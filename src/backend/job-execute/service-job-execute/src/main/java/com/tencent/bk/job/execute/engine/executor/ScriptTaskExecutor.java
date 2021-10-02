@@ -31,6 +31,7 @@ import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
 import com.tencent.bk.job.execute.common.constants.StepExecuteTypeEnum;
 import com.tencent.bk.job.execute.common.util.VariableResolver;
 import com.tencent.bk.job.execute.engine.consts.GseConstants;
+import com.tencent.bk.job.execute.engine.consts.IpStatus;
 import com.tencent.bk.job.execute.engine.gse.GseRequestUtils;
 import com.tencent.bk.job.execute.engine.gse.ScriptRequestBuilder;
 import com.tencent.bk.job.execute.engine.model.GseTaskExecuteResult;
@@ -46,6 +47,7 @@ import com.tencent.bk.job.execute.engine.variable.VariableResolveContext;
 import com.tencent.bk.job.execute.engine.variable.VariableResolveResult;
 import com.tencent.bk.job.execute.engine.variable.VariableResolveUtils;
 import com.tencent.bk.job.execute.model.AccountDTO;
+import com.tencent.bk.job.execute.model.GseTaskIpLogDTO;
 import com.tencent.bk.job.execute.model.GseTaskLogDTO;
 import com.tencent.bk.job.execute.model.StepInstanceBaseDTO;
 import com.tencent.bk.job.execute.model.StepInstanceDTO;
@@ -58,6 +60,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -98,6 +101,11 @@ public class ScriptTaskExecutor extends AbstractGseTaskExecutor {
     @Override
     protected void initExecutionContext() {
         super.initExecutionContext();
+        if (CollectionUtils.isNotEmpty(invalidIpSet)) {
+            logService.batchWriteJobSystemScriptLog(taskInstance.getCreateTime(), stepInstanceId,
+                stepInstance.getExecuteCount(), buildIpAndLogOffsetMap(invalidIpSet),
+                "The host(s) is not belongs to the Business, or doesn't exists.", System.currentTimeMillis());
+        }
     }
 
 
@@ -122,7 +130,7 @@ public class ScriptTaskExecutor extends AbstractGseTaskExecutor {
 
         AccountDTO accountInfo = getAccountBean(stepInstance.getAccountId(), stepInstance.getAccount(),
             stepInstance.getAppId());
-        List<api_agent> agentList = GseRequestUtils.buildAgentList(jobIpSet, accountInfo.getAccount(),
+        List<api_agent> agentList = GseRequestUtils.buildAgentList(targetIpSet, accountInfo.getAccount(),
             accountInfo.getPassword());
         api_script_request request = GseRequestUtils.buildScriptRequest(agentList, scriptContent, scriptFileName,
             scriptFilePath, resolvedScriptParam, timeout);
@@ -214,7 +222,7 @@ public class ScriptTaskExecutor extends AbstractGseTaskExecutor {
 
         AccountDTO accountInfo = getAccountBean(stepInstance.getAccountId(), stepInstance.getAccount(),
             stepInstance.getAppId());
-        List<api_agent> agentList = GseRequestUtils.buildAgentList(jobIpSet, accountInfo.getAccount(),
+        List<api_agent> agentList = GseRequestUtils.buildAgentList(targetIpSet, accountInfo.getAccount(),
             accountInfo.getPassword());
 
         builder.addScriptTask(agentList, scriptFilePath, scriptFileName, resolvedScriptParam, timeout);
@@ -251,7 +259,7 @@ public class ScriptTaskExecutor extends AbstractGseTaskExecutor {
 
         AccountDTO accountInfo = getAccountBean(stepInstance.getAccountId(), stepInstance.getAccount(),
             stepInstance.getAppId());
-        List<api_agent> agentList = GseRequestUtils.buildAgentList(jobIpSet, accountInfo.getAccount(),
+        List<api_agent> agentList = GseRequestUtils.buildAgentList(targetIpSet, accountInfo.getAccount(),
             accountInfo.getPassword());
         builder.addScriptTask(agentList, scriptFilePath, wrapperScriptFileName, resolvedScriptParam, timeout);
         return builder.build();
@@ -372,7 +380,7 @@ public class ScriptTaskExecutor extends AbstractGseTaskExecutor {
 
         AccountDTO accountInfo = getAccountBean(stepInstance.getAccountId(), stepInstance.getAccount(),
             stepInstance.getAppId());
-        List<api_agent> agentList = GseRequestUtils.buildAgentList(jobIpSet, accountInfo.getAccount(),
+        List<api_agent> agentList = GseRequestUtils.buildAgentList(targetIpSet, accountInfo.getAccount(),
             accountInfo.getPassword());
 
         ScriptRequestBuilder builder = new ScriptRequestBuilder();
@@ -590,7 +598,7 @@ public class ScriptTaskExecutor extends AbstractGseTaskExecutor {
     public GseTaskExecuteResult stopGseTask() {
         AccountDTO accountInfo = getAccountBean(stepInstance.getAccountId(), stepInstance.getAccount(),
             stepInstance.getAppId());
-        List<api_agent> agentList = GseRequestUtils.buildAgentList(jobIpSet, accountInfo.getAccount(),
+        List<api_agent> agentList = GseRequestUtils.buildAgentList(targetIpSet, accountInfo.getAccount(),
             accountInfo.getPassword());
         api_stop_task_request stopTaskRequest = new api_stop_task_request();
         GseTaskLogDTO gseTaskLog = gseTaskLogService.getGseTaskLog(stepInstanceId, executeCount);
@@ -619,7 +627,7 @@ public class ScriptTaskExecutor extends AbstractGseTaskExecutor {
     void addExecutionResultHandleTask() {
         ScriptResultHandleTask scriptResultHandleTask =
             new ScriptResultHandleTask(taskInstance, stepInstance, taskVariablesAnalyzeResult, ipLogMap, gseTaskLog,
-                jobIpSet, requestId);
+                targetIpSet, requestId);
         scriptResultHandleTask.initDependentService(taskInstanceService, gseTaskLogService, logService,
             taskInstanceVariableService, stepInstanceVariableValueService,
             taskManager, resultHandleTaskKeepaliveManager);
@@ -638,6 +646,28 @@ public class ScriptTaskExecutor extends AbstractGseTaskExecutor {
 
     @Override
     protected boolean checkHostExecutable() {
-        return !jobIpSet.isEmpty();
+        return !targetIpSet.isEmpty();
+    }
+
+    @Override
+    protected void handleStartGseTaskError(long startTime, long endTime, IpStatus status, String msg) {
+        super.handleStartGseTaskError(startTime, endTime, status, msg);
+        if (CollectionUtils.isNotEmpty(notStartedTargetIpSet) && StringUtils.isNotEmpty(msg)) {
+            logService.batchWriteJobSystemScriptLog(taskInstance.getCreateTime(), stepInstanceId,
+                stepInstance.getExecuteCount(), buildIpAndLogOffsetMap(notStartedTargetIpSet), msg, endTime);
+        }
+    }
+
+    private Map<String, Integer> buildIpAndLogOffsetMap(Collection<String> ips) {
+        Map<String, Integer> ipAndLogOffsetMap = new HashMap<>();
+        ips.forEach(ip -> {
+            GseTaskIpLogDTO ipLog = ipLogMap.get(ip);
+            if (ipLog != null) {
+                ipAndLogOffsetMap.put(ip, ipLog.getOffset());
+            } else {
+                ipAndLogOffsetMap.put(ip, 0);
+            }
+        });
+        return ipAndLogOffsetMap;
     }
 }

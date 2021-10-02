@@ -58,7 +58,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.StopWatch;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -109,17 +108,21 @@ public abstract class AbstractGseTaskExecutor implements ResumableTask {
      */
     protected int executeCount;
     /**
+     * 所有目标主机(包括不合法的)
+     */
+    protected Set<String> allTargetIpSet = new HashSet<>();
+    /**
      * 目标主机
      */
-    protected Set<String> jobIpSet = new HashSet<>();
+    protected Set<String> targetIpSet = new HashSet<>();
+    /**
+     * 未开始执行任务的目标主机
+     */
+    protected Set<String> notStartedTargetIpSet = new HashSet<>();
     /**
      * 不合法的主机
      */
     protected Set<String> invalidIpSet;
-    /**
-     * 文件源主机
-     */
-    protected Set<String> fileSourceIPSet = new HashSet<>();
     /**
      * gse 原子任务信息
      */
@@ -136,14 +139,6 @@ public abstract class AbstractGseTaskExecutor implements ResumableTask {
      * 全局变量参数定义与初始值
      */
     protected Map<String, TaskVariableDTO> globalVariables = new HashMap<>();
-    /**
-     * 执行任务的所有主机
-     */
-    private Set<String> allJobIpSet = new HashSet<>();
-    /**
-     * 未开始执行任务的主机
-     */
-    private Set<String> notStartedJobIPSet = new HashSet<>();
 
     /**
      * GSETaskExecutor Constructor
@@ -168,10 +163,10 @@ public abstract class AbstractGseTaskExecutor implements ResumableTask {
             log.warn("Init gse task info, task contains invalid hosts: {}", this.invalidIpSet);
         }
 
-        this.allJobIpSet.addAll(executeIps);
+        this.allTargetIpSet.addAll(executeIps);
         executeIps.removeAll(this.invalidIpSet);
-        this.jobIpSet.addAll(executeIps);
-        this.notStartedJobIPSet.addAll(executeIps);
+        this.targetIpSet.addAll(executeIps);
+        this.notStartedTargetIpSet.addAll(executeIps);
     }
 
     /**
@@ -222,7 +217,7 @@ public abstract class AbstractGseTaskExecutor implements ResumableTask {
      * 保存将要执行的gse原子任务初始状态
      */
     protected void initAndSaveGseIpLogsToBeStarted() {
-        for (String cloudAreaIdAndIp : notStartedJobIPSet) {
+        for (String cloudAreaIdAndIp : notStartedTargetIpSet) {
             GseTaskIpLogDTO ipLog = buildGseTaskIpLog(cloudAreaIdAndIp, IpStatus.WAITING, true, false);
             ipLogMap.put(cloudAreaIdAndIp, ipLog);
         }
@@ -236,31 +231,16 @@ public abstract class AbstractGseTaskExecutor implements ResumableTask {
         if (!invalidIpSet.isEmpty()) {
             List<GseTaskIpLogDTO> ipLogList = new ArrayList<>();
             invalidIpSet.forEach(cloudAreaIdAndIp -> {
-                boolean isTargetServer = this.allJobIpSet.contains(cloudAreaIdAndIp);
+                boolean isTargetServer = this.allTargetIpSet.contains(cloudAreaIdAndIp);
                 GseTaskIpLogDTO ipLog = buildGseTaskIpLog(cloudAreaIdAndIp, IpStatus.HOST_NOT_EXIST, isTargetServer,
                     !isTargetServer);
                 ipLogList.add(ipLog);
             });
             gseTaskLogService.batchSaveIpLog(ipLogList);
-            logService.batchWriteJobSystemScriptLog(taskInstance.getCreateTime(), stepInstanceId,
-                stepInstance.getExecuteCount(),
-                buildIpAndLogOffsetMap(invalidIpSet), "The host(s) is not belongs to the Business, or doesn't exists" +
-                    ".", System.currentTimeMillis());
         }
     }
 
-    private Map<String, Integer> buildIpAndLogOffsetMap(Collection<String> ips) {
-        Map<String, Integer> ipAndLogOffsetMap = new HashMap<>();
-        ips.forEach(ip -> {
-            GseTaskIpLogDTO ipLog = ipLogMap.get(ip);
-            if (ipLog != null) {
-                ipAndLogOffsetMap.put(ip, ipLog.getOffset());
-            } else {
-                ipAndLogOffsetMap.put(ip, 0);
-            }
-        });
-        return ipAndLogOffsetMap;
-    }
+
 
     protected GseTaskIpLogDTO buildGseTaskIpLog(String cloudAreaIdAndIp, IpStatus status, boolean isTargetServer,
                                                 boolean isSourceServer) {
@@ -305,8 +285,7 @@ public abstract class AbstractGseTaskExecutor implements ResumableTask {
         watch.start("check-executable");
         if (!checkHostExecutable()) {
             log.warn("Task is not executable, stepInstanceId:{}", stepInstanceId);
-            handleStartGseTaskError(System.currentTimeMillis(), IpStatus.HOST_NOT_EXIST, "The host(s) is not belongs " +
-                "to the Business, or doesn't exists.");
+            handleStartGseTaskError(System.currentTimeMillis(), System.currentTimeMillis(), IpStatus.UNKNOWN_ERROR, null);
             return;
         }
         watch.stop();
@@ -316,9 +295,7 @@ public abstract class AbstractGseTaskExecutor implements ResumableTask {
         watch.stop();
 
         boolean shouldSendTaskToGseServer = (gseTaskLog == null || StringUtils.isEmpty(gseTaskLog.getGseTaskId()));
-        /**
-         * gse任务ID
-         */
+
         String gseTaskId;
         if (shouldSendTaskToGseServer) {
             watch.start("send-task-to-gse-server");
@@ -328,7 +305,7 @@ public abstract class AbstractGseTaskExecutor implements ResumableTask {
             watch.stop();
             watch.start("analyse-gse-response");
             if (GseTaskResponse.ERROR_CODE_SUCCESS != gseTaskResponse.getErrorCode()) {
-                handleStartGseTaskError(startTime, IpStatus.SUBMIT_FAILED,
+                handleStartGseTaskError(startTime, System.currentTimeMillis(), IpStatus.SUBMIT_FAILED,
                     "GSE Job failed:" + gseTaskResponse.getErrorMessage());
                 gseTasksExceptionCounter.increment();
                 return;
@@ -367,48 +344,40 @@ public abstract class AbstractGseTaskExecutor implements ResumableTask {
     abstract void addExecutionResultHandleTask();
 
     /**
-     * 处理gse任务下发失败
+     * 处理启动任务失败
      *
      * @param startTime 启动时间
+     * @param endTime   结束时间
      * @param status    失败状态
      * @param msg       错误信息
      */
-    private void handleStartGseTaskError(long startTime, IpStatus status, String msg) {
+    protected void handleStartGseTaskError(long startTime, long endTime, IpStatus status, String msg) {
         gseTaskLog = new GseTaskLogDTO();
         gseTaskLog.setStepInstanceId(stepInstanceId);
         gseTaskLog.setExecuteCount(executeCount);
-        long endTime = DateUtils.currentTimeMillis();
 
         gseTaskLog.setStatus(RunStatusEnum.FAIL.getValue());
         gseTaskLog.setEndTime(endTime);
         gseTaskLog.setTotalTime(endTime - startTime);
         gseTaskLogService.saveGseTaskLog(gseTaskLog);
 
-        // 处理未完成的任务
-        handleNotStartedIPResult(startTime, endTime, status, msg);
+        saveStartFailTargetIpLogs(startTime, endTime, status);
 
         taskInstanceService.updateStepEndTime(stepInstanceId, endTime);
         int invalidIpNum = this.invalidIpSet == null ? 0 : this.invalidIpSet.size();
-        taskInstanceService.updateStepStatInfo(stepInstanceId, invalidIpNum + jobIpSet.size(), 0,
-            invalidIpNum + jobIpSet.size());
+        taskInstanceService.updateStepStatInfo(stepInstanceId, invalidIpNum + targetIpSet.size(), 0,
+            invalidIpNum + targetIpSet.size());
         taskInstanceService.updateStepTotalTime(stepInstanceId, endTime - stepInstance.getStartTime());
         taskInstanceService.updateStepStatus(stepInstanceId, RunStatusEnum.ABNORMAL_STATE.getValue());
         taskInstanceService.updateTaskStatus(taskInstance.getId(), RunStatusEnum.ABNORMAL_STATE.getValue());
     }
 
-    private void handleNotStartedIPResult(Long startTime, Long endTime, IpStatus status, String errorMsg) {
-        log.info("[{}]: handleNotStartedIPResult| noStartJobIPSet={}", stepInstanceId, this.notStartedJobIPSet);
-
-        Set<String> unfinishedIPSet = new HashSet<>();
-        unfinishedIPSet.addAll(notStartedJobIPSet);
-        unfinishedIPSet.addAll(this.fileSourceIPSet);
-        if (StringUtils.isNotEmpty(errorMsg)) {
-            logService.batchWriteJobSystemScriptLog(taskInstance.getCreateTime(), stepInstanceId,
-                stepInstance.getExecuteCount(),
-                buildIpAndLogOffsetMap(unfinishedIPSet), errorMsg, endTime);
+    private void saveStartFailTargetIpLogs(Long startTime, Long endTime, IpStatus status) {
+        if (CollectionUtils.isNotEmpty(notStartedTargetIpSet)) {
+            log.info("[{}]: saveStartFailTargetIpLogs| failTargetIps={}", stepInstanceId, this.notStartedTargetIpSet);
+            gseTaskLogService.batchUpdateIpLog(stepInstanceId, executeCount, notStartedTargetIpSet,
+                startTime, endTime, status);
         }
-
-        gseTaskLogService.batchUpdateIpLog(stepInstanceId, executeCount, unfinishedIPSet, startTime, endTime, status);
     }
 
     /**

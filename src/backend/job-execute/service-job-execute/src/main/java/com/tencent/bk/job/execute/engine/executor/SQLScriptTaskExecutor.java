@@ -159,7 +159,7 @@ public class SQLScriptTaskExecutor extends ScriptTaskExecutor {
         AccountDTO accountInfo = getAccountBean(stepInstance.getAccountId(), stepInstance.getAccount(),
             stepInstance.getAppId());
 
-        List<api_agent> agentList = GseRequestUtils.buildAgentList(jobIpSet, accountInfo.getAccount(),
+        List<api_agent> agentList = GseRequestUtils.buildAgentList(targetIpSet, accountInfo.getAccount(),
             accountInfo.getPassword());
 
         return GseRequestUtils.buildScriptRequestWithSQL(agentList, param);

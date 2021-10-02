@@ -75,7 +75,7 @@ public class FileTaskExecutor extends AbstractGseTaskExecutor {
     /*
      * 本地Agent ip
      */
-    private String localAgentIp;
+    private final String localAgentIp;
     /*
      * 待分发文件，文件传输的源文件
      */
@@ -83,16 +83,20 @@ public class FileTaskExecutor extends AbstractGseTaskExecutor {
     /*
      * 本地文件的存储根目录
      */
-    private String fileStorageRootPath;
+    private final String fileStorageRootPath;
     /**
      * 源文件路径与目标路径映射关系
      * 格式： Map<源IP:源文件路径，目标路径>
      */
-    private Map<String, String> sourceDestPathMap = new HashMap<>();
+    private final Map<String, String> sourceDestPathMap = new HashMap<>();
 
     private Map<String, String> sourceFileDisplayMap = new HashMap<>();
 
-    private String localUploadDir;
+    private final String localUploadDir;
+     /**
+     * 文件源主机
+     */
+    private final Set<String> fileSourceIPSet = new HashSet<>();
 
     /**
      * FileTaskExecutor Constructor
@@ -136,7 +140,7 @@ public class FileTaskExecutor extends AbstractGseTaskExecutor {
     private void initFileSourceIpLog() {
         List<GseTaskIpLogDTO> fileSourceIpLogs = new ArrayList<>();
         for (String cloudAreaIdAndIp : fileSourceIPSet) {
-            if (jobIpSet.contains(cloudAreaIdAndIp) && ipLogMap.get(cloudAreaIdAndIp) != null) {
+            if (targetIpSet.contains(cloudAreaIdAndIp) && ipLogMap.get(cloudAreaIdAndIp) != null) {
                 GseTaskIpLogDTO ipLog = ipLogMap.get(cloudAreaIdAndIp);
                 ipLog.setSourceServer(true);
                 fileSourceIpLogs.add(ipLog);
@@ -230,7 +234,7 @@ public class FileTaskExecutor extends AbstractGseTaskExecutor {
                     fileSourceIp, fileSourceIp, file.getStandardFilePath(), file.getDisplayFilePath(), "--",
                     FileDistStatusEnum.WAITING.getValue(), FileDistStatusEnum.WAITING.getName(), "--", "--", null));
             }
-            for (String fileTargetIp : jobIpSet) {
+            for (String fileTargetIp : targetIpSet) {
                 ServiceIpLogDTO ipTaskLog = initServiceLogDTOIfAbsent(logs, stepInstanceId, executeCount, fileTargetIp);
                 for (JobFile file : sendFiles) {
                     String fileSourceIp = file.isLocalUploadFile() ? IpHelper.fix1To0(localAgentIp) :
@@ -288,7 +292,7 @@ public class FileTaskExecutor extends AbstractGseTaskExecutor {
             log.error("Start gse task fail, account is null!");
             return GseTaskResponse.fail(GseTaskResponse.ERROR_CODE_FAIL, "account is empty");
         }
-        List<api_agent> dst = GseRequestUtils.buildAgentList(jobIpSet, accountInfo.getAccount(),
+        List<api_agent> dst = GseRequestUtils.buildAgentList(targetIpSet, accountInfo.getAccount(),
             accountInfo.getPassword());
 
         List<api_copy_fileinfoV2> copyFileInfoList = new ArrayList<>();
@@ -342,7 +346,7 @@ public class FileTaskExecutor extends AbstractGseTaskExecutor {
             return new GseTaskExecuteResult(GseTaskExecuteResult.RESULT_CODE_STOP_FAILED, "Account is empty");
         }
         //目标机器的agent
-        List<api_agent> agentList = GseRequestUtils.buildAgentList(jobIpSet, accountInfo.getAccount(),
+        List<api_agent> agentList = GseRequestUtils.buildAgentList(targetIpSet, accountInfo.getAccount(),
             accountInfo.getPassword());
 
         //源机器agent
@@ -386,7 +390,7 @@ public class FileTaskExecutor extends AbstractGseTaskExecutor {
     void addExecutionResultHandleTask() {
         FileResultHandleTask fileResultHandleTask =
             new FileResultHandleTask(taskInstance, stepInstance, taskVariablesAnalyzeResult, ipLogMap,
-                gseTaskLog, jobIpSet, sendFiles, fileStorageRootPath, sourceDestPathMap, sourceFileDisplayMap,
+                gseTaskLog, targetIpSet, sendFiles, fileStorageRootPath, sourceDestPathMap, sourceFileDisplayMap,
                 requestId);
         fileResultHandleTask.initDependentService(taskInstanceService, gseTaskLogService, logService,
             taskInstanceVariableService, stepInstanceVariableValueService,
@@ -407,6 +411,16 @@ public class FileTaskExecutor extends AbstractGseTaskExecutor {
     @Override
     protected boolean checkHostExecutable() {
         // 同时包含合法的源和目标，才可以被执行
-        return (!jobIpSet.isEmpty() && !fileSourceIPSet.isEmpty());
+        return (!targetIpSet.isEmpty() && !fileSourceIPSet.isEmpty());
+    }
+
+    @Override
+    protected void handleStartGseTaskError(long startTime, long endTime, IpStatus status, String msg) {
+        super.handleStartGseTaskError(startTime, endTime, status, msg);
+        if (CollectionUtils.isNotEmpty(fileSourceIPSet)) {
+            log.info("[{}]: saveStartFailSourceIpLogs| failSourceIps={}", stepInstanceId, this.fileSourceIPSet);
+            gseTaskLogService.batchUpdateIpLog(stepInstanceId, executeCount, fileSourceIPSet,
+                startTime, endTime, status);
+        }
     }
 }
