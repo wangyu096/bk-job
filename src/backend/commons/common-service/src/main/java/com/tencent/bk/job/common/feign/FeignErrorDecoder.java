@@ -33,9 +33,6 @@ import feign.RetryableException;
 import feign.codec.ErrorDecoder;
 import lombok.extern.slf4j.Slf4j;
 
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-
 @Slf4j
 public class FeignErrorDecoder extends ErrorDecoder.Default {
     @Override
@@ -49,11 +46,11 @@ public class FeignErrorDecoder extends ErrorDecoder.Default {
 
         try {
             if (exception instanceof FeignException && ((FeignException) exception).responseBody().isPresent()) {
-                ByteBuffer responseBody = ((FeignException) exception).responseBody().get();
-                String bodyText = StandardCharsets.UTF_8.newDecoder()
-                    .decode(responseBody.asReadOnlyBuffer()).toString();
-                log.info("Handle FeignException, error: {}", bodyText);
-                ServiceResponse<?> serviceResponse = JsonUtils.fromJson(bodyText, ServiceResponse.class);
+                FeignException feignException = (FeignException) exception;
+                log.info("FeignException", feignException);
+                String responseBody = feignException.contentUTF8();
+                log.info("Handle FeignException, responseBody: {}", responseBody);
+                ServiceResponse<?> serviceResponse = JsonUtils.fromJson(responseBody, ServiceResponse.class);
                 Integer errorCode = serviceResponse.getCode();
                 return new SystemException(errorCode);
             }
