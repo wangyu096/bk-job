@@ -26,6 +26,8 @@ package com.tencent.bk.job.common.web.exception.handler;
 
 import com.tencent.bk.job.common.annotation.WebAPI;
 import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.exception.BadRequestException;
+import com.tencent.bk.job.common.exception.BusinessException;
 import com.tencent.bk.job.common.exception.ServiceException;
 import com.tencent.bk.job.common.exception.SystemException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
@@ -55,6 +57,7 @@ import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
@@ -76,46 +79,14 @@ public class WebExceptionControllerAdvice extends ResponseEntityExceptionHandler
         this.webAuthService = webAuthService;
     }
 
-    @ExceptionHandler(ServiceException.class)
-    @ResponseBody
-    ResponseEntity<?> handleControllerServiceException(HttpServletRequest request, ServiceException ex) {
-        if (ex instanceof HttpStatusServiceException) {
-            log.warn("Handle service exception", ex);
-            HttpStatusServiceException httpStatusServiceException = (HttpStatusServiceException) ex;
-            return new ResponseEntity<>(ServiceResponse.buildCommonFailResp(httpStatusServiceException, i18nService),
-                httpStatusServiceException.getHttpStatus());
-        } else if (ex instanceof InSufficientPermissionException) {
-            InSufficientPermissionException inSufficientPermissionException = (InSufficientPermissionException) ex;
-            AuthResult authResult = inSufficientPermissionException.getAuthResult();
-            log.debug("Insufficient permission, authResult: {}", authResult);
-            if (StringUtils.isEmpty(authResult.getApplyUrl())) {
-                authResult.setApplyUrl(webAuthService.getApplyUrl(authResult.getRequiredActionResources()));
-            }
-            return new ResponseEntity<>(ServiceResponse.buildAuthFailResp(
-                webAuthService.toAuthResultVO(inSufficientPermissionException.getAuthResult())), HttpStatus.OK);
-        } else {
-            log.warn("Handle service exception", ex);
-            return new ResponseEntity<>(ServiceResponse.buildCommonFailResp(ex, i18nService),
-                HttpStatus.OK);
-        }
-    }
-
     @ExceptionHandler(Throwable.class)
     @ResponseBody
-    ResponseEntity<?> handleControllerException(HttpServletRequest request, Throwable ex) {
-        log.warn("Handle exception", ex);
-        // 默认处理
+    ResponseEntity<?> handleException(HttpServletRequest request, Throwable ex) {
+        String errorMsg = "Handle Exception, uri: " + request.getRequestURI();
+        log.error(errorMsg, ex);
         HttpStatus status = getStatus(request);
         return new ResponseEntity<>(ServiceResponse.buildCommonFailResp(ErrorCode.SERVICE_INTERNAL_ERROR,
             i18nService), status);
-    }
-
-    @ExceptionHandler(SystemException.class)
-    @ResponseBody
-    ResponseEntity<?> handleControllerSystemException(HttpServletRequest request, SystemException ex) {
-        log.warn("Handle system exception", ex);
-        return new ResponseEntity<>(ServiceResponse.buildCommonFailResp(ex.getErrorCode(),
-            i18nService), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     private HttpStatus getStatus(HttpServletRequest request) {
@@ -126,12 +97,68 @@ public class WebExceptionControllerAdvice extends ResponseEntityExceptionHandler
         return HttpStatus.valueOf(statusCode);
     }
 
+    @ExceptionHandler(InSufficientPermissionException.class)
+    @ResponseBody
+    ResponseEntity<?> handleInSufficientPermissionException(HttpServletRequest request,
+                                                            InSufficientPermissionException ex) {
+        AuthResult authResult = ex.getAuthResult();
+        log.debug("Handle InSufficientPermissionException, uri: {}, authResult: {}",
+            request.getRequestURI(), authResult);
+        if (StringUtils.isEmpty(authResult.getApplyUrl())) {
+            authResult.setApplyUrl(webAuthService.getApplyUrl(authResult.getRequiredActionResources()));
+        }
+        return new ResponseEntity<>(ServiceResponse.buildAuthFailResp(
+            webAuthService.toAuthResultVO(ex.getAuthResult())), HttpStatus.OK);
+    }
+
+    @ExceptionHandler(ServiceException.class)
+    @ResponseBody
+    ResponseEntity<?> handleServiceException(HttpServletRequest request, ServiceException ex) {
+        String errorMsg = "Handle ServiceException, uri: " + request.getRequestURI();
+        log.warn(errorMsg, ex);
+        if (ex instanceof HttpStatusServiceException) {
+            HttpStatusServiceException httpStatusServiceException = (HttpStatusServiceException) ex;
+            return new ResponseEntity<>(ServiceResponse.buildCommonFailResp(httpStatusServiceException, i18nService),
+                httpStatusServiceException.getHttpStatus());
+        } else {
+            return new ResponseEntity<>(ServiceResponse.buildCommonFailResp(ex, i18nService),
+                HttpStatus.OK);
+        }
+    }
+
+    @ExceptionHandler(SystemException.class)
+    @ResponseBody
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    ServiceResponse<?> handleSystemException(HttpServletRequest request, SystemException ex) {
+        String errorMsg = "Handle SystemException, uri: " + request.getRequestURI();
+        log.error(errorMsg, ex);
+        return ServiceResponse.buildCommonFailResp(ex.getErrorCode(), i18nService);
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    @ResponseBody
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    ServiceResponse<?> handleBadRequestException(HttpServletRequest request, BadRequestException ex) {
+        String errorMsg = "Handle BadRequestException, uri: " + request.getRequestURI();
+        log.error(errorMsg, ex);
+        return ServiceResponse.buildCommonFailResp(ex.getErrorCode(), i18nService);
+    }
+
+    @ExceptionHandler(BusinessException.class)
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    ServiceResponse<?> handleBusinessException(HttpServletRequest request, BusinessException ex) {
+        String errorMsg = "Handle BusinessException, uri: " + request.getRequestURI();
+        log.info(errorMsg, ex);
+        return ServiceResponse.buildCommonFailResp(ex.getErrorCode(), i18nService);
+    }
+
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseBody
     ResponseEntity<?> handleConstraintViolationException(HttpServletRequest request,
                                                          ConstraintViolationException ex) {
         log.warn("Handle ConstraintViolationException", ex);
-        ServiceResponse resp = ServiceResponse.buildCommonFailResp(ErrorCode.BAD_REQUEST, i18nService);
+        ServiceResponse<?> resp = ServiceResponse.buildCommonFailResp(ErrorCode.BAD_REQUEST, i18nService);
         return new ResponseEntity<>(resp, HttpStatus.OK);
     }
 

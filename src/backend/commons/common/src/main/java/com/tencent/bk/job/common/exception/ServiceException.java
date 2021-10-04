@@ -24,6 +24,8 @@
 
 package com.tencent.bk.job.common.exception;
 
+import com.tencent.bk.job.common.model.error.ErrorType;
+
 import java.util.Arrays;
 import java.util.StringJoiner;
 
@@ -31,6 +33,7 @@ import java.util.StringJoiner;
  * 服务层异常
  */
 public class ServiceException extends RuntimeException {
+    private int errorType;
     private int errorCode;
     private String errorMsg;
     private Object[] errorParams;
@@ -40,6 +43,23 @@ public class ServiceException extends RuntimeException {
 
     public ServiceException(int errorCode) {
         this.errorCode = errorCode;
+    }
+
+    public ServiceException(int errorType, int errorCode) {
+        this.errorType = errorType;
+        this.errorCode = errorCode;
+    }
+
+    public ServiceException(int errorType, int errorCode, Object[] errorParams) {
+        this.errorType = errorType;
+        this.errorCode = errorCode;
+        this.errorParams = errorParams;
+    }
+
+    public ServiceException(int errorType, int errorCode, String errorMsg) {
+        this.errorType = errorType;
+        this.errorCode = errorCode;
+        this.errorMsg = errorMsg;
     }
 
     public ServiceException(String errorMsg) {
@@ -60,6 +80,7 @@ public class ServiceException extends RuntimeException {
 
     public ServiceException(Throwable cause, int errorCode, Object[] errorParams) {
         super(cause);
+        this.errorType = ErrorType.INTERNAL_ERROR.getType();
         this.errorCode = errorCode;
         this.errorParams = errorParams;
     }
@@ -72,6 +93,7 @@ public class ServiceException extends RuntimeException {
 
     public ServiceException(Throwable cause, int errorCode, String errorMsg) {
         super(errorMsg, cause);
+        this.errorType = ErrorType.INTERNAL_ERROR.getType();
         this.errorCode = errorCode;
         this.errorMsg = errorMsg;
     }

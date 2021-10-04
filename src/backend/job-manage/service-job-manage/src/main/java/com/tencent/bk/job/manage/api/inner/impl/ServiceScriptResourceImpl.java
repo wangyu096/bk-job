@@ -25,8 +25,8 @@
 package com.tencent.bk.job.manage.api.inner.impl;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.exception.BadRequestException;
 import com.tencent.bk.job.common.exception.ServiceException;
-import com.tencent.bk.job.common.exception.SystemException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.model.ServiceResponse;
 import com.tencent.bk.job.manage.api.common.ScriptDTOBuilder;
@@ -63,7 +63,7 @@ public class ServiceScriptResourceImpl implements ServiceScriptResource {
                                                                                 Long scriptVersionId) {
         // TEST CODE
         if(scriptVersionId > 0) {
-            throw new SystemException(ErrorCode.ILLEGAL_PARAM);
+            throw new BadRequestException(ErrorCode.ILLEGAL_PARAM);
         }
 
         if (appId == null || appId < 0) {

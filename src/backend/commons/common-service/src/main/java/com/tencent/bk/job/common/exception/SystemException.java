@@ -24,28 +24,22 @@
 
 package com.tencent.bk.job.common.exception;
 
+import com.tencent.bk.job.common.model.error.ErrorType;
+
 /**
  * 系统异常
  */
 public class SystemException extends ServiceException {
-    public SystemException() {
-        super();
-    }
-
     public SystemException(int errorCode) {
-        super(errorCode);
-    }
-
-    public SystemException(String errorMsg) {
-        super(errorMsg);
+        super(ErrorType.INTERNAL_ERROR.getType(), errorCode);
     }
 
     public SystemException(int errorCode, String errorMsg) {
-        super(errorCode, errorMsg);
+        super(ErrorType.INTERNAL_ERROR.getType(), errorCode, errorMsg);
     }
 
     public SystemException(int errorCode, Object[] errorParams) {
-        super(errorCode, errorParams);
+        super(ErrorType.INTERNAL_ERROR.getType(), errorCode, errorParams);
     }
 
     public SystemException(Throwable cause, int errorCode, Object[] errorParams) {

@@ -60,6 +60,12 @@ public class ServiceResponse<T> {
     @ApiModelProperty("返回码")
     private Integer code;
 
+    /**
+     * @see com.tencent.bk.job.common.model.error.ErrorType
+     */
+    @ApiModelProperty("错误类型")
+    private Integer errorType;
+
     @ApiModelProperty("错误信息")
     private String errorMsg;
 

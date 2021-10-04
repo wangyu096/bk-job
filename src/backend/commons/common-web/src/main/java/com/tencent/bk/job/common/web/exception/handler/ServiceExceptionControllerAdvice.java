@@ -26,6 +26,8 @@ package com.tencent.bk.job.common.web.exception.handler;
 
 import com.tencent.bk.job.common.annotation.InternalAPI;
 import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.exception.BadRequestException;
+import com.tencent.bk.job.common.exception.BusinessException;
 import com.tencent.bk.job.common.exception.ServiceException;
 import com.tencent.bk.job.common.exception.SystemException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
@@ -80,6 +82,24 @@ public class ServiceExceptionControllerAdvice extends ResponseEntityExceptionHan
         String errorMsg = "Handle system exception, uri: " + request.getRequestURI();
         log.error(errorMsg, ex);
         return ServiceResponse.buildCommonFailResp(ex.getErrorCode());
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    @ResponseBody
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    ServiceResponse<?> handleBadRequestException(HttpServletRequest request, BadRequestException ex) {
+        String errorMsg = "Handle BadRequestException, uri: " + request.getRequestURI();
+        log.error(errorMsg, ex);
+        return ServiceResponse.buildCommonFailResp(ex.getErrorCode(), i18nService);
+    }
+
+    @ExceptionHandler(BusinessException.class)
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    ServiceResponse<?> handleBusinessException(HttpServletRequest request, BusinessException ex) {
+        String errorMsg = "Handle BusinessException, uri: " + request.getRequestURI();
+        log.info(errorMsg, ex);
+        return ServiceResponse.buildCommonFailResp(ex.getErrorCode(), i18nService);
     }
 
     @ExceptionHandler(Throwable.class)

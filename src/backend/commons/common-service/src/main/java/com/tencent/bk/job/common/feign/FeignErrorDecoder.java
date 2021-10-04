@@ -24,39 +24,67 @@
 
 package com.tencent.bk.job.common.feign;
 
+import com.tencent.bk.job.common.exception.BadRequestException;
+import com.tencent.bk.job.common.exception.BusinessException;
+import com.tencent.bk.job.common.exception.ServiceException;
 import com.tencent.bk.job.common.exception.SystemException;
 import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.model.error.ErrorType;
 import com.tencent.bk.job.common.util.json.JsonUtils;
 import feign.FeignException;
 import feign.Response;
 import feign.RetryableException;
 import feign.codec.ErrorDecoder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
 public class FeignErrorDecoder extends ErrorDecoder.Default {
+
     @Override
     public Exception decode(String methodKey, Response response) {
-        log.info("Decode FeignException, methodKey: {}, response: {}", methodKey, response);
         Exception exception = super.decode(methodKey, response);
+        log.debug("Decode feign error, methodKey: {}, response: {}", methodKey, response);
 
         if (exception instanceof RetryableException) {
             return exception;
         }
 
         try {
-            if (exception instanceof FeignException && ((FeignException) exception).responseBody().isPresent()) {
+            if (exception instanceof FeignException) {
                 FeignException feignException = (FeignException) exception;
-                log.info("FeignException", feignException);
                 String responseBody = feignException.contentUTF8();
-                log.info("Handle FeignException, responseBody: {}", responseBody);
-                ServiceResponse<?> serviceResponse = JsonUtils.fromJson(responseBody, ServiceResponse.class);
-                Integer errorCode = serviceResponse.getCode();
-                return new SystemException(errorCode);
+
+                if (StringUtils.isNotEmpty(responseBody)) {
+                    ServiceResponse<?> serviceResponse = JsonUtils.fromJson(responseBody, ServiceResponse.class);
+                    if (serviceResponse != null && serviceResponse.getCode() != null) {
+                        return decodeErrorCode(feignException, serviceResponse.getErrorType(),
+                            serviceResponse.getCode());
+                    }
+                }
             }
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
         }
         return exception;
+    }
+
+    private Exception decodeErrorCode(FeignException exception, Integer errorType, Integer errorCode) {
+        if (errorType == null || errorCode == null) {
+            return exception;
+        }
+
+        ErrorType type = ErrorType.valOf(errorType);
+        switch (type) {
+            case BadRequest:
+                return new BadRequestException(errorCode);
+            case INTERNAL_ERROR:
+                return new SystemException(errorCode);
+            case BUSINESS_LOGIC:
+                return new BusinessException(errorCode);
+            default:
+                return new ServiceException(errorCode);
+        }
+
     }
 }

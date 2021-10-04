@@ -26,8 +26,11 @@ package com.tencent.bk.job.common.exception;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
 
+/**
+ * Cmdb API 调用异常
+ */
 public class CmdbApiException extends SystemException {
-    public CmdbApiException(Long errorCode) {
+    public CmdbApiException() {
         super(ErrorCode.CMDB_API_DATA_ERROR);
     }
 }

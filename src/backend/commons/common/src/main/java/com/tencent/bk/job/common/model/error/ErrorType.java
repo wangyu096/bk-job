@@ -27,8 +27,15 @@
 package com.tencent.bk.job.common.model.error;
 
 public enum ErrorType {
-    BadRequest(1);
-    private int type;
+    BUSINESS_LOGIC(299),
+    BadRequest(400),
+    UNAUTHENTICATED(401),
+    PERMISSION_DENIED(403),
+    NOT_FOUND(404),
+    RESOURCE_EXHAUSTED(429),
+    INTERNAL_ERROR(500);
+
+    private final int type;
 
     ErrorType(int type) {
         this.type = type;
@@ -38,7 +45,7 @@ public enum ErrorType {
         return type;
     }
 
-    public ErrorType valOf(Integer type) {
+    public static ErrorType valOf(Integer type) {
         if (type == null) {
             return null;
         }

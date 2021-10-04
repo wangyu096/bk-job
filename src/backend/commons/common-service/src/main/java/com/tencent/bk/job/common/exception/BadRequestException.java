@@ -27,30 +27,30 @@ package com.tencent.bk.job.common.exception;
 import com.tencent.bk.job.common.model.error.ErrorType;
 
 /**
- * 业务异常
+ * 系统异常
  */
-public class BusinessException extends ServiceException {
-    public BusinessException(int errorCode) {
-        super(ErrorType.BUSINESS_LOGIC.getType(), errorCode);
+public class BadRequestException extends ServiceException {
+    public BadRequestException(int errorCode) {
+        super(ErrorType.BadRequest.getType(), errorCode);
     }
 
-    public BusinessException(int errorCode, String errorMsg) {
-        super(ErrorType.BUSINESS_LOGIC.getType(), errorCode, errorMsg);
+    public BadRequestException(int errorCode, String errorMsg) {
+        super(ErrorType.INTERNAL_ERROR.getType(), errorCode, errorMsg);
     }
 
-    public BusinessException(int errorCode, Object[] errorParams) {
-        super(ErrorType.BUSINESS_LOGIC.getType(), errorCode, errorParams);
+    public BadRequestException(int errorCode, Object[] errorParams) {
+        super(ErrorType.INTERNAL_ERROR.getType(), errorCode, errorParams);
     }
 
-    public BusinessException(Throwable cause, int errorCode, Object[] errorParams) {
+    public BadRequestException(Throwable cause, int errorCode, Object[] errorParams) {
         super(cause, errorCode, errorParams);
     }
 
-    public BusinessException(int errorCode, Object errorParam) {
+    public BadRequestException(int errorCode, Object errorParam) {
         super(errorCode, errorParam);
     }
 
-    public BusinessException(Throwable cause, int errorCode, String errorMsg) {
+    public BadRequestException(Throwable cause, int errorCode, String errorMsg) {
         super(cause, errorCode, errorMsg);
     }
 }
