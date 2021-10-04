@@ -22,19 +22,41 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.web.feign;
+package com.tencent.bk.job.common.exception;
 
-import com.tencent.bk.job.common.i18n.locale.LocaleUtils;
-import com.tencent.bk.job.common.util.JobContextUtil;
-import feign.RequestInterceptor;
-import feign.RequestTemplate;
-import lombok.extern.slf4j.Slf4j;
+/**
+ * 系统异常
+ */
+public class SystemException extends ServiceException {
+    public SystemException() {
+        super();
+    }
 
-@Slf4j
-public class FeignAddHeaderRequestInterceptor implements RequestInterceptor {
-    @Override
-    public void apply(RequestTemplate template) {
-        String lang = JobContextUtil.getUserLang();
-        template.header(LocaleUtils.COMMON_LANG_HEADER, lang);
+    public SystemException(int errorCode) {
+        super(errorCode);
+    }
+
+    public SystemException(String errorMsg) {
+        super(errorMsg);
+    }
+
+    public SystemException(int errorCode, String errorMsg) {
+        super(errorCode, errorMsg);
+    }
+
+    public SystemException(int errorCode, Object[] errorParams) {
+        super(errorCode, errorParams);
+    }
+
+    public SystemException(Throwable cause, int errorCode, Object[] errorParams) {
+        super(cause, errorCode, errorParams);
+    }
+
+    public SystemException(int errorCode, Object errorParam) {
+        super(errorCode, errorParam);
+    }
+
+    public SystemException(Throwable cause, int errorCode, String errorMsg) {
+        super(cause, errorCode, errorMsg);
     }
 }

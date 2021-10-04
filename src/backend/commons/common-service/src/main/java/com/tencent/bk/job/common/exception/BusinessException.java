@@ -22,15 +22,41 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.web.feign;
+package com.tencent.bk.job.common.exception;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+/**
+ * 业务异常
+ */
+public class BusinessException extends ServiceException {
+    public BusinessException() {
+        super();
+    }
 
-@Configuration
-public class FeignConfiguration {
-    @Bean
-    public FeignAddHeaderRequestInterceptor feignAddHeaderRequestInterceptor() {
-        return new FeignAddHeaderRequestInterceptor();
+    public BusinessException(int errorCode) {
+        super(errorCode);
+    }
+
+    public BusinessException(String errorMsg) {
+        super(errorMsg);
+    }
+
+    public BusinessException(int errorCode, String errorMsg) {
+        super(errorCode, errorMsg);
+    }
+
+    public BusinessException(int errorCode, Object[] errorParams) {
+        super(errorCode, errorParams);
+    }
+
+    public BusinessException(Throwable cause, int errorCode, Object[] errorParams) {
+        super(cause, errorCode, errorParams);
+    }
+
+    public BusinessException(int errorCode, Object errorParam) {
+        super(errorCode, errorParam);
+    }
+
+    public BusinessException(Throwable cause, int errorCode, String errorMsg) {
+        super(cause, errorCode, errorMsg);
     }
 }

@@ -24,6 +24,7 @@
 
 package com.tencent.bk.job.common.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.ServiceException;
@@ -41,16 +42,17 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
+@ApiModel("服务调用通用返回结构")
 @Slf4j
 @Getter
 @Setter
 @ToString
 @NoArgsConstructor
-@ApiModel("服务调用通用返回结构")
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ServiceResponse<T> {
     public static final Integer SUCCESS_CODE = 0;
     public static final Integer COMMON_FAIL_CODE = 1;
-    private static volatile MessageI18nService i18nService;
+    private static MessageI18nService i18nService;
 
     @ApiModelProperty("是否成功")
     private boolean success;

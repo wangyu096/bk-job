@@ -46,9 +46,9 @@ public class ScriptServiceImpl implements ScriptService {
         throws ServiceException {
         ServiceResponse<ServiceScriptDTO> resp = scriptResourceClient.getScriptByAppIdAndScriptVersionId(username,
             appId, scriptVersionId);
-        if (!resp.isSuccess()) {
-            throw new ServiceException(resp.getCode(), resp.getErrorMsg());
-        }
+//        if (!resp.isSuccess()) {
+//            throw new ServiceException(resp.getCode(), resp.getErrorMsg());
+//        }
         return resp.getData();
     }
 

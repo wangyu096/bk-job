@@ -27,6 +27,7 @@ package com.tencent.bk.job.common.web.exception.handler;
 import com.tencent.bk.job.common.annotation.WebAPI;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.exception.SystemException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.iam.exception.InSufficientPermissionException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
@@ -107,6 +108,14 @@ public class WebExceptionControllerAdvice extends ResponseEntityExceptionHandler
         HttpStatus status = getStatus(request);
         return new ResponseEntity<>(ServiceResponse.buildCommonFailResp(ErrorCode.SERVICE_INTERNAL_ERROR,
             i18nService), status);
+    }
+
+    @ExceptionHandler(SystemException.class)
+    @ResponseBody
+    ResponseEntity<?> handleControllerSystemException(HttpServletRequest request, SystemException ex) {
+        log.warn("Handle system exception", ex);
+        return new ResponseEntity<>(ServiceResponse.buildCommonFailResp(ex.getErrorCode(),
+            i18nService), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     private HttpStatus getStatus(HttpServletRequest request) {

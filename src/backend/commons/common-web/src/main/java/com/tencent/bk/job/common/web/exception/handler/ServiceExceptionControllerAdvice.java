@@ -27,6 +27,7 @@ package com.tencent.bk.job.common.web.exception.handler;
 import com.tencent.bk.job.common.annotation.InternalAPI;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.exception.SystemException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.iam.exception.InSufficientPermissionException;
 import com.tencent.bk.job.common.model.ServiceResponse;
@@ -38,6 +39,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import javax.servlet.http.HttpServletRequest;
@@ -69,6 +71,15 @@ public class ServiceExceptionControllerAdvice extends ResponseEntityExceptionHan
         } else {
             return new ResponseEntity<>(ServiceResponse.buildCommonFailResp(ex, i18nService), HttpStatus.OK);
         }
+    }
+
+    @ExceptionHandler(SystemException.class)
+    @ResponseBody
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    ServiceResponse<?> handleControllerSystemException(HttpServletRequest request, SystemException ex) {
+        String errorMsg = "Handle system exception, uri: " + request.getRequestURI();
+        log.error(errorMsg, ex);
+        return ServiceResponse.buildCommonFailResp(ex.getErrorCode());
     }
 
     @ExceptionHandler(Throwable.class)
