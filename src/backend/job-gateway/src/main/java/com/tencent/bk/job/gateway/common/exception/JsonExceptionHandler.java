@@ -24,9 +24,9 @@
 
 package com.tencent.bk.job.gateway.common.exception;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.model.error.JobError;
 import com.tencent.bk.job.common.util.json.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,24 +92,23 @@ public class JsonExceptionHandler implements ErrorWebExceptionHandler {
     @Override
     public Mono<Void> handle(ServerWebExchange exchange, Throwable ex) {
         HttpStatus httpStatus;
-        int errorCode = 0;
+        JobError error;
         if (ex instanceof NotFoundException) {
             httpStatus = HttpStatus.NOT_FOUND;
-            errorCode = ErrorCode.SERVICE_UNAVAILABLE;
+            error = JobError.INTERNAL_ERROR;
         } else if (ex instanceof ResponseStatusException) {
             ResponseStatusException responseStatusException = (ResponseStatusException) ex;
             httpStatus = responseStatusException.getStatus();
-            errorCode = ErrorCode.SERVICE_INTERNAL_ERROR;
+            error = JobError.INTERNAL_ERROR;
         } else {
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            errorCode = ErrorCode.SERVICE_INTERNAL_ERROR;
+            error = JobError.INTERNAL_ERROR;
         }
 
         Map<String, Object> result = new HashMap<>(2, 1);
         result.put("httpStatus", httpStatus);
 
-        ServiceResponse serviceResponse = ServiceResponse.buildCommonFailResp(errorCode,
-            messageI18nService.getI18n(String.valueOf(errorCode)));
+        ServiceResponse<?> serviceResponse = ServiceResponse.buildCommonFailResp(error);
         result.put("body", JsonUtils.toJson(serviceResponse));
         //错误记录
         ServerHttpRequest request = exchange.getRequest();

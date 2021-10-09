@@ -39,7 +39,7 @@ public class TaskExecuteAuthFailedException extends ServiceException {
     private final AuthResultVO authResultVO;
 
     public TaskExecuteAuthFailedException(AuthResult authResult, AuthResultVO authResultVO) {
-        super(ErrorCode.USER_NO_PERMISSION_COMMON);
+        super(ErrorCode.PERMISSION_DENIED);
         this.authResult = authResult;
         this.authResultVO = authResultVO;
     }

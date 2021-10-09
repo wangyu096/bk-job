@@ -27,44 +27,44 @@ package com.tencent.bk.job.common.exception;
 import com.tencent.bk.job.common.model.error.ErrorType;
 
 /**
- * 请求参数非法异常
+ * 资源不存在
  */
-public class InvalidParamException extends ServiceException {
-    public InvalidParamException(Integer errorCode) {
-        super(ErrorType.INVALID_ARGUMENT, errorCode);
+public class NotFoundException extends ServiceException {
+    public NotFoundException(Integer errorCode) {
+        super(ErrorType.NOT_FOUND, errorCode);
     }
 
-    public InvalidParamException(Integer errorCode, Object[] errorParams) {
-        super(ErrorType.INVALID_ARGUMENT, errorCode, errorParams);
+    public NotFoundException(Integer errorCode, Object[] errorParams) {
+        super(ErrorType.NOT_FOUND, errorCode, errorParams);
     }
 
-    public InvalidParamException(Integer errorCode, Object errorParam) {
-        super(ErrorType.INVALID_ARGUMENT, errorCode, errorParam);
+    public NotFoundException(Integer errorCode, Object errorParam) {
+        super(ErrorType.NOT_FOUND, errorCode, errorParam);
     }
 
-    public InvalidParamException(Throwable cause, Integer errorCode) {
-        super(cause, ErrorType.INVALID_ARGUMENT, errorCode);
+    public NotFoundException(Throwable cause, Integer errorCode) {
+        super(cause, ErrorType.NOT_FOUND, errorCode);
     }
 
-    public InvalidParamException(Throwable cause, Integer errorCode, Object[] errorParams) {
-        super(cause, ErrorType.INVALID_ARGUMENT, errorCode, errorParams);
+    public NotFoundException(Throwable cause, Integer errorCode, Object[] errorParams) {
+        super(cause, ErrorType.NOT_FOUND, errorCode, errorParams);
     }
 
-    public InvalidParamException(Throwable cause, Integer errorCode, Object errorParam) {
-        super(cause, ErrorType.INVALID_ARGUMENT, errorCode, errorParam);
+    public NotFoundException(Throwable cause, Integer errorCode, Object errorParam) {
+        super(cause, ErrorType.NOT_FOUND, errorCode, errorParam);
     }
 
-    public InvalidParamException(String message, Throwable cause, Integer errorCode) {
-        super(message, cause, ErrorType.INVALID_ARGUMENT, errorCode);
+    public NotFoundException(String message, Throwable cause, Integer errorCode) {
+        super(message, cause, ErrorType.NOT_FOUND, errorCode);
     }
 
-    public InvalidParamException(String message, Throwable cause, Integer errorCode,
-                                 Object[] errorParams) {
-        super(message, cause, ErrorType.INVALID_ARGUMENT, errorCode, errorParams);
+    public NotFoundException(String message, Throwable cause, Integer errorCode,
+                             Object[] errorParams) {
+        super(message, cause, ErrorType.NOT_FOUND, errorCode, errorParams);
     }
 
-    public InvalidParamException(String message, Throwable cause, Integer errorCode,
-                                 Object errorParam) {
-        super(message, cause, ErrorType.INVALID_ARGUMENT, errorCode, errorParam);
+    public NotFoundException(String message, Throwable cause, Integer errorCode,
+                             Object errorParam) {
+        super(message, cause, ErrorType.NOT_FOUND, errorCode, errorParam);
     }
 }

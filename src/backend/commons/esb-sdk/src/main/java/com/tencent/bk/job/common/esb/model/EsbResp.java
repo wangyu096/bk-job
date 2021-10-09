@@ -24,26 +24,33 @@
 
 package com.tencent.bk.job.common.esb.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.esb.model.iam.EsbApplyPermissionDTO;
 import com.tencent.bk.job.common.exception.ServiceException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
+import com.tencent.bk.job.common.model.ServiceResponse;
 import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.model.error.ErrorDetail;
+import com.tencent.bk.job.common.model.error.JobError;
+import com.tencent.bk.job.common.util.ApplicationContextRegister;
 import com.tencent.bk.job.common.util.JobContextUtil;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.function.Function;
 
 @Data
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Slf4j
 public class EsbResp<T> {
     public static final Integer SUCCESS_CODE = 0;
+
+    @JsonIgnore
+    private static MessageI18nService i18nService;
 
     private Integer code;
 
@@ -64,8 +71,8 @@ public class EsbResp<T> {
      */
     private EsbApplyPermissionDTO permission;
 
-    private EsbResp(Integer code, String message, T data) {
-        this.code = code;
+    private EsbResp(JobError error, String message, T data) {
+        this.code = error.getErrorCode();
         this.data = data;
         this.message = message;
         this.result = code.equals(SUCCESS_CODE);
@@ -73,71 +80,47 @@ public class EsbResp<T> {
     }
 
     public static <T> EsbResp<T> buildSuccessResp(T data) {
-        EsbResp<T> resp = new EsbResp<>(SUCCESS_CODE, null, data);
+        EsbResp<T> resp = new EsbResp<>(JobError.OK, null, data);
         resp.result = true;
         return resp;
     }
 
-    public static <T> EsbResp<T> buildCommonFailResp(Integer errorCode, String msg) {
-        EsbResp<T> resp = new EsbResp<>(errorCode, msg, null);
+    public static <T> EsbResp<T> buildCommonFailResp(JobError error, String msg) {
+        EsbResp<T> resp = new EsbResp<>(error, msg, null);
         resp.result = false;
         return resp;
     }
 
-    public static <T> EsbResp<T> buildCommonFailResp(ServiceException e, MessageI18nService i18nService) {
-        int errorCode = e.getErrorCode();
-        String errorMsg = e.getMessage();
-        if (StringUtils.isEmpty(errorMsg)) {
-            errorMsg = i18nService.getI18nWithArgs(String.valueOf(errorCode), e.getErrorParams());
-        }
-        if (StringUtils.isEmpty(errorMsg)) {
-            errorMsg = String.valueOf(errorCode);
-        }
-        return new EsbResp<>(e.getErrorCode(), errorMsg, null);
+    public static <T> EsbResp<T> buildCommonFailResp(ServiceException e) {
+        String errorMsg = buildErrorMsg(e.getError().getErrorCode());
+        return new EsbResp<>(e.getError(), errorMsg, null);
     }
 
-    public static <T> EsbResp<T> buildCommonFailResp(int errorCode, MessageI18nService i18nService) {
-        String errorMsg = i18nService.getI18n(String.valueOf(errorCode));
-        if (StringUtils.isEmpty(errorMsg)) {
-            errorMsg = String.valueOf(errorCode);
-        }
-        return new EsbResp<>(errorCode, errorMsg, null);
+    public static <T> EsbResp<T> buildCommonFailResp(JobError error) {
+        return new EsbResp<>(error, buildErrorMsg(error.getErrorCode()), null);
     }
 
-    public static <T> EsbResp<T> buildCommonFailResp(int errorCode, ErrorDetail errorDetail,
-                                                     MessageI18nService i18nService) {
-        String errorMsg = i18nService.getI18n(String.valueOf(errorCode));
-        EsbResp<T> esbResp = new EsbResp<>(errorCode, errorMsg, null);
+    public static <T> EsbResp<T> buildCommonFailResp(JobError error, ErrorDetail errorDetail) {
+        EsbResp<T> esbResp = buildCommonFailResp(error);
         esbResp.setErrorDetail(errorDetail);
         return esbResp;
     }
 
-    public static <T> EsbResp<T> buildCommonFailResp(int errorCode, MessageI18nService i18nService,
-                                                     Object... errorParams) {
-        String errorMsg = i18nService.getI18nWithArgs(String.valueOf(errorCode), errorParams);
-        if (StringUtils.isEmpty(errorMsg)) {
-            errorMsg = String.valueOf(errorCode);
-        }
-        return new EsbResp<>(errorCode, errorMsg, null);
+    public static <T> EsbResp<T> buildCommonFailResp(JobError error, Object... errorParams) {
+        return new EsbResp<>(error, buildErrorMsg(error.getErrorCode(), errorParams), null);
     }
 
-    public static <T> EsbResp<T> buildAuthFailResult(EsbApplyPermissionDTO permission, MessageI18nService i18nService) {
+    public static <T> EsbResp<T> buildAuthFailResult(EsbApplyPermissionDTO permission) {
         EsbResp<T> esbResp = new EsbResp<>();
         esbResp.setPermission(permission);
-        esbResp.setMessage(i18nService.getI18n(String.valueOf(ErrorCode.API_NO_PERMISSION)));
-        esbResp.setCode(ErrorCode.API_NO_PERMISSION);
+        esbResp.setMessage(buildErrorMsg(JobError.BK_PERMISSION_DENIED.getErrorCode()));
+        esbResp.setCode(JobError.BK_PERMISSION_DENIED.getErrorCode());
         return esbResp;
     }
 
-    public static <T> EsbResp<T> buildCommonFailResp(MessageI18nService i18nService, ValidateResult validateResult) {
-        if (validateResult.getErrorParams() != null && validateResult.getErrorParams().length > 0) {
-            return EsbResp.buildCommonFailResp(validateResult.getErrorCode(),
-                i18nService.getI18nWithArgs(String.valueOf(validateResult.getErrorCode()),
-                    validateResult.getErrorParams()));
-        } else {
-            return EsbResp.buildCommonFailResp(validateResult.getErrorCode(),
-                i18nService.getI18n(String.valueOf(validateResult.getErrorCode())));
-        }
+    public static <T> EsbResp<T> buildCommonFailResp(ValidateResult validateResult) {
+        return new EsbResp<>(validateResult.getError(),
+            buildErrorMsg(validateResult.getError().getErrorCode(), validateResult.getErrorParams()), null);
     }
 
     public static <T, R> EsbResp<R> convertData(EsbResp<T> esbResp, Function<T, R> converter) {
@@ -149,5 +132,37 @@ public class EsbResp<T> {
         newEsbResp.setResult(esbResp.getResult());
         newEsbResp.setData(converter.apply(esbResp.getData()));
         return newEsbResp;
+    }
+
+    private static String buildErrorMsg(int errorCode) {
+        initI18nService();
+        if (i18nService == null) {
+            log.warn("Can not find available i18nService");
+            return "";
+        }
+        return i18nService.getI18n(String.valueOf(errorCode));
+    }
+
+    private static String buildErrorMsg(int errorCode, Object[] errorParams) {
+        initI18nService();
+        if (i18nService == null) {
+            log.warn("Can not find available i18nService");
+            return "";
+        }
+        if (errorParams != null && errorParams.length > 0) {
+            return i18nService.getI18nWithArgs(String.valueOf(errorCode), errorParams);
+        } else {
+            return i18nService.getI18n(String.valueOf(errorCode));
+        }
+    }
+
+    private static void initI18nService() {
+        if (i18nService == null) {
+            synchronized (ServiceResponse.class) {
+                if (i18nService == null) {
+                    i18nService = ApplicationContextRegister.getBean(MessageI18nService.class);
+                }
+            }
+        }
     }
 }

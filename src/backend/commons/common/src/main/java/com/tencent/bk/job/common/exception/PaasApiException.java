@@ -24,33 +24,17 @@
 
 package com.tencent.bk.job.common.exception;
 
-import com.tencent.bk.job.common.model.error.ErrorType;
+import com.tencent.bk.job.common.model.error.JobError;
 
 /**
- * 业务异常
+ * Paas API 调用异常
  */
-public class BusinessException extends ServiceException {
-    public BusinessException(int errorCode) {
-        super(ErrorType.BUSINESS_LOGIC.getType(), errorCode);
+public class PaasApiException extends ApiException {
+    public PaasApiException(Throwable cause, String errorMsg) {
+        super(cause, JobError.PAAS_API_ERROR, errorMsg);
     }
 
-    public BusinessException(int errorCode, String errorMsg) {
-        super(ErrorType.BUSINESS_LOGIC.getType(), errorCode, errorMsg);
-    }
-
-    public BusinessException(int errorCode, Object[] errorParams) {
-        super(ErrorType.BUSINESS_LOGIC.getType(), errorCode, errorParams);
-    }
-
-    public BusinessException(Throwable cause, int errorCode, Object[] errorParams) {
-        super(cause, errorCode, errorParams);
-    }
-
-    public BusinessException(int errorCode, Object errorParam) {
-        super(errorCode, errorParam);
-    }
-
-    public BusinessException(Throwable cause, int errorCode, String errorMsg) {
-        super(cause, errorCode, errorMsg);
+    public PaasApiException(String errorMsg) {
+        super(JobError.PAAS_API_ERROR, errorMsg);
     }
 }

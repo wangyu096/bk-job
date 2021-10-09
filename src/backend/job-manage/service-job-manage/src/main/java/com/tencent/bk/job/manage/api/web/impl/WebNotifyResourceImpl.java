@@ -44,7 +44,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-import static com.tencent.bk.job.common.constant.ErrorCode.USER_NO_PERMISSION_COMMON;
+import static com.tencent.bk.job.common.constant.ErrorCode.PERMISSION_DENIED;
 
 @RestController
 @Slf4j
@@ -107,7 +107,7 @@ public class WebNotifyResourceImpl implements WebNotifyResource {
         if (localPermissionService.isAdmin(username)) {
             return ServiceResponse.buildSuccessResp(notifyService.sendSimpleNotification(notification));
         } else {
-            return ServiceResponse.buildCommonFailResp(USER_NO_PERMISSION_COMMON);
+            return ServiceResponse.buildCommonFailResp(PERMISSION_DENIED);
         }
     }
 }

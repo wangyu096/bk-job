@@ -24,18 +24,18 @@
 
 package com.tencent.bk.job.manage.api.esb.impl.v3;
 
+import com.tencent.bk.job.common.api.model.InternalResponse;
 import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.iam.service.AuthService;
-import com.tencent.bk.job.common.api.model.InnerServiceResponse;
 import com.tencent.bk.job.manage.api.esb.v3.EsbCredentialV3Resource;
+import com.tencent.bk.job.manage.api.inner.ServiceCredentialResource;
 import com.tencent.bk.job.manage.common.consts.CredentialTypeEnum;
 import com.tencent.bk.job.manage.model.esb.v3.request.EsbCreateOrUpdateCredentialV3Req;
 import com.tencent.bk.job.manage.model.esb.v3.response.EsbCredentialSimpleInfoV3DTO;
-import com.tencent.bk.job.manage.model.web.request.CredentialCreateUpdateReq;
-import com.tencent.bk.job.manage.api.inner.ServiceCredentialResource;
 import com.tencent.bk.job.manage.model.inner.resp.ServiceBasicCredentialDTO;
+import com.tencent.bk.job.manage.model.web.request.CredentialCreateUpdateReq;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,7 +95,7 @@ public class EsbCredentialResourceV3Impl implements EsbCredentialV3Resource {
 
     private EsbResp<EsbCredentialSimpleInfoV3DTO> saveCredential(EsbCreateOrUpdateCredentialV3Req req) {
         CredentialCreateUpdateReq createUpdateReq = convertToCreateUpdateReq(req);
-        InnerServiceResponse<ServiceBasicCredentialDTO> resp;
+        InternalResponse<ServiceBasicCredentialDTO> resp;
         if (req.getId() == null) {
             resp = credentialService.createCredential(
                 req.getUserName(),

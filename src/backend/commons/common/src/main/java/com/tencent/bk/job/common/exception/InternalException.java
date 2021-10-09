@@ -25,32 +25,53 @@
 package com.tencent.bk.job.common.exception;
 
 import com.tencent.bk.job.common.model.error.ErrorType;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 /**
- * 系统异常
+ * 内部服务异常
  */
-public class BadRequestException extends ServiceException {
-    public BadRequestException(int errorCode) {
-        super(ErrorType.BadRequest.getType(), errorCode);
+@Getter
+@Setter
+@ToString
+public class InternalException extends ServiceException {
+
+    public InternalException(Integer errorCode) {
+        super(ErrorType.INTERNAL, errorCode);
     }
 
-    public BadRequestException(int errorCode, String errorMsg) {
-        super(ErrorType.INTERNAL_ERROR.getType(), errorCode, errorMsg);
+    public InternalException(Integer errorCode, Object[] errorParams) {
+        super(ErrorType.INTERNAL, errorCode, errorParams);
     }
 
-    public BadRequestException(int errorCode, Object[] errorParams) {
-        super(ErrorType.INTERNAL_ERROR.getType(), errorCode, errorParams);
+    public InternalException(Integer errorCode, Object errorParam) {
+        super(ErrorType.INTERNAL, errorCode, errorParam);
     }
 
-    public BadRequestException(Throwable cause, int errorCode, Object[] errorParams) {
-        super(cause, errorCode, errorParams);
+    public InternalException(Throwable cause, Integer errorCode) {
+        super(cause, ErrorType.INTERNAL, errorCode);
     }
 
-    public BadRequestException(int errorCode, Object errorParam) {
-        super(errorCode, errorParam);
+    public InternalException(Throwable cause, Integer errorCode, Object[] errorParams) {
+        super(cause, ErrorType.INTERNAL, errorCode, errorParams);
     }
 
-    public BadRequestException(Throwable cause, int errorCode, String errorMsg) {
-        super(cause, errorCode, errorMsg);
+    public InternalException(Throwable cause, Integer errorCode, Object errorParam) {
+        super(cause, ErrorType.INTERNAL, errorCode, errorParam);
+    }
+
+    public InternalException(String message, Throwable cause, Integer errorCode) {
+        super(message, cause, ErrorType.INTERNAL, errorCode);
+    }
+
+    public InternalException(String message, Throwable cause, Integer errorCode,
+                             Object[] errorParams) {
+        super(message, cause, ErrorType.INTERNAL, errorCode, errorParams);
+    }
+
+    public InternalException(String message, Throwable cause, Integer errorCode,
+                             Object errorParam) {
+        super(message, cause, ErrorType.INTERNAL, errorCode, errorParam);
     }
 }

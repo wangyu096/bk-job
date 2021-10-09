@@ -30,6 +30,7 @@ import com.tencent.bk.job.common.exception.ServiceException;
 import com.tencent.bk.job.common.exception.SystemException;
 import com.tencent.bk.job.common.model.ServiceResponse;
 import com.tencent.bk.job.common.model.error.ErrorType;
+import com.tencent.bk.job.common.model.error.JobError;
 import com.tencent.bk.job.common.util.json.JsonUtils;
 import feign.FeignException;
 import feign.Response;
@@ -59,7 +60,7 @@ public class FeignErrorDecoder extends ErrorDecoder.Default {
                     ServiceResponse<?> serviceResponse = JsonUtils.fromJson(responseBody, ServiceResponse.class);
                     if (serviceResponse != null && serviceResponse.getCode() != null) {
                         return decodeErrorCode(feignException, serviceResponse.getErrorType(),
-                            serviceResponse.getCode());
+                            serviceResponse.getCode(), serviceResponse.getErrorMsg());
                     }
                 }
             }
@@ -69,7 +70,8 @@ public class FeignErrorDecoder extends ErrorDecoder.Default {
         return exception;
     }
 
-    private Exception decodeErrorCode(FeignException exception, Integer errorType, Integer errorCode) {
+    private Exception decodeErrorCode(FeignException exception, Integer errorType, Integer errorCode,
+                                      String errorMsg) {
         if (errorType == null || errorCode == null) {
             return exception;
         }
@@ -77,13 +79,13 @@ public class FeignErrorDecoder extends ErrorDecoder.Default {
         ErrorType type = ErrorType.valOf(errorType);
         switch (type) {
             case BadRequest:
-                return new BadRequestException(errorCode);
+                return new BadRequestException(exception, new JobError(errorType, errorCode), errorMsg);
             case INTERNAL_ERROR:
-                return new SystemException(errorCode);
+                return new SystemException(exception, new JobError(errorType, errorCode), errorMsg);
             case BUSINESS_LOGIC:
-                return new BusinessException(errorCode);
+                return new BusinessException(exception, new JobError(errorType, errorCode), errorMsg);
             default:
-                return new ServiceException(errorCode);
+                return new ServiceException(exception, new JobError(errorType, errorCode), errorMsg);
         }
 
     }

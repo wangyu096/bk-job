@@ -22,16 +22,18 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.model;
+package com.tencent.bk.job.common.api.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.ServiceException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
+import com.tencent.bk.job.common.iam.model.AuthResult;
+import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.model.error.ErrorDetail;
+import com.tencent.bk.job.common.model.error.ErrorType;
 import com.tencent.bk.job.common.model.error.JobError;
-import com.tencent.bk.job.common.model.permission.AuthResultVO;
 import com.tencent.bk.job.common.util.ApplicationContextRegister;
 import com.tencent.bk.job.common.util.JobContextUtil;
 import io.swagger.annotations.ApiModel;
@@ -42,18 +44,16 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
-@ApiModel("服务调用通用返回结构")
 @Slf4j
 @Getter
 @Setter
 @ToString
 @NoArgsConstructor
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class ServiceResponse<T> {
+@ApiModel("job内部微服务间调用通用返回结构")
+public class InternalResponse<T> {
     public static final Integer SUCCESS_CODE = 0;
     public static final Integer COMMON_FAIL_CODE = 1;
-    @JsonIgnore
-    private static MessageI18nService i18nService;
+    private static volatile MessageI18nService i18nService;
 
     @ApiModelProperty("是否成功")
     private boolean success;
@@ -61,9 +61,6 @@ public class ServiceResponse<T> {
     @ApiModelProperty("返回码")
     private Integer code;
 
-    /**
-     * @see com.tencent.bk.job.common.model.error.ErrorType
-     */
     @ApiModelProperty("错误类型")
     private Integer errorType;
 
@@ -78,76 +75,68 @@ public class ServiceResponse<T> {
 
     @ApiModelProperty("鉴权结果，当返回码为1238001时，该字段有值")
     @JsonProperty("authResult")
-    private AuthResultVO authResult;
+    private AuthResult authResult;
 
     @ApiModelProperty("错误详情")
     @JsonProperty("errorDetail")
     private ErrorDetail errorDetail;
 
-    public ServiceResponse(JobError error, String errorMsg, T data) {
-        this.errorType = error.getErrorType();
-        this.code = error.getErrorCode();
-        this.errorMsg = errorMsg;
+    public InternalResponse(ErrorType errorType, Integer errorCode, T data) {
+        this.code = errorCode;
+        this.success = SUCCESS_CODE.equals(errorCode);
+        this.errorMsg = buildErrorMsg(errorCode);
+        this.errorType = errorType.getType();
         this.data = data;
         this.requestId = JobContextUtil.getRequestId();
     }
 
-    public static <T> ServiceResponse<T> buildSuccessResp(T data) {
-        ServiceResponse<T> resp = new ServiceResponse<>(JobError.OK, null, data);
-        resp.success = true;
+    public InternalResponse(ErrorType errorType, Integer errorCode, Object[] errorParams, T data) {
+        this.code = errorCode;
+        this.success = SUCCESS_CODE.equals(errorCode);
+        this.errorMsg = buildErrorMsg(errorCode, errorParams);
+        this.errorType = errorType.getType();
+        this.data = data;
+        this.requestId = JobContextUtil.getRequestId();
+    }
+
+    public static <T> InternalResponse<T> buildSuccessResp(T data) {
+        return new InternalResponse<>(ErrorType.OK, SUCCESS_CODE, data);
+    }
+
+    public static <T> InternalResponse<T> buildAuthFailResp(AuthResult authResult) {
+        InternalResponse<T> resp = new InternalResponse<>(ErrorType.PERMISSION_DENIED,
+            ErrorCode.PERMISSION_DENIED, null);
+        resp.authResult = authResult;
         return resp;
     }
 
-    public static <T> ServiceResponse<T> buildAuthFailResp(AuthResultVO authResultVO) {
-        ServiceResponse<T> resp = new ServiceResponse<>(JobError.PERMISSION_DENIED,
-            buildErrorMsg(JobError.PERMISSION_DENIED.getErrorCode()), null);
-        resp.success = false;
-        resp.authResult = authResultVO;
-        return resp;
+    public static <T> InternalResponse<T> buildCommonFailResp(ErrorType errorType, Integer errorCode) {
+        return new InternalResponse<>(errorType, errorCode, null);
     }
 
-    public static <T> ServiceResponse<T> buildCommonFailResp(String msg) {
-        ServiceResponse<T> resp = new ServiceResponse<>(JobError.COMMON_ERROR, msg, null);
-        resp.success = false;
-        return resp;
+    public static <T> InternalResponse<T> buildCommonFailResp(ErrorType errorType, Integer errorCode, Object[] params) {
+        return new InternalResponse<>(errorType, errorCode, params, null);
     }
 
-    public static <T> ServiceResponse<T> buildCommonFailResp(JobError error, String msg) {
-        ServiceResponse<T> resp = new ServiceResponse<>(error, msg, null);
-        resp.success = false;
-        return resp;
-    }
-
-    public static <T> ServiceResponse<T> buildCommonFailResp(JobError error) {
-        ServiceResponse<T> resp = new ServiceResponse<>(error, buildErrorMsg(error.getErrorCode()), null);
-        resp.success = false;
-        return resp;
-    }
-
-    public static <T> ServiceResponse<T> buildCommonFailResp(JobError error, Object[] params) {
-        ServiceResponse<T> resp = new ServiceResponse<>(error, buildErrorMsg(error.getErrorCode(), params), null);
-        resp.success = false;
-        return resp;
-    }
-
-    public static <T> ServiceResponse<T> buildCommonFailResp(ServiceException e) {
+    public static <T> InternalResponse<T> buildCommonFailResp(ServiceException e) {
         int errorCode = e.getError().getErrorCode();
         String errorMsg = buildErrorMsg(errorCode);
-        return new ServiceResponse<>(e.getError(), errorMsg, null);
+        return new InternalResponse<>(e.getError(), errorMsg, null);
     }
 
-    public static <T> ServiceResponse<T> buildValidateFailResp(ValidateResult validateResult) {
-        return new ServiceResponse<>(validateResult.getError(),
+    public static <T> InternalResponse<T> buildValidateFailResp(ValidateResult validateResult) {
+        return new InternalResponse<>(validateResult.getError(),
             buildErrorMsg(validateResult.getError().getErrorCode(), validateResult.getErrorParams()), null);
     }
 
-    public static <T> ServiceResponse<T> buildCommonFailResp(JobError error, ErrorDetail errorDetail) {
-        ServiceResponse<T> esbResp = new ServiceResponse<>(error, buildErrorMsg(error.getErrorCode()), null);
+    public static <T> InternalResponse<T> buildCommonFailResp(JobError error, ErrorDetail errorDetail) {
+        String errorMsg = buildErrorMsg(error.getErrorCode());
+        InternalResponse<T> esbResp = new InternalResponse<>(error, errorMsg, null);
         esbResp.setErrorDetail(errorDetail);
         return esbResp;
     }
 
-    private static String buildErrorMsg(int errorCode) {
+    private static String buildErrorMsg(Integer errorCode) {
         initI18nService();
         if (i18nService == null) {
             log.warn("Can not find available i18nService");
@@ -156,7 +145,7 @@ public class ServiceResponse<T> {
         return i18nService.getI18n(String.valueOf(errorCode));
     }
 
-    private static String buildErrorMsg(int errorCode, Object[] errorParams) {
+    private static String buildErrorMsg(Integer errorCode, Object[] errorParams) {
         initI18nService();
         if (i18nService == null) {
             log.warn("Can not find available i18nService");

@@ -22,44 +22,19 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.web.exception;
+package com.tencent.bk.job.common.exception;
 
-import com.tencent.bk.job.common.exception.ServiceException;
-import org.springframework.http.HttpStatus;
-
-import java.util.StringJoiner;
+import com.tencent.bk.job.common.model.error.JobError;
 
 /**
- * 包含httpStatus的ServiceException基础类
+ * Cmdb API 调用异常
  */
-public class HttpStatusServiceException extends ServiceException {
-
-    private HttpStatus httpStatus;
-
-    public HttpStatusServiceException(HttpStatus httpStatus, int errorCode) {
-        super(errorCode);
-        this.httpStatus = httpStatus;
+public class CmdbApiException extends ApiException {
+    public CmdbApiException(Throwable cause, String errorMsg) {
+        super(cause, JobError.CMDB_API_ERROR, errorMsg);
     }
 
-    public HttpStatusServiceException(HttpStatus httpStatus, int errorCode, String errorMsg) {
-        super(errorCode, errorMsg);
-        this.httpStatus = httpStatus;
-    }
-
-    public HttpStatusServiceException(HttpStatus httpStatus, int errorCode, Object[] errorParams) {
-        super(errorCode, errorParams);
-        this.httpStatus = httpStatus;
-    }
-
-    public HttpStatus getHttpStatus() {
-        return this.httpStatus;
-    }
-
-    @Override
-    public String toString() {
-        return new StringJoiner(", ", HttpStatusServiceException.class.getSimpleName() + "[", "]")
-            .add("httpStatus=" + httpStatus)
-            .add("exception=" + super.toString())
-            .toString();
+    public CmdbApiException(String errorMsg) {
+        super(JobError.CMDB_API_ERROR, errorMsg);
     }
 }

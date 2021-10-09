@@ -25,97 +25,83 @@
 package com.tencent.bk.job.common.exception;
 
 import com.tencent.bk.job.common.model.error.ErrorType;
-
-import java.util.Arrays;
-import java.util.StringJoiner;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 /**
- * 服务层异常
+ * 服务异常
  */
+@Getter
+@Setter
+@ToString
 public class ServiceException extends RuntimeException {
-    private int errorType;
-    private int errorCode;
-    private String errorMsg;
+    private ErrorType errorType;
+    private Integer errorCode;
     private Object[] errorParams;
 
-    public ServiceException() {
-    }
-
-    public ServiceException(int errorCode) {
-        this.errorCode = errorCode;
-    }
-
-    public ServiceException(int errorType, int errorCode) {
+    public ServiceException(ErrorType errorType, Integer errorCode) {
+        super();
         this.errorType = errorType;
         this.errorCode = errorCode;
     }
 
-    public ServiceException(int errorType, int errorCode, Object[] errorParams) {
+    public ServiceException(ErrorType errorType, Integer errorCode, Object[] errorParams) {
+        super();
         this.errorType = errorType;
         this.errorCode = errorCode;
         this.errorParams = errorParams;
     }
 
-    public ServiceException(int errorType, int errorCode, String errorMsg) {
+    public ServiceException(ErrorType errorType, Integer errorCode, Object errorParam) {
+        super();
         this.errorType = errorType;
-        this.errorCode = errorCode;
-        this.errorMsg = errorMsg;
-    }
-
-    public ServiceException(String errorMsg) {
-        super(errorMsg);
-        this.errorMsg = errorMsg;
-    }
-
-    public ServiceException(int errorCode, String errorMsg) {
-        super(errorMsg);
-        this.errorCode = errorCode;
-        this.errorMsg = errorMsg;
-    }
-
-    public ServiceException(int errorCode, Object[] errorParams) {
-        this.errorCode = errorCode;
-        this.errorParams = errorParams;
-    }
-
-    public ServiceException(Throwable cause, int errorCode, Object[] errorParams) {
-        super(cause);
-        this.errorType = ErrorType.INTERNAL_ERROR.getType();
-        this.errorCode = errorCode;
-        this.errorParams = errorParams;
-    }
-
-    public ServiceException(int errorCode, Object errorParam) {
         this.errorCode = errorCode;
         this.errorParams = new Object[1];
         this.errorParams[0] = errorParam;
     }
 
-    public ServiceException(Throwable cause, int errorCode, String errorMsg) {
-        super(errorMsg, cause);
-        this.errorType = ErrorType.INTERNAL_ERROR.getType();
+    public ServiceException(Throwable cause, ErrorType errorType, Integer errorCode) {
+        super(cause);
+        this.errorType = errorType;
         this.errorCode = errorCode;
-        this.errorMsg = errorMsg;
     }
 
-    public int getErrorCode() {
-        return errorCode;
+    public ServiceException(Throwable cause, ErrorType errorType, Integer errorCode, Object[] errorParams) {
+        super(cause);
+        this.errorType = errorType;
+        this.errorCode = errorCode;
+        this.errorParams = errorParams;
     }
 
-    public Object[] getErrorParams() {
-        return errorParams;
+    public ServiceException(Throwable cause, ErrorType errorType, Integer errorCode, Object errorParam) {
+        super(cause);
+        this.errorType = errorType;
+        this.errorCode = errorCode;
+        this.errorParams = new Object[1];
+        this.errorParams[0] = errorParam;
     }
 
-    public String getErrorMsg() {
-        return this.errorMsg;
+    public ServiceException(String message, Throwable cause, ErrorType errorType, Integer errorCode) {
+        super(message, cause);
+        this.errorType = errorType;
+        this.errorCode = errorCode;
     }
 
-    @Override
-    public String toString() {
-        return new StringJoiner(", ", ServiceException.class.getSimpleName() + "[", "]")
-            .add("errorCode=" + errorCode)
-            .add("errorMsg='" + errorMsg + "'")
-            .add("errorParams=" + Arrays.toString(errorParams))
-            .toString();
+    public ServiceException(String message, Throwable cause, ErrorType errorType, Integer errorCode,
+                            Object[] errorParams) {
+        super(message, cause);
+        this.errorType = errorType;
+        this.errorCode = errorCode;
+        this.errorParams = errorParams;
+    }
+
+    public ServiceException(String message, Throwable cause, ErrorType errorType, Integer errorCode,
+                            Object errorParam) {
+        super(message, cause);
+        this.errorType = errorType;
+        this.errorCode = errorCode;
+        this.errorParams = new Object[1];
+        this.errorParams[0] = errorParam;
     }
 }

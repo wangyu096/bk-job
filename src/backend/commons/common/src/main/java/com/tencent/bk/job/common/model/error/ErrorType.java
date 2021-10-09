@@ -26,15 +26,29 @@
  */
 package com.tencent.bk.job.common.model.error;
 
-public enum ErrorType {
-    BUSINESS_LOGIC(299),
-    BadRequest(400),
-    UNAUTHENTICATED(401),
-    PERMISSION_DENIED(403),
-    NOT_FOUND(404),
-    RESOURCE_EXHAUSTED(429),
-    INTERNAL_ERROR(500);
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 
+public enum ErrorType {
+    OK(200),
+    CANCELLED(499),
+    UNKNOWN(500),
+    INVALID_ARGUMENT(400),
+    DEADLINE_EXCEEDED(504),
+    NOT_FOUND(404),
+    ALREADY_EXISTS(409),
+    PERMISSION_DENIED(403),
+    RESOURCE_EXHAUSTED(429),
+    FAILED_PRECONDITION(400),
+    ABORTED(409),
+    OUT_OF_RANGE(400),
+    UNIMPLEMENTED(501),
+    INTERNAL(500),
+    UNAVAILABLE(503),
+    DATA_LOSS(500),
+    UNAUTHENTICATED(401);
+
+    @JsonValue
     private final int type;
 
     ErrorType(int type) {
@@ -45,6 +59,7 @@ public enum ErrorType {
         return type;
     }
 
+    @JsonCreator
     public static ErrorType valOf(Integer type) {
         if (type == null) {
             return null;

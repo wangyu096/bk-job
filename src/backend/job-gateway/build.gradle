@@ -38,6 +38,7 @@ dependencies {
     api project(":commons:common-security")
     api project(":commons:paas-sdk")
     api project(":commons:common-service")
+    implementation group: 'com.google.cloud', name: 'google-cloud-core', version: '2.1.7'
     implementation("org.springframework.boot:spring-boot-autoconfigure")
     implementation 'org.springframework:spring-webflux'
     implementation 'org.springframework.cloud:spring-cloud-starter-bootstrap'

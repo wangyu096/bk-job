@@ -29,31 +29,74 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.tencent.bk.job.common.cc.config.CcConfig;
-import com.tencent.bk.job.common.cc.model.*;
-import com.tencent.bk.job.common.cc.model.req.*;
+import com.tencent.bk.job.common.cc.model.AppRoleDTO;
+import com.tencent.bk.job.common.cc.model.BaseConditionDTO;
+import com.tencent.bk.job.common.cc.model.BriefTopologyDTO;
+import com.tencent.bk.job.common.cc.model.BusinessInfoDTO;
+import com.tencent.bk.job.common.cc.model.CcCloudAreaInfoDTO;
+import com.tencent.bk.job.common.cc.model.CcCloudIdDTO;
+import com.tencent.bk.job.common.cc.model.CcDynamicGroupDTO;
+import com.tencent.bk.job.common.cc.model.CcGroupDTO;
+import com.tencent.bk.job.common.cc.model.CcGroupHostPropDTO;
+import com.tencent.bk.job.common.cc.model.CcHostInfoDTO;
+import com.tencent.bk.job.common.cc.model.CcInstanceDTO;
+import com.tencent.bk.job.common.cc.model.CcObjAttributeDTO;
+import com.tencent.bk.job.common.cc.model.ConditionDTO;
+import com.tencent.bk.job.common.cc.model.InstanceTopologyDTO;
+import com.tencent.bk.job.common.cc.model.TopoNodePathDTO;
+import com.tencent.bk.job.common.cc.model.req.ExecuteDynamicGroupReq;
+import com.tencent.bk.job.common.cc.model.req.FindHostBizRelationsReq;
+import com.tencent.bk.job.common.cc.model.req.FindModuleHostRelationReq;
+import com.tencent.bk.job.common.cc.model.req.GetAppReq;
+import com.tencent.bk.job.common.cc.model.req.GetBizInstTopoReq;
+import com.tencent.bk.job.common.cc.model.req.GetBizInternalModuleReq;
+import com.tencent.bk.job.common.cc.model.req.GetBriefCacheTopoReq;
+import com.tencent.bk.job.common.cc.model.req.GetCloudAreaInfoReq;
+import com.tencent.bk.job.common.cc.model.req.GetObjAttributeReq;
+import com.tencent.bk.job.common.cc.model.req.GetTopoNodePathReq;
+import com.tencent.bk.job.common.cc.model.req.ListBizHostReq;
+import com.tencent.bk.job.common.cc.model.req.ListBizHostsTopoReq;
+import com.tencent.bk.job.common.cc.model.req.ListHostsWithoutBizReq;
+import com.tencent.bk.job.common.cc.model.req.Page;
+import com.tencent.bk.job.common.cc.model.req.ResourceWatchReq;
+import com.tencent.bk.job.common.cc.model.req.SearchHostDynamicGroupReq;
 import com.tencent.bk.job.common.cc.model.req.input.GetHostByIpInput;
 import com.tencent.bk.job.common.cc.model.response.CcCountInfo;
-import com.tencent.bk.job.common.cc.model.result.*;
+import com.tencent.bk.job.common.cc.model.result.AppEventDetail;
+import com.tencent.bk.job.common.cc.model.result.ExecuteDynamicGroupHostResult;
+import com.tencent.bk.job.common.cc.model.result.FindHostBizRelationsResult;
+import com.tencent.bk.job.common.cc.model.result.FindModuleHostRelationResult;
+import com.tencent.bk.job.common.cc.model.result.GetBizInternalModuleResult;
+import com.tencent.bk.job.common.cc.model.result.HostEventDetail;
+import com.tencent.bk.job.common.cc.model.result.HostRelationEventDetail;
+import com.tencent.bk.job.common.cc.model.result.ListBizHostResult;
+import com.tencent.bk.job.common.cc.model.result.ListBizHostsTopoResult;
+import com.tencent.bk.job.common.cc.model.result.ListHostsWithoutBizResult;
+import com.tencent.bk.job.common.cc.model.result.ResourceWatchResult;
+import com.tencent.bk.job.common.cc.model.result.SearchAppResult;
+import com.tencent.bk.job.common.cc.model.result.SearchCloudAreaResult;
+import com.tencent.bk.job.common.cc.model.result.SearchDynamicGroupResult;
 import com.tencent.bk.job.common.cc.util.TopologyUtil;
 import com.tencent.bk.job.common.cc.util.VersionCompatUtil;
 import com.tencent.bk.job.common.constant.AppTypeEnum;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.esb.config.EsbConfig;
 import com.tencent.bk.job.common.esb.model.EsbReq;
 import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.common.esb.sdk.AbstractEsbSdkClient;
+import com.tencent.bk.job.common.exception.ApiException;
+import com.tencent.bk.job.common.exception.CmdbApiException;
 import com.tencent.bk.job.common.exception.ServiceException;
 import com.tencent.bk.job.common.gse.service.QueryAgentStatusClient;
 import com.tencent.bk.job.common.model.dto.ApplicationHostInfoDTO;
 import com.tencent.bk.job.common.model.dto.ApplicationInfoDTO;
 import com.tencent.bk.job.common.model.dto.IpDTO;
 import com.tencent.bk.job.common.model.dto.PageDTO;
+import com.tencent.bk.job.common.model.error.JobError;
 import com.tencent.bk.job.common.util.FlowController;
 import com.tencent.bk.job.common.util.JobContextUtil;
 import com.tencent.bk.job.common.util.Utils;
 import com.tencent.bk.job.common.util.http.AbstractHttpHelper;
 import com.tencent.bk.job.common.util.http.LongRetryableHttpHelper;
-import com.tencent.bk.job.common.util.http.RetryableHttpHelper;
 import com.tencent.bk.job.common.util.json.JsonMapper;
 import com.tencent.bk.job.common.util.json.JsonUtils;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -65,9 +108,21 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.springframework.util.StopWatch;
 
-import java.net.UnknownHostException;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
@@ -184,13 +239,6 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
 
     public static void init() {
         initThreadPoolExecutor(ccConfig.getCmdbQueryThreadsNum(), ccConfig.getFindHostRelationLongTermConcurrency());
-    }
-
-    private static ServiceException caughtException(Exception e, int code) {
-        if (e instanceof UnknownHostException) {
-            code = ErrorCode.CMDB_UNREACHABLE_SERVER;
-        }
-        return new ServiceException(code);
     }
 
     public static void setCcConfig(CcConfig ccConfig) {
@@ -330,8 +378,7 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
         try {
             return bizInstCompleteTopologyCache.get("" + appId + ":" + owner + ":" + uin);
         } catch (ExecutionException e) {
-            throw new ServiceException(e, ErrorCode.CMDB_API_DATA_ERROR, "Fail to get " +
-                "getCachedBizInstCompleteTopology");
+            throw new CmdbApiException(e, null);
         }
     }
 
@@ -363,7 +410,7 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
         String key = "" + appId + ":" + owner + ":" + uin;
         ReentrantLock lock = null;
         if (bizInstTopoMap.containsKey(key)
-                && bizInstTopoMap.get(key).getRight() > System.currentTimeMillis() - 30 * 1000) {
+            && bizInstTopoMap.get(key).getRight() > System.currentTimeMillis() - 30 * 1000) {
             return bizInstTopoMap.get(key).getLeft();
         } else {
             lock = bizInstTopoLockMap.computeIfAbsent(key, s -> new ReentrantLock());
@@ -383,7 +430,7 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
         }
     }
 
-    public InstanceTopologyDTO getBriefCacheTopo(long appId, String owner, String uin) throws ServiceException {
+    public InstanceTopologyDTO getBriefCacheTopo(long appId, String owner, String uin) throws CmdbApiException {
         try {
             if (owner == null) {
                 owner = defaultSupplierAccount;
@@ -397,14 +444,17 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
                 new TypeReference<EsbResp<BriefTopologyDTO>>() {
                 });
             return TopologyUtil.convert(esbResp.getData());
-        } catch (Exception e) {
-            log.error("{}|{}", ErrorCode.CMDB_API_DATA_ERROR, GET_BIZ_BRIEF_CACHE_TOPO, e);
-            throw caughtException(e, ErrorCode.CMDB_API_DATA_ERROR);
+        } catch (ApiException e) {
+            throw toCmdbApiException(e);
         }
     }
 
+    private CmdbApiException toCmdbApiException(ApiException e) throws CmdbApiException {
+        return new CmdbApiException(e.getCause(), e.getMessage());
+    }
+
     public InstanceTopologyDTO getBizInstTopologyWithoutInternalTopoFromCMDB(long appId, String owner,
-                                                                             String uin) throws ServiceException {
+                                                                             String uin) throws CmdbApiException {
         try {
             if (owner == null) {
                 owner = defaultSupplierAccount;
@@ -422,25 +472,17 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
             } else {
                 return null;
             }
-        } catch (Exception e) {
-            log.error("{}|{}", ErrorCode.CMDB_API_DATA_ERROR, SEARCH_BIZ_INST_TOPO, e);
-            throw caughtException(e, ErrorCode.CMDB_API_DATA_ERROR);
+        } catch (ApiException e) {
+            throw toCmdbApiException(e);
         }
     }
 
-    public <T, R> R getEsbRespByReq(String method, String uri, EsbReq reqBody,
-                                     TypeReference<R> typeReference) throws RuntimeException {
-        if (ccConfig.getEnableInterfaceRetry()) {
-            log.debug("using RetryableHttpHelper");
-            return getEsbRespByReq(method, uri, reqBody, typeReference, new RetryableHttpHelper());
-        } else {
-            log.debug("using DefaultHttpHelper");
-            return getEsbRespByReq(method, uri, reqBody, typeReference, null);
-        }
-    }
+    public <R> EsbResp<R> getEsbRespByReq(String method,
+                                          String uri,
+                                          EsbReq reqBody,
+                                          TypeReference<EsbResp<R>> typeReference,
+                                          AbstractHttpHelper httpHelper) throws RuntimeException {
 
-    public <T, R> R getEsbRespByReq(String method, String uri, EsbReq reqBody, TypeReference<R> typeReference,
-                                     AbstractHttpHelper httpHelper) throws RuntimeException {
         if (ccConfig != null && ccConfig.getEnableFlowControl()) {
             if (globalFlowController != null) {
                 String resourceId = uri;
@@ -460,59 +502,18 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
                 log.debug("globalFlowController not set, ignore this time");
             }
         }
-        String reqStr = JsonUtils.toJsonWithoutSkippedFields(reqBody);
-        String respStr = null;
         long start = System.nanoTime();
         String status = "none";
         try {
-            if (method.equals(HttpGet.METHOD_NAME)) {
-                respStr = doHttpGet(uri, reqBody, httpHelper);
-            } else if (method.equals(HttpPost.METHOD_NAME)) {
-                respStr = doHttpPost(uri, reqBody, httpHelper);
-            }
-            if (StringUtils.isBlank(respStr)) {
-                log.error("fail:response is blank|method={}|uri={}|reqStr={}", method, uri, reqStr);
-                throw new ServiceException(ErrorCode.CMDB_API_DATA_ERROR, "response is blank");
-            } else {
-                log.debug("success|method={}|uri={}|reqStr={}|respStr={}", method, uri, reqStr, respStr);
-            }
-            R result =
-                JSON_MAPPER.fromJson(respStr, typeReference);
-            EsbResp esbResp = (EsbResp) result;
-            if (esbResp == null) {
-                log.error("fail:esbResp is null after parse|method={}|uri={}|reqStr={}|respStr={}", method, uri,
-                    reqStr, respStr);
-                status = "error";
-                throw new ServiceException(ErrorCode.CMDB_API_DATA_ERROR, "esbResp is null after parse");
-            } else if (esbResp.getCode() != RESULT_OK) {
-                log.error(
-                    "fail:esbResp code!=0|esbResp.requestId={}|esbResp.code={}|esbResp" +
-                        ".message={}|method={}|uri={}|reqStr={}|respStr={}"
-                    , esbResp.getRequestId()
-                    , esbResp.getCode()
-                    , esbResp.getMessage()
-                    , method, uri, reqStr, respStr
-                );
-                status = "error";
-                throw new ServiceException(ErrorCode.CMDB_API_DATA_ERROR, "esbResp code!=0");
-            }
-            if (esbResp.getData() == null) {
-                log.warn(
-                    "warn:esbResp.getData() == null|esbResp.requestId={}|esbResp.code={}|esbResp" +
-                        ".message={}|method={}|uri={}|reqStr={}|respStr={}"
-                    , esbResp.getRequestId()
-                    , esbResp.getCode()
-                    , esbResp.getMessage()
-                    , method, uri, reqStr, respStr
-                );
-            }
+            EsbResp<R> esbResp = getEsbRespByReq(method, uri, reqBody, typeReference);
             status = "ok";
-            return result;
-        } catch (Exception e) {
+            return esbResp;
+        } catch (ApiException e) {
+            String reqStr = JsonUtils.toJsonWithoutSkippedFields(reqBody);
             String errorMsg = "Fail to request CMDB data|method=" + method + "|uri=" + uri + "|reqStr=" + reqStr;
             log.error(errorMsg, e);
             status = "error";
-            throw new ServiceException(ErrorCode.CMDB_API_DATA_ERROR, "Fail to request CMDB data");
+            throw new ApiException(e, JobError.CMDB_API_ERROR, e.getMessage());
         } finally {
             long end = System.nanoTime();
             meterRegistry.timer("cmdb.api", "api_name", uri, "status", status)
@@ -607,9 +608,9 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
             }
             instanceTopologyDTO.setChild(childList);
             return instanceTopologyDTO;
-        } catch (Exception e) {
-            log.error("{}|{}", ErrorCode.CMDB_API_DATA_ERROR, GET_BIZ_INTERNAL_MODULE, e);
-            throw caughtException(e, ErrorCode.CMDB_API_DATA_ERROR);
+        } catch (ApiException e) {
+            log.error("CMDB API error, api: {}", GET_BIZ_INTERNAL_MODULE);
+            throw toCmdbApiException(e);
         }
     }
 
@@ -891,11 +892,10 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
             hostInfoList.forEach(hostInfo -> {
                 ipSet.add(hostInfo.getHost().getCloudId() + ":" + hostInfo.getHost().getIp());
             });
-            log.info("ipSet.size=" + ipSet.size());
             return hostInfoList;
-        } catch (Exception e) {
-            log.error("{}|{}", ErrorCode.CMDB_API_DATA_ERROR, LIST_BIZ_HOSTS_TOPO, e);
-            throw caughtException(e, ErrorCode.CMDB_API_DATA_ERROR);
+        } catch (ApiException e) {
+            log.error("CMDB API error, api: {}", LIST_BIZ_HOSTS_TOPO);
+            throw toCmdbApiException(e);
         }
     }
 
@@ -954,7 +954,7 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
                 SearchAppResult data = esbResp.getData();
                 if (data == null) {
                     appList.clear();
-                    throw new ServiceException(ErrorCode.CMDB_API_DATA_ERROR, "data is null");
+                    throw new CmdbApiException("Data is null");
                 }
                 List<BusinessInfoDTO> businessInfos = data.getInfo();
                 if (businessInfos != null && !businessInfos.isEmpty()) {
@@ -971,9 +971,9 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
                 }
             }
             return appList;
-        } catch (Exception e) {
-            log.error("{}|{}", ErrorCode.CMDB_API_DATA_ERROR, SEARCH_BUSINESS, e);
-            throw caughtException(e, ErrorCode.CMDB_API_DATA_ERROR);
+        } catch (ApiException e) {
+            log.error("CMDB API error, api: {}", SEARCH_BUSINESS);
+            throw toCmdbApiException(e);
         }
     }
 
@@ -1021,7 +1021,7 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
                 SearchAppResult data = esbResp.getData();
                 if (data == null) {
                     appList.clear();
-                    throw new ServiceException(ErrorCode.CMDB_API_DATA_ERROR, "data is null");
+                    throw new CmdbApiException("data is null");
                 }
                 List<BusinessInfoDTO> businessInfos = data.getInfo();
                 if (businessInfos != null && !businessInfos.isEmpty()) {
@@ -1038,9 +1038,9 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
                 }
             }
             return appList;
-        } catch (Exception e) {
-            log.error("{}|{}", ErrorCode.CMDB_API_DATA_ERROR, SEARCH_BUSINESS, e);
-            throw caughtException(e, ErrorCode.CMDB_API_DATA_ERROR);
+        } catch (ApiException e) {
+            log.error("CMDB API error, api: {}", SEARCH_BUSINESS);
+            throw toCmdbApiException(e);
         }
     }
 
@@ -1066,17 +1066,16 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
                 });
             SearchAppResult data = esbResp.getData();
             if (data == null) {
-                throw new ServiceException(ErrorCode.CMDB_API_DATA_ERROR, "data == null");
+                throw new CmdbApiException("data is null");
             }
             List<BusinessInfoDTO> businessInfos = data.getInfo();
             if (businessInfos == null || businessInfos.isEmpty()) {
-                throw new ServiceException(ErrorCode.CMDB_API_DATA_ERROR, "businessInfos == null || businessInfos" +
-                    ".isEmpty()");
+                throw new CmdbApiException("data is null");
             }
             return convertToAppInfo(businessInfos.get(0));
-        } catch (Exception e) {
-            log.error("{}|{}", ErrorCode.CMDB_API_DATA_ERROR, SEARCH_BUSINESS, e);
-            throw caughtException(e, ErrorCode.CMDB_API_DATA_ERROR);
+        } catch (ApiException e) {
+            log.error("CMDB API error, api: {}", SEARCH_BUSINESS);
+            throw toCmdbApiException(e);
         }
     }
 
@@ -1126,9 +1125,9 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
             List<CcGroupDTO> ccGroupDTOList =
                 ccDynamicGroupList.parallelStream().map(this::convertToCcGroupDTO).collect(Collectors.toList());
             return ccGroupDTOList;
-        } catch (Exception e) {
-            log.error("{}|{}", ErrorCode.CMDB_API_DATA_ERROR, SEARCH_DYNAMIC_GROUP, e);
-            return Collections.emptyList();
+        } catch (ApiException e) {
+            log.error("CMDB API error, api: {}", SEARCH_DYNAMIC_GROUP);
+            throw toCmdbApiException(e);
         }
     }
 
@@ -1204,10 +1203,10 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
                 }
             }
             return ccGroupHostList;
-        } catch (Exception e) {
+        } catch (ApiException e) {
             String errorMsg = String.format("Get host by dynamic group id %s fail", groupId);
             log.error(errorMsg, e);
-            throw new ServiceException(ErrorCode.CMDB_API_DATA_ERROR);
+            throw toCmdbApiException(e);
         }
     }
 
@@ -1255,9 +1254,9 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
                 }
             }
             return appCloudAreaList;
-        } catch (Exception e) {
-            log.error("{}|{}", ErrorCode.CMDB_API_DATA_ERROR, GET_CLOUD_AREAS, e);
-            throw caughtException(e, ErrorCode.CMDB_API_DATA_ERROR);
+        } catch (ApiException e) {
+            log.error("CMDB API error, api: {}", GET_CLOUD_AREAS, e);
+            throw toCmdbApiException(e);
         }
     }
 
@@ -1290,9 +1289,9 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
                 return Collections.emptyList();
             }
             return results;
-        } catch (Exception e) {
-            log.error("{}|{}", ErrorCode.CMDB_API_DATA_ERROR, FIND_HOST_BIZ_RELATIONS, e);
-            throw caughtException(e, ErrorCode.CMDB_API_DATA_ERROR);
+        } catch (ApiException e) {
+            log.error("CMDB API error, api: {}", FIND_HOST_BIZ_RELATIONS);
+            throw toCmdbApiException(e);
         }
     }
 
@@ -1359,9 +1358,9 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
                 }
             }
             return hostInfoList;
-        } catch (Exception e) {
-            log.error("{}|{}", ErrorCode.CMDB_API_DATA_ERROR, LIST_HOSTS_WITHOUT_BIZ, e);
-            throw caughtException(e, ErrorCode.CMDB_API_DATA_ERROR);
+        } catch (ApiException e) {
+            log.error("CMDB API error, api: {}", LIST_HOSTS_WITHOUT_BIZ);
+            throw toCmdbApiException(e);
         }
     }
 
@@ -1411,9 +1410,9 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
                 }
             }
             return hostInfoList;
-        } catch (Exception e) {
-            log.error("{}|{}", ErrorCode.CMDB_API_DATA_ERROR, LIST_BIZ_HOSTS, e);
-            throw caughtException(e, ErrorCode.CMDB_API_DATA_ERROR);
+        } catch (ApiException e) {
+            log.error("CMDB API error, api: {}", LIST_BIZ_HOSTS);
+            throw toCmdbApiException(e);
         }
     }
 
@@ -1451,9 +1450,9 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
                 return null;
             }
             return convertHost(-1L, pageData.getInfo().get(0));
-        } catch (Exception e) {
-            log.error("{}|{}", ErrorCode.CMDB_API_DATA_ERROR, LIST_HOSTS_WITHOUT_BIZ, e);
-            throw caughtException(e, ErrorCode.CMDB_API_DATA_ERROR);
+        } catch (ApiException e) {
+            log.error("CMDB API error, api: {}", LIST_HOSTS_WITHOUT_BIZ);
+            throw toCmdbApiException(e);
         }
     }
 
@@ -1467,9 +1466,9 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
                 new TypeReference<EsbResp<List<CcObjAttributeDTO>>>() {
                 });
             return esbResp.getData();
-        } catch (Exception e) {
-            log.error("{}|{}", ErrorCode.CMDB_API_DATA_ERROR, GET_OBJ_ATTRIBUTES, e);
-            throw caughtException(e, ErrorCode.CMDB_API_DATA_ERROR);
+        } catch (ApiException e) {
+            log.error("CMDB API error, api: {}", GET_OBJ_ATTRIBUTES);
+            throw toCmdbApiException(e);
         }
     }
 
@@ -1486,9 +1485,9 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
                 new TypeReference<EsbResp<CcCountInfo>>() {
                 });
             searchResult = esbResp.getData();
-        } catch (Exception e) {
-            log.error("{}|{}", ErrorCode.CMDB_API_DATA_ERROR, SEARCH_BUSINESS, e);
-            throw caughtException(e, ErrorCode.CMDB_API_DATA_ERROR);
+        } catch (ApiException e) {
+            log.error("CMDB API error, api: {}", SEARCH_BUSINESS);
+            throw toCmdbApiException(e);
         }
         if (searchResult == null || searchResult.getInfo() == null || searchResult.getInfo().isEmpty()) {
             return Collections.emptySet();
@@ -1588,9 +1587,9 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
                 });
             }
             return hierarchyTopoList;
-        } catch (Exception e) {
-            log.error("{}|{}", ErrorCode.CMDB_API_DATA_ERROR, GET_TOPO_NODE_PATHS, e);
-            throw caughtException(e, ErrorCode.CMDB_API_DATA_ERROR);
+        } catch (ApiException e) {
+            log.error("CMDB API error, api: {}", GET_TOPO_NODE_PATHS);
+            throw toCmdbApiException(e);
         }
     }
 

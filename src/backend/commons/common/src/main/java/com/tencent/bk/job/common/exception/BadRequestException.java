@@ -24,20 +24,33 @@
 
 package com.tencent.bk.job.common.exception;
 
+import com.tencent.bk.job.common.model.error.JobError;
+
 /**
- * @since 30/9/2019 11:46
+ * 系统异常
  */
-public class ParamErrorException extends ServiceException {
-
-    public ParamErrorException(int errorCode) {
-        super(errorCode);
+public class BadRequestException extends ServiceException {
+    public BadRequestException(JobError error) {
+        super(error);
     }
 
-    public ParamErrorException(int errorCode, String errorMsg) {
-        super(errorCode, errorMsg);
+    public BadRequestException(JobError error, String errorMsg) {
+        super(error, errorMsg);
     }
 
-    public ParamErrorException(int errorCode, String errorMsg, Throwable cause) {
-        super(cause, errorCode, errorMsg);
+    public BadRequestException(JobError error, Object[] errorParams) {
+        super(error, errorParams);
+    }
+
+    public BadRequestException(Throwable cause, JobError error, Object[] errorParams) {
+        super(cause, error, errorParams);
+    }
+
+    public BadRequestException(JobError error, Object errorParam) {
+        super(error, errorParam);
+    }
+
+    public BadRequestException(Throwable cause, JobError error, String errorMsg) {
+        super(cause, error, errorMsg);
     }
 }

@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.manage.api.inner.impl;
 
-import com.tencent.bk.job.common.api.model.InnerServiceResponse;
+import com.tencent.bk.job.common.api.model.InternalResponse;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeEnum;
 import com.tencent.bk.job.common.iam.model.AuthResult;
@@ -62,7 +62,7 @@ public class ServiceCredentialResourceImpl implements ServiceCredentialResource 
     }
 
     @Override
-    public InnerServiceResponse<ServiceBasicCredentialDTO> createCredential(
+    public InternalResponse<ServiceBasicCredentialDTO> createCredential(
         String username,
         Long appId,
         CredentialCreateUpdateReq createUpdateReq
@@ -71,7 +71,7 @@ public class ServiceCredentialResourceImpl implements ServiceCredentialResource 
     }
 
     @Override
-    public InnerServiceResponse<ServiceBasicCredentialDTO> updateCredential(
+    public InternalResponse<ServiceBasicCredentialDTO> updateCredential(
         String username,
         Long appId,
         CredentialCreateUpdateReq createUpdateReq
@@ -79,7 +79,7 @@ public class ServiceCredentialResourceImpl implements ServiceCredentialResource 
         return saveCredential(username, appId, createUpdateReq);
     }
 
-    private InnerServiceResponse<ServiceBasicCredentialDTO> saveCredential(
+    private InternalResponse<ServiceBasicCredentialDTO> saveCredential(
         String username,
         Long appId,
         CredentialCreateUpdateReq createUpdateReq
@@ -91,10 +91,10 @@ public class ServiceCredentialResourceImpl implements ServiceCredentialResource 
             authResult = checkManageTicketPermission(username, appId, createUpdateReq.getId());
         }
         if (!authResult.isPass()) {
-            return InnerServiceResponse.buildAuthFailResp(authResult);
+            return InternalResponse.buildAuthFailResp(authResult);
         }
         String credentialId = credentialService.saveCredential(username, appId, createUpdateReq);
-        return InnerServiceResponse.buildSuccessResp(new ServiceBasicCredentialDTO(credentialId));
+        return InternalResponse.buildSuccessResp(new ServiceBasicCredentialDTO(credentialId));
     }
 
     public AuthResult checkCreateTicketPermission(String username, Long appId) {

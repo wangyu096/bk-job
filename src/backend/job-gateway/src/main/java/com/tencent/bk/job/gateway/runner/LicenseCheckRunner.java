@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.gateway.runner;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.model.error.JobError;
 import com.tencent.bk.job.common.util.json.JsonUtils;
 import com.tencent.bk.job.gateway.config.BkConfig;
 import com.tencent.bk.job.gateway.model.LicenseCheckResultDTO;
@@ -186,7 +186,7 @@ public class LicenseCheckRunner implements CommandLineRunner, ApplicationContext
     private void createFailCheck(LicenseCheckResultDTO licenseCheckDto) {
         licenseCheckDto.setStatus(false);
         licenseCheckDto.setMessage("License Server unreachable");
-        licenseCheckDto.setResult(ErrorCode.LICENSE_ERROR);
+        licenseCheckDto.setResult(JobError.LICENSE_ERROR.getErrorCode());
     }
 
     private String buildCheckRequestBody() throws IOException {

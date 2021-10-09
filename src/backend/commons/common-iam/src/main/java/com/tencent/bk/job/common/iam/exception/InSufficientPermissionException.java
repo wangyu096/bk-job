@@ -24,9 +24,9 @@
 
 package com.tencent.bk.job.common.iam.exception;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.ServiceException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
+import com.tencent.bk.job.common.model.error.JobError;
 
 import java.util.StringJoiner;
 
@@ -37,11 +37,11 @@ public class InSufficientPermissionException extends ServiceException {
     private AuthResult authResult;
 
     public InSufficientPermissionException(Object[] errorParams) {
-        super(ErrorCode.USER_NO_PERMISSION_COMMON, errorParams);
+        super(JobError.PERMISSION_DENIED, errorParams);
     }
 
     public InSufficientPermissionException(AuthResult authResult) {
-        super(ErrorCode.USER_NO_PERMISSION_COMMON);
+        super(JobError.PERMISSION_DENIED);
         this.authResult = authResult;
     }
 

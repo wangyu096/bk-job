@@ -25,46 +25,53 @@
 package com.tencent.bk.job.common.exception;
 
 import com.tencent.bk.job.common.model.error.ErrorType;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 /**
- * 请求参数非法异常
+ * 服务不可用
  */
-public class InvalidParamException extends ServiceException {
-    public InvalidParamException(Integer errorCode) {
-        super(ErrorType.INVALID_ARGUMENT, errorCode);
+@Getter
+@Setter
+@ToString
+public class UnavailableException extends ServiceException {
+
+    public UnavailableException(Integer errorCode) {
+        super(ErrorType.UNAVAILABLE, errorCode);
     }
 
-    public InvalidParamException(Integer errorCode, Object[] errorParams) {
-        super(ErrorType.INVALID_ARGUMENT, errorCode, errorParams);
+    public UnavailableException(Integer errorCode, Object[] errorParams) {
+        super(ErrorType.UNAVAILABLE, errorCode, errorParams);
     }
 
-    public InvalidParamException(Integer errorCode, Object errorParam) {
-        super(ErrorType.INVALID_ARGUMENT, errorCode, errorParam);
+    public UnavailableException(Integer errorCode, Object errorParam) {
+        super(ErrorType.UNAVAILABLE, errorCode, errorParam);
     }
 
-    public InvalidParamException(Throwable cause, Integer errorCode) {
-        super(cause, ErrorType.INVALID_ARGUMENT, errorCode);
+    public UnavailableException(Throwable cause, Integer errorCode) {
+        super(cause, ErrorType.UNAVAILABLE, errorCode);
     }
 
-    public InvalidParamException(Throwable cause, Integer errorCode, Object[] errorParams) {
-        super(cause, ErrorType.INVALID_ARGUMENT, errorCode, errorParams);
+    public UnavailableException(Throwable cause, Integer errorCode, Object[] errorParams) {
+        super(cause, ErrorType.UNAVAILABLE, errorCode, errorParams);
     }
 
-    public InvalidParamException(Throwable cause, Integer errorCode, Object errorParam) {
-        super(cause, ErrorType.INVALID_ARGUMENT, errorCode, errorParam);
+    public UnavailableException(Throwable cause, Integer errorCode, Object errorParam) {
+        super(cause, ErrorType.UNAVAILABLE, errorCode, errorParam);
     }
 
-    public InvalidParamException(String message, Throwable cause, Integer errorCode) {
-        super(message, cause, ErrorType.INVALID_ARGUMENT, errorCode);
+    public UnavailableException(String message, Throwable cause, Integer errorCode) {
+        super(message, cause, ErrorType.UNAVAILABLE, errorCode);
     }
 
-    public InvalidParamException(String message, Throwable cause, Integer errorCode,
-                                 Object[] errorParams) {
-        super(message, cause, ErrorType.INVALID_ARGUMENT, errorCode, errorParams);
+    public UnavailableException(String message, Throwable cause, Integer errorCode,
+                                Object[] errorParams) {
+        super(message, cause, ErrorType.UNAVAILABLE, errorCode, errorParams);
     }
 
-    public InvalidParamException(String message, Throwable cause, Integer errorCode,
-                                 Object errorParam) {
-        super(message, cause, ErrorType.INVALID_ARGUMENT, errorCode, errorParam);
+    public UnavailableException(String message, Throwable cause, Integer errorCode,
+                                Object errorParam) {
+        super(message, cause, ErrorType.UNAVAILABLE, errorCode, errorParam);
     }
 }

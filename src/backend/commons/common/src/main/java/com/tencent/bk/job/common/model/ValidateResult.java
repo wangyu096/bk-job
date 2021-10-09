@@ -24,6 +24,7 @@
 
 package com.tencent.bk.job.common.model;
 
+import com.tencent.bk.job.common.model.error.JobError;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -48,16 +49,16 @@ public class ValidateResult {
     /**
      * 错误码
      */
-    private Integer errorCode;
+    private JobError error;
 
     /**
      * 错误信息参数值
      */
     private Object[] errorParams;
 
-    public ValidateResult(boolean isPass, Integer code, Object[] errorParams) {
+    public ValidateResult(boolean isPass, JobError error, Object[] errorParams) {
         this.pass = isPass;
-        this.errorCode = code;
+        this.error = error;
         this.errorParams = errorParams;
     }
 
@@ -65,15 +66,15 @@ public class ValidateResult {
         return new ValidateResult(true, null, null);
     }
 
-    public static ValidateResult fail(Integer errorCode, Object[] errorParams) {
-        return new ValidateResult(false, errorCode, errorParams);
+    public static ValidateResult fail(JobError error, Object[] errorParams) {
+        return new ValidateResult(false, error, errorParams);
     }
 
-    public static ValidateResult fail(Integer errorCode) {
-        return new ValidateResult(false, errorCode, null);
+    public static ValidateResult fail(JobError error) {
+        return new ValidateResult(false, error, null);
     }
 
-    public static ValidateResult fail(Integer errorCode, Object errorParam1) {
-        return new ValidateResult(false, errorCode, new Object[]{errorParam1});
+    public static ValidateResult fail(JobError error, Object errorParam1) {
+        return new ValidateResult(false, error, new Object[]{errorParam1});
     }
 }

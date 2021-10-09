@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.common.exception;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.model.error.JobError;
 
 /**
  * 数据一致性异常
@@ -34,7 +34,7 @@ public class DataConsistencyException extends ServiceException {
     private String targetData;
 
     public DataConsistencyException(String sourceData, String targetData) {
-        super(ErrorCode.DATA_CONSISTENCY_ERROR, new String[]{sourceData, targetData});
+        super(JobError.DATA_CONSISTENCY_ERROR, new String[]{sourceData, targetData});
         this.sourceData = sourceData;
     }
 }

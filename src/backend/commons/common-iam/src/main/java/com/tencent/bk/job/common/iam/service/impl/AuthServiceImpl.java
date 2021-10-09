@@ -465,7 +465,7 @@ public class AuthServiceImpl implements AuthService {
         applyPermission.setSystemId(SystemId.JOB);
         applyPermission.setSystemName(i18nService.getI18n("system.bk_job"));
         applyPermission.setActions(actions.stream().map(this::convertToEsbAction).collect(Collectors.toList()));
-        return EsbResp.buildAuthFailResult(applyPermission, i18nService);
+        return EsbResp.buildAuthFailResult(applyPermission);
     }
 
     private EsbActionDTO convertToEsbAction(ActionDTO action) {

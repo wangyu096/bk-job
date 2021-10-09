@@ -25,7 +25,6 @@
 package com.tencent.bk.job.common.web.exception.handler;
 
 import com.tencent.bk.job.common.annotation.WebAPI;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.BadRequestException;
 import com.tencent.bk.job.common.exception.BusinessException;
 import com.tencent.bk.job.common.exception.ServiceException;
@@ -35,7 +34,7 @@ import com.tencent.bk.job.common.iam.exception.InSufficientPermissionException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.iam.service.WebAuthService;
 import com.tencent.bk.job.common.model.ServiceResponse;
-import com.tencent.bk.job.common.web.exception.HttpStatusServiceException;
+import com.tencent.bk.job.common.model.error.JobError;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.ConversionNotSupportedException;
@@ -81,25 +80,17 @@ public class WebExceptionControllerAdvice extends ResponseEntityExceptionHandler
 
     @ExceptionHandler(Throwable.class)
     @ResponseBody
-    ResponseEntity<?> handleException(HttpServletRequest request, Throwable ex) {
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    ServiceResponse<?> handleException(HttpServletRequest request, Throwable ex) {
         String errorMsg = "Handle Exception, uri: " + request.getRequestURI();
         log.error(errorMsg, ex);
-        HttpStatus status = getStatus(request);
-        return new ResponseEntity<>(ServiceResponse.buildCommonFailResp(ErrorCode.SERVICE_INTERNAL_ERROR,
-            i18nService), status);
-    }
-
-    private HttpStatus getStatus(HttpServletRequest request) {
-        Integer statusCode = (Integer) request.getAttribute("javax.servlet.error.status_code");
-        if (statusCode == null) {
-            return HttpStatus.INTERNAL_SERVER_ERROR;
-        }
-        return HttpStatus.valueOf(statusCode);
+        return ServiceResponse.buildCommonFailResp(JobError.INTERNAL_ERROR);
     }
 
     @ExceptionHandler(InSufficientPermissionException.class)
     @ResponseBody
-    ResponseEntity<?> handleInSufficientPermissionException(HttpServletRequest request,
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    ServiceResponse<?> handleInSufficientPermissionException(HttpServletRequest request,
                                                             InSufficientPermissionException ex) {
         AuthResult authResult = ex.getAuthResult();
         log.debug("Handle InSufficientPermissionException, uri: {}, authResult: {}",
@@ -107,8 +98,7 @@ public class WebExceptionControllerAdvice extends ResponseEntityExceptionHandler
         if (StringUtils.isEmpty(authResult.getApplyUrl())) {
             authResult.setApplyUrl(webAuthService.getApplyUrl(authResult.getRequiredActionResources()));
         }
-        return new ResponseEntity<>(ServiceResponse.buildAuthFailResp(
-            webAuthService.toAuthResultVO(ex.getAuthResult())), HttpStatus.OK);
+        return ServiceResponse.buildAuthFailResp(webAuthService.toAuthResultVO(ex.getAuthResult()));
     }
 
     @ExceptionHandler(ServiceException.class)
@@ -116,14 +106,7 @@ public class WebExceptionControllerAdvice extends ResponseEntityExceptionHandler
     ResponseEntity<?> handleServiceException(HttpServletRequest request, ServiceException ex) {
         String errorMsg = "Handle ServiceException, uri: " + request.getRequestURI();
         log.warn(errorMsg, ex);
-        if (ex instanceof HttpStatusServiceException) {
-            HttpStatusServiceException httpStatusServiceException = (HttpStatusServiceException) ex;
-            return new ResponseEntity<>(ServiceResponse.buildCommonFailResp(httpStatusServiceException, i18nService),
-                httpStatusServiceException.getHttpStatus());
-        } else {
-            return new ResponseEntity<>(ServiceResponse.buildCommonFailResp(ex, i18nService),
-                HttpStatus.OK);
-        }
+        return new ResponseEntity<>(ServiceResponse.buildCommonFailResp(ex), HttpStatus.OK);
     }
 
     @ExceptionHandler(SystemException.class)
@@ -132,7 +115,7 @@ public class WebExceptionControllerAdvice extends ResponseEntityExceptionHandler
     ServiceResponse<?> handleSystemException(HttpServletRequest request, SystemException ex) {
         String errorMsg = "Handle SystemException, uri: " + request.getRequestURI();
         log.error(errorMsg, ex);
-        return ServiceResponse.buildCommonFailResp(ex.getErrorCode(), i18nService);
+        return ServiceResponse.buildCommonFailResp(ex.getError());
     }
 
     @ExceptionHandler(BadRequestException.class)
@@ -141,7 +124,7 @@ public class WebExceptionControllerAdvice extends ResponseEntityExceptionHandler
     ServiceResponse<?> handleBadRequestException(HttpServletRequest request, BadRequestException ex) {
         String errorMsg = "Handle BadRequestException, uri: " + request.getRequestURI();
         log.error(errorMsg, ex);
-        return ServiceResponse.buildCommonFailResp(ex.getErrorCode(), i18nService);
+        return ServiceResponse.buildCommonFailResp(ex.getError());
     }
 
     @ExceptionHandler(BusinessException.class)
@@ -150,7 +133,7 @@ public class WebExceptionControllerAdvice extends ResponseEntityExceptionHandler
     ServiceResponse<?> handleBusinessException(HttpServletRequest request, BusinessException ex) {
         String errorMsg = "Handle BusinessException, uri: " + request.getRequestURI();
         log.info(errorMsg, ex);
-        return ServiceResponse.buildCommonFailResp(ex.getErrorCode(), i18nService);
+        return ServiceResponse.buildCommonFailResp(ex.getError());
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -158,8 +141,8 @@ public class WebExceptionControllerAdvice extends ResponseEntityExceptionHandler
     ResponseEntity<?> handleConstraintViolationException(HttpServletRequest request,
                                                          ConstraintViolationException ex) {
         log.warn("Handle ConstraintViolationException", ex);
-        ServiceResponse<?> resp = ServiceResponse.buildCommonFailResp(ErrorCode.BAD_REQUEST, i18nService);
-        return new ResponseEntity<>(resp, HttpStatus.OK);
+        ServiceResponse<?> resp = ServiceResponse.buildCommonFailResp(JobError.BAD_REQUEST);
+        return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
     }
 
     @Override
@@ -167,8 +150,8 @@ public class WebExceptionControllerAdvice extends ResponseEntityExceptionHandler
                                                                          HttpHeaders headers, HttpStatus status,
                                                                          WebRequest request) {
         log.warn("Handle HttpRequestMethodNotSupportedException", ex);
-        ServiceResponse resp = ServiceResponse.buildCommonFailResp(ErrorCode.BAD_REQUEST, i18nService);
-        return new ResponseEntity<>(resp, HttpStatus.OK);
+        ServiceResponse<?> resp = ServiceResponse.buildCommonFailResp(JobError.BAD_REQUEST);
+        return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
     }
 
     @Override
@@ -176,8 +159,8 @@ public class WebExceptionControllerAdvice extends ResponseEntityExceptionHandler
                                                                      HttpHeaders headers, HttpStatus status,
                                                                      WebRequest request) {
         log.warn("Handle HttpMediaTypeNotSupportedException", ex);
-        ServiceResponse resp = ServiceResponse.buildCommonFailResp(ErrorCode.BAD_REQUEST, i18nService);
-        return new ResponseEntity<>(resp, HttpStatus.OK);
+        ServiceResponse<?> resp = ServiceResponse.buildCommonFailResp(JobError.BAD_REQUEST);
+        return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
     }
 
     @Override
@@ -185,16 +168,16 @@ public class WebExceptionControllerAdvice extends ResponseEntityExceptionHandler
                                                                       HttpHeaders headers, HttpStatus status,
                                                                       WebRequest request) {
         log.warn("Handle HttpMediaTypeNotAcceptableException", ex);
-        ServiceResponse resp = ServiceResponse.buildCommonFailResp(ErrorCode.BAD_REQUEST, i18nService);
-        return new ResponseEntity<>(resp, HttpStatus.OK);
+        ServiceResponse<?> resp = ServiceResponse.buildCommonFailResp(JobError.BAD_REQUEST);
+        return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
     }
 
     @Override
     protected ResponseEntity<Object> handleMissingPathVariable(MissingPathVariableException ex, HttpHeaders headers,
                                                                HttpStatus status, WebRequest request) {
         log.warn("Handle MissingPathVariableException", ex);
-        ServiceResponse resp = ServiceResponse.buildCommonFailResp(ErrorCode.SERVICE_INTERNAL_ERROR, i18nService);
-        return new ResponseEntity<>(resp, HttpStatus.OK);
+        ServiceResponse<?> resp = ServiceResponse.buildCommonFailResp(JobError.BAD_REQUEST);
+        return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
     }
 
     @Override
@@ -202,8 +185,8 @@ public class WebExceptionControllerAdvice extends ResponseEntityExceptionHandler
                                                                           HttpHeaders headers, HttpStatus status,
                                                                           WebRequest request) {
         log.warn("Handle MissingServletRequestParameterException", ex);
-        ServiceResponse resp = ServiceResponse.buildCommonFailResp(ErrorCode.BAD_REQUEST, i18nService);
-        return new ResponseEntity<>(resp, HttpStatus.OK);
+        ServiceResponse<?> resp = ServiceResponse.buildCommonFailResp(JobError.BAD_REQUEST);
+        return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
     }
 
     @Override
@@ -211,8 +194,8 @@ public class WebExceptionControllerAdvice extends ResponseEntityExceptionHandler
                                                                           HttpHeaders headers, HttpStatus status,
                                                                           WebRequest request) {
         log.warn("Handle ServletRequestBindingException", ex);
-        ServiceResponse resp = ServiceResponse.buildCommonFailResp(ErrorCode.BAD_REQUEST, i18nService);
-        return new ResponseEntity<>(resp, HttpStatus.OK);
+        ServiceResponse<?> resp = ServiceResponse.buildCommonFailResp(JobError.BAD_REQUEST);
+        return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
     }
 
     @Override
@@ -220,16 +203,16 @@ public class WebExceptionControllerAdvice extends ResponseEntityExceptionHandler
                                                                   HttpHeaders headers, HttpStatus status,
                                                                   WebRequest request) {
         log.warn("Handle ConversionNotSupportedException", ex);
-        ServiceResponse resp = ServiceResponse.buildCommonFailResp(ErrorCode.SERVICE_INTERNAL_ERROR, i18nService);
-        return new ResponseEntity<>(resp, HttpStatus.OK);
+        ServiceResponse<?> resp = ServiceResponse.buildCommonFailResp(JobError.BAD_REQUEST);
+        return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
     }
 
     @Override
     protected ResponseEntity<Object> handleTypeMismatch(TypeMismatchException ex, HttpHeaders headers,
                                                         HttpStatus status, WebRequest request) {
         log.warn("Handle TypeMismatchException", ex);
-        ServiceResponse resp = ServiceResponse.buildCommonFailResp(ErrorCode.BAD_REQUEST, i18nService);
-        return new ResponseEntity<>(resp, HttpStatus.OK);
+        ServiceResponse<?> resp = ServiceResponse.buildCommonFailResp(JobError.BAD_REQUEST);
+        return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
     }
 
     @Override
@@ -237,8 +220,8 @@ public class WebExceptionControllerAdvice extends ResponseEntityExceptionHandler
                                                                   HttpHeaders headers, HttpStatus status,
                                                                   WebRequest request) {
         log.warn("Handle HttpMessageNotReadableException", ex);
-        ServiceResponse resp = ServiceResponse.buildCommonFailResp(ErrorCode.BAD_REQUEST, i18nService);
-        return new ResponseEntity<>(resp, HttpStatus.OK);
+        ServiceResponse<?> resp = ServiceResponse.buildCommonFailResp(JobError.BAD_REQUEST);
+        return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
     }
 
     @Override
@@ -246,8 +229,8 @@ public class WebExceptionControllerAdvice extends ResponseEntityExceptionHandler
                                                                   HttpHeaders headers, HttpStatus status,
                                                                   WebRequest request) {
         log.warn("Handle HttpMessageNotWritableException", ex);
-        ServiceResponse resp = ServiceResponse.buildCommonFailResp(ErrorCode.SERVICE_INTERNAL_ERROR, i18nService);
-        return new ResponseEntity<>(resp, HttpStatus.OK);
+        ServiceResponse<?> resp = ServiceResponse.buildCommonFailResp(JobError.BAD_REQUEST);
+        return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
     }
 
     @Override
@@ -255,8 +238,8 @@ public class WebExceptionControllerAdvice extends ResponseEntityExceptionHandler
                                                                   HttpHeaders headers, HttpStatus status,
                                                                   WebRequest request) {
         log.warn("Handle MethodArgumentNotValidException", ex);
-        ServiceResponse resp = ServiceResponse.buildCommonFailResp(ErrorCode.BAD_REQUEST, i18nService);
-        return new ResponseEntity<>(resp, HttpStatus.OK);
+        ServiceResponse<?> resp = ServiceResponse.buildCommonFailResp(JobError.BAD_REQUEST);
+        return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
     }
 
     @Override
@@ -264,24 +247,24 @@ public class WebExceptionControllerAdvice extends ResponseEntityExceptionHandler
                                                                      HttpHeaders headers, HttpStatus status,
                                                                      WebRequest request) {
         log.warn("Handle MissingServletRequestPartException", ex);
-        ServiceResponse resp = ServiceResponse.buildCommonFailResp(ErrorCode.BAD_REQUEST, i18nService);
-        return new ResponseEntity<>(resp, HttpStatus.OK);
+        ServiceResponse<?> resp = ServiceResponse.buildCommonFailResp(JobError.BAD_REQUEST);
+        return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
     }
 
     @Override
     protected ResponseEntity<Object> handleBindException(BindException ex, HttpHeaders headers, HttpStatus status,
                                                          WebRequest request) {
         log.warn("Handle BindException", ex);
-        ServiceResponse resp = ServiceResponse.buildCommonFailResp(ErrorCode.BAD_REQUEST, i18nService);
-        return new ResponseEntity<>(resp, HttpStatus.OK);
+        ServiceResponse<?> resp = ServiceResponse.buildCommonFailResp(JobError.BAD_REQUEST);
+        return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
     }
 
     @Override
     protected ResponseEntity<Object> handleNoHandlerFoundException(NoHandlerFoundException ex, HttpHeaders headers,
                                                                    HttpStatus status, WebRequest request) {
         log.warn("Handle NoHandlerFoundException", ex);
-        ServiceResponse resp = ServiceResponse.buildCommonFailResp(ErrorCode.BAD_REQUEST, i18nService);
-        return new ResponseEntity<>(resp, HttpStatus.OK);
+        ServiceResponse<?> resp = ServiceResponse.buildCommonFailResp(JobError.BAD_REQUEST);
+        return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
     }
 
     @Override
@@ -289,8 +272,10 @@ public class WebExceptionControllerAdvice extends ResponseEntityExceptionHandler
                                                                         HttpHeaders headers, HttpStatus status,
                                                                         WebRequest webRequest) {
         log.warn("Handle AsyncRequestTimeoutException", ex);
-        ServiceResponse resp = ServiceResponse.buildCommonFailResp(ErrorCode.SERVICE_INTERNAL_ERROR, i18nService);
-        return new ResponseEntity<>(resp, HttpStatus.OK);
+        ServiceResponse<?> resp = ServiceResponse.buildCommonFailResp(JobError.API_INVOKE_TIMEOUT);
+        return new ResponseEntity<>(resp, HttpStatus.REQUEST_TIMEOUT);
     }
+
+
 
 }

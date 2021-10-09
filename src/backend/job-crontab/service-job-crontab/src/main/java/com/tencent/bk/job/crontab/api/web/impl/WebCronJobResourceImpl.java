@@ -466,7 +466,7 @@ public class WebCronJobResourceImpl implements WebCronJobResource {
         if (allowed.size() == cronJobInstanceList.size()) {
             return ServiceResponse.buildSuccessResp(cronJobService.batchUpdateCronJob(appId, batchUpdateCronJobReq));
         } else {
-            return ServiceResponse.buildCommonFailResp(ErrorCode.API_NO_PERMISSION);
+            return ServiceResponse.buildCommonFailResp(ErrorCode.BK_PERMISSION_DENIED);
         }
     }
 
