@@ -25,9 +25,9 @@
 package com.tencent.bk.job.upgrader.task;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.tencent.bk.job.common.exception.SystemException;
-import com.tencent.bk.job.common.model.ServiceResponse;
-import com.tencent.bk.job.common.model.error.JobError;
+import com.tencent.bk.job.common.api.model.InternalResponse;
+import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.util.Base64Util;
 import com.tencent.bk.job.common.util.json.JsonUtils;
 import com.tencent.bk.job.upgrader.anotation.ExecuteTimeEnum;
@@ -100,22 +100,22 @@ public class ResourceTagMigrationTask extends BaseUpgradeTask {
             String respStr = HttpHelperFactory.getDefaultHttpHelper().post(url, "", headers);
             if (StringUtils.isBlank(respStr)) {
                 log.error("Fail:response is blank|uri={}", url);
-                throw new SystemException(JobError.INTERNAL_ERROR, "Migration tags fail");
+                throw new InternalException(ErrorCode.INTERNAL_ERROR, "Migration tags fail");
             }
-            ServiceResponse<List<ResourceTagDTO>> resp = JsonUtils.fromJson(respStr,
-                new TypeReference<ServiceResponse<List<ResourceTagDTO>>>() {
+            InternalResponse<List<ResourceTagDTO>> resp = JsonUtils.fromJson(respStr,
+                new TypeReference<InternalResponse<List<ResourceTagDTO>>>() {
                 });
             if (resp == null) {
                 log.error("Fail:parse respStr fail|uri={}", url);
-                throw new SystemException(JobError.INTERNAL_ERROR, "Migration tags fail");
+                throw new InternalException(ErrorCode.INTERNAL_ERROR, "Migration tags fail");
             } else if (!resp.isSuccess()) {
                 log.error("Fail: code!=0");
-                throw new SystemException(JobError.INTERNAL_ERROR, "Migration tags fail");
+                throw new InternalException(ErrorCode.INTERNAL_ERROR, "Migration tags fail");
             }
             log.info("Migration tags successfully!tags: {}", JsonUtils.toJson(resp.getData()));
         } catch (Exception e) {
             log.error("Fail: caught exception", e);
-            throw new SystemException(JobError.INTERNAL_ERROR, "Migration tags fail");
+            throw new InternalException(ErrorCode.INTERNAL_ERROR, "Migration tags fail");
         }
         return 0;
     }

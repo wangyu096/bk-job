@@ -25,7 +25,9 @@
 package com.tencent.bk.job.manage.api.esb.impl.v3;
 
 import com.tencent.bk.job.common.api.model.InternalResponse;
+import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.esb.model.EsbResp;
+import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.iam.service.AuthService;
@@ -50,7 +52,8 @@ public class EsbCredentialResourceV3Impl implements EsbCredentialV3Resource {
     private final MessageI18nService i18nService;
 
     @Autowired
-    public EsbCredentialResourceV3Impl(ServiceCredentialResource credentialService, AuthService authService, MessageI18nService i18nService) {
+    public EsbCredentialResourceV3Impl(ServiceCredentialResource credentialService, AuthService authService,
+                                       MessageI18nService i18nService) {
         this.credentialService = credentialService;
         this.authService = authService;
         this.i18nService = i18nService;
@@ -70,7 +73,8 @@ public class EsbCredentialResourceV3Impl implements EsbCredentialV3Resource {
 
     private void checkAppId(Long appId) {
         if (appId == null) {
-            throw new InvalidParamException("bk_biz_id", "bk_biz_id cannot be null");
+            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
+                new String[]{"bk_biz_id", "bk_biz_id cannot be null"});
         }
     }
 
@@ -79,17 +83,20 @@ public class EsbCredentialResourceV3Impl implements EsbCredentialV3Resource {
         String name = req.getName();
         String type = req.getType();
         if (StringUtils.isBlank(name)) {
-            throw new InvalidParamException("name", "name cannot be null or blank");
+            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
+                new String[]{"name", "name cannot be null or blank"});
         }
         if (StringUtils.isBlank(type)) {
-            throw new InvalidParamException("type", "type cannot be null or blank");
+            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
+                new String[]{"type", "type cannot be null or blank"});
         }
     }
 
     private void checkUpdateParam(EsbCreateOrUpdateCredentialV3Req req) {
         checkAppId(req.getAppId());
         if (StringUtils.isBlank(req.getId())) {
-            throw new InvalidParamException("id", "id cannot be null or blank");
+            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
+                new String[]{"id", "id cannot be null or blank"});
         }
     }
 
@@ -114,11 +121,7 @@ public class EsbCredentialResourceV3Impl implements EsbCredentialV3Resource {
                 resp.getAuthResult().getRequiredActionResources()
             );
         } else if (!resp.isSuccess()) {
-            return EsbResp.buildCommonFailResp(
-                resp.getCode(),
-                resp.getErrorDetail(),
-                i18nService
-            );
+            throw new InternalException(resp.getCode());
         }
         ServiceBasicCredentialDTO data = resp.getData();
         return EsbResp.buildSuccessResp(new EsbCredentialSimpleInfoV3DTO(data.getId()));
@@ -144,13 +147,15 @@ public class EsbCredentialResourceV3Impl implements EsbCredentialV3Resource {
             createUpdateReq.setValue1(req.getCredentialUsername());
             createUpdateReq.setValue2(req.getCredentialPassword());
         } else {
-            throw new InvalidParamException(
-                "type",
-                String.format(
-                    "Unsupported type:%s, supported types:%s",
-                    type,
-                    CredentialTypeEnum.getAllNameStr()
-                )
+            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
+                new String[]{
+                    "type",
+                    String.format(
+                        "Unsupported type:%s, supported types:%s",
+                        type,
+                        CredentialTypeEnum.getAllNameStr()
+                    )}
+
             );
         }
         return createUpdateReq;

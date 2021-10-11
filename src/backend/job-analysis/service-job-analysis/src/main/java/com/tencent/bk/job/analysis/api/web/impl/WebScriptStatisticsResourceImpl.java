@@ -27,7 +27,7 @@ package com.tencent.bk.job.analysis.api.web.impl;
 import com.tencent.bk.job.analysis.api.web.WebScriptStatisticsResource;
 import com.tencent.bk.job.analysis.model.web.ScriptCiteStatisticVO;
 import com.tencent.bk.job.analysis.service.ScriptStatisticService;
-import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.model.WebResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
@@ -46,8 +46,8 @@ public class WebScriptStatisticsResourceImpl implements WebScriptStatisticsResou
     }
 
     @Override
-    public ServiceResponse<ScriptCiteStatisticVO> scriptCiteInfo(String username, List<Long> appIdList, String date) {
+    public WebResponse<ScriptCiteStatisticVO> scriptCiteInfo(String username, List<Long> appIdList, String date) {
         ScriptCiteStatisticVO scriptCiteStatisticVO = scriptStatisticService.scriptCiteInfo(appIdList, date);
-        return ServiceResponse.buildSuccessResp(scriptCiteStatisticVO);
+        return WebResponse.buildSuccessResp(scriptCiteStatisticVO);
     }
 }

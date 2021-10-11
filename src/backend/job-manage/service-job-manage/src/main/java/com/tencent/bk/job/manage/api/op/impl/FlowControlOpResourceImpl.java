@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.manage.api.op.impl;
 
-import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.model.WebResponse;
 import com.tencent.bk.job.common.util.FlowController;
 import com.tencent.bk.job.manage.api.op.FlowControlOpResource;
 import com.tencent.bk.job.manage.model.op.req.ConfigFlowControlReq;
@@ -58,26 +58,26 @@ public class FlowControlOpResourceImpl implements FlowControlOpResource {
     }
 
     @Override
-    public ServiceResponse<Map<String, Long>> getCurrentFlowControlConfig(String username) {
+    public WebResponse<Map<String, Long>> getCurrentFlowControlConfig(String username) {
         logInput(username);
-        return ServiceResponse.buildSuccessResp(globalFlowController.getCurrentConfig());
+        return WebResponse.buildSuccessResp(globalFlowController.getCurrentConfig());
     }
 
     @Override
-    public ServiceResponse<Integer> configFlowControl(String username, ConfigFlowControlReq req) {
+    public WebResponse<Integer> configFlowControl(String username, ConfigFlowControlReq req) {
         logInput(username, req);
-        return ServiceResponse.buildSuccessResp(globalFlowController.updateConfig(req.getConfigMap()));
+        return WebResponse.buildSuccessResp(globalFlowController.updateConfig(req.getConfigMap()));
     }
 
     @Override
-    public ServiceResponse<Map<String, Long>> getCurrentRateMap(String username) {
+    public WebResponse<Map<String, Long>> getCurrentRateMap(String username) {
         logInput(username);
-        return ServiceResponse.buildSuccessResp(globalFlowController.getCurrentRateMap());
+        return WebResponse.buildSuccessResp(globalFlowController.getCurrentRateMap());
     }
 
     @Override
-    public ServiceResponse<Long> getCurrentRate(String username, String resourceId) {
+    public WebResponse<Long> getCurrentRate(String username, String resourceId) {
         logInput(username, resourceId);
-        return ServiceResponse.buildSuccessResp(globalFlowController.getCurrentRate(resourceId));
+        return WebResponse.buildSuccessResp(globalFlowController.getCurrentRate(resourceId));
     }
 }

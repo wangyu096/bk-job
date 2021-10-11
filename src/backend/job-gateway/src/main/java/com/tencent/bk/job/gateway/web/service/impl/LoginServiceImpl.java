@@ -27,7 +27,8 @@ package com.tencent.bk.job.gateway.web.service.impl;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.tencent.bk.job.common.exception.PaasApiException;
+import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.model.dto.BkUserDTO;
 import com.tencent.bk.job.common.paas.login.ILoginClient;
 import com.tencent.bk.job.gateway.config.BkConfig;
@@ -105,7 +106,7 @@ public class LoginServiceImpl implements LoginService {
             return userDto.orElse(null);
         } catch (ExecutionException e) {
             log.warn("Error occur when get user from paas!");
-            throw new PaasApiException(e, "Query userinfo from paas fail");
+            throw new InternalException(e, ErrorCode.PAAS_API_DATA_ERROR, "Query userinfo from paas fail");
         }
     }
 

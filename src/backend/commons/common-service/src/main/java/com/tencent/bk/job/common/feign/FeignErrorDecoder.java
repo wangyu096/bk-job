@@ -24,13 +24,13 @@
 
 package com.tencent.bk.job.common.feign;
 
-import com.tencent.bk.job.common.exception.BadRequestException;
-import com.tencent.bk.job.common.exception.BusinessException;
+import com.tencent.bk.job.common.api.model.InternalResponse;
+import com.tencent.bk.job.common.exception.AlreadyExistsException;
+import com.tencent.bk.job.common.exception.FailedPreconditionException;
+import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.NotFoundException;
 import com.tencent.bk.job.common.exception.ServiceException;
-import com.tencent.bk.job.common.exception.SystemException;
-import com.tencent.bk.job.common.model.ServiceResponse;
 import com.tencent.bk.job.common.model.error.ErrorType;
-import com.tencent.bk.job.common.model.error.JobError;
 import com.tencent.bk.job.common.util.json.JsonUtils;
 import feign.FeignException;
 import feign.Response;
@@ -57,7 +57,7 @@ public class FeignErrorDecoder extends ErrorDecoder.Default {
                 String responseBody = feignException.contentUTF8();
 
                 if (StringUtils.isNotEmpty(responseBody)) {
-                    ServiceResponse<?> serviceResponse = JsonUtils.fromJson(responseBody, ServiceResponse.class);
+                    InternalResponse<?> serviceResponse = JsonUtils.fromJson(responseBody, InternalResponse.class);
                     if (serviceResponse != null && serviceResponse.getCode() != null) {
                         return decodeErrorCode(feignException, serviceResponse.getErrorType(),
                             serviceResponse.getCode(), serviceResponse.getErrorMsg());
@@ -78,14 +78,24 @@ public class FeignErrorDecoder extends ErrorDecoder.Default {
 
         ErrorType type = ErrorType.valOf(errorType);
         switch (type) {
-            case BadRequest:
-                return new BadRequestException(exception, new JobError(errorType, errorCode), errorMsg);
-            case INTERNAL_ERROR:
-                return new SystemException(exception, new JobError(errorType, errorCode), errorMsg);
-            case BUSINESS_LOGIC:
-                return new BusinessException(exception, new JobError(errorType, errorCode), errorMsg);
+            case INVALID_PARAM:
+            case UNAUTHENTICATED:
+            case ABORTED:
+            case RESOURCE_EXHAUSTED:
+            case UNIMPLEMENTED:
+            case INTERNAL:
+            case UNAVAILABLE:
+            case TIMEOUT:
+                log.error("Decode error code, errorType: {}, errorCode: {}, errorMsg: {}", type, errorCode, errorMsg);
+                return new InternalException(exception, errorCode, errorMsg);
+            case NOT_FOUND:
+                return new NotFoundException(exception, errorCode, errorMsg);
+            case ALREADY_EXISTS:
+                return new AlreadyExistsException(exception, errorCode, errorMsg);
+            case FAILED_PRECONDITION:
+                return new FailedPreconditionException(errorCode, errorMsg);
             default:
-                return new ServiceException(exception, new JobError(errorType, errorCode), errorMsg);
+                return new ServiceException(type, errorCode);
         }
 
     }

@@ -40,6 +40,6 @@ public class ErrorDetail {
 
     public ErrorDetail(BadRequestDetail badRequestDetail) {
         this.badRequestDetail = badRequestDetail;
-        this.type = ErrorType.BadRequest.getType();
+        this.type = ErrorType.INVALID_PARAM.getType();
     }
 }

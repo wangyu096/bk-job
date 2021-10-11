@@ -26,7 +26,7 @@ package com.tencent.bk.job.file_gateway.api.web;
 
 import com.tencent.bk.job.common.annotation.WebAPI;
 import com.tencent.bk.job.common.model.PageData;
-import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.model.WebResponse;
 import com.tencent.bk.job.file_gateway.model.req.common.FileSourceStaticParam;
 import com.tencent.bk.job.file_gateway.model.req.web.FileSourceCreateUpdateReq;
 import com.tencent.bk.job.file_gateway.model.resp.web.FileSourceVO;
@@ -54,7 +54,7 @@ public interface WebFileSourceResource {
 
     @ApiOperation(value = "检查文件源别名是否已存在（可用返回true）", produces = "application/json")
     @GetMapping("/checkAlias/{alias}")
-    ServiceResponse<Boolean> checkAlias(
+    WebResponse<Boolean> checkAlias(
         @ApiParam(value = "用户名，网关自动传入", required = true)
         @RequestHeader("username") String username,
         @ApiParam(value = "业务 ID", required = true)
@@ -67,7 +67,7 @@ public interface WebFileSourceResource {
 
     @ApiOperation(value = "新增文件源", produces = "application/json")
     @PostMapping("")
-    ServiceResponse<Integer> saveFileSource(
+    WebResponse<Integer> saveFileSource(
         @ApiParam(value = "用户名，网关自动传入", required = true)
         @RequestHeader("username") String username,
         @ApiParam(value = "业务 ID", required = true)
@@ -77,7 +77,7 @@ public interface WebFileSourceResource {
 
     @ApiOperation(value = "更新文件源", produces = "application/json")
     @PutMapping("")
-    ServiceResponse<Integer> updateFileSource(
+    WebResponse<Integer> updateFileSource(
         @ApiParam(value = "用户名，网关自动传入", required = true)
         @RequestHeader("username") String username,
         @ApiParam(value = "业务 ID", required = true)
@@ -87,7 +87,7 @@ public interface WebFileSourceResource {
 
     @ApiOperation(value = "删除文件源", produces = "application/json")
     @DeleteMapping("/ids/{id}")
-    ServiceResponse<Integer> deleteFileSource(
+    WebResponse<Integer> deleteFileSource(
         @ApiParam(value = "用户名，网关自动传入", required = true)
         @RequestHeader("username") String username,
         @ApiParam(value = "业务 ID", required = true)
@@ -97,7 +97,7 @@ public interface WebFileSourceResource {
 
     @ApiOperation(value = "启用/禁用文件源", produces = "application/json")
     @PutMapping("/ids/{id}/enable")
-    ServiceResponse<Boolean> enableFileSource(
+    WebResponse<Boolean> enableFileSource(
         @ApiParam(value = "用户名，网关自动传入", required = true)
         @RequestHeader("username") String username,
         @ApiParam(value = "业务 ID", required = true)
@@ -110,7 +110,7 @@ public interface WebFileSourceResource {
 
     @ApiOperation(value = "获取文件源详情", produces = "application/json")
     @GetMapping("/ids/{id}")
-    ServiceResponse<FileSourceVO> getFileSourceDetail(
+    WebResponse<FileSourceVO> getFileSourceDetail(
         @ApiParam(value = "用户名，网关自动传入", required = true)
         @RequestHeader("username") String username,
         @ApiParam(value = "业务 ID", required = true)
@@ -120,7 +120,7 @@ public interface WebFileSourceResource {
 
     @ApiOperation(value = "获取可使用的文件源列表", produces = "application/json")
     @GetMapping("/available/list")
-    ServiceResponse<PageData<FileSourceVO>> listAvailableFileSource(
+    WebResponse<PageData<FileSourceVO>> listAvailableFileSource(
         @ApiParam("用户名，网关自动传入")
         @RequestHeader("username") String username,
         @ApiParam(value = "业务 ID", required = true)
@@ -140,7 +140,7 @@ public interface WebFileSourceResource {
 
     @ApiOperation(value = "获取可管理的工作台文件源列表", produces = "application/json")
     @GetMapping("/workTable/list")
-    ServiceResponse<PageData<FileSourceVO>> listWorkTableFileSource(
+    WebResponse<PageData<FileSourceVO>> listWorkTableFileSource(
         @ApiParam("用户名，网关自动传入")
         @RequestHeader("username") String username,
         @ApiParam(value = "业务 ID", required = true)
@@ -160,7 +160,7 @@ public interface WebFileSourceResource {
 
     @ApiOperation(value = "获取文件源类型的静态参数", produces = "application/json")
     @GetMapping("/fileSourceParams")
-    ServiceResponse<List<FileSourceStaticParam>> getFileSourceParams(
+    WebResponse<List<FileSourceStaticParam>> getFileSourceParams(
         @ApiParam("用户名，网关自动传入")
         @RequestHeader("username")
             String username,

@@ -27,7 +27,7 @@ package com.tencent.bk.job.manage.api.web.impl;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeEnum;
 import com.tencent.bk.job.common.iam.service.WebAuthService;
-import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.model.WebResponse;
 import com.tencent.bk.job.common.model.permission.AuthResultVO;
 import com.tencent.bk.job.manage.api.web.WebNotifyResource;
 import com.tencent.bk.job.manage.model.inner.ServiceNotificationDTO;
@@ -63,12 +63,12 @@ public class WebNotifyResourceImpl implements WebNotifyResource {
     }
 
     @Override
-    public ServiceResponse<List<TriggerPolicyVO>> listAppDefaultNotifyPolicies(String username, Long appId) {
-        return ServiceResponse.buildSuccessResp(notifyService.listAppDefaultNotifyPolicies(username, appId));
+    public WebResponse<List<TriggerPolicyVO>> listAppDefaultNotifyPolicies(String username, Long appId) {
+        return WebResponse.buildSuccessResp(notifyService.listAppDefaultNotifyPolicies(username, appId));
     }
 
     @Override
-    public ServiceResponse<Long> saveAppDefaultNotifyPolicies(
+    public WebResponse<Long> saveAppDefaultNotifyPolicies(
         String username,
         Long appId,
         NotifyPoliciesCreateUpdateReq createUpdateReq
@@ -76,38 +76,38 @@ public class WebNotifyResourceImpl implements WebNotifyResource {
         AuthResultVO authResultVO = authService.auth(true, username, ActionId.NOTIFICATION_SETTING,
             ResourceTypeEnum.BUSINESS, appId.toString(), null);
         if (!authResultVO.isPass()) {
-            return ServiceResponse.buildAuthFailResp(authResultVO);
+            return WebResponse.buildAuthFailResp(authResultVO);
         }
-        return ServiceResponse.buildSuccessResp(notifyService.saveAppDefaultNotifyPolicies(
+        return WebResponse.buildSuccessResp(notifyService.saveAppDefaultNotifyPolicies(
             username, appId, createUpdateReq));
     }
 
     @Override
-    public ServiceResponse<PageTemplateVO> getPageTemplate(String username) {
-        return ServiceResponse.buildSuccessResp(notifyService.getPageTemplate(username));
+    public WebResponse<PageTemplateVO> getPageTemplate(String username) {
+        return WebResponse.buildSuccessResp(notifyService.getPageTemplate(username));
     }
 
     @Override
-    public ServiceResponse<List<RoleVO>> listRoles(String username) {
-        return ServiceResponse.buildSuccessResp(notifyService.listRole(username));
+    public WebResponse<List<RoleVO>> listRoles(String username) {
+        return WebResponse.buildSuccessResp(notifyService.listRole(username));
     }
 
     @Override
-    public ServiceResponse<List<UserVO>> listUsers(
+    public WebResponse<List<UserVO>> listUsers(
         String username,
         String prefixStr,
         Long offset,
         Long limit
     ) {
-        return ServiceResponse.buildSuccessResp(notifyService.listUsers(username, prefixStr, offset, limit, true));
+        return WebResponse.buildSuccessResp(notifyService.listUsers(username, prefixStr, offset, limit, true));
     }
 
     @Override
-    public ServiceResponse sendNotification(String username, ServiceNotificationDTO notification) {
+    public WebResponse sendNotification(String username, ServiceNotificationDTO notification) {
         if (localPermissionService.isAdmin(username)) {
-            return ServiceResponse.buildSuccessResp(notifyService.sendSimpleNotification(notification));
+            return WebResponse.buildSuccessResp(notifyService.sendSimpleNotification(notification));
         } else {
-            return ServiceResponse.buildCommonFailResp(PERMISSION_DENIED);
+            return WebResponse.buildCommonFailResp(PERMISSION_DENIED);
         }
     }
 }

@@ -24,9 +24,10 @@
 
 package com.tencent.bk.job.manage.api.web.impl;
 
+import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
-import com.tencent.bk.job.common.model.ServiceResponse;
 import com.tencent.bk.job.common.model.ValidateResult;
+import com.tencent.bk.job.common.model.WebResponse;
 import com.tencent.bk.job.manage.api.web.WebDangerousRuleResource;
 import com.tencent.bk.job.manage.model.web.request.globalsetting.AddOrUpdateDangerousRuleReq;
 import com.tencent.bk.job.manage.model.web.request.globalsetting.MoveDangerousRuleReq;
@@ -52,17 +53,17 @@ public class WebDangerousRuleResourceImpl implements WebDangerousRuleResource {
     }
 
     @Override
-    public ServiceResponse<List<DangerousRuleVO>> listDangerousRules(String username) {
-        return ServiceResponse.buildSuccessResp(dangerousRuleService.listDangerousRules(username));
+    public WebResponse<List<DangerousRuleVO>> listDangerousRules(String username) {
+        return WebResponse.buildSuccessResp(dangerousRuleService.listDangerousRules(username));
     }
 
     @Override
-    public ServiceResponse<Boolean> addOrUpdateDangerousRule(String username, AddOrUpdateDangerousRuleReq req) {
+    public WebResponse<Boolean> addOrUpdateDangerousRule(String username, AddOrUpdateDangerousRuleReq req) {
         ValidateResult validateResult = checkAddOrUpdateDangerousRuleReq(req);
         if (!validateResult.isPass()) {
-            return ServiceResponse.buildValidateFailResp(i18nService, validateResult);
+            throw new InvalidParamException(validateResult);
         }
-        return ServiceResponse.buildSuccessResp(dangerousRuleService.addOrUpdateDangerousRule(username, req));
+        return WebResponse.buildSuccessResp(dangerousRuleService.addOrUpdateDangerousRule(username, req));
     }
 
     private ValidateResult checkAddOrUpdateDangerousRuleReq(AddOrUpdateDangerousRuleReq req) {
@@ -75,12 +76,12 @@ public class WebDangerousRuleResourceImpl implements WebDangerousRuleResource {
     }
 
     @Override
-    public ServiceResponse<Integer> moveDangerousRule(String username, MoveDangerousRuleReq req) {
-        return ServiceResponse.buildSuccessResp(dangerousRuleService.moveDangerousRule(username, req));
+    public WebResponse<Integer> moveDangerousRule(String username, MoveDangerousRuleReq req) {
+        return WebResponse.buildSuccessResp(dangerousRuleService.moveDangerousRule(username, req));
     }
 
     @Override
-    public ServiceResponse<Integer> deleteDangerousRuleById(String username, Long id) {
-        return ServiceResponse.buildSuccessResp(dangerousRuleService.deleteDangerousRuleById(username, id));
+    public WebResponse<Integer> deleteDangerousRuleById(String username, Long id) {
+        return WebResponse.buildSuccessResp(dangerousRuleService.deleteDangerousRuleById(username, id));
     }
 }

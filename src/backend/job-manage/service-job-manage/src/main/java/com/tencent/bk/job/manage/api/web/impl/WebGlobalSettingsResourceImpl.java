@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.manage.api.web.impl;
 
-import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.model.WebResponse;
 import com.tencent.bk.job.manage.api.web.WebGlobalSettingsResource;
 import com.tencent.bk.job.manage.model.web.request.globalsetting.AccountNameRulesReq;
 import com.tencent.bk.job.manage.model.web.request.globalsetting.FileUploadSettingReq;
@@ -67,91 +67,91 @@ public class WebGlobalSettingsResourceImpl implements WebGlobalSettingsResource 
     }
 
     @Override
-    public ServiceResponse<List<NotifyChannelWithIconVO>> listNotifyChannel(String username) {
-        return ServiceResponse.buildSuccessResp(globalSettingsService.listNotifyChannel(username));
+    public WebResponse<List<NotifyChannelWithIconVO>> listNotifyChannel(String username) {
+        return WebResponse.buildSuccessResp(globalSettingsService.listNotifyChannel(username));
     }
 
     @Override
-    public ServiceResponse<Integer> setAvailableNotifyChannel(String username, SetAvailableNotifyChannelReq req) {
-        return ServiceResponse.buildSuccessResp(globalSettingsService.setAvailableNotifyChannel(username, req));
+    public WebResponse<Integer> setAvailableNotifyChannel(String username, SetAvailableNotifyChannelReq req) {
+        return WebResponse.buildSuccessResp(globalSettingsService.setAvailableNotifyChannel(username, req));
     }
 
     @Override
-    public ServiceResponse<Integer> saveChannelTemplate(String username, ChannelTemplateReq req) {
-        return ServiceResponse.buildSuccessResp(globalSettingsService.saveChannelTemplate(username, req));
+    public WebResponse<Integer> saveChannelTemplate(String username, ChannelTemplateReq req) {
+        return WebResponse.buildSuccessResp(globalSettingsService.saveChannelTemplate(username, req));
     }
 
     @Override
-    public ServiceResponse<Integer> sendChannelTemplate(String username, ChannelTemplatePreviewReq req) {
-        return ServiceResponse.buildSuccessResp(globalSettingsService.sendChannelTemplate(username, req));
+    public WebResponse<Integer> sendChannelTemplate(String username, ChannelTemplatePreviewReq req) {
+        return WebResponse.buildSuccessResp(globalSettingsService.sendChannelTemplate(username, req));
     }
 
     @Override
-    public ServiceResponse<ChannelTemplateDetailWithDefaultVO> getChannelTemplateDetail(String username,
-                                                                                        String channelCode,
-                                                                                        String messageTypeCode) {
-        return ServiceResponse.buildSuccessResp(globalSettingsService.getChannelTemplateDetail(username, channelCode,
+    public WebResponse<ChannelTemplateDetailWithDefaultVO> getChannelTemplateDetail(String username,
+                                                                                    String channelCode,
+                                                                                    String messageTypeCode) {
+        return WebResponse.buildSuccessResp(globalSettingsService.getChannelTemplateDetail(username, channelCode,
             messageTypeCode));
     }
 
     @Override
-    public ServiceResponse<List<ChannelTemplateStatusVO>> listChannelTemplateStatus(String username) {
-        return ServiceResponse.buildSuccessResp(globalSettingsService.listChannelTemplateStatus(username));
+    public WebResponse<List<ChannelTemplateStatusVO>> listChannelTemplateStatus(String username) {
+        return WebResponse.buildSuccessResp(globalSettingsService.listChannelTemplateStatus(username));
     }
 
     @Override
-    public ServiceResponse<List<UserVO>> listUsers(String username, String prefixStr, Long offset, Long limit) {
-        return ServiceResponse.buildSuccessResp(globalSettingsService.listUsers(username, prefixStr, offset, limit));
+    public WebResponse<List<UserVO>> listUsers(String username, String prefixStr, Long offset, Long limit) {
+        return WebResponse.buildSuccessResp(globalSettingsService.listUsers(username, prefixStr, offset, limit));
     }
 
     @Override
-    public ServiceResponse<List<NotifyBlackUserInfoVO>> listNotifyBlackUsers(String username, Integer start,
-                                                                             Integer pageSize) {
-        return ServiceResponse.buildSuccessResp(globalSettingsService.listNotifyBlackUsers(username, start, pageSize));
+    public WebResponse<List<NotifyBlackUserInfoVO>> listNotifyBlackUsers(String username, Integer start,
+                                                                         Integer pageSize) {
+        return WebResponse.buildSuccessResp(globalSettingsService.listNotifyBlackUsers(username, start, pageSize));
     }
 
     @Override
-    public ServiceResponse<List<String>> saveNotifyBlackUsers(String username, NotifyBlackUsersReq req) {
-        return ServiceResponse.buildSuccessResp(globalSettingsService.saveNotifyBlackUsers(username, req));
+    public WebResponse<List<String>> saveNotifyBlackUsers(String username, NotifyBlackUsersReq req) {
+        return WebResponse.buildSuccessResp(globalSettingsService.saveNotifyBlackUsers(username, req));
     }
 
     @Override
-    public ServiceResponse<Long> getHistoryExpireTime(String username) {
-        return ServiceResponse.buildSuccessResp(globalSettingsService.getHistoryExpireTime(username));
+    public WebResponse<Long> getHistoryExpireTime(String username) {
+        return WebResponse.buildSuccessResp(globalSettingsService.getHistoryExpireTime(username));
     }
 
     @Override
-    public ServiceResponse<Integer> setHistoryExpireTime(String username, HistoryExpireReq req) {
-        return ServiceResponse.buildSuccessResp(globalSettingsService.setHistoryExpireTime(username, req));
+    public WebResponse<Integer> setHistoryExpireTime(String username, HistoryExpireReq req) {
+        return WebResponse.buildSuccessResp(globalSettingsService.setHistoryExpireTime(username, req));
     }
 
     @Override
-    public ServiceResponse<AccountNameRulesWithDefaultVO> getAccountNameRules(String username) {
-        return ServiceResponse.buildSuccessResp(globalSettingsService.getAccountNameRules());
+    public WebResponse<AccountNameRulesWithDefaultVO> getAccountNameRules(String username) {
+        return WebResponse.buildSuccessResp(globalSettingsService.getAccountNameRules());
     }
 
     @Override
-    public ServiceResponse<Boolean> setAccountNameRules(String username, AccountNameRulesReq req) {
-        return ServiceResponse.buildSuccessResp(globalSettingsService.setAccountNameRules(username, req));
+    public WebResponse<Boolean> setAccountNameRules(String username, AccountNameRulesReq req) {
+        return WebResponse.buildSuccessResp(globalSettingsService.setAccountNameRules(username, req));
     }
 
     @Override
-    public ServiceResponse<Boolean> saveFileUploadSettings(String username, FileUploadSettingReq req) {
-        return ServiceResponse.buildSuccessResp(globalSettingsService.saveFileUploadSettings(username, req));
+    public WebResponse<Boolean> saveFileUploadSettings(String username, FileUploadSettingReq req) {
+        return WebResponse.buildSuccessResp(globalSettingsService.saveFileUploadSettings(username, req));
     }
 
     @Override
-    public ServiceResponse<FileUploadSettingVO> getFileUploadSettings(String username) {
-        return ServiceResponse.buildSuccessResp(globalSettingsService.getFileUploadSettings(username));
+    public WebResponse<FileUploadSettingVO> getFileUploadSettings(String username) {
+        return WebResponse.buildSuccessResp(globalSettingsService.getFileUploadSettings(username));
     }
 
     @Override
-    public ServiceResponse<Boolean> setTitleFooter(String username, SetTitleFooterReq req) {
-        return ServiceResponse.buildSuccessResp(globalSettingsService.setTitleFooter(username, req));
+    public WebResponse<Boolean> setTitleFooter(String username, SetTitleFooterReq req) {
+        return WebResponse.buildSuccessResp(globalSettingsService.setTitleFooter(username, req));
     }
 
     @Override
-    public ServiceResponse<TitleFooterWithDefaultVO> getTitleFooterWithDefault(String username) {
-        return ServiceResponse.buildSuccessResp(globalSettingsService.getTitleFooterWithDefault(username));
+    public WebResponse<TitleFooterWithDefaultVO> getTitleFooterWithDefault(String username) {
+        return WebResponse.buildSuccessResp(globalSettingsService.getTitleFooterWithDefault(username));
     }
 }

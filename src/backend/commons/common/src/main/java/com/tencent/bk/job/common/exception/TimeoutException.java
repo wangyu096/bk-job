@@ -24,33 +24,52 @@
 
 package com.tencent.bk.job.common.exception;
 
-import com.tencent.bk.job.common.model.error.JobError;
+import com.tencent.bk.job.common.model.error.ErrorType;
+import lombok.Getter;
+import lombok.ToString;
 
 /**
- * 系统异常
+ * 请求超时
  */
-public class BadRequestException extends ServiceException {
-    public BadRequestException(JobError error) {
-        super(error);
+@Getter
+@ToString
+public class TimeoutException extends ServiceException {
+
+    public TimeoutException(Integer errorCode) {
+        super(ErrorType.TIMEOUT, errorCode);
     }
 
-    public BadRequestException(JobError error, String errorMsg) {
-        super(error, errorMsg);
+    public TimeoutException(Integer errorCode, Object[] errorParams) {
+        super(ErrorType.TIMEOUT, errorCode, errorParams);
     }
 
-    public BadRequestException(JobError error, Object[] errorParams) {
-        super(error, errorParams);
+    public TimeoutException(Integer errorCode, Object errorParam) {
+        super(ErrorType.TIMEOUT, errorCode, errorParam);
     }
 
-    public BadRequestException(Throwable cause, JobError error, Object[] errorParams) {
-        super(cause, error, errorParams);
+    public TimeoutException(Throwable cause, Integer errorCode) {
+        super(cause, ErrorType.TIMEOUT, errorCode);
     }
 
-    public BadRequestException(JobError error, Object errorParam) {
-        super(error, errorParam);
+    public TimeoutException(Throwable cause, Integer errorCode, Object[] errorParams) {
+        super(cause, ErrorType.TIMEOUT, errorCode, errorParams);
     }
 
-    public BadRequestException(Throwable cause, JobError error, String errorMsg) {
-        super(cause, error, errorMsg);
+    public TimeoutException(Throwable cause, Integer errorCode, Object errorParam) {
+        super(cause, ErrorType.TIMEOUT, errorCode, errorParam);
+    }
+
+    public TimeoutException(String message, Throwable cause, Integer errorCode) {
+        super(message, cause, ErrorType.TIMEOUT, errorCode);
+    }
+
+    public TimeoutException(String message, Throwable cause, Integer errorCode,
+                            Object[] errorParams) {
+        super(message, cause, ErrorType.TIMEOUT, errorCode, errorParams);
+    }
+
+    public TimeoutException(String message, Throwable cause, Integer errorCode,
+                            Object errorParam) {
+        super(message, cause, ErrorType.TIMEOUT, errorCode, errorParam);
     }
 }

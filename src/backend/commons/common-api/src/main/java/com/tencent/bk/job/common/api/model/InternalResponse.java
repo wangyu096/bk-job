@@ -29,12 +29,10 @@ import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.ServiceException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.iam.model.AuthResult;
-import com.tencent.bk.job.common.model.ServiceResponse;
 import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.model.error.ErrorDetail;
 import com.tencent.bk.job.common.model.error.ErrorType;
-import com.tencent.bk.job.common.model.error.JobError;
-import com.tencent.bk.job.common.util.ApplicationContextRegister;
+import com.tencent.bk.job.common.util.I18nUtil;
 import com.tencent.bk.job.common.util.JobContextUtil;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -84,7 +82,7 @@ public class InternalResponse<T> {
     public InternalResponse(ErrorType errorType, Integer errorCode, T data) {
         this.code = errorCode;
         this.success = SUCCESS_CODE.equals(errorCode);
-        this.errorMsg = buildErrorMsg(errorCode);
+        this.errorMsg = I18nUtil.getI18nMessage(String.valueOf(errorCode));
         this.errorType = errorType.getType();
         this.data = data;
         this.requestId = JobContextUtil.getRequestId();
@@ -93,7 +91,7 @@ public class InternalResponse<T> {
     public InternalResponse(ErrorType errorType, Integer errorCode, Object[] errorParams, T data) {
         this.code = errorCode;
         this.success = SUCCESS_CODE.equals(errorCode);
-        this.errorMsg = buildErrorMsg(errorCode, errorParams);
+        this.errorMsg = I18nUtil.getI18nMessage(String.valueOf(errorCode), errorParams);
         this.errorType = errorType.getType();
         this.data = data;
         this.requestId = JobContextUtil.getRequestId();
@@ -119,52 +117,18 @@ public class InternalResponse<T> {
     }
 
     public static <T> InternalResponse<T> buildCommonFailResp(ServiceException e) {
-        int errorCode = e.getError().getErrorCode();
-        String errorMsg = buildErrorMsg(errorCode);
-        return new InternalResponse<>(e.getError(), errorMsg, null);
+        return new InternalResponse<>(e.getErrorType(), e.getErrorCode(), e.getErrorParams(), null);
     }
 
     public static <T> InternalResponse<T> buildValidateFailResp(ValidateResult validateResult) {
-        return new InternalResponse<>(validateResult.getError(),
-            buildErrorMsg(validateResult.getError().getErrorCode(), validateResult.getErrorParams()), null);
+        return new InternalResponse<>(ErrorType.INVALID_PARAM, validateResult.getErrorCode(),
+            validateResult.getErrorParams(), null);
     }
 
-    public static <T> InternalResponse<T> buildCommonFailResp(JobError error, ErrorDetail errorDetail) {
-        String errorMsg = buildErrorMsg(error.getErrorCode());
-        InternalResponse<T> esbResp = new InternalResponse<>(error, errorMsg, null);
-        esbResp.setErrorDetail(errorDetail);
-        return esbResp;
-    }
-
-    private static String buildErrorMsg(Integer errorCode) {
-        initI18nService();
-        if (i18nService == null) {
-            log.warn("Can not find available i18nService");
-            return "";
-        }
-        return i18nService.getI18n(String.valueOf(errorCode));
-    }
-
-    private static String buildErrorMsg(Integer errorCode, Object[] errorParams) {
-        initI18nService();
-        if (i18nService == null) {
-            log.warn("Can not find available i18nService");
-            return "";
-        }
-        if (errorParams != null && errorParams.length > 0) {
-            return i18nService.getI18nWithArgs(String.valueOf(errorCode), errorParams);
-        } else {
-            return i18nService.getI18n(String.valueOf(errorCode));
-        }
-    }
-
-    private static void initI18nService() {
-        if (i18nService == null) {
-            synchronized (ServiceResponse.class) {
-                if (i18nService == null) {
-                    i18nService = ApplicationContextRegister.getBean(MessageI18nService.class);
-                }
-            }
-        }
+    public static <T> InternalResponse<T> buildCommonFailResp(ErrorType errorType, Integer errorCode,
+                                                              ErrorDetail errorDetail) {
+        InternalResponse<T> resp = buildCommonFailResp(errorType, errorCode);
+        resp.setErrorDetail(errorDetail);
+        return resp;
     }
 }

@@ -26,14 +26,12 @@ package com.tencent.bk.job.common.exception;
 
 import com.tencent.bk.job.common.model.error.ErrorType;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
 
 /**
  * 资源配额不足或达到速率限制
  */
 @Getter
-@Setter
 @ToString
 public class ResourceExhaustedException extends ServiceException {
 

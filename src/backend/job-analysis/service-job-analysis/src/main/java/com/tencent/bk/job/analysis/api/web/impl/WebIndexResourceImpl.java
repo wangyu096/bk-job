@@ -27,7 +27,7 @@ package com.tencent.bk.job.analysis.api.web.impl;
 import com.tencent.bk.job.analysis.api.web.WebIndexResource;
 import com.tencent.bk.job.analysis.model.web.AnalysisResultVO;
 import com.tencent.bk.job.analysis.service.IndexService;
-import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.model.WebResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
@@ -46,7 +46,7 @@ public class WebIndexResourceImpl implements WebIndexResource {
     }
 
     @Override
-    public ServiceResponse<List<AnalysisResultVO>> listAnalysisResult(String username, Long appId, Long limit) {
-        return ServiceResponse.buildSuccessResp(indexService.listAnalysisResult(username, appId, limit));
+    public WebResponse<List<AnalysisResultVO>> listAnalysisResult(String username, Long appId, Long limit) {
+        return WebResponse.buildSuccessResp(indexService.listAnalysisResult(username, appId, limit));
     }
 }

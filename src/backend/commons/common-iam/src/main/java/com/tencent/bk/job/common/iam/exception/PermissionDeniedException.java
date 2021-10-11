@@ -24,35 +24,28 @@
 
 package com.tencent.bk.job.common.iam.exception;
 
+import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.ServiceException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
-import com.tencent.bk.job.common.model.error.JobError;
-
-import java.util.StringJoiner;
+import com.tencent.bk.job.common.model.error.ErrorType;
+import lombok.Getter;
+import lombok.ToString;
 
 /**
  * 权限不足异常
  */
-public class InSufficientPermissionException extends ServiceException {
-    private AuthResult authResult;
+@Getter
+@ToString
+public class PermissionDeniedException extends ServiceException {
+    private final AuthResult authResult;
 
-    public InSufficientPermissionException(Object[] errorParams) {
-        super(JobError.PERMISSION_DENIED, errorParams);
-    }
 
-    public InSufficientPermissionException(AuthResult authResult) {
-        super(JobError.PERMISSION_DENIED);
+    public PermissionDeniedException(AuthResult authResult) {
+        super(ErrorType.PERMISSION_DENIED, ErrorCode.PERMISSION_DENIED);
         this.authResult = authResult;
     }
 
     public AuthResult getAuthResult() {
         return authResult;
-    }
-
-    @Override
-    public String toString() {
-        return new StringJoiner(", ", InSufficientPermissionException.class.getSimpleName() + "[", "]")
-            .add("authResult=" + authResult)
-            .toString();
     }
 }

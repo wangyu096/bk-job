@@ -24,8 +24,8 @@
 
 package com.tencent.bk.job.common.util.http;
 
-import com.tencent.bk.job.common.exception.ApiException;
-import com.tencent.bk.job.common.model.error.JobError;
+import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.exception.InternalException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -92,7 +92,7 @@ public class HttpConPoolUtil {
      * @param contentType 默认传null则为"application/x-www-form-urlencoded"
      * @return 响应
      */
-    public static String post(String url, String content, String contentType) throws ApiException {
+    public static String post(String url, String content, String contentType) {
         return post(url, CHARSET, content, contentType);
     }
 
@@ -105,7 +105,7 @@ public class HttpConPoolUtil {
      * @param contentType 默认传null则为"application/x-www-form-urlencoded"
      * @return 响应
      */
-    public static String post(String url, String charset, String content, String contentType) throws ApiException {
+    public static String post(String url, String charset, String content, String contentType) {
         try {
             byte[] resp = post(url, content.getBytes(charset), contentType);
             if (null == resp) {
@@ -114,7 +114,7 @@ public class HttpConPoolUtil {
             return new String(resp, charset);
         } catch (IOException e) {
             log.error("Post request fail", e);
-            throw new ApiException(e, JobError.API_ERROR);
+            throw new InternalException(e, ErrorCode.API_ERROR);
         }
     }
 
@@ -125,7 +125,7 @@ public class HttpConPoolUtil {
      * @param content 提交的内容字符串
      * @return 响应
      */
-    public static String post(String url, String content) throws ApiException {
+    public static String post(String url, String content) {
         return post(url, CHARSET, content, "application/x-www-form-urlencoded");
     }
 
@@ -137,7 +137,7 @@ public class HttpConPoolUtil {
      * @param headers 自定义请求头
      * @return 响应
      */
-    public static String post(String url, String content, Header... headers) throws ApiException {
+    public static String post(String url, String content, Header... headers) {
         return post(url, CHARSET, content, headers);
     }
 
@@ -150,7 +150,7 @@ public class HttpConPoolUtil {
      * @param headers 自定义请求头
      * @return 响应
      */
-    public static String post(String url, String charset, String content, Header... headers) throws ApiException {
+    public static String post(String url, String charset, String content, Header... headers) {
         try {
             byte[] resp = post(url, new ByteArrayEntity(content.getBytes(charset)), headers);
             if (null == resp) {
@@ -159,7 +159,7 @@ public class HttpConPoolUtil {
             return new String(resp, charset);
         } catch (IOException e) {
             log.error("Post request fail", e);
-            throw new ApiException(e, JobError.API_ERROR);
+            throw new InternalException(e, ErrorCode.API_ERROR);
         }
     }
 
@@ -171,7 +171,7 @@ public class HttpConPoolUtil {
      * @param contentType 默认传null则为"application/x-www-form-urlencoded"
      * @return 返回字节数组
      */
-    public static byte[] post(String url, byte[] content, String contentType) throws ApiException {
+    public static byte[] post(String url, byte[] content, String contentType) {
         return post(url, new ByteArrayEntity(content), contentType);
     }
 
@@ -183,12 +183,12 @@ public class HttpConPoolUtil {
      * @param contentType   默认传null则为"application/x-www-form-urlencoded"
      * @return 返回字节数组
      */
-    public static byte[] post(String url, HttpEntity requestEntity, String contentType) throws ApiException {
+    public static byte[] post(String url, HttpEntity requestEntity, String contentType) {
         return post(url, requestEntity,
             new BasicHeader("Content-Type", contentType == null ? "application/x-www-form-urlencoded" : contentType));
     }
 
-    public static byte[] post(String url, HttpEntity requestEntity, Header... headers) throws ApiException {
+    public static byte[] post(String url, HttpEntity requestEntity, Header... headers) {
         HttpPost post = new HttpPost(url);
         // 设置为长连接，服务端判断有此参数就不关闭连接。
         post.setHeader("Connection", "Keep-Alive");
@@ -201,13 +201,13 @@ public class HttpConPoolUtil {
                 String errorMsg = buildErrorMessage("Post", url, statusCode,
                     httpResponse.getStatusLine().getReasonPhrase());
                 log.error(errorMsg);
-                throw new ApiException(JobError.API_ERROR, errorMsg);
+                throw new InternalException(ErrorCode.API_ERROR, errorMsg);
             }
             HttpEntity entity = httpResponse.getEntity();
             return EntityUtils.toByteArray(entity);
         } catch (IOException e) {
             log.error("Post request fail", e);
-            throw new ApiException(e, JobError.API_ERROR);
+            throw new InternalException(e, ErrorCode.API_ERROR);
         }
     }
 
@@ -221,15 +221,15 @@ public class HttpConPoolUtil {
      * @param url 提交的地址
      * @return 响应
      */
-    public static String get(String url) throws ApiException {
+    public static String get(String url) {
         return get(url, null);
     }
 
-    public static String get(String url, Header[] header) throws ApiException {
+    public static String get(String url, Header[] header) {
         return get(true, url, header);
     }
 
-    public static String get(boolean keepAlive, String url, Header[] header) throws ApiException {
+    public static String get(boolean keepAlive, String url, Header[] header) {
         HttpGet get = new HttpGet(url);
         if (keepAlive) {
             get.setHeader("Connection", "Keep-Alive");
@@ -242,11 +242,11 @@ public class HttpConPoolUtil {
             return EntityUtils.toString(entity, CHARSET);
         } catch (IOException e) {
             log.error("Get request fail", e);
-            throw new ApiException(e, JobError.API_ERROR);
+            throw new InternalException(e, ErrorCode.API_ERROR);
         }
     }
 
-    public static String delete(String url, String content, Header... headers) throws ApiException {
+    public static String delete(String url, String content, Header... headers) {
         FakeHttpDelete delete = new FakeHttpDelete(url);
         try (CloseableHttpResponse httpResponse = HTTP_CLIENT.execute(delete)) {
             HttpEntity requestEntity = new ByteArrayEntity(content.getBytes(CHARSET));
@@ -257,7 +257,7 @@ public class HttpConPoolUtil {
                 String errorMsg = buildErrorMessage("Delete", url, statusCode,
                     httpResponse.getStatusLine().getReasonPhrase());
                 log.error(errorMsg);
-                throw new ApiException(JobError.API_ERROR, errorMsg);
+                throw new InternalException(ErrorCode.API_ERROR, errorMsg);
             }
             HttpEntity entity = httpResponse.getEntity();
             byte[] respBytes = EntityUtils.toByteArray(entity);
@@ -267,7 +267,7 @@ public class HttpConPoolUtil {
             return new String(EntityUtils.toByteArray(entity), CHARSET);
         } catch (IOException e) {
             log.error("Delete request fail", e);
-            throw new ApiException(e, JobError.API_ERROR);
+            throw new InternalException(e, ErrorCode.API_ERROR);
         }
     }
 

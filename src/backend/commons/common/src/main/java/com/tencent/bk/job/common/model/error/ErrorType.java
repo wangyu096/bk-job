@@ -30,23 +30,19 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum ErrorType {
-    OK(200),
-    CANCELLED(499),
-    UNKNOWN(500),
-    INVALID_ARGUMENT(400),
-    DEADLINE_EXCEEDED(504),
-    NOT_FOUND(404),
-    ALREADY_EXISTS(409),
-    PERMISSION_DENIED(403),
-    RESOURCE_EXHAUSTED(429),
-    FAILED_PRECONDITION(400),
-    ABORTED(409),
-    OUT_OF_RANGE(400),
-    UNIMPLEMENTED(501),
-    INTERNAL(500),
-    UNAVAILABLE(503),
-    DATA_LOSS(500),
-    UNAUTHENTICATED(401);
+    OK(1),
+    INVALID_PARAM(2),
+    FAILED_PRECONDITION(3),
+    UNAUTHENTICATED(4),
+    PERMISSION_DENIED(5),
+    NOT_FOUND(6),
+    ALREADY_EXISTS(7),
+    ABORTED(8),
+    RESOURCE_EXHAUSTED(9),
+    UNIMPLEMENTED(10),
+    INTERNAL(11),
+    UNAVAILABLE(12),
+    TIMEOUT(13);
 
     @JsonValue
     private final int type;

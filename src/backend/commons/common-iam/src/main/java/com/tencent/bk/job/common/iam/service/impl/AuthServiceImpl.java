@@ -37,7 +37,7 @@ import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.constant.ResourceId;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeEnum;
 import com.tencent.bk.job.common.iam.dto.AppIdResult;
-import com.tencent.bk.job.common.iam.exception.InSufficientPermissionException;
+import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.iam.model.PermissionActionResource;
 import com.tencent.bk.job.common.iam.model.PermissionResource;
@@ -511,7 +511,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public <T> EsbResp<T> buildEsbAuthFailResp(InSufficientPermissionException exception) {
+    public <T> EsbResp<T> buildEsbAuthFailResp(PermissionDeniedException exception) {
         return buildEsbAuthFailResp(exception.getAuthResult().getRequiredActionResources());
     }
 

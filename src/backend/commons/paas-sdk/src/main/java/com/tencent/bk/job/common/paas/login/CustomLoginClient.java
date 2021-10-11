@@ -25,7 +25,6 @@
 package com.tencent.bk.job.common.paas.login;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.tencent.bk.job.common.exception.ApiException;
 import com.tencent.bk.job.common.model.dto.BkUserDTO;
 import com.tencent.bk.job.common.util.http.HttpConPoolUtil;
 import com.tencent.bk.job.common.util.json.JsonUtils;
@@ -92,7 +91,7 @@ public class CustomLoginClient implements ILoginClient {
         }
     }
 
-    private String doHttpGet(String uri, Map<String, String> queryParams, String secretField) throws ApiException {
+    private String doHttpGet(String uri, Map<String, String> queryParams, String secretField) {
         boolean error = false;
         long start = System.currentTimeMillis();
         String responseBody = null;
@@ -101,7 +100,7 @@ public class CustomLoginClient implements ILoginClient {
         try {
             responseBody = HttpConPoolUtil.get(false, url, null);
             return responseBody;
-        } catch (ApiException e) {
+        } catch (Throwable e) {
             log.error("doHttpGet| url={}| params={}| exception={}", uri, buildPrintedParams(queryParams, secretField),
                 e.getMessage());
             error = true;

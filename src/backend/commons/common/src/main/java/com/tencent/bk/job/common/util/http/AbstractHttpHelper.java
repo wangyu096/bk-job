@@ -24,9 +24,8 @@
 
 package com.tencent.bk.job.common.util.http;
 
-import com.tencent.bk.job.common.exception.ApiException;
-import com.tencent.bk.job.common.exception.SystemException;
-import com.tencent.bk.job.common.model.error.JobError;
+import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.exception.InternalException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -57,7 +56,7 @@ public abstract class AbstractHttpHelper {
      * @param contentType 默认传null则为"application/x-www-form-urlencoded"
      * @return
      */
-    public String post(String url, String content, String contentType) throws ApiException {
+    public String post(String url, String content, String contentType) {
         return post(url, CHARSET, content, contentType);
     }
 
@@ -70,7 +69,7 @@ public abstract class AbstractHttpHelper {
      * @param contentType 默认传null则为"application/x-www-form-urlencoded"
      * @return 返回字符串
      */
-    public String post(String url, String charset, String content, String contentType) throws ApiException {
+    public String post(String url, String charset, String content, String contentType) {
         try {
             byte[] resp = post(url, content.getBytes(charset), contentType);
             if (null == resp) {
@@ -79,7 +78,7 @@ public abstract class AbstractHttpHelper {
             return new String(resp, charset);
         } catch (IOException e) {
             log.error("Post request fail", e);
-            throw new ApiException(e, JobError.API_ERROR);
+            throw new InternalException(e, ErrorCode.API_ERROR);
         }
     }
 
@@ -90,7 +89,7 @@ public abstract class AbstractHttpHelper {
      * @param content 提交的内容字符串
      * @return 返回字符串
      */
-    public String post(String url, String content) throws ApiException {
+    public String post(String url, String content) {
         return post(url, CHARSET, content, "application/x-www-form-urlencoded");
     }
 
@@ -102,7 +101,7 @@ public abstract class AbstractHttpHelper {
      * @param headers 自定义请求头
      * @return
      */
-    public String post(String url, String content, Header... headers) throws ApiException {
+    public String post(String url, String content, Header... headers) {
         return post(url, CHARSET, content, headers);
     }
 
@@ -121,7 +120,7 @@ public abstract class AbstractHttpHelper {
      * @param headers 自定义请求头
      * @return
      */
-    public String post(String url, String charset, String content, Header... headers) throws ApiException {
+    public String post(String url, String charset, String content, Header... headers) {
         log.debug("post:url={},charset={},content={},headers={}", url, charset, content, headers);
         try {
             byte[] resp = post(url, new ByteArrayEntity(content.getBytes(charset)), headers);
@@ -131,7 +130,7 @@ public abstract class AbstractHttpHelper {
             return new String(resp, charset);
         } catch (IOException e) {
             log.error("Post request fail", e);
-            throw new ApiException(e, JobError.API_ERROR);
+            throw new InternalException(e, ErrorCode.API_ERROR);
         }
     }
 
@@ -143,7 +142,7 @@ public abstract class AbstractHttpHelper {
      * @param contentType 默认传null则为"application/x-www-form-urlencoded"
      * @return 返回字节数组
      */
-    public byte[] post(String url, byte[] content, String contentType) throws ApiException {
+    public byte[] post(String url, byte[] content, String contentType) {
         return post(url, new ByteArrayEntity(content), contentType);
     }
 
@@ -155,12 +154,12 @@ public abstract class AbstractHttpHelper {
      * @param contentType   默认传null则为"application/x-www-form-urlencoded"
      * @return 返回字节数组
      */
-    public byte[] post(String url, HttpEntity requestEntity, String contentType) throws ApiException {
+    public byte[] post(String url, HttpEntity requestEntity, String contentType) {
         return post(url, requestEntity,
             new BasicHeader("Content-Type", contentType == null ? "application/x-www-form-urlencoded" : contentType));
     }
 
-    public byte[] post(String url, HttpEntity requestEntity, Header... headers) throws ApiException {
+    public byte[] post(String url, HttpEntity requestEntity, Header... headers) {
         HttpPost post = new HttpPost(url);
         // 设置为长连接，服务端判断有此参数就不关闭连接。
         post.setHeader("Connection", "Keep-Alive");
@@ -177,13 +176,13 @@ public abstract class AbstractHttpHelper {
                     url,
                     headers
                 );
-                throw new SystemException(JobError.API_ERROR, message);
+                throw new InternalException(ErrorCode.API_ERROR, message);
             }
             HttpEntity entity = httpResponse.getEntity();
             return EntityUtils.toByteArray(entity);
         } catch (IOException e) {
             log.error("Post request fail", e);
-            throw new ApiException(e, JobError.API_ERROR);
+            throw new InternalException(e, ErrorCode.API_ERROR);
         }
     }
 
@@ -193,20 +192,20 @@ public abstract class AbstractHttpHelper {
      * @param url 提交的地址
      * @return
      */
-    public String get(String url) throws ApiException {
+    public String get(String url) {
         return get(url, (Header[]) null);
     }
 
-    public String get(String url, List<Header> headerList) throws ApiException {
+    public String get(String url, List<Header> headerList) {
         Header[] headers = new Header[headerList.size()];
         return get(url, headerList.toArray(headers));
     }
 
-    public String get(String url, Header[] header) throws ApiException {
+    public String get(String url, Header[] header) {
         return get(true, url, header);
     }
 
-    public String get(boolean keepAlive, String url, Header[] header) throws ApiException {
+    public String get(boolean keepAlive, String url, Header[] header) {
         HttpGet get = new HttpGet(url);
         if (keepAlive) {
             get.setHeader("Connection", "Keep-Alive");
@@ -219,11 +218,11 @@ public abstract class AbstractHttpHelper {
             return EntityUtils.toString(entity, CHARSET);
         } catch (IOException e) {
             log.error("Get request fail", e);
-            throw new ApiException(e, JobError.API_ERROR);
+            throw new InternalException(e, ErrorCode.API_ERROR);
         }
     }
 
-    public CloseableHttpResponse getRawResp(boolean keepAlive, String url, Header[] header) throws ApiException {
+    public CloseableHttpResponse getRawResp(boolean keepAlive, String url, Header[] header) {
         HttpGet get = new HttpGet(url);
         if (keepAlive) {
             get.setHeader("Connection", "Keep-Alive");
@@ -235,11 +234,11 @@ public abstract class AbstractHttpHelper {
             return getHttpClient().execute(get);
         } catch (IOException e) {
             log.error("Get request fail", e);
-            throw new ApiException(e, JobError.API_ERROR);
+            throw new InternalException(e, ErrorCode.API_ERROR);
         }
     }
 
-    public String put(String url, HttpEntity requestEntity, Header... headers) throws ApiException {
+    public String put(String url, HttpEntity requestEntity, Header... headers) {
         HttpPut put = new HttpPut(url);
         // 设置为长连接，服务端判断有此参数就不关闭连接。
         put.setHeader("Connection", "Keep-Alive");
@@ -250,17 +249,17 @@ public abstract class AbstractHttpHelper {
             if (statusCode != HttpStatus.SC_OK) {
                 String message = httpResponse.getStatusLine().getReasonPhrase();
                 log.info("Put request fail, statusCode={}, errorReason={}", statusCode, message);
-                throw new SystemException(JobError.API_ERROR, message);
+                throw new InternalException(ErrorCode.API_ERROR, message);
             }
             HttpEntity entity = httpResponse.getEntity();
             return new String(EntityUtils.toByteArray(entity), CHARSET);
         } catch (IOException e) {
             log.error("Put request fail", e);
-            throw new ApiException(e, JobError.API_ERROR);
+            throw new InternalException(e, ErrorCode.API_ERROR);
         }
     }
 
-    public String delete(String url, String content, Header... headers) throws ApiException {
+    public String delete(String url, String content, Header... headers) {
         FakeHttpDelete delete = new FakeHttpDelete(url);
         try (CloseableHttpResponse httpResponse = getHttpClient().execute(delete)) {
             HttpEntity requestEntity = new ByteArrayEntity(content.getBytes(CHARSET));
@@ -270,7 +269,7 @@ public abstract class AbstractHttpHelper {
             if (statusCode != HttpStatus.SC_OK) {
                 String message = httpResponse.getStatusLine().getReasonPhrase();
                 log.info("Delete request fail, url={}, statusCode={}, errorReason={}", url, statusCode, message);
-                throw new SystemException(JobError.API_ERROR, String.format("url=%s,statusCode=%s" +
+                throw new InternalException(ErrorCode.API_ERROR, String.format("url=%s,statusCode=%s" +
                     "，message=%s", url, statusCode, message));
             }
             HttpEntity entity = httpResponse.getEntity();
@@ -281,7 +280,7 @@ public abstract class AbstractHttpHelper {
             return new String(respBytes, CHARSET);
         } catch (IOException e) {
             log.error("Delete request fail", e);
-            throw new ApiException(e, JobError.API_ERROR);
+            throw new InternalException(e, ErrorCode.API_ERROR);
         }
     }
 

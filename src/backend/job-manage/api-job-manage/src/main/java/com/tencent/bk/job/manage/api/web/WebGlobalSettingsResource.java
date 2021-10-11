@@ -25,7 +25,7 @@
 package com.tencent.bk.job.manage.api.web;
 
 import com.tencent.bk.job.common.annotation.WebAPI;
-import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.model.WebResponse;
 import com.tencent.bk.job.manage.model.web.request.globalsetting.AccountNameRulesReq;
 import com.tencent.bk.job.manage.model.web.request.globalsetting.FileUploadSettingReq;
 import com.tencent.bk.job.manage.model.web.request.globalsetting.HistoryExpireReq;
@@ -63,7 +63,7 @@ public interface WebGlobalSettingsResource {
 
     @ApiOperation(value = "获取通知渠道列表及生效状态", produces = "application/json")
     @GetMapping("/notify/listChannels")
-    ServiceResponse<List<NotifyChannelWithIconVO>> listNotifyChannel(
+    WebResponse<List<NotifyChannelWithIconVO>> listNotifyChannel(
         @ApiParam("用户名，网关自动传入")
         @RequestHeader("username")
             String username
@@ -71,7 +71,7 @@ public interface WebGlobalSettingsResource {
 
     @ApiOperation(value = "超级管理员设置启用的通知渠道", produces = "application/json")
     @PostMapping("/notify/setAvailableChannels")
-    ServiceResponse<Integer> setAvailableNotifyChannel(
+    WebResponse<Integer> setAvailableNotifyChannel(
         @ApiParam(value = "用户名，网关自动传入", required = true)
         @RequestHeader("username")
             String username,
@@ -82,7 +82,7 @@ public interface WebGlobalSettingsResource {
 
     @ApiOperation(value = "超级管理员保存消息模板", produces = "application/json")
     @PostMapping("/notify/channelTemplate")
-    ServiceResponse<Integer> saveChannelTemplate(
+    WebResponse<Integer> saveChannelTemplate(
         @ApiParam(value = "用户名，网关自动传入", required = true)
         @RequestHeader("username")
             String username,
@@ -93,7 +93,7 @@ public interface WebGlobalSettingsResource {
 
     @ApiOperation(value = "消息发送预览", produces = "application/json")
     @PostMapping("/notify/channelTemplate/send")
-    ServiceResponse<Integer> sendChannelTemplate(
+    WebResponse<Integer> sendChannelTemplate(
         @ApiParam(value = "用户名，网关自动传入", required = true)
         @RequestHeader("username")
             String username,
@@ -104,7 +104,7 @@ public interface WebGlobalSettingsResource {
 
     @ApiOperation(value = "消息模板详情", produces = "application/json")
     @GetMapping("/notify/channelTemplate/detail")
-    ServiceResponse<ChannelTemplateDetailWithDefaultVO> getChannelTemplateDetail(
+    WebResponse<ChannelTemplateDetailWithDefaultVO> getChannelTemplateDetail(
         @ApiParam("用户名，网关自动传入")
         @RequestHeader("username")
             String username,
@@ -118,7 +118,7 @@ public interface WebGlobalSettingsResource {
 
     @ApiOperation(value = "查询各渠道消息模板配置状态", produces = "application/json")
     @GetMapping("/notify/channelTemplate/configStatus")
-    ServiceResponse<List<ChannelTemplateStatusVO>> listChannelTemplateStatus(
+    WebResponse<List<ChannelTemplateStatusVO>> listChannelTemplateStatus(
         @ApiParam("用户名，网关自动传入")
         @RequestHeader("username")
             String username
@@ -126,7 +126,7 @@ public interface WebGlobalSettingsResource {
 
     @ApiOperation(value = "根据用户英文名前缀拉取用户列表", produces = "application/json")
     @GetMapping("/users/list")
-    ServiceResponse<List<UserVO>> listUsers(
+    WebResponse<List<UserVO>> listUsers(
         @ApiParam("用户名，网关自动传入")
         @RequestHeader("username")
             String username,
@@ -144,7 +144,7 @@ public interface WebGlobalSettingsResource {
 
     @ApiOperation(value = "获取现有通知黑名单用户列表", produces = "application/json")
     @GetMapping("/notify/users/blacklist")
-    ServiceResponse<List<NotifyBlackUserInfoVO>> listNotifyBlackUsers(
+    WebResponse<List<NotifyBlackUserInfoVO>> listNotifyBlackUsers(
         @ApiParam("用户名，网关自动传入")
         @RequestHeader("username")
             String username,
@@ -159,7 +159,7 @@ public interface WebGlobalSettingsResource {
 
     @ApiOperation(value = "设置通知黑名单", produces = "application/json")
     @PostMapping("/notify/users/blacklist")
-    ServiceResponse<List<String>> saveNotifyBlackUsers(
+    WebResponse<List<String>> saveNotifyBlackUsers(
         @ApiParam(value = "用户名，网关自动传入", required = true)
         @RequestHeader("username")
             String username,
@@ -171,7 +171,7 @@ public interface WebGlobalSettingsResource {
 
     @ApiOperation(value = "获取执行历史保留时间", produces = "application/json")
     @GetMapping("/history/expireTime")
-    ServiceResponse<Long> getHistoryExpireTime(
+    WebResponse<Long> getHistoryExpireTime(
         @ApiParam("用户名，网关自动传入")
         @RequestHeader("username")
             String username
@@ -180,7 +180,7 @@ public interface WebGlobalSettingsResource {
 
     @ApiOperation(value = "设置执行历史保留时间", produces = "application/json")
     @PostMapping("/history/expireTime")
-    ServiceResponse<Integer> setHistoryExpireTime(
+    WebResponse<Integer> setHistoryExpireTime(
         @ApiParam(value = "用户名，网关自动传入", required = true)
         @RequestHeader("username")
             String username,
@@ -192,7 +192,7 @@ public interface WebGlobalSettingsResource {
 
     @ApiOperation(value = "获取账号命名规则", produces = "application/json")
     @GetMapping("/account/nameRules")
-    ServiceResponse<AccountNameRulesWithDefaultVO> getAccountNameRules(
+    WebResponse<AccountNameRulesWithDefaultVO> getAccountNameRules(
         @ApiParam("用户名，网关自动传入")
         @RequestHeader("username")
             String username
@@ -201,7 +201,7 @@ public interface WebGlobalSettingsResource {
 
     @ApiOperation(value = "设置账号命名规则", produces = "application/json")
     @PostMapping("/account/setNameRules")
-    ServiceResponse<Boolean> setAccountNameRules(
+    WebResponse<Boolean> setAccountNameRules(
         @ApiParam(value = "用户名，网关自动传入", required = true)
         @RequestHeader("username")
             String username,
@@ -212,7 +212,7 @@ public interface WebGlobalSettingsResource {
 
     @ApiOperation(value = "设置文件上传设置", produces = "application/json")
     @PostMapping("/file/upload")
-    ServiceResponse<Boolean> saveFileUploadSettings(
+    WebResponse<Boolean> saveFileUploadSettings(
         @ApiParam(value = "用户名，网关自动传入", required = true)
         @RequestHeader("username")
             String username,
@@ -224,7 +224,7 @@ public interface WebGlobalSettingsResource {
 
     @ApiOperation(value = "获取执行历史保留时间", produces = "application/json")
     @GetMapping("/file/upload")
-    ServiceResponse<FileUploadSettingVO> getFileUploadSettings(
+    WebResponse<FileUploadSettingVO> getFileUploadSettings(
         @ApiParam("用户名，网关自动传入")
         @RequestHeader("username")
             String username
@@ -232,7 +232,7 @@ public interface WebGlobalSettingsResource {
 
     @ApiOperation(value = "设置Title与Footer", produces = "application/json")
     @PostMapping("/titleFooter")
-    ServiceResponse<Boolean> setTitleFooter(
+    WebResponse<Boolean> setTitleFooter(
         @ApiParam(value = "用户名，网关自动传入", required = true)
         @RequestHeader("username")
             String username,
@@ -243,7 +243,7 @@ public interface WebGlobalSettingsResource {
 
     @ApiOperation(value = "获取Title与Footer", produces = "application/json")
     @GetMapping("/titleFooterWithDefault")
-    ServiceResponse<TitleFooterWithDefaultVO> getTitleFooterWithDefault(
+    WebResponse<TitleFooterWithDefaultVO> getTitleFooterWithDefault(
         @ApiParam(value = "用户名，网关自动传入", required = true)
         @RequestHeader("username")
             String username

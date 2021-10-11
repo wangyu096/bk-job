@@ -42,6 +42,7 @@ import com.tencent.bk.job.backup.service.StorageService;
 import com.tencent.bk.job.backup.service.TaskPlanService;
 import com.tencent.bk.job.backup.service.TaskTemplateService;
 import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.exception.ServiceException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.util.json.JsonMapper;
@@ -273,7 +274,7 @@ public class ImportJobExecutor {
                             "Find or create db account " + account.getAlias() +
                                 "|" + account.getDbSystemAccount().getAlias() + " " + "failed!",
                             LogEntityTypeEnum.ERROR);
-                        throw new ServiceException(-1, "Find or create account failed!");
+                        throw new InternalException(ErrorCode.INTERNAL_ERROR, "Find or create account failed!");
                     }
                     account.getDbSystemAccount().setId(finalAccountIdMap.get(account.getDbSystemAccount().getId()));
                 }
@@ -297,7 +298,7 @@ public class ImportJobExecutor {
                 logService.addImportLog(importJob.getAppId(), importJob.getId(),
                     "Find or create account " + account.getAlias() +
                         " " + "failed!", LogEntityTypeEnum.ERROR);
-                throw new ServiceException(-1, "Find or create account failed!");
+                throw new InternalException(ErrorCode.INTERNAL_ERROR, "Find or create account failed!");
             }
         } else {
             log.debug("Already create account|{}|{}", account.getAppId(), account.getAlias());

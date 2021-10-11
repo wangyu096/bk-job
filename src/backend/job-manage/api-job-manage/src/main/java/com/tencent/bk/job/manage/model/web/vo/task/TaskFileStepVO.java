@@ -26,9 +26,9 @@ package com.tencent.bk.job.manage.model.web.vo.task;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.tencent.bk.job.common.constant.DuplicateHandlerEnum;
+import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.NotExistPathHandlerEnum;
-import com.tencent.bk.job.common.exception.SystemException;
-import com.tencent.bk.job.common.model.error.JobError;
+import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.util.JobContextUtil;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -164,7 +164,7 @@ public class TaskFileStepVO {
             case 4:
                 return DuplicateHandlerEnum.GROUP_BY_DATE_AND_IP.getId();
             default:
-                throw new SystemException(JobError.INTERNAL_ERROR, "illegal param");
+                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
         }
     }
 }

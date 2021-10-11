@@ -24,15 +24,15 @@
 
 package com.tencent.bk.job.common.web.exception;
 
-import com.tencent.bk.job.common.exception.SystemException;
-import com.tencent.bk.job.common.model.error.JobError;
+import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.exception.InternalException;
 
 /**
  * 服务拒绝访问
  */
-public class ServiceNoAuthException extends SystemException {
+public class ServiceNoAuthException extends InternalException {
     public ServiceNoAuthException() {
-        super(JobError.SERVICE_AUTH_FAIL);
+        super(ErrorCode.SERVICE_AUTH_FAIL);
     }
 
 }

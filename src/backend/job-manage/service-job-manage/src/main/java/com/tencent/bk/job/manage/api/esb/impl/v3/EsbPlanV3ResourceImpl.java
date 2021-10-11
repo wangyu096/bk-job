@@ -24,6 +24,7 @@
 
 package com.tencent.bk.job.manage.api.esb.impl.v3;
 
+import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
 import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.common.esb.model.job.v3.EsbPageDataV3;
@@ -34,7 +35,6 @@ import com.tencent.bk.job.common.iam.service.AuthService;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.model.ValidateResult;
-import com.tencent.bk.job.common.model.error.JobError;
 import com.tencent.bk.job.manage.api.esb.v3.EsbPlanV3Resource;
 import com.tencent.bk.job.manage.common.util.IamPathUtil;
 import com.tencent.bk.job.manage.model.dto.TaskPlanQueryDTO;
@@ -178,7 +178,7 @@ public class EsbPlanV3ResourceImpl implements EsbPlanV3Resource {
     private ValidateResult checkRequest(EsbGetPlanListV3Request request) {
         if (request.getAppId() == null || request.getAppId() < 1) {
             log.warn("AppId is empty or illegal!");
-            return ValidateResult.fail(JobError.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME, "bk_biz_id");
+            return ValidateResult.fail(ErrorCode.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME, "bk_biz_id");
         }
         // TODO 暂不校验，后面补上
         return ValidateResult.pass();

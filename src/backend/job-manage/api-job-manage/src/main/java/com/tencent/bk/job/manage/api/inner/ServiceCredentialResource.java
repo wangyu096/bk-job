@@ -26,7 +26,6 @@ package com.tencent.bk.job.manage.api.inner;
 
 import com.tencent.bk.job.common.annotation.InternalAPI;
 import com.tencent.bk.job.common.api.model.InternalResponse;
-import com.tencent.bk.job.common.model.ServiceResponse;
 import com.tencent.bk.job.manage.model.inner.resp.ServiceBasicCredentialDTO;
 import com.tencent.bk.job.manage.model.inner.resp.ServiceCredentialDTO;
 import com.tencent.bk.job.manage.model.web.request.CredentialCreateUpdateReq;
@@ -50,7 +49,7 @@ public interface ServiceCredentialResource {
 
     @ApiOperation(value = "获取凭据详情", produces = "application/json")
     @GetMapping("/ids/{id}")
-    ServiceResponse<ServiceCredentialDTO> getCredentialById(
+    InternalResponse<ServiceCredentialDTO> getCredentialById(
         @ApiParam(value = "业务ID", required = true)
         @PathVariable("appId") Long appId,
         @ApiParam("凭据ID")

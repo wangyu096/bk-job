@@ -26,14 +26,14 @@ package com.tencent.bk.job.crontab.api.web.impl;
 
 import com.google.common.base.CaseFormat;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeEnum;
 import com.tencent.bk.job.common.iam.service.WebAuthService;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
-import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.model.WebResponse;
 import com.tencent.bk.job.common.model.permission.AuthResultVO;
 import com.tencent.bk.job.common.util.JobContextUtil;
 import com.tencent.bk.job.common.util.check.IlegalCharChecker;
@@ -42,7 +42,6 @@ import com.tencent.bk.job.common.util.check.NotEmptyChecker;
 import com.tencent.bk.job.common.util.check.StringCheckHelper;
 import com.tencent.bk.job.common.util.check.TrimChecker;
 import com.tencent.bk.job.common.util.check.exception.StringCheckException;
-import com.tencent.bk.job.common.util.json.JsonUtils;
 import com.tencent.bk.job.crontab.api.web.WebCronJobResource;
 import com.tencent.bk.job.crontab.constant.ExecuteStatusEnum;
 import com.tencent.bk.job.crontab.exception.TaskExecuteAuthFailedException;
@@ -97,7 +96,7 @@ public class WebCronJobResourceImpl implements WebCronJobResource {
     }
 
     @Override
-    public ServiceResponse<PageData<CronJobVO>> listCronJobs(
+    public WebResponse<PageData<CronJobVO>> listCronJobs(
         String username,
         Long appId,
         Long cronJobId,
@@ -113,7 +112,7 @@ public class WebCronJobResourceImpl implements WebCronJobResource {
         AuthResultVO authResultVO = authService.auth(true, username, ActionId.LIST_BUSINESS,
             ResourceTypeEnum.BUSINESS, appId.toString(), null);
         if (!authResultVO.isPass()) {
-            return ServiceResponse.buildAuthFailResp(authResultVO);
+            return WebResponse.buildAuthFailResp(authResultVO);
         }
 
         CronJobInfoDTO cronJobCondition = new CronJobInfoDTO();
@@ -142,8 +141,6 @@ public class WebCronJobResourceImpl implements WebCronJobResource {
         List<CronJobVO> resultCronJobs = new ArrayList<>();
         if (cronJobInfoPageData != null) {
             cronJobInfoPageData.getData().forEach(cronJobInfo -> resultCronJobs.add(CronJobInfoDTO.toVO(cronJobInfo)));
-        } else {
-            return ServiceResponse.buildCommonFailResp(ErrorCode.CRON_JOB_NOT_EXIST, i18nService);
         }
 
         PageData<CronJobVO> resultPageData = new PageData<>();
@@ -155,17 +152,17 @@ public class WebCronJobResourceImpl implements WebCronJobResource {
 
         processCronJobPermission(cronJobCondition.getAppId(), resultPageData);
 
-        ServiceResponse<PageData<CronJobVO>> resp = ServiceResponse.buildSuccessResp(resultPageData);
+        WebResponse<PageData<CronJobVO>> resp = WebResponse.buildSuccessResp(resultPageData);
 
         return resp;
     }
 
     @Override
-    public ServiceResponse<List<CronJobVO>> listCronJobStatistic(String username, Long appId, List<Long> cronJobId) {
+    public WebResponse<List<CronJobVO>> listCronJobStatistic(String username, Long appId, List<Long> cronJobId) {
         AuthResultVO authResultVO = authService.auth(true, username, ActionId.LIST_BUSINESS,
             ResourceTypeEnum.BUSINESS, appId.toString(), null);
         if (!authResultVO.isPass()) {
-            return ServiceResponse.buildAuthFailResp(authResultVO);
+            return WebResponse.buildAuthFailResp(authResultVO);
         }
 
         List<CronJobInfoDTO> cronJobInfoList = cronJobService.listCronJobByIds(appId, cronJobId);
@@ -177,13 +174,11 @@ public class WebCronJobResourceImpl implements WebCronJobResource {
                 cronJobVO.setVariableValue(Collections.emptyList());
                 resultCronJobs.add(cronJobVO);
             });
-        } else {
-            return ServiceResponse.buildCommonFailResp(ErrorCode.CRON_JOB_NOT_EXIST, i18nService);
         }
 
         processCronExecuteHistory(appId, resultCronJobs);
 
-        return ServiceResponse.buildSuccessResp(resultCronJobs);
+        return WebResponse.buildSuccessResp(resultCronJobs);
     }
 
     private void processCronJobPermission(Long appId, PageData<CronJobVO> resultPageData) {
@@ -352,35 +347,35 @@ public class WebCronJobResourceImpl implements WebCronJobResource {
     }
 
     @Override
-    public ServiceResponse<CronJobVO> getCronJobById(String username, Long appId, Long cronJobId) {
+    public WebResponse<CronJobVO> getCronJobById(String username, Long appId, Long cronJobId) {
 
         CronJobVO cronJobVO = CronJobInfoDTO.toVO(cronJobService.getCronJobInfoById(appId, cronJobId));
 
         AuthResultVO authResult = authService.auth(true, username, ActionId.MANAGE_CRON,
             ResourceTypeEnum.CRON, cronJobId.toString(), buildCronJobPathInfo(appId));
         if (authResult.isPass()) {
-            return ServiceResponse.buildSuccessResp(cronJobVO);
+            return WebResponse.buildSuccessResp(cronJobVO);
         } else {
-            return ServiceResponse.buildAuthFailResp(authResult);
+            return WebResponse.buildAuthFailResp(authResult);
         }
     }
 
     @Override
-    public ServiceResponse<Long> saveCronJob(String username, Long appId, Long cronJobId,
-                                             CronJobCreateUpdateReq cronJobCreateUpdateReq) {
+    public WebResponse<Long> saveCronJob(String username, Long appId, Long cronJobId,
+                                         CronJobCreateUpdateReq cronJobCreateUpdateReq) {
 
         if (cronJobId > 0) {
             cronJobCreateUpdateReq.setId(cronJobId);
             AuthResultVO authResult = authService.auth(true, username, ActionId.MANAGE_CRON,
                 ResourceTypeEnum.CRON, cronJobId.toString(), buildCronJobPathInfo(appId));
             if (!authResult.isPass()) {
-                return ServiceResponse.buildAuthFailResp(authResult);
+                return WebResponse.buildAuthFailResp(authResult);
             }
         } else {
             AuthResultVO authResult = authService.auth(true, username, ActionId.CREATE_CRON,
                 ResourceTypeEnum.BUSINESS, appId.toString(), null);
             if (!authResult.isPass()) {
-                return ServiceResponse.buildAuthFailResp(authResult);
+                return WebResponse.buildAuthFailResp(authResult);
             }
         }
         try {
@@ -389,54 +384,47 @@ public class WebCronJobResourceImpl implements WebCronJobResource {
             cronJobCreateUpdateReq.setName(stringCheckHelper.checkAndGetResult(cronJobCreateUpdateReq.getName()));
         } catch (StringCheckException e) {
             log.warn("Cron Job Name is invalid:", e);
-            return ServiceResponse.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM,
-                i18nService.getI18n(String.valueOf(ErrorCode.ILLEGAL_PARAM)));
+            throw new InvalidParamException(e, ErrorCode.ILLEGAL_PARAM);
         }
         CronJobInfoDTO cronJobInfoDTO = CronJobInfoDTO.fromReq(username, appId, cronJobCreateUpdateReq);
         if (cronJobInfoDTO.validate()) {
             try {
                 Long finalCronJobId = cronJobService.saveCronJobInfo(cronJobInfoDTO);
-                return ServiceResponse.buildSuccessResp(finalCronJobId);
+                return WebResponse.buildSuccessResp(finalCronJobId);
             } catch (TaskExecuteAuthFailedException e) {
-                return ServiceResponse.buildAuthFailResp(e.getAuthResultVO());
+                return WebResponse.buildAuthFailResp(e.getAuthResultVO());
             }
         } else {
             log.warn("Validate cron job failed!|{}", JobContextUtil.getDebugMessage());
-            return ServiceResponse.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM,
-                i18nService.getI18n(String.valueOf(ErrorCode.ILLEGAL_PARAM))
-                    + JsonUtils.toJson(JobContextUtil.getDebugMessage()));
+            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
         }
     }
 
     @Override
-    public ServiceResponse<Boolean> deleteCronJob(String username, Long appId, Long cronJobId) {
+    public WebResponse<Boolean> deleteCronJob(String username, Long appId, Long cronJobId) {
         AuthResultVO authResult = authService.auth(true, username, ActionId.MANAGE_CRON,
             ResourceTypeEnum.CRON, cronJobId.toString(), buildCronJobPathInfo(appId));
         if (authResult.isPass()) {
-            return ServiceResponse.buildSuccessResp(cronJobService.deleteCronJobInfo(appId, cronJobId));
+            return WebResponse.buildSuccessResp(cronJobService.deleteCronJobInfo(appId, cronJobId));
         } else {
-            return ServiceResponse.buildAuthFailResp(authResult);
+            return WebResponse.buildAuthFailResp(authResult);
         }
     }
 
     @Override
-    public ServiceResponse<Boolean> changeCronJobEnableStatus(String username, Long appId, Long cronJobId,
-                                                              Boolean enable) {
-        try {
-            AuthResultVO authResult = authService.auth(true, username, ActionId.MANAGE_CRON,
-                ResourceTypeEnum.CRON, cronJobId.toString(), buildCronJobPathInfo(appId));
-            if (authResult.isPass()) {
-                try {
-                    return ServiceResponse
-                        .buildSuccessResp(cronJobService.changeCronJobEnableStatus(username, appId, cronJobId, enable));
-                } catch (TaskExecuteAuthFailedException e) {
-                    return ServiceResponse.buildAuthFailResp(e.getAuthResultVO());
-                }
-            } else {
-                return ServiceResponse.buildAuthFailResp(authResult);
+    public WebResponse<Boolean> changeCronJobEnableStatus(String username, Long appId, Long cronJobId,
+                                                          Boolean enable) {
+        AuthResultVO authResult = authService.auth(true, username, ActionId.MANAGE_CRON,
+            ResourceTypeEnum.CRON, cronJobId.toString(), buildCronJobPathInfo(appId));
+        if (authResult.isPass()) {
+            try {
+                return WebResponse
+                    .buildSuccessResp(cronJobService.changeCronJobEnableStatus(username, appId, cronJobId, enable));
+            } catch (TaskExecuteAuthFailedException e) {
+                return WebResponse.buildAuthFailResp(e.getAuthResultVO());
             }
-        } catch (ServiceException e) {
-            return ServiceResponse.buildCommonFailResp(e, i18nService);
+        } else {
+            return WebResponse.buildAuthFailResp(authResult);
         }
     }
 
@@ -445,18 +433,18 @@ public class WebCronJobResourceImpl implements WebCronJobResource {
     }
 
     @Override
-    public ServiceResponse<Boolean> checkCronJobName(String username, Long appId, Long cronJobId, String name) {
+    public WebResponse<Boolean> checkCronJobName(String username, Long appId, Long cronJobId, String name) {
         AuthResultVO authResultVO = authService.auth(true, username, ActionId.LIST_BUSINESS,
             ResourceTypeEnum.BUSINESS, appId.toString(), null);
         if (!authResultVO.isPass()) {
-            return ServiceResponse.buildAuthFailResp(authResultVO);
+            return WebResponse.buildAuthFailResp(authResultVO);
         }
-        return ServiceResponse.buildSuccessResp(cronJobService.checkCronJobName(appId, cronJobId, name));
+        return WebResponse.buildSuccessResp(cronJobService.checkCronJobName(appId, cronJobId, name));
     }
 
     @Override
-    public ServiceResponse<Boolean> batchUpdateCronJob(String username, Long appId,
-                                                       BatchUpdateCronJobReq batchUpdateCronJobReq) {
+    public WebResponse<Boolean> batchUpdateCronJob(String username, Long appId,
+                                                   BatchUpdateCronJobReq batchUpdateCronJobReq) {
         List<String> cronJobInstanceList = new ArrayList<>();
         batchUpdateCronJobReq.getCronJobInfoList()
             .forEach(cronJobCreateUpdateReq -> cronJobInstanceList.add(cronJobCreateUpdateReq.getId().toString()));
@@ -464,18 +452,18 @@ public class WebCronJobResourceImpl implements WebCronJobResource {
             authService.batchAuth(username, ActionId.MANAGE_CRON, appId, ResourceTypeEnum.CRON, cronJobInstanceList)
                 .parallelStream().map(Long::valueOf).collect(Collectors.toList());
         if (allowed.size() == cronJobInstanceList.size()) {
-            return ServiceResponse.buildSuccessResp(cronJobService.batchUpdateCronJob(appId, batchUpdateCronJobReq));
+            return WebResponse.buildSuccessResp(cronJobService.batchUpdateCronJob(appId, batchUpdateCronJobReq));
         } else {
-            return ServiceResponse.buildCommonFailResp(ErrorCode.BK_PERMISSION_DENIED);
+            return WebResponse.buildCommonFailResp(ErrorCode.BK_PERMISSION_DENIED);
         }
     }
 
     @Override
-    public ServiceResponse<List<CronJobVO>> getCronJobListByPlanId(String username, Long appId, Long planId) {
+    public WebResponse<List<CronJobVO>> getCronJobListByPlanId(String username, Long appId, Long planId) {
         AuthResultVO authResultVO = authService.auth(true, username, ActionId.LIST_BUSINESS,
             ResourceTypeEnum.BUSINESS, appId.toString(), null);
         if (!authResultVO.isPass()) {
-            return ServiceResponse.buildAuthFailResp(authResultVO);
+            return WebResponse.buildAuthFailResp(authResultVO);
         }
 
         List<CronJobInfoDTO> cronJobInfoList = cronJobService.listCronJobByPlanId(appId, planId);
@@ -483,19 +471,19 @@ public class WebCronJobResourceImpl implements WebCronJobResource {
             List<CronJobVO> cronJobList =
                 cronJobInfoList.parallelStream().map(CronJobInfoDTO::toBasicVO).collect(Collectors.toList());
             processCronJobPermission(appId, cronJobList);
-            return ServiceResponse.buildSuccessResp(cronJobList);
+            return WebResponse.buildSuccessResp(cronJobList);
         } else {
-            return ServiceResponse.buildSuccessResp(Collections.emptyList());
+            return WebResponse.buildSuccessResp(Collections.emptyList());
         }
     }
 
     @Override
-    public ServiceResponse<Map<Long, List<CronJobVO>>> getCronJobListByPlanIdList(String username, Long appId,
-                                                                                  List<Long> planIdList) {
+    public WebResponse<Map<Long, List<CronJobVO>>> getCronJobListByPlanIdList(String username, Long appId,
+                                                                              List<Long> planIdList) {
         AuthResultVO authResultVO = authService.auth(true, username, ActionId.LIST_BUSINESS,
             ResourceTypeEnum.BUSINESS, appId.toString(), null);
         if (!authResultVO.isPass()) {
-            return ServiceResponse.buildAuthFailResp(authResultVO);
+            return WebResponse.buildAuthFailResp(authResultVO);
         }
 
         Map<Long, List<CronJobInfoDTO>> cronJobInfoMap = cronJobService.listCronJobByPlanIds(appId, planIdList);
@@ -508,20 +496,20 @@ public class WebCronJobResourceImpl implements WebCronJobResource {
                 processCronJobPermission(appId, cronJobList);
                 cronJobMap.put(cronJobInfoListEntity.getKey(), cronJobList);
             }
-            return ServiceResponse.buildSuccessResp(cronJobMap);
+            return WebResponse.buildSuccessResp(cronJobMap);
         } else {
-            return ServiceResponse.buildSuccessResp(Collections.emptyMap());
+            return WebResponse.buildSuccessResp(Collections.emptyMap());
         }
     }
 
     @Override
-    public ServiceResponse<PageData<CronJobLaunchHistoryVO>> getCronJobLaunchHistory(String username, Long appId,
-                                                                                     Long cronJobId, Integer start,
-                                                                                     Integer pageSize) {
+    public WebResponse<PageData<CronJobLaunchHistoryVO>> getCronJobLaunchHistory(String username, Long appId,
+                                                                                 Long cronJobId, Integer start,
+                                                                                 Integer pageSize) {
         AuthResultVO authResultVO = authService.auth(true, username, ActionId.LIST_BUSINESS,
             ResourceTypeEnum.BUSINESS, appId.toString(), null);
         if (!authResultVO.isPass()) {
-            return ServiceResponse.buildAuthFailResp(authResultVO);
+            return WebResponse.buildAuthFailResp(authResultVO);
         }
 
         CronJobInfoDTO cronJobInfo = cronJobService.getCronJobInfoById(appId, cronJobId);
@@ -548,7 +536,7 @@ public class WebCronJobResourceImpl implements WebCronJobResource {
                 resultPageData.setPageSize(pageSize);
                 resultPageData.setTotal(0L);
                 resultPageData.setData(Collections.emptyList());
-                return ServiceResponse.buildSuccessResp(resultPageData);
+                return WebResponse.buildSuccessResp(resultPageData);
             }
 
             PageData<CronJobLaunchHistoryVO> resultPageData = new PageData<>();
@@ -557,8 +545,8 @@ public class WebCronJobResourceImpl implements WebCronJobResource {
             resultPageData.setTotal(cronJobHistoryPageData.getTotal());
             resultPageData.setData(resultCronJobHistories);
 
-            return ServiceResponse.buildSuccessResp(resultPageData);
+            return WebResponse.buildSuccessResp(resultPageData);
         }
-        return ServiceResponse.buildCommonFailResp(ErrorCode.CRON_JOB_NOT_EXIST);
+        return WebResponse.buildCommonFailResp(ErrorCode.CRON_JOB_NOT_EXIST);
     }
 }

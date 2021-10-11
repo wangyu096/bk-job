@@ -29,7 +29,6 @@ import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeEnum;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.iam.service.AuthService;
-import com.tencent.bk.job.common.model.ServiceResponse;
 import com.tencent.bk.job.manage.api.inner.ServiceCredentialResource;
 import com.tencent.bk.job.manage.model.inner.resp.ServiceBasicCredentialDTO;
 import com.tencent.bk.job.manage.model.inner.resp.ServiceCredentialDTO;
@@ -56,9 +55,9 @@ public class ServiceCredentialResourceImpl implements ServiceCredentialResource 
     }
 
     @Override
-    public ServiceResponse<ServiceCredentialDTO> getCredentialById(Long appId, String id) {
+    public InternalResponse<ServiceCredentialDTO> getCredentialById(Long appId, String id) {
         ServiceCredentialDTO serviceCredentialDTO = credentialService.getServiceCredentialById(appId, id);
-        return ServiceResponse.buildSuccessResp(serviceCredentialDTO);
+        return InternalResponse.buildSuccessResp(serviceCredentialDTO);
     }
 
     @Override

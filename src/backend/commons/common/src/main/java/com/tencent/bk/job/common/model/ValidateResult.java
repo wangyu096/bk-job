@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.common.model;
 
-import com.tencent.bk.job.common.model.error.JobError;
+import com.tencent.bk.job.common.constant.ErrorCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -49,32 +49,32 @@ public class ValidateResult {
     /**
      * 错误码
      */
-    private JobError error;
+    private Integer errorCode;
 
     /**
      * 错误信息参数值
      */
     private Object[] errorParams;
 
-    public ValidateResult(boolean isPass, JobError error, Object[] errorParams) {
+    public ValidateResult(boolean isPass, Integer errorCode, Object[] errorParams) {
         this.pass = isPass;
-        this.error = error;
+        this.errorCode = errorCode;
         this.errorParams = errorParams;
     }
 
     public static ValidateResult pass() {
-        return new ValidateResult(true, null, null);
+        return new ValidateResult(true, ErrorCode.RESULT_OK, null);
     }
 
-    public static ValidateResult fail(JobError error, Object[] errorParams) {
-        return new ValidateResult(false, error, errorParams);
+    public static ValidateResult fail(Integer errorCode, Object[] errorParams) {
+        return new ValidateResult(false, errorCode, errorParams);
     }
 
-    public static ValidateResult fail(JobError error) {
-        return new ValidateResult(false, error, null);
+    public static ValidateResult fail(Integer errorCode) {
+        return new ValidateResult(false, errorCode, null);
     }
 
-    public static ValidateResult fail(JobError error, Object errorParam1) {
-        return new ValidateResult(false, error, new Object[]{errorParam1});
+    public static ValidateResult fail(Integer errorCode, Object errorParam1) {
+        return new ValidateResult(false, errorCode, new Object[]{errorParam1});
     }
 }

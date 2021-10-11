@@ -76,8 +76,8 @@ public class ErrorCode {
     public static final int ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON = 1241010;
     // 尚未支持的功能
     public static final int NOT_SUPPORT_FEATURE = 1241011;
-    // 数据一致性异常，源数据：{0}，目标数据：{1}
-    public static final int DATA_CONSISTENCY_ERROR = 1241012;
+
+    public static final int ILLEGAL_PARAM_WITH_REASON = 1241012;
     // 业务通用 end
 
     // 配置服务 start
@@ -176,6 +176,8 @@ public class ErrorCode {
     public static final int BATCH_UPDATE_PLAN_VARIABLE_FAILED = 1243046;
     // 脚本版本不存在
     public static final int SCRIPT_VERSION_NOT_EXIST = 1243047;
+    // 凭证不存在
+    public static final int CREDENTIAL_NOT_EXIST = 1243048;
 
     // 作业管理 end
 
@@ -220,6 +222,8 @@ public class ErrorCode {
     public static final int DANGEROUS_SCRIPT_FORBIDDEN_EXECUTION = 1244019;
     // 作业执行历史查询时间范围必须小于30天
     public static final int TASK_INSTANCE_QUERY_TIME_SPAN_MORE_THAN_30_DAYS = 1244020;
+    public static final int FILE_TASKS_EXCEEDS_LIMIT = 1244021;
+
     // 作业执行 end
 
     // 定时作业 start
@@ -252,11 +256,11 @@ public class ErrorCode {
     // 文件源不存在:{0}
     public static final int FILE_SOURCE_NOT_EXIST = 1260001;
     // 接入点响应异常：ListBucket，详情：{0}
-    public static final int FAIL_TO_REQUEST_FILE_WORKER_LIST_BUCKET = 1260002;
-    // 接入点响应异常：ListObjects，详情：{0}
-    public static final int FAIL_TO_REQUEST_FILE_WORKER_LIST_OBJECTS = 1260003;
-    // 接入点响应异常：DeleteBucket，详情：{0}
-    public static final int FAIL_TO_REQUEST_FILE_WORKER_DELETE_BUCKET = 1260008;
+    public static final int FAIL_TO_REQUEST_FILE_WORKER_LIST_FILE_NODE = 1260002;
+    // 接入点响应异常：FileAvailable，详情：{0}
+    public static final int FAIL_TO_REQUEST_FILE_WORKER_FILE_AVAILABLE = 1260003;
+    // 接入点响应异常：ExecuteAction，详情：{0}
+    public static final int FAIL_TO_REQUEST_FILE_WORKER_EXECUTE_ACTION = 1260008;
     // 接入点响应异常：DeleteBucketFile，详情：{0}
     public static final int FAIL_TO_REQUEST_FILE_WORKER_DELETE_BUCKET_FILE = 1260009;
 
@@ -304,7 +308,7 @@ public class ErrorCode {
 
     // ========= 系统错误-请求 ====================//
     // 内部服务异常
-    public static final int SERVICE_INTERNAL_ERROR = 1240002;
+    public static final int INTERNAL_ERROR = 1240002;
     // 错误的请求
     public static final int BAD_REQUEST = 1240003;
     // Cookie过期或者不存在
@@ -369,7 +373,7 @@ public class ErrorCode {
     // IAM接口返回数据结构异常- 一般是被网关防火墙重定向返回统一登录页面
     public static final int IAM_API_DATA_ERROR = 1215001;
 
-    // ESB接口返回数据结构异常- 一般是被网关防火墙重定向返回统一登录页面
-    public static final int ESB_API_DATA_ERROR = 1216001;
+    // API 请求错误
+    public static final int API_ERROR = 1216001;
 
 }

@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.file.worker.api;
 
-import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.model.WebResponse;
 import com.tencent.bk.job.file.worker.cos.service.FileTaskService;
 import com.tencent.bk.job.file.worker.cos.service.RemoteClient;
 import com.tencent.bk.job.file.worker.cos.service.ThreadCommandBus;
@@ -49,27 +49,27 @@ public abstract class FileTaskResourceImpl implements RemoteClientAccess, FileTa
     public abstract RemoteClient getRemoteClient(BaseReq req);
 
     @Override
-    public ServiceResponse<Integer> downloadFiles(DownloadFilesTaskReq req) {
+    public WebResponse<Integer> downloadFiles(DownloadFilesTaskReq req) {
         log.debug("req={}", req);
         RemoteClient remoteClient = getRemoteClient(req);
-        return ServiceResponse.buildSuccessResp(fileTaskService.downloadFiles(remoteClient, req.getTaskId(),
+        return WebResponse.buildSuccessResp(fileTaskService.downloadFiles(remoteClient, req.getTaskId(),
             req.getFilePathList(), req.getFilePrefix()));
     }
 
     @Override
-    public ServiceResponse<Integer> stopTasks(StopTasksReq req) {
+    public WebResponse<Integer> stopTasks(StopTasksReq req) {
         List<String> taskIdList = req.getTaskIdList();
         Integer count;
         count = fileTaskService.stopTasksAtOnce(taskIdList,
             new ThreadCommandBus.Command(TaskCommandEnum.valueOf(req.getTaskCommand()), null));
-        return ServiceResponse.buildSuccessResp(count);
+        return WebResponse.buildSuccessResp(count);
     }
 
     @Override
-    public ServiceResponse<Integer> clearFiles(ClearTaskFilesReq req) {
+    public WebResponse<Integer> clearFiles(ClearTaskFilesReq req) {
         List<String> taskIdList = req.getTaskIdList();
         Integer count = 0;
         count = fileTaskService.clearTaskFilesAtOnce(taskIdList);
-        return ServiceResponse.buildSuccessResp(count);
+        return WebResponse.buildSuccessResp(count);
     }
 }

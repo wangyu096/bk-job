@@ -26,9 +26,10 @@ package com.tencent.bk.job.common.paas.user;
 
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.common.esb.sdk.AbstractEsbSdkClient;
-import com.tencent.bk.job.common.exception.PaasApiException;
+import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.model.dto.BkUserDTO;
 import com.tencent.bk.job.common.paas.model.EsbListUsersResult;
 import com.tencent.bk.job.common.paas.model.EsbNotifyChannelDTO;
@@ -138,7 +139,7 @@ public class EEPaasClient extends AbstractEsbSdkClient implements IPaasClient {
         } catch (Exception e) {
             String errorMsg = "Get " + API_GET_USER_LIST + " error";
             log.error(errorMsg, e);
-            throw new PaasApiException(e, errorMsg);
+            throw new InternalException(e, ErrorCode.PAAS_API_DATA_ERROR, errorMsg);
         }
         if (oriUsers == null || oriUsers.isEmpty()) {
             return null;

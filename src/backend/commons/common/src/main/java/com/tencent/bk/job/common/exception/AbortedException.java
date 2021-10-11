@@ -25,32 +25,51 @@
 package com.tencent.bk.job.common.exception;
 
 import com.tencent.bk.job.common.model.error.ErrorType;
+import lombok.Getter;
+import lombok.ToString;
 
 /**
- * 系统异常
+ * 并发冲突，例如读取/修改/写入冲突
  */
-public class SystemException extends ServiceException {
-    public SystemException(int errorCode) {
-        super(ErrorType.INTERNAL_ERROR.getType(), errorCode);
+@Getter
+@ToString
+public class AbortedException extends ServiceException {
+
+    public AbortedException(Integer errorCode) {
+        super(ErrorType.ABORTED, errorCode);
     }
 
-    public SystemException(int errorCode, String errorMsg) {
-        super(ErrorType.INTERNAL_ERROR.getType(), errorCode, errorMsg);
+    public AbortedException(Integer errorCode, Object[] errorParams) {
+        super(ErrorType.ABORTED, errorCode, errorParams);
     }
 
-    public SystemException(int errorCode, Object[] errorParams) {
-        super(ErrorType.INTERNAL_ERROR.getType(), errorCode, errorParams);
+    public AbortedException(Integer errorCode, Object errorParam) {
+        super(ErrorType.ABORTED, errorCode, errorParam);
     }
 
-    public SystemException(Throwable cause, int errorCode, Object[] errorParams) {
-        super(cause, errorCode, errorParams);
+    public AbortedException(Throwable cause, Integer errorCode) {
+        super(cause, ErrorType.ABORTED, errorCode);
     }
 
-    public SystemException(int errorCode, Object errorParam) {
-        super(errorCode, errorParam);
+    public AbortedException(Throwable cause, Integer errorCode, Object[] errorParams) {
+        super(cause, ErrorType.ABORTED, errorCode, errorParams);
     }
 
-    public SystemException(Throwable cause, int errorCode, String errorMsg) {
-        super(cause, errorCode, errorMsg);
+    public AbortedException(Throwable cause, Integer errorCode, Object errorParam) {
+        super(cause, ErrorType.ABORTED, errorCode, errorParam);
+    }
+
+    public AbortedException(String message, Throwable cause, Integer errorCode) {
+        super(message, cause, ErrorType.ABORTED, errorCode);
+    }
+
+    public AbortedException(String message, Throwable cause, Integer errorCode,
+                            Object[] errorParams) {
+        super(message, cause, ErrorType.ABORTED, errorCode, errorParams);
+    }
+
+    public AbortedException(String message, Throwable cause, Integer errorCode,
+                            Object errorParam) {
+        super(message, cause, ErrorType.ABORTED, errorCode, errorParam);
     }
 }
