@@ -96,7 +96,6 @@ import com.tencent.bk.job.common.util.JobContextUtil;
 import com.tencent.bk.job.common.util.Utils;
 import com.tencent.bk.job.common.util.http.AbstractHttpHelper;
 import com.tencent.bk.job.common.util.http.LongRetryableHttpHelper;
-import com.tencent.bk.job.common.util.json.JsonMapper;
 import com.tencent.bk.job.common.util.json.JsonUtils;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
@@ -131,11 +130,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
 
-    /**
-     * CMDB API 处理请求成功
-     */
-    private static final int RESULT_OK = 0;
-
     private static final String SEARCH_BIZ_INST_TOPO = "/api/c/compapi/v2/cc/search_biz_inst_topo/";
     private static final String GET_BIZ_INTERNAL_MODULE = "/api/c/compapi/v2/cc/get_biz_internal_module/";
     private static final String LIST_BIZ_HOSTS = "/api/c/compapi/v2/cc/list_biz_hosts/";
@@ -153,7 +147,6 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
     private static final String GET_BIZ_BRIEF_CACHE_TOPO = "/api/c/compapi/v2/cc/get_biz_brief_cache_topo/";
 
     private static final Map<String, String> interfaceNameMap = new HashMap<>();
-    private static final JsonMapper JSON_MAPPER = JsonMapper.nonDefaultMapper();
     private static final ConcurrentHashMap<String, Pair<InstanceTopologyDTO, Long>> bizInstTopoMap =
         new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, ReentrantLock> bizInstTopoLockMap = new ConcurrentHashMap<>();
@@ -464,7 +457,7 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
         }
     }
 
-    public <R> EsbResp<R> getEsbRespByReq(String method,
+    public <R> EsbResp<R> requestCmdbApi(String method,
                                           String uri,
                                           EsbReq reqBody,
                                           TypeReference<EsbResp<R>> typeReference,
@@ -1514,7 +1507,7 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
         req.setResource("host");
         req.setCursor(cursor);
         req.setStartTime(startTime);
-        EsbResp<ResourceWatchResult<HostEventDetail>> esbResp = getEsbRespByReq(HttpPost.METHOD_NAME, RESOURCE_WATCH,
+        EsbResp<ResourceWatchResult<HostEventDetail>> esbResp = requestCmdbApi(HttpPost.METHOD_NAME, RESOURCE_WATCH,
             req, new TypeReference<EsbResp<ResourceWatchResult<HostEventDetail>>>() {
             }, new LongRetryableHttpHelper());
         return esbResp.getData();
@@ -1528,7 +1521,7 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
         req.setResource("host_relation");
         req.setCursor(cursor);
         req.setStartTime(startTime);
-        EsbResp<ResourceWatchResult<HostRelationEventDetail>> esbResp = getEsbRespByReq(HttpPost.METHOD_NAME,
+        EsbResp<ResourceWatchResult<HostRelationEventDetail>> esbResp = requestCmdbApi(HttpPost.METHOD_NAME,
             RESOURCE_WATCH, req, new TypeReference<EsbResp<ResourceWatchResult<HostRelationEventDetail>>>() {
             }, new LongRetryableHttpHelper());
         return esbResp.getData();
@@ -1543,7 +1536,7 @@ public class EsbCcClient extends AbstractEsbSdkClient implements CcClient {
         req.setResource("biz");
         req.setCursor(cursor);
         req.setStartTime(startTime);
-        EsbResp<ResourceWatchResult<AppEventDetail>> esbResp = getEsbRespByReq(HttpPost.METHOD_NAME, RESOURCE_WATCH,
+        EsbResp<ResourceWatchResult<AppEventDetail>> esbResp = requestCmdbApi(HttpPost.METHOD_NAME, RESOURCE_WATCH,
             req, new TypeReference<EsbResp<ResourceWatchResult<AppEventDetail>>>() {
             }, new LongRetryableHttpHelper());
         return esbResp.getData();

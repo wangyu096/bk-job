@@ -198,7 +198,7 @@ public class ArtifactoryClient {
         }
     }
 
-    private <T, R> R getArtifactoryRespByReq(
+    private <R> R getArtifactoryRespByReq(
         String method,
         String url,
         ArtifactoryReq reqBody,
