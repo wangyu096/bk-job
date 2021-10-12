@@ -25,7 +25,7 @@
 package com.tencent.bk.job.crontab.api.inner;
 
 import com.tencent.bk.job.common.annotation.EsbAPI;
-import com.tencent.bk.job.common.api.model.InternalResponse;
+import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.crontab.model.inner.ServiceInnerCronJobInfoDTO;
 import com.tencent.bk.job.crontab.model.inner.request.ServiceAddInnerCronJobRequestDTO;
 import io.swagger.annotations.Api;

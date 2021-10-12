@@ -25,7 +25,7 @@
 package com.tencent.bk.job.file.worker.api;
 
 import com.tencent.bk.job.common.annotation.InternalAPI;
-import com.tencent.bk.job.common.api.model.InternalResponse;
+import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.file.worker.model.req.BaseReq;
 import com.tencent.bk.job.file.worker.model.req.ExecuteActionReq;
 import com.tencent.bk.job.file.worker.model.req.ListFileNodeReq;

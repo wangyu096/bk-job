@@ -24,9 +24,9 @@
 
 package com.tencent.bk.job.file_gateway.api.inner;
 
-import com.tencent.bk.job.common.api.model.InternalResponse;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.file_gateway.model.dto.FileSourceDTO;
 import com.tencent.bk.job.file_gateway.service.FileSourceService;
 import lombok.extern.slf4j.Slf4j;

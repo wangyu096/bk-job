@@ -24,8 +24,8 @@
 
 package com.tencent.bk.job.crontab.service.impl;
 
-import com.tencent.bk.job.common.api.model.InternalResponse;
 import com.tencent.bk.job.common.constant.AppTypeEnum;
+import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.common.model.dto.ApplicationInfoDTO;
 import com.tencent.bk.job.common.service.CommonApplicationService;
 import com.tencent.bk.job.crontab.client.ServiceApplicationResourceClient;

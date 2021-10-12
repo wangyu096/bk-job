@@ -22,8 +22,9 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.feign;
+package com.tencent.bk.job.common.web.feign;
 
+import com.tencent.bk.job.common.feign.FeignAddHeaderRequestInterceptor;
 import feign.codec.ErrorDecoder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

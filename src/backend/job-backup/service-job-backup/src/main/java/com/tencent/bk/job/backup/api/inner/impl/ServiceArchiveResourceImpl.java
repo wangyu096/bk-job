@@ -28,7 +28,7 @@ import com.tencent.bk.job.backup.api.inner.ServiceArchiveResource;
 import com.tencent.bk.job.backup.archive.JobExecuteArchiveManage;
 import com.tencent.bk.job.backup.config.ArchiveConfig;
 import com.tencent.bk.job.backup.model.inner.ServiceArchiveDBRequest;
-import com.tencent.bk.job.common.api.model.InternalResponse;
+import com.tencent.bk.job.common.model.InternalResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;

@@ -24,9 +24,9 @@
 
 package com.tencent.bk.job.file.worker.api;
 
-import com.tencent.bk.job.common.api.model.InternalResponse;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.file.worker.consts.FileSourceTypeEnum;
 import com.tencent.bk.job.file.worker.cos.service.RemoteClient;
 import com.tencent.bk.job.file.worker.model.req.BaseReq;

@@ -39,7 +39,6 @@ import lombok.ToString;
 public class PermissionDeniedException extends ServiceException {
     private final AuthResult authResult;
 
-
     public PermissionDeniedException(AuthResult authResult) {
         super(ErrorType.PERMISSION_DENIED, ErrorCode.PERMISSION_DENIED);
         this.authResult = authResult;

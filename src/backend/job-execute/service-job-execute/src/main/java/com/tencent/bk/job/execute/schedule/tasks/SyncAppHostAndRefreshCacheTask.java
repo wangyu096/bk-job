@@ -24,8 +24,8 @@
 
 package com.tencent.bk.job.execute.schedule.tasks;
 
-import com.tencent.bk.job.common.api.model.InternalResponse;
 import com.tencent.bk.job.common.constant.AppTypeEnum;
+import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.common.model.dto.ApplicationInfoDTO;
 import com.tencent.bk.job.execute.model.db.CacheHostDO;
 import com.tencent.bk.job.execute.service.ApplicationService;

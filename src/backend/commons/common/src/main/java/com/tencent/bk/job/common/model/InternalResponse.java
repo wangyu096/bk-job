@@ -22,16 +22,15 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.api.model;
+package com.tencent.bk.job.common.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.ServiceException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
-import com.tencent.bk.job.common.iam.model.AuthResult;
-import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.model.error.ErrorDetail;
 import com.tencent.bk.job.common.model.error.ErrorType;
+import com.tencent.bk.job.common.model.iam.AuthResultDTO;
 import com.tencent.bk.job.common.util.I18nUtil;
 import com.tencent.bk.job.common.util.JobContextUtil;
 import io.swagger.annotations.ApiModel;
@@ -73,7 +72,7 @@ public class InternalResponse<T> {
 
     @ApiModelProperty("鉴权结果，当返回码为1238001时，该字段有值")
     @JsonProperty("authResult")
-    private AuthResult authResult;
+    private AuthResultDTO authResult;
 
     @ApiModelProperty("错误详情")
     @JsonProperty("errorDetail")
@@ -101,7 +100,7 @@ public class InternalResponse<T> {
         return new InternalResponse<>(ErrorType.OK, SUCCESS_CODE, data);
     }
 
-    public static <T> InternalResponse<T> buildAuthFailResp(AuthResult authResult) {
+    public static <T> InternalResponse<T> buildAuthFailResp(AuthResultDTO authResult) {
         InternalResponse<T> resp = new InternalResponse<>(ErrorType.PERMISSION_DENIED,
             ErrorCode.PERMISSION_DENIED, null);
         resp.authResult = authResult;

@@ -25,7 +25,6 @@
 package com.tencent.bk.job.common.web.exception.handler;
 
 import com.tencent.bk.job.common.annotation.InternalAPI;
-import com.tencent.bk.job.common.api.model.InternalResponse;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.AlreadyExistsException;
 import com.tencent.bk.job.common.exception.FailedPreconditionException;
@@ -35,6 +34,8 @@ import com.tencent.bk.job.common.exception.NotFoundException;
 import com.tencent.bk.job.common.exception.ServiceException;
 import com.tencent.bk.job.common.exception.UnauthenticatedException;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.iam.model.AuthResult;
+import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.common.model.error.ErrorType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -75,7 +76,7 @@ public class ServiceExceptionControllerAdvice extends ResponseEntityExceptionHan
                                                         PermissionDeniedException ex) {
         log.info("Handle PermissionDeniedException, uri: {}, authResult: {}",
             request.getRequestURI(), ex.getAuthResult());
-        return InternalResponse.buildAuthFailResp(ex.getAuthResult());
+        return InternalResponse.buildAuthFailResp(AuthResult.toAuthResultDTO(ex.getAuthResult()));
     }
 
     @ExceptionHandler(InternalException.class)

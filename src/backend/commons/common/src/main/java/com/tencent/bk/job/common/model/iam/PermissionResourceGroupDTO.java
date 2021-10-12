@@ -22,44 +22,28 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.manage.service.impl;
+package com.tencent.bk.job.common.model.iam;
 
-import com.tencent.bk.job.common.model.InternalResponse;
-import com.tencent.bk.job.crontab.model.CronJobVO;
-import com.tencent.bk.job.manage.client.ServiceCronJobResourceClient;
-import com.tencent.bk.job.manage.service.CronJobService;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import lombok.Data;
 
 import java.util.List;
-import java.util.Map;
 
 /**
- * @since 22/2/2020 21:25
+ * 权限-资源分组，根据ResourceType分组
  */
-@Slf4j
-@Service
-public class CronJobServiceImpl implements CronJobService {
+@Data
+public class PermissionResourceGroupDTO {
+    /**
+     * 资源类型
+     */
+    private String resourceType;
+    /**
+     * 资源所属的接入系统ID
+     */
+    private String systemId;
+    /**
+     * 操作关联的资源
+     */
+    private List<PermissionResourceDTO> permissionResources;
 
-    private ServiceCronJobResourceClient serviceCronJobResourceClient;
-
-    @Autowired
-    public CronJobServiceImpl(ServiceCronJobResourceClient serviceCronJobResourceClient) {
-        this.serviceCronJobResourceClient = serviceCronJobResourceClient;
-    }
-
-    @Override
-    public Map<Long, List<CronJobVO>> batchListCronJobByPlanIds(Long appId, List<Long> planIdList) {
-        if (appId <= 0 || CollectionUtils.isEmpty(planIdList)) {
-            return null;
-        }
-        InternalResponse<Map<Long, List<CronJobVO>>> cronJobByPlanIds =
-            serviceCronJobResourceClient.batchListCronJobByPlanIds(appId, planIdList);
-        if (cronJobByPlanIds != null) {
-            return cronJobByPlanIds.getData();
-        }
-        return null;
-    }
 }

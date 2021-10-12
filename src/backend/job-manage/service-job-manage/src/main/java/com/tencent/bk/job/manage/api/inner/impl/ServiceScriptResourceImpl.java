@@ -24,11 +24,11 @@
 
 package com.tencent.bk.job.manage.api.inner.impl;
 
-import com.tencent.bk.job.common.api.model.InternalResponse;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.exception.NotFoundException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
+import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.manage.api.common.ScriptDTOBuilder;
 import com.tencent.bk.job.manage.api.inner.ServiceScriptResource;
 import com.tencent.bk.job.manage.model.dto.ScriptDTO;
@@ -61,10 +61,6 @@ public class ServiceScriptResourceImpl implements ServiceScriptResource {
     @Override
     public InternalResponse<ServiceScriptDTO> getScriptByAppIdAndScriptVersionId(String username, Long appId,
                                                                                  Long scriptVersionId) {
-        // TEST CODE
-        if(scriptVersionId > 0) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
-        }
 
         if (appId == null || appId < 0) {
             log.warn("Get script version by id, appId is empty");

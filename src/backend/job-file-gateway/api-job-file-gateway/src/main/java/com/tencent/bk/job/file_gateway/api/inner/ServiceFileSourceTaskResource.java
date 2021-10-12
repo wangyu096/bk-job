@@ -25,7 +25,7 @@
 package com.tencent.bk.job.file_gateway.api.inner;
 
 import com.tencent.bk.job.common.annotation.InternalAPI;
-import com.tencent.bk.job.common.api.model.InternalResponse;
+import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.file_gateway.model.req.inner.ClearBatchTaskFilesReq;
 import com.tencent.bk.job.file_gateway.model.req.inner.ClearTaskFilesReq;
 import com.tencent.bk.job.file_gateway.model.req.inner.FileSourceBatchDownloadTaskReq;

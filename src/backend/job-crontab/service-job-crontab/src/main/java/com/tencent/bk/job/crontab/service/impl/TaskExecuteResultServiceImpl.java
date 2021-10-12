@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.crontab.service.impl;
 
-import com.tencent.bk.job.common.api.model.InternalResponse;
+import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.common.util.json.JsonUtils;
 import com.tencent.bk.job.crontab.client.ServiceTaskExecuteResultResourceClient;
 import com.tencent.bk.job.crontab.service.TaskExecuteResultService;

@@ -27,7 +27,7 @@ package com.tencent.bk.job.backup.service.impl;
 import com.tencent.bk.job.backup.client.ServiceScriptResourceClient;
 import com.tencent.bk.job.backup.client.WebScriptResourceClient;
 import com.tencent.bk.job.backup.service.ScriptService;
-import com.tencent.bk.job.common.api.model.InternalResponse;
+import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.manage.model.inner.ServiceScriptDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

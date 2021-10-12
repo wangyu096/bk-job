@@ -64,7 +64,7 @@ public class EsbExceptionControllerAdvice extends ResponseEntityExceptionHandler
     @ExceptionHandler(Throwable.class)
     @ResponseBody
     ResponseEntity<?> handleException(HttpServletRequest request, Throwable ex) {
-        log.warn("Handle exception", ex);
+        log.error("Handle exception", ex);
         // esb请求错误统一返回200，具体的错误信息放在返回数据里边
         return new ResponseEntity<>(EsbResp.buildCommonFailResp(ErrorCode.INTERNAL_ERROR),
             HttpStatus.OK);
@@ -73,7 +73,7 @@ public class EsbExceptionControllerAdvice extends ResponseEntityExceptionHandler
     @ExceptionHandler(ServiceException.class)
     @ResponseBody
     ResponseEntity<?> handleServiceException(HttpServletRequest request, ServiceException ex) {
-        log.error("Handle ServiceException", ex);
+        log.warn("Handle ServiceException", ex);
         // esb请求错误统一返回200，具体的错误信息放在返回数据里边
         return new ResponseEntity<>(EsbResp.buildCommonFailResp(ex), HttpStatus.OK);
     }
@@ -90,7 +90,7 @@ public class EsbExceptionControllerAdvice extends ResponseEntityExceptionHandler
     @ExceptionHandler(PermissionDeniedException.class)
     @ResponseBody
     ResponseEntity<?> handlePermissionDeniedException(HttpServletRequest request, PermissionDeniedException ex) {
-        log.warn("Handle PermissionDeniedException", ex);
+        log.info("Handle PermissionDeniedException", ex);
         // esb请求错误统一返回200，具体的错误信息放在返回数据里边
         return new ResponseEntity<>(authService.buildEsbAuthFailResp(ex),
             HttpStatus.OK);
@@ -107,7 +107,7 @@ public class EsbExceptionControllerAdvice extends ResponseEntityExceptionHandler
     @ExceptionHandler(FailedPreconditionException.class)
     @ResponseBody
     @ResponseStatus(HttpStatus.OK)
-    ResponseEntity<?> handleBusinessException(HttpServletRequest request, FailedPreconditionException ex) {
+    ResponseEntity<?> handleFailedPreconditionException(HttpServletRequest request, FailedPreconditionException ex) {
         String errorMsg = "Handle FailedPreconditionException, uri: " + request.getRequestURI();
         log.info(errorMsg, ex);
         return new ResponseEntity<>(EsbResp.buildCommonFailResp(ex.getErrorCode()), HttpStatus.OK);

@@ -24,13 +24,14 @@
 
 package com.tencent.bk.job.manage.api.esb.impl.v3;
 
-import com.tencent.bk.job.common.api.model.InternalResponse;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
+import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.iam.service.AuthService;
+import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.manage.api.esb.v3.EsbCredentialV3Resource;
 import com.tencent.bk.job.manage.api.inner.ServiceCredentialResource;
 import com.tencent.bk.job.manage.common.consts.CredentialTypeEnum;
@@ -118,7 +119,7 @@ public class EsbCredentialResourceV3Impl implements EsbCredentialV3Resource {
         }
         if (resp.getAuthResult() != null) {
             return authService.buildEsbAuthFailResp(
-                resp.getAuthResult().getRequiredActionResources()
+                AuthResult.fromAuthResultDTO(resp.getAuthResult()).getRequiredActionResources()
             );
         } else if (!resp.isSuccess()) {
             throw new InternalException(resp.getCode());

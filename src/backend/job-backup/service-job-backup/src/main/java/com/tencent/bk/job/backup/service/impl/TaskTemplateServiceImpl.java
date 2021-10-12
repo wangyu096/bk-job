@@ -27,7 +27,7 @@ package com.tencent.bk.job.backup.service.impl;
 import com.tencent.bk.job.backup.client.ServiceTemplateResourceClient;
 import com.tencent.bk.job.backup.client.WebTemplateResourceClient;
 import com.tencent.bk.job.backup.service.TaskTemplateService;
-import com.tencent.bk.job.common.api.model.InternalResponse;
+import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.common.model.WebResponse;
 import com.tencent.bk.job.manage.model.inner.ServiceIdNameCheckDTO;
 import com.tencent.bk.job.manage.model.inner.ServiceTaskVariableDTO;

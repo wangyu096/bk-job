@@ -22,14 +22,16 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.feign;
+package com.tencent.bk.job.common.web.feign;
 
-import com.tencent.bk.job.common.api.model.InternalResponse;
 import com.tencent.bk.job.common.exception.AlreadyExistsException;
 import com.tencent.bk.job.common.exception.FailedPreconditionException;
 import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.exception.NotFoundException;
 import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.iam.model.AuthResult;
+import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.common.model.error.ErrorType;
 import com.tencent.bk.job.common.util.json.JsonUtils;
 import feign.FeignException;
@@ -59,8 +61,7 @@ public class FeignErrorDecoder extends ErrorDecoder.Default {
                 if (StringUtils.isNotEmpty(responseBody)) {
                     InternalResponse<?> serviceResponse = JsonUtils.fromJson(responseBody, InternalResponse.class);
                     if (serviceResponse != null && serviceResponse.getCode() != null) {
-                        return decodeErrorCode(feignException, serviceResponse.getErrorType(),
-                            serviceResponse.getCode(), serviceResponse.getErrorMsg());
+                        return decodeErrorCode(feignException, serviceResponse);
                     }
                 }
             }
@@ -70,11 +71,15 @@ public class FeignErrorDecoder extends ErrorDecoder.Default {
         return exception;
     }
 
-    private Exception decodeErrorCode(FeignException exception, Integer errorType, Integer errorCode,
-                                      String errorMsg) {
+    private Exception decodeErrorCode(FeignException exception, InternalResponse<?> response) {
+        Integer errorType = response.getErrorType();
+        Integer errorCode = response.getCode();
+        String errorMsg = response.getErrorMsg();
         if (errorType == null || errorCode == null) {
             return exception;
         }
+
+        log.debug("Decode error code, errorType: {}, errorCode: {}, errorMsg: {}", errorType, errorCode, errorMsg);
 
         ErrorType type = ErrorType.valOf(errorType);
         switch (type) {
@@ -86,8 +91,9 @@ public class FeignErrorDecoder extends ErrorDecoder.Default {
             case INTERNAL:
             case UNAVAILABLE:
             case TIMEOUT:
-                log.error("Decode error code, errorType: {}, errorCode: {}, errorMsg: {}", type, errorCode, errorMsg);
                 return new InternalException(exception, errorCode, errorMsg);
+            case PERMISSION_DENIED:
+                return new PermissionDeniedException(AuthResult.fromAuthResultDTO(response.getAuthResult()));
             case NOT_FOUND:
                 return new NotFoundException(exception, errorCode, errorMsg);
             case ALREADY_EXISTS:

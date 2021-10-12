@@ -22,44 +22,51 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.manage.service.impl;
+package com.tencent.bk.job.common.model.iam;
 
-import com.tencent.bk.job.common.model.InternalResponse;
-import com.tencent.bk.job.crontab.model.CronJobVO;
-import com.tencent.bk.job.manage.client.ServiceCronJobResourceClient;
-import com.tencent.bk.job.manage.service.CronJobService;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import lombok.Data;
 
 import java.util.List;
-import java.util.Map;
 
 /**
- * @since 22/2/2020 21:25
+ * 权限-资源
  */
-@Slf4j
-@Service
-public class CronJobServiceImpl implements CronJobService {
+@Data
+public class PermissionResourceDTO {
+    /**
+     * 接入系统ID
+     */
+    private String systemId;
+    /**
+     * 资源类型
+     */
+    private String resourceType;
+    /**
+     * 子资源类型。比如cmdb主机，具有静态主机、动态topo、动态分组三种子类型。可取值：host/topo/dynamic_group
+     */
+    private String subResourceType;
+    /**
+     * 资源ID
+     */
+    private String resourceId;
+    /**
+     * iam path
+     */
+    private PathInfoDTO pathInfo;
+    /**
+     * 资源名称
+     */
+    private String resourceName;
+    /**
+     * 层级节点的资源类型
+     */
+    private String type;
 
-    private ServiceCronJobResourceClient serviceCronJobResourceClient;
+    /**
+     * 层级节点（比如CMDB的主机)的父资源
+     */
+    private List<PermissionResourceDTO> parentHierarchicalResources;
 
-    @Autowired
-    public CronJobServiceImpl(ServiceCronJobResourceClient serviceCronJobResourceClient) {
-        this.serviceCronJobResourceClient = serviceCronJobResourceClient;
-    }
-
-    @Override
-    public Map<Long, List<CronJobVO>> batchListCronJobByPlanIds(Long appId, List<Long> planIdList) {
-        if (appId <= 0 || CollectionUtils.isEmpty(planIdList)) {
-            return null;
-        }
-        InternalResponse<Map<Long, List<CronJobVO>>> cronJobByPlanIds =
-            serviceCronJobResourceClient.batchListCronJobByPlanIds(appId, planIdList);
-        if (cronJobByPlanIds != null) {
-            return cronJobByPlanIds.getData();
-        }
-        return null;
+    public PermissionResourceDTO() {
     }
 }

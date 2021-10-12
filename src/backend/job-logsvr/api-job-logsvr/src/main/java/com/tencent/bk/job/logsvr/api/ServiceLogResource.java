@@ -25,7 +25,7 @@
 package com.tencent.bk.job.logsvr.api;
 
 import com.tencent.bk.job.common.annotation.InternalAPI;
-import com.tencent.bk.job.common.api.model.InternalResponse;
+import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.common.model.dto.IpDTO;
 import com.tencent.bk.job.logsvr.model.service.BatchSaveLogRequest;
 import com.tencent.bk.job.logsvr.model.service.FileLogQueryRequest;

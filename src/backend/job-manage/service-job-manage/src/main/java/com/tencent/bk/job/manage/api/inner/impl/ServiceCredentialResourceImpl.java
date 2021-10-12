@@ -24,11 +24,11 @@
 
 package com.tencent.bk.job.manage.api.inner.impl;
 
-import com.tencent.bk.job.common.api.model.InternalResponse;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeEnum;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.iam.service.AuthService;
+import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.manage.api.inner.ServiceCredentialResource;
 import com.tencent.bk.job.manage.model.inner.resp.ServiceBasicCredentialDTO;
 import com.tencent.bk.job.manage.model.inner.resp.ServiceCredentialDTO;
@@ -90,7 +90,7 @@ public class ServiceCredentialResourceImpl implements ServiceCredentialResource 
             authResult = checkManageTicketPermission(username, appId, createUpdateReq.getId());
         }
         if (!authResult.isPass()) {
-            return InternalResponse.buildAuthFailResp(authResult);
+            return InternalResponse.buildAuthFailResp(AuthResult.toAuthResultDTO(authResult));
         }
         String credentialId = credentialService.saveCredential(username, appId, createUpdateReq);
         return InternalResponse.buildSuccessResp(new ServiceBasicCredentialDTO(credentialId));

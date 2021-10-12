@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.crontab.api.inner.impl;
 
-import com.tencent.bk.job.common.api.model.InternalResponse;
+import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.crontab.api.inner.ServiceCronMetricsResource;
 import com.tencent.bk.job.crontab.service.CronJobService;
 import lombok.extern.slf4j.Slf4j;

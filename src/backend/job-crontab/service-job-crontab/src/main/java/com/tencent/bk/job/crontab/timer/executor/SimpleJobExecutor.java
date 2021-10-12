@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.crontab.timer.executor;
 
-import com.tencent.bk.job.common.api.model.InternalResponse;
+import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.crontab.constant.ExecuteStatusEnum;
 import com.tencent.bk.job.crontab.model.dto.CronJobHistoryDTO;
 import com.tencent.bk.job.crontab.model.dto.CronJobInfoDTO;

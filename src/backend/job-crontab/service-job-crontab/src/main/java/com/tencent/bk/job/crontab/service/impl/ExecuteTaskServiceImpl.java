@@ -24,9 +24,9 @@
 
 package com.tencent.bk.job.crontab.service.impl;
 
-import com.tencent.bk.job.common.api.model.InternalResponse;
 import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
+import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.common.util.json.JsonUtils;
 import com.tencent.bk.job.crontab.client.ServiceExecuteTaskResourceClient;
 import com.tencent.bk.job.crontab.exception.TaskExecuteAuthFailedException;
@@ -115,7 +115,8 @@ public class ExecuteTaskServiceImpl implements ExecuteTaskService {
                 authExecuteResult.getAuthResult() == null && authExecuteResult.getData() == null) {
                 return;
             } else if (authExecuteResult.getData() != null || authExecuteResult.getAuthResult() != null) {
-                throw new TaskExecuteAuthFailedException(authExecuteResult.getAuthResult(), null);
+                throw new TaskExecuteAuthFailedException(
+                    AuthResult.fromAuthResultDTO(authExecuteResult.getAuthResult()), null);
             } else {
                 throw new InternalException(authExecuteResult.getCode(), authExecuteResult.getErrorMsg());
             }

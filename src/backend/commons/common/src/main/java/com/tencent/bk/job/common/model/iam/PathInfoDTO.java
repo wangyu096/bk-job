@@ -22,44 +22,22 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.manage.service.impl;
+package com.tencent.bk.job.common.model.iam;
 
-import com.tencent.bk.job.common.model.InternalResponse;
-import com.tencent.bk.job.crontab.model.CronJobVO;
-import com.tencent.bk.job.manage.client.ServiceCronJobResourceClient;
-import com.tencent.bk.job.manage.service.CronJobService;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
-import java.util.List;
-import java.util.Map;
+@Getter
+@Setter
+@ToString
+public class PathInfoDTO {
+    private String id;
+    private String type;
+    private PathInfoDTO child;
 
-/**
- * @since 22/2/2020 21:25
- */
-@Slf4j
-@Service
-public class CronJobServiceImpl implements CronJobService {
-
-    private ServiceCronJobResourceClient serviceCronJobResourceClient;
-
-    @Autowired
-    public CronJobServiceImpl(ServiceCronJobResourceClient serviceCronJobResourceClient) {
-        this.serviceCronJobResourceClient = serviceCronJobResourceClient;
-    }
-
-    @Override
-    public Map<Long, List<CronJobVO>> batchListCronJobByPlanIds(Long appId, List<Long> planIdList) {
-        if (appId <= 0 || CollectionUtils.isEmpty(planIdList)) {
-            return null;
-        }
-        InternalResponse<Map<Long, List<CronJobVO>>> cronJobByPlanIds =
-            serviceCronJobResourceClient.batchListCronJobByPlanIds(appId, planIdList);
-        if (cronJobByPlanIds != null) {
-            return cronJobByPlanIds.getData();
-        }
-        return null;
+    public PathInfoDTO(String id, String type) {
+        this.id = id;
+        this.type = type;
     }
 }
