@@ -238,7 +238,7 @@ public class ScriptServiceImpl implements ScriptService {
     public PageData<ScriptDTO> listPageScript(ScriptQuery scriptCondition,
                                               BaseSearchCondition baseSearchCondition) throws ServiceException {
         if (scriptCondition.isExistTagCondition()) {
-            List<String> tagMatchedScriptIds = queryTemplateIdsByTags(scriptCondition);
+            List<String> tagMatchedScriptIds = queryScriptIdsByTags(scriptCondition);
             if (CollectionUtils.isEmpty(tagMatchedScriptIds)) {
                 // none match, return empty page data
                 return PageData.emptyPageData(baseSearchCondition.getStart(), baseSearchCondition.getLength());
@@ -252,7 +252,7 @@ public class ScriptServiceImpl implements ScriptService {
         return pageData;
     }
 
-    private List<String> queryTemplateIdsByTags(ScriptQuery query) {
+    private List<String> queryScriptIdsByTags(ScriptQuery query) {
         List<String> matchScriptIds = new ArrayList<>();
         Integer resourceType = query.getPublicScript() ? JobResourceTypeEnum.PUBLIC_SCRIPT.getValue() :
             JobResourceTypeEnum.APP_SCRIPT.getValue();
@@ -329,33 +329,27 @@ public class ScriptServiceImpl implements ScriptService {
         script.setId(scriptId);
         script.setScriptVersionId(scriptVersionId);
 
-        saveScriptTags(targetAppId, script);
+        saveScriptTags(appId, script);
 
         return scriptDAO.getScriptVersionById(scriptVersionId);
     }
 
     private void saveScriptTags(Long appId, ScriptDTO script) {
-        List<TagDTO> tags = script.getTags();
-        if (tags != null && !tags.isEmpty()) {
-            List<TagDTO> newTags = tagService.createNewTagIfNotExist(tags, appId,
-                script.getLastModifyUser());
-            script.setTags(newTags);
-            Integer resourceType = script.isPublicScript() ? JobResourceTypeEnum.PUBLIC_SCRIPT.getValue() :
-                JobResourceTypeEnum.APP_SCRIPT.getValue();
-            tagService.patchResourceTags(resourceType, script.getId(),
-                newTags.stream().map(TagDTO::getId).collect(Collectors.toList()));
-        }
+        saveScriptTags(script.getLastModifyUser(), appId, script.getId(), script.getTags());
     }
 
-    private void saveScriptTags(Long appId, String scriptId, List<TagDTO> tags, String operator) {
+    private void saveScriptTags(String operator, Long appId, String scriptId, List<TagDTO> tags) {
+        List<TagDTO> newTags = tags;
         if (tags != null && !tags.isEmpty()) {
-            List<TagDTO> newTags = tagService.createNewTagIfNotExist(tags, appId, operator);
-            Integer resourceType = appId == (JobConstants.PUBLIC_APP_ID) ?
-                JobResourceTypeEnum.PUBLIC_SCRIPT.getValue() :
-                JobResourceTypeEnum.APP_SCRIPT.getValue();
-            tagService.patchResourceTags(resourceType, scriptId,
-                newTags.stream().map(TagDTO::getId).collect(Collectors.toList()));
+            newTags = tagService.createNewTagIfNotExist(tags, appId, operator);
         }
+
+        Integer resourceType = appId == (JobConstants.PUBLIC_APP_ID) ?
+            JobResourceTypeEnum.PUBLIC_SCRIPT.getValue() :
+            JobResourceTypeEnum.APP_SCRIPT.getValue();
+
+        tagService.patchResourceTags(resourceType, scriptId, CollectionUtils.isEmpty(newTags) ?
+            Collections.emptyList() : newTags.stream().map(TagDTO::getId).collect(Collectors.toList()));
     }
 
     private Long getTimeOrDefault(Long time) {
@@ -441,7 +435,7 @@ public class ScriptServiceImpl implements ScriptService {
                 script.setScriptVersionId(scriptVersionId);
             });
         }
-        saveScriptTags(targetAppId, script);
+        saveScriptTags(appId, script);
         return Pair.of(script.getId(), script.getScriptVersionId());
     }
 
@@ -715,7 +709,7 @@ public class ScriptServiceImpl implements ScriptService {
         if (script.isPublicScript()) {
             targetAppId = JobConstants.PUBLIC_APP_ID;
         }
-        saveScriptTags(targetAppId, scriptId, tags, operator);
+        saveScriptTags(operator, targetAppId, scriptId, tags);
     }
 
     @Override
@@ -734,7 +728,7 @@ public class ScriptServiceImpl implements ScriptService {
     public PageData<ScriptDTO> listPageOnlineScript(ScriptQuery scriptCondition,
                                                     BaseSearchCondition baseSearchCondition) throws ServiceException {
         if (scriptCondition.isExistTagCondition()) {
-            List<String> tagMatchedScriptIds = queryTemplateIdsByTags(scriptCondition);
+            List<String> tagMatchedScriptIds = queryScriptIdsByTags(scriptCondition);
             if (CollectionUtils.isEmpty(tagMatchedScriptIds)) {
                 // none match, return empty page data
                 return PageData.emptyPageData(baseSearchCondition.getStart(), baseSearchCondition.getLength());
