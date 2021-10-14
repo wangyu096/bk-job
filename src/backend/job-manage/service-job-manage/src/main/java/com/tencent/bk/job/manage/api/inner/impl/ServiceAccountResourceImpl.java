@@ -59,7 +59,7 @@ public class ServiceAccountResourceImpl implements ServiceAccountResource {
         AccountDTO accountDTO = accountService.getAccountById(accountId);
         if (accountDTO == null) {
             log.warn("Account is not exist, accountId={}", accountId);
-            throw new NotFoundException(ErrorCode.ACCOUNT_ALIAS_EXIST, accountId);
+            throw new NotFoundException(ErrorCode.ACCOUNT_NOT_EXIST, accountId);
         }
         ServiceAccountDTO result = accountDTO.toServiceAccountDTO();
         if (accountDTO.getCategory() == AccountCategoryEnum.DB) {
@@ -67,7 +67,7 @@ public class ServiceAccountResourceImpl implements ServiceAccountResource {
             AccountDTO dbSystemAccount = accountService.getAccountById(systemAccountId);
             if (dbSystemAccount == null) {
                 log.warn("Db related system account is not exist, accountId={}", accountId);
-                throw new NotFoundException(ErrorCode.ACCOUNT_ALIAS_EXIST, systemAccountId);
+                throw new NotFoundException(ErrorCode.ACCOUNT_NOT_EXIST, systemAccountId);
             }
             result.setDbSystemAccount(dbSystemAccount.toServiceAccountDTO());
         }
@@ -79,7 +79,7 @@ public class ServiceAccountResourceImpl implements ServiceAccountResource {
         AccountDTO accountDTO = accountService.getAccountByAccount(appId, account);
         if (accountDTO == null) {
             log.warn("Account is not exist, appId={},account={}", appId, account);
-            throw new NotFoundException(ErrorCode.ACCOUNT_ALIAS_EXIST, account);
+            throw new NotFoundException(ErrorCode.ACCOUNT_NOT_EXIST, account);
         }
         ServiceAccountDTO result = accountDTO.toServiceAccountDTO();
         if (accountDTO.getCategory() == AccountCategoryEnum.DB) {
@@ -87,7 +87,7 @@ public class ServiceAccountResourceImpl implements ServiceAccountResource {
             AccountDTO dbSystemAccount = accountService.getAccountById(systemAccountId);
             if (dbSystemAccount == null) {
                 log.warn("Db related system account is not exist,appId={}, account={}", appId, account);
-                throw new NotFoundException(ErrorCode.ACCOUNT_ALIAS_EXIST);
+                throw new NotFoundException(ErrorCode.ACCOUNT_NOT_EXIST);
             }
             result.setDbSystemAccount(dbSystemAccount.toServiceAccountDTO());
         }
@@ -101,7 +101,7 @@ public class ServiceAccountResourceImpl implements ServiceAccountResource {
         AccountDTO accountDTO = accountService.getAccount(appId, AccountCategoryEnum.valOf(category), alias);
         if (accountDTO == null) {
             log.warn("Account is not exist, appId={}, category={}, alias={}", appId, category, alias);
-            throw new NotFoundException(ErrorCode.ACCOUNT_ALIAS_EXIST, alias);
+            throw new NotFoundException(ErrorCode.ACCOUNT_NOT_EXIST, alias);
         }
         ServiceAccountDTO result = accountDTO.toServiceAccountDTO();
         if (accountDTO.getCategory() == AccountCategoryEnum.DB) {
@@ -110,7 +110,7 @@ public class ServiceAccountResourceImpl implements ServiceAccountResource {
             if (dbSystemAccount == null) {
                 log.warn("Db related system account is not exist, , appId={}, category={}, alias={}", appId, category
                     , alias);
-                throw new NotFoundException(ErrorCode.ACCOUNT_ALIAS_EXIST, systemAccountId);
+                throw new NotFoundException(ErrorCode.ACCOUNT_NOT_EXIST, systemAccountId);
             }
             result.setDbSystemAccount(dbSystemAccount.toServiceAccountDTO());
         }

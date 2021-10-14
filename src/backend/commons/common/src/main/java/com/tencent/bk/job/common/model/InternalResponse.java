@@ -27,7 +27,6 @@ package com.tencent.bk.job.common.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.ServiceException;
-import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.model.error.ErrorDetail;
 import com.tencent.bk.job.common.model.error.ErrorType;
 import com.tencent.bk.job.common.model.iam.AuthResultDTO;
@@ -48,9 +47,6 @@ import lombok.extern.slf4j.Slf4j;
 @NoArgsConstructor
 @ApiModel("job内部微服务间调用通用返回结构")
 public class InternalResponse<T> {
-    public static final Integer SUCCESS_CODE = 0;
-    public static final Integer COMMON_FAIL_CODE = 1;
-    private static volatile MessageI18nService i18nService;
 
     @ApiModelProperty("是否成功")
     private boolean success;
@@ -80,7 +76,7 @@ public class InternalResponse<T> {
 
     public InternalResponse(ErrorType errorType, Integer errorCode, T data) {
         this.code = errorCode;
-        this.success = SUCCESS_CODE.equals(errorCode);
+        this.success = errorCode != null && errorCode.equals(ErrorCode.RESULT_OK);
         this.errorMsg = I18nUtil.getI18nMessage(String.valueOf(errorCode));
         this.errorType = errorType.getType();
         this.data = data;
@@ -89,7 +85,7 @@ public class InternalResponse<T> {
 
     public InternalResponse(ErrorType errorType, Integer errorCode, Object[] errorParams, T data) {
         this.code = errorCode;
-        this.success = SUCCESS_CODE.equals(errorCode);
+        this.success = errorCode != null && errorCode.equals(ErrorCode.RESULT_OK);
         this.errorMsg = I18nUtil.getI18nMessage(String.valueOf(errorCode), errorParams);
         this.errorType = errorType.getType();
         this.data = data;
@@ -97,7 +93,7 @@ public class InternalResponse<T> {
     }
 
     public static <T> InternalResponse<T> buildSuccessResp(T data) {
-        return new InternalResponse<>(ErrorType.OK, SUCCESS_CODE, data);
+        return new InternalResponse<>(ErrorType.OK, ErrorCode.RESULT_OK, data);
     }
 
     public static <T> InternalResponse<T> buildAuthFailResp(AuthResultDTO authResult) {
