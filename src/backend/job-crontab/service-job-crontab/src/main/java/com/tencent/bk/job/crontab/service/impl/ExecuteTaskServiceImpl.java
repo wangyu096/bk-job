@@ -24,9 +24,9 @@
 
 package com.tencent.bk.job.crontab.service.impl;
 
-import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.InternalResponse;
+import com.tencent.bk.job.common.model.iam.AuthResultDTO;
 import com.tencent.bk.job.common.util.json.JsonUtils;
 import com.tencent.bk.job.crontab.client.ServiceExecuteTaskResourceClient;
 import com.tencent.bk.job.crontab.exception.TaskExecuteAuthFailedException;
@@ -107,20 +107,14 @@ public class ExecuteTaskServiceImpl implements ExecuteTaskService {
             log.debug("Sending auth execute request to executor|{}", request);
         }
 
-        InternalResponse<AuthResult> authExecuteResult = serviceExecuteTaskResourceClient.authExecuteTask(request);
+        InternalResponse<AuthResultDTO> authExecuteResult = serviceExecuteTaskResourceClient.authExecuteTask(request);
         log.info("Auth execute result|appId|{}|taskId|{}|cronTaskId|{}|{}|operator|{}|result|{}", appId,
             taskId, cronTaskId, cronName, operator, JsonUtils.toJson(authExecuteResult));
         if (authExecuteResult != null) {
-            if (authExecuteResult.isSuccess() && authExecuteResult.getCode() == 0 &&
-                authExecuteResult.getAuthResult() == null && authExecuteResult.getData() == null) {
-                return;
-            } else if (authExecuteResult.getData() != null || authExecuteResult.getAuthResult() != null) {
-                throw new TaskExecuteAuthFailedException(
-                    AuthResult.fromAuthResultDTO(authExecuteResult.getAuthResult()), null);
-            } else {
-                throw new InternalException(authExecuteResult.getCode(), authExecuteResult.getErrorMsg());
+            AuthResultDTO authResult = authExecuteResult.getData();
+            if (authResult != null && !authResult.isPass()) {
+                throw new TaskExecuteAuthFailedException(AuthResult.fromAuthResultDTO(authResult), null);
             }
         }
-        throw new TaskExecuteAuthFailedException(null, null);
     }
 }

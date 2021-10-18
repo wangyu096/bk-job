@@ -33,6 +33,7 @@ import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.iam.service.WebAuthService;
 import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.common.model.dto.IpDTO;
+import com.tencent.bk.job.common.model.iam.AuthResultDTO;
 import com.tencent.bk.job.execute.common.constants.TaskStartupModeEnum;
 import com.tencent.bk.job.execute.engine.model.TaskVariableDTO;
 import com.tencent.bk.job.execute.model.DynamicServerGroupDTO;
@@ -169,21 +170,21 @@ public class ServiceExecuteTaskResourceImpl implements ServiceExecuteTaskResourc
     }
 
     @Override
-    public InternalResponse<AuthResult> authExecuteTask(ServiceTaskExecuteRequest request) {
+    public InternalResponse<AuthResultDTO> authExecuteTask(ServiceTaskExecuteRequest request) {
         log.info("Auth execute task, request={}", request);
         if (!checkExecuteTaskRequest(request)) {
             throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
         }
         TaskExecuteParam executeParam = buildExecuteParam(request);
 
-        AuthResult authResult = null;
+        AuthResultDTO authResult = null;
         try {
             taskExecuteService.authExecuteJobPlan(executeParam);
         } catch (PermissionDeniedException e) {
-            authResult = e.getAuthResult();
+            authResult = AuthResult.toAuthResultDTO(e.getAuthResult());
             log.debug("Insufficient permission, authResult: {}", authResult);
             if (StringUtils.isEmpty(authResult.getApplyUrl())) {
-                authResult.setApplyUrl(webAuthService.getApplyUrl(authResult.getRequiredActionResources()));
+                authResult.setApplyUrl(webAuthService.getApplyUrl(e.getAuthResult().getRequiredActionResources()));
             }
         }
         return InternalResponse.buildSuccessResp(authResult);
