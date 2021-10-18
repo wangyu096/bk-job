@@ -303,7 +303,7 @@ public class AuthResult {
                 List<PermissionResourceGroup> resourceGroups = new ArrayList<>();
                 for (PermissionResourceGroupDTO resourceGroupDTO : actionResourceDTO.getResourceGroups()) {
                     PermissionResourceGroup resourceGroup = new PermissionResourceGroup();
-                    resourceGroup.setResourceType(ResourceTypeEnum.valueOf(resourceGroupDTO.getResourceType()));
+                    resourceGroup.setResourceType(ResourceTypeEnum.getByResourceTypeId(resourceGroupDTO.getResourceType()));
                     resourceGroup.setSystemId(resourceGroupDTO.getSystemId());
                     if (CollectionUtils.isNotEmpty(resourceGroup.getPermissionResources())) {
                         List<PermissionResource> resources = new ArrayList<>();
@@ -325,7 +325,7 @@ public class AuthResult {
     private static PermissionResource toPermissionResource(PermissionResourceDTO resourceDTO) {
         PermissionResource resource = new PermissionResource();
         resource.setResourceId(resourceDTO.getResourceId());
-        resource.setResourceType(ResourceTypeEnum.valueOf(resourceDTO.getType()));
+        resource.setResourceType(ResourceTypeEnum.getByResourceTypeId(resourceDTO.getResourceType()));
         resource.setResourceName(resourceDTO.getResourceName());
         resource.setSubResourceType(resourceDTO.getSubResourceType());
         resource.setSystemId(resourceDTO.getSystemId());
