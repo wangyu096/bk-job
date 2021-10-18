@@ -175,19 +175,17 @@ public class ServiceExecuteTaskResourceImpl implements ServiceExecuteTaskResourc
             throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
         }
         TaskExecuteParam executeParam = buildExecuteParam(request);
+
+        AuthResult authResult = null;
         try {
             taskExecuteService.authExecuteJobPlan(executeParam);
         } catch (PermissionDeniedException e) {
-            AuthResult authResult = e.getAuthResult();
+            authResult = e.getAuthResult();
             log.debug("Insufficient permission, authResult: {}", authResult);
             if (StringUtils.isEmpty(authResult.getApplyUrl())) {
                 authResult.setApplyUrl(webAuthService.getApplyUrl(authResult.getRequiredActionResources()));
             }
-            InternalResponse<AuthResult> response =
-                InternalResponse.buildAuthFailResp(AuthResult.toAuthResultDTO(authResult));
-            response.setData(authResult);
-            return response;
         }
-        return InternalResponse.buildSuccessResp(null);
+        return InternalResponse.buildSuccessResp(authResult);
     }
 }
