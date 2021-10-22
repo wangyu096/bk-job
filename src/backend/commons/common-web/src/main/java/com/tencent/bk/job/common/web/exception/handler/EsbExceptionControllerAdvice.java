@@ -46,6 +46,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.validation.BindException;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -267,6 +268,13 @@ public class EsbExceptionControllerAdvice extends ResponseEntityExceptionHandler
                                                                   HttpHeaders headers, HttpStatus status,
                                                                   WebRequest request) {
         log.warn("Handle MethodArgumentNotValidException", ex);
+        BindingResult bindingResult = ex.getBindingResult();
+        if (bindingResult.hasFieldErrors()) {
+            bindingResult.getFieldErrors().forEach(fieldError -> {
+                log.info("Field: {}, errorMsg: {}, rejectedValue: {}",
+                    fieldError.getField(), fieldError.getDefaultMessage(), fieldError.getRejectedValue());
+            });
+        }
         EsbResp<?> resp = EsbResp.buildCommonFailResp(ErrorCode.BAD_REQUEST);
         return new ResponseEntity<>(resp, HttpStatus.OK);
     }

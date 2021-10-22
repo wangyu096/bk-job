@@ -22,41 +22,40 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.esb.model.job.v3;
+package com.tencent.bk.job.common.validation;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.tencent.bk.job.common.esb.model.job.EsbCCTopoNodeDTO;
-import com.tencent.bk.job.common.esb.model.job.EsbIpDTO;
-import lombok.Data;
+import javax.validation.Constraint;
+import javax.validation.Payload;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Repeatable;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-import javax.validation.Valid;
-import java.util.List;
+import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.ElementType.TYPE_USE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-/**
- * 服务器定义-ESB
- */
-@Data
-public class EsbServerV3DTO {
-    /**
-     * 目标服务器对应的主机变量
-     */
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    private String variable;
+@Target({ FIELD, METHOD, PARAMETER, ANNOTATION_TYPE, TYPE_USE })
+@Constraint(validatedBy = NotBlankFieldValidator.class)
+@Documented
+@Repeatable(NotBlankField.List.class)
+@Retention(RUNTIME)
+public @interface NotBlankField {
+    String message() default "{fieldName}{validation.constraints.NotBlankField.message}";
 
-    @JsonProperty("ip_list")
-    @Valid
-    private List<EsbIpDTO> ips;
+    Class<?>[] groups() default { };
 
-    /**
-     * 动态分组ID列表
-     */
-    @JsonProperty("dynamic_group_list")
-    private List<EsbDynamicGroupDTO> dynamicGroups;
+    Class<? extends Payload>[] payload() default { };
 
-    /**
-     * 分布式拓扑节点列表
-     */
-    @JsonProperty("topo_node_list")
-    private List<EsbCCTopoNodeDTO> topoNodes;
+    String fieldName();
+
+    @Target({ FIELD, METHOD, PARAMETER, ANNOTATION_TYPE })
+    @Retention(RUNTIME)
+    @Documented
+    @interface List {
+        NotBlankField[] value();
+    }
 }

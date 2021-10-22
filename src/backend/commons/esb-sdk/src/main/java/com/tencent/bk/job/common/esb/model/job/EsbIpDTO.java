@@ -28,10 +28,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.tencent.bk.job.common.model.dto.ApplicationHostInfoDTO;
 import com.tencent.bk.job.common.model.dto.HostDTO;
 import com.tencent.bk.job.common.util.ip.IpUtils;
+import com.tencent.bk.job.common.validation.NotBlankField;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import javax.validation.constraints.Max;
+import javax.validation.constraints.NotNull;
 
 @Setter
 @Getter
@@ -40,9 +44,14 @@ import lombok.Setter;
 public class EsbIpDTO {
 
     @JsonProperty("bk_cloud_id")
+    @NotNull(message = "云区域ID不能为空")
+    @Max(1)
     private Long cloudAreaId;
 
     @JsonProperty("ip")
+    @NotBlankField(fieldName = "host_ip")
+//    @Pattern(regexp = "\\b((?!\\d\\d\\d)\\d+|1\\d\\d|2[0-4]\\d|25[0-5])\\.((?!\\d\\d\\d)\\d+|1\\d\\d|2[0-4]\\d|25[0-5])\\.((?!\\d\\d\\d)\\d+|1\\d\\d|2[0-4]\\d|25[0-5])\\.((?!\\d\\d\\d)\\d+|1\\d\\d|2[0-4]\\d|25[0-5])\\b",
+//        message = "{validation.constraints.NotNull.message}")
     private String ip;
 
     public static EsbIpDTO fromApplicationHostInfo(ApplicationHostInfoDTO applicationHostInfo) {

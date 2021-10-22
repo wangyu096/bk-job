@@ -22,41 +22,18 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.esb.model.job.v3;
+package com.tencent.bk.job.common.validation;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.tencent.bk.job.common.esb.model.job.EsbCCTopoNodeDTO;
-import com.tencent.bk.job.common.esb.model.job.EsbIpDTO;
-import lombok.Data;
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
 
-import javax.validation.Valid;
-import java.util.List;
+public class NotBlankFieldValidator implements ConstraintValidator<NotBlankField, CharSequence> {
+    @Override
+    public boolean isValid(CharSequence charSequence, ConstraintValidatorContext context) {
+        if (charSequence == null) {
+            return false;
+        }
 
-/**
- * 服务器定义-ESB
- */
-@Data
-public class EsbServerV3DTO {
-    /**
-     * 目标服务器对应的主机变量
-     */
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    private String variable;
-
-    @JsonProperty("ip_list")
-    @Valid
-    private List<EsbIpDTO> ips;
-
-    /**
-     * 动态分组ID列表
-     */
-    @JsonProperty("dynamic_group_list")
-    private List<EsbDynamicGroupDTO> dynamicGroups;
-
-    /**
-     * 分布式拓扑节点列表
-     */
-    @JsonProperty("topo_node_list")
-    private List<EsbCCTopoNodeDTO> topoNodes;
+        return charSequence.toString().trim().length() > 0;
+    }
 }
