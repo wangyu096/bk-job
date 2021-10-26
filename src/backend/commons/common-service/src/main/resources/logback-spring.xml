@@ -12,6 +12,7 @@
     <property name="ESB_LOG_FILE" value="${APP_LOG_DIR}/esb_client.log"/>
     <property name="ESB_JOB_LOG_FILE" value="${APP_LOG_DIR}/esb_job.log"/>
     <property name="IAM_LOG_FILE" value="${APP_LOG_DIR}/iam.log"/>
+    <property name="TASK_MONITOR_LOG_FILE" value="${BK_LOG_DIR_EXECUTE}/monitor_task.log"/>
     <contextName>logback</contextName>
 
     <appender name="app-appender" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -89,6 +90,20 @@
         </encoder>
     </appender>
 
+    <appender name="task-monitor-appender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${TASK_MONITOR_LOG_FILE}</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${TASK_MONITOR_LOG_FILE}-%d{yyyy-MM-dd}.log.%i</fileNamePattern>
+            <maxFileSize>1GB</maxFileSize>
+            <maxHistory>3</maxHistory>
+            <totalSizeCap>10GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>${CONSOLE_LOG_PATTERN}</pattern>
@@ -120,6 +135,11 @@
             <appender-ref ref="iam-appender"/>
             <appender-ref ref="error-appender"/>
         </logger>
+        <logger name="TaskMonitorLogger" level="INFO" additivity="false">
+            <appender-ref ref="task-monitor-appender"/>
+        </logger>
+        <root level="ERROR">
+            <appender-ref ref="execute-appender"/>
         <root level="INFO" additivity="false">
             <appender-ref ref="async-app-appender"/>
             <appender-ref ref="error-appender"/>
@@ -142,6 +162,11 @@
             <appender-ref ref="iam-appender"/>
             <appender-ref ref="error-appender"/>
         </logger>
+        <logger name="TaskMonitorLogger" level="INFO" additivity="false">
+            <appender-ref ref="task-monitor-appender"/>
+        </logger>
+        <root level="ERROR">
+            <appender-ref ref="execute-appender"/>
         <root level="INFO">
             <appender-ref ref="async-app-appender"/>
             <appender-ref ref="error-appender"/>
@@ -154,6 +179,10 @@
         <logger name="com.tencent.bk.sdk.iam" level="DEBUG" additivity="false">
             <appender-ref ref="CONSOLE"/>
         </logger>
+        <logger name="TaskMonitorLogger" level="INFO" additivity="false">
+            <appender-ref ref="CONSOLE"/>
+        </logger>
+        <root level="ERROR">
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
         </root>
@@ -165,6 +194,10 @@
         <logger name="com.tencent.bk.sdk.iam" level="INFO" additivity="false">
             <appender-ref ref="CONSOLE"/>
         </logger>
+        <logger name="TaskMonitorLogger" level="INFO" additivity="false">
+            <appender-ref ref="CONSOLE"/>
+        </logger>
+        <root level="ERROR">
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
         </root>

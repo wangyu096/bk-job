@@ -240,7 +240,13 @@ public class WhiteIPServiceImpl implements WhiteIPService {
                 throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
             });
         }
-        return ipList;
+        List<String> uniqueIpList = new ArrayList<>();
+        for (String ip : ipList) {
+            if (!uniqueIpList.contains(ip)) {
+                uniqueIpList.add(ip);
+            }
+        }
+        return uniqueIpList;
     }
 
     @Override
