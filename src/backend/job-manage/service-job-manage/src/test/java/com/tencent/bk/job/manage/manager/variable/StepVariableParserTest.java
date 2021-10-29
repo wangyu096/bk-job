@@ -62,6 +62,14 @@ class StepVariableParserTest {
     }
 
     @Test
+    @DisplayName("Test parse variable from shell script - Ignore comment line")
+    void testParseShellScriptVarIgnoreCommentLine() {
+        String scriptContent = "#!/bin/bash\necho \"${var1}\"\n# ${var2}";
+        List<String> varNames = StepVariableParser.parseShellScriptVar(scriptContent);
+        assertThat(varNames).containsOnly("var1");
+    }
+
+    @Test
     @DisplayName("Test parse variable from shell script - Expression")
     void testParseShellScriptVarForStringExpression() {
         String scriptContent = "#!/bin/bash\necho ${var-DEFAULT}";
@@ -176,4 +184,18 @@ class StepVariableParserTest {
         List<String> varNames = StepVariableParser.parseShellScriptVar(scriptContent);
         assertThat(varNames).containsOnly("my_array", "var1", "var2", "_var3");
     }
+
+    @Test
+    @DisplayName("Test parse variable using job variable standard format")
+    void testParseJobStandardVar() {
+        String content = "/data/${log_dir}/${log_module}/job.log";
+        List<String> varNames = StepVariableParser.parseJobStandardVar(content);
+        assertThat(varNames).containsOnly("log_dir", "log_module");
+
+        content = "/data/${log_dir}/job_${log_module}/job.log";
+        varNames = StepVariableParser.parseJobStandardVar(content);
+        assertThat(varNames).containsOnly("log_dir", "log_module");
+    }
+
+
 }

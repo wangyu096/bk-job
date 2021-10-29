@@ -26,6 +26,7 @@ package com.tencent.bk.job.manage.manager.variable;
 
 import com.tencent.bk.job.manage.model.dto.task.TaskStepDTO;
 import com.tencent.bk.job.manage.model.dto.task.TaskVariableDTO;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -36,12 +37,22 @@ import java.util.regex.Pattern;
 public class StepVariableParser {
 
     public static List<Pair<TaskStepDTO, List<TaskVariableDTO>>> parse(List<TaskStepDTO> steps,
-                                                                List<TaskVariableDTO> variables) {
+                                                                       List<TaskVariableDTO> variables) {
         return null;
     }
 
-    public static List<String> parseShellScriptVar(String shellScriptContent) {
-        Matcher m = Pattern.compile("\\$\\{[#!]?([_a-zA-Z][0-9_a-zA-Z]*)\\S*}").matcher(shellScriptContent);
+    /**
+     * 使用job的标准格式解析变量
+     *
+     * @param content 被解析的内容
+     * @return 变量列表
+     */
+    public static List<String> parseJobStandardVar(String content) {
+        if (StringUtils.isBlank(content)) {
+            return null;
+        }
+
+        Matcher m = Pattern.compile("\\$\\{([_a-zA-Z][0-9_a-zA-Z]*)}").matcher(content);
         List<String> varNames = new ArrayList<>();
         while (m.find()) {
             String varName = m.group(1);
@@ -50,5 +61,37 @@ public class StepVariableParser {
             }
         }
         return varNames;
+    }
+
+    /**
+     * 从shell脚本解析变量
+     *
+     * @param shellScriptContent shell脚本内容
+     * @return 变量列表
+     */
+    public static List<String> parseShellScriptVar(String shellScriptContent) {
+        String content = filterCommentLine(shellScriptContent);
+        Matcher m = Pattern.compile("\\$\\{[#!]?([_a-zA-Z][0-9_a-zA-Z]*)\\S*}").matcher(content);
+        List<String> varNames = new ArrayList<>();
+        while (m.find()) {
+            String varName = m.group(1);
+            if (!varNames.contains(varName)) {
+                varNames.add(varName);
+            }
+        }
+        return varNames;
+    }
+
+    private static String filterCommentLine(String shellScriptContent) {
+        String[] lines = shellScriptContent.split("\n");
+        StringBuilder builder = new StringBuilder();
+        for (String line : lines) {
+            String trimLine = line.trim();
+            if (StringUtils.isBlank(trimLine) || trimLine.startsWith("#")) {
+                continue;
+            }
+            builder.append(line).append("\n");
+        }
+        return builder.toString();
     }
 }
