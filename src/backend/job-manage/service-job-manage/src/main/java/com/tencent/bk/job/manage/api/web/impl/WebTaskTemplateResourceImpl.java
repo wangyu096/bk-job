@@ -365,6 +365,11 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
             throw new InvalidParamException(validateResult);
         }
 
+        if (CollectionUtils.isEmpty(req.getAddTagIdList()) && CollectionUtils.isEmpty(req.getDeleteTagIdList())) {
+            // do nothing
+            return WebResponse.buildSuccessResp(true);
+        }
+
         AuthResultVO authResultVO = batchAuthTemplate(username, ActionId.EDIT_JOB_TEMPLATE, appId,
             req.getIdList().stream().map(String::valueOf).collect(Collectors.toList()));
         if (!authResultVO.isPass()) {
@@ -409,11 +414,6 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
             return ValidateResult.fail(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, "idList");
         }
 
-        if (CollectionUtils.isEmpty(req.getAddTagIdList()) && CollectionUtils.isEmpty(req.getDeleteTagIdList())) {
-            log.warn("TemplateTagBatchPatchReq->No template tags changed!");
-            return ValidateResult.fail(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME,
-                "addTagIdList|deleteTagIdList");
-        }
         return ValidateResult.pass();
     }
 }
