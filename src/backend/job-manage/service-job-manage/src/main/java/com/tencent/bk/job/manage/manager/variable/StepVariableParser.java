@@ -24,74 +24,95 @@
 
 package com.tencent.bk.job.manage.manager.variable;
 
+import com.tencent.bk.job.common.service.VariableResolver;
+import com.tencent.bk.job.manage.common.consts.task.TaskStepTypeEnum;
+import com.tencent.bk.job.manage.model.dto.task.TaskFileStepDTO;
+import com.tencent.bk.job.manage.model.dto.task.TaskScriptStepDTO;
 import com.tencent.bk.job.manage.model.dto.task.TaskStepDTO;
 import com.tencent.bk.job.manage.model.dto.task.TaskVariableDTO;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class StepVariableParser {
 
-    public static List<Pair<TaskStepDTO, List<TaskVariableDTO>>> parse(List<TaskStepDTO> steps,
-                                                                       List<TaskVariableDTO> variables) {
-        return null;
-    }
-
     /**
-     * 使用job的标准格式解析变量
+     * 解析步骤和引用的全局变量
      *
-     * @param content 被解析的内容
-     * @return 变量列表
+     * @param steps     步骤列表
+     * @param variables 全局变量列表
      */
-    public static List<String> parseJobStandardVar(String content) {
-        if (StringUtils.isBlank(content)) {
-            return null;
-        }
-
-        Matcher m = Pattern.compile("\\$\\{([_a-zA-Z][0-9_a-zA-Z]*)}").matcher(content);
-        List<String> varNames = new ArrayList<>();
-        while (m.find()) {
-            String varName = m.group(1);
-            if (!varNames.contains(varName)) {
-                varNames.add(varName);
+    public static void parseStepRefVars(List<TaskStepDTO> steps,
+                                        List<TaskVariableDTO> variables) {
+        steps.forEach(step -> {
+            if (CollectionUtils.isEmpty(variables)) {
+                return;
             }
-        }
-        return varNames;
+
+            TaskStepTypeEnum stepType = step.getType();
+            switch (stepType) {
+                case SCRIPT:
+                    parseScriptStepRefVars(step, variables);
+                    break;
+                case FILE:
+                    parseFileStepRefVars(step, variables);
+                    break;
+                case APPROVAL:
+                default:
+                    break;
+            }
+        });
     }
 
-    /**
-     * 从shell脚本解析变量
-     *
-     * @param shellScriptContent shell脚本内容
-     * @return 变量列表
-     */
-    public static List<String> parseShellScriptVar(String shellScriptContent) {
-        String content = filterCommentLine(shellScriptContent);
-        Matcher m = Pattern.compile("\\$\\{[#!]?([_a-zA-Z][0-9_a-zA-Z]*)\\S*}").matcher(content);
-        List<String> varNames = new ArrayList<>();
-        while (m.find()) {
-            String varName = m.group(1);
-            if (!varNames.contains(varName)) {
-                varNames.add(varName);
-            }
+    private static void parseScriptStepRefVars(TaskStepDTO step,
+                                               List<TaskVariableDTO> variables) {
+        TaskScriptStepDTO scriptStep = step.getScriptStepInfo();
+        List<String> refVarNames = new ArrayList<>();
+
+        List<String> shellVarNames = VariableResolver.resolveShellScriptVar(scriptStep.getContent());
+        List<String> jobStandardVarNames = VariableResolver.resolveJobStandardVar(scriptStep.getScriptParam());
+        List<String> jobImportedVarNames = VariableResolver.resolveJobImportVariables(scriptStep.getContent());
+
+        if (CollectionUtils.isNotEmpty(shellVarNames)) {
+            refVarNames.addAll(shellVarNames);
         }
-        return varNames;
+        if (CollectionUtils.isNotEmpty(jobStandardVarNames)) {
+            refVarNames.addAll(jobStandardVarNames);
+        }
+        if (CollectionUtils.isNotEmpty(jobImportedVarNames)) {
+            refVarNames.addAll(jobImportedVarNames);
+        }
+
+        step.setRefVariables(variables.stream().filter(variable -> refVarNames.contains(variable.getName()))
+            .distinct().collect(Collectors.toList()));
     }
 
-    private static String filterCommentLine(String shellScriptContent) {
-        String[] lines = shellScriptContent.split("\n");
-        StringBuilder builder = new StringBuilder();
-        for (String line : lines) {
-            String trimLine = line.trim();
-            if (StringUtils.isBlank(trimLine) || trimLine.startsWith("#")) {
-                continue;
+    private static void parseFileStepRefVars(TaskStepDTO step,
+                                             List<TaskVariableDTO> variables) {
+        TaskFileStepDTO fileStep = step.getFileStepInfo();
+        List<String> refVarNames = new ArrayList<>();
+
+        fileStep.getOriginFileList().forEach(originFile -> {
+            if (CollectionUtils.isNotEmpty(originFile.getFileLocation())) {
+                originFile.getFileLocation().forEach(filePath -> {
+                    List<String> filePathVarNames = VariableResolver.resolveJobStandardVar(filePath);
+                    if (CollectionUtils.isNotEmpty(filePathVarNames)) {
+                        refVarNames.addAll(filePathVarNames);
+                    }
+                });
             }
-            builder.append(line).append("\n");
+        });
+        List<String> destFilePathVarNames =
+            VariableResolver.resolveJobStandardVar(fileStep.getDestinationFileLocation());
+        if (CollectionUtils.isNotEmpty(destFilePathVarNames)) {
+            refVarNames.addAll(destFilePathVarNames);
         }
-        return builder.toString();
+
+        step.setRefVariables(variables.stream().filter(variable -> refVarNames.contains(variable.getName()))
+            .distinct().collect(Collectors.toList()));
     }
+
+
 }
