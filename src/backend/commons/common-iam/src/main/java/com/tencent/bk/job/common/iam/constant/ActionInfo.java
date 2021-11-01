@@ -22,34 +22,36 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.execute.statistics;
+package com.tencent.bk.job.common.iam.constant;
 
-import com.tencent.bk.job.execute.statistics.message.TaskStatisticsProcessor;
-import com.tencent.bk.job.execute.statistics.model.TaskStatisticsCmd;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.stereotype.Service;
+import lombok.Getter;
 
-@Service
-@Slf4j
-public class TaskStatisticsMsgSenderImpl implements TaskStatisticsMsgSender {
+import java.util.ArrayList;
+import java.util.List;
 
-    private final MessageChannel taskStatisticsOutput;
+/**
+ * IAM Action
+ */
+@Getter
+public class ActionInfo {
+    private final String actionId;
+    private final List<ResourceTypeEnum> relatedResourceTypes;
 
-    @Autowired
-    public TaskStatisticsMsgSenderImpl(@Qualifier(TaskStatisticsProcessor.OUTPUT) MessageChannel taskStatisticsOutput) {
-        this.taskStatisticsOutput = taskStatisticsOutput;
+    public ActionInfo(String actionId,
+                      List<ResourceTypeEnum> relatedResourceTypes) {
+        this.actionId = actionId;
+        this.relatedResourceTypes = relatedResourceTypes;
     }
 
-    @Override
-    public void sendTaskStatisticsCmd(TaskStatisticsCmd taskStatisticsCmd) {
-        log.info("Begin to send taskStatisticsCmd, taskInstanceId={}, action={}",
-            taskStatisticsCmd.getTaskInstanceId(), taskStatisticsCmd.getAction());
-        taskStatisticsOutput.send(MessageBuilder.withPayload(taskStatisticsCmd).build());
-        log.info("Send taskStatisticsCmd message successfully, taskInstanceId={}, action={}",
-            taskStatisticsCmd.getTaskInstanceId(), taskStatisticsCmd.getAction());
+    public ActionInfo(String actionId,
+                      ResourceTypeEnum relatedResourceType) {
+        this.actionId = actionId;
+        this.relatedResourceTypes = new ArrayList<>();
+        this.relatedResourceTypes.add(relatedResourceType);
+    }
+
+    public ActionInfo(String actionId) {
+        this.actionId = actionId;
+        this.relatedResourceTypes = null;
     }
 }

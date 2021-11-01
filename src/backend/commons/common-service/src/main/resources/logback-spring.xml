@@ -135,11 +135,6 @@
             <appender-ref ref="iam-appender"/>
             <appender-ref ref="error-appender"/>
         </logger>
-        <logger name="TaskMonitorLogger" level="INFO" additivity="false">
-            <appender-ref ref="task-monitor-appender"/>
-        </logger>
-        <root level="ERROR">
-            <appender-ref ref="execute-appender"/>
         <root level="INFO" additivity="false">
             <appender-ref ref="async-app-appender"/>
             <appender-ref ref="error-appender"/>
@@ -162,11 +157,6 @@
             <appender-ref ref="iam-appender"/>
             <appender-ref ref="error-appender"/>
         </logger>
-        <logger name="TaskMonitorLogger" level="INFO" additivity="false">
-            <appender-ref ref="task-monitor-appender"/>
-        </logger>
-        <root level="ERROR">
-            <appender-ref ref="execute-appender"/>
         <root level="INFO">
             <appender-ref ref="async-app-appender"/>
             <appender-ref ref="error-appender"/>
@@ -179,10 +169,6 @@
         <logger name="com.tencent.bk.sdk.iam" level="DEBUG" additivity="false">
             <appender-ref ref="CONSOLE"/>
         </logger>
-        <logger name="TaskMonitorLogger" level="INFO" additivity="false">
-            <appender-ref ref="CONSOLE"/>
-        </logger>
-        <root level="ERROR">
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
         </root>
@@ -194,10 +180,6 @@
         <logger name="com.tencent.bk.sdk.iam" level="INFO" additivity="false">
             <appender-ref ref="CONSOLE"/>
         </logger>
-        <logger name="TaskMonitorLogger" level="INFO" additivity="false">
-            <appender-ref ref="CONSOLE"/>
-        </logger>
-        <root level="ERROR">
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
         </root>
