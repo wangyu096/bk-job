@@ -26,19 +26,21 @@ package com.tencent.bk.job.common.model.error;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ErrorDetail {
+public class ErrorDetailDTO {
     /**
      * @see ErrorType
      */
     private Integer type;
 
     @JsonProperty("bad_request_detail")
-    private BadRequestDetail badRequestDetail;
+    private BadRequestDetailDTO badRequestDetail;
 
-    public ErrorDetail(BadRequestDetail badRequestDetail) {
+    public ErrorDetailDTO(BadRequestDetailDTO badRequestDetail) {
         this.badRequestDetail = badRequestDetail;
         this.type = ErrorType.INVALID_PARAM.getType();
     }

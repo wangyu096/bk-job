@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.model.error.ErrorDetailDTO;
 import com.tencent.bk.job.common.model.permission.AuthResultVO;
 import com.tencent.bk.job.common.util.I18nUtil;
 import com.tencent.bk.job.common.util.JobContextUtil;
@@ -65,6 +66,10 @@ public class WebResponse<T> {
     @ApiModelProperty("鉴权结果，当返回码为1238001时，该字段有值")
     @JsonProperty("authResult")
     private AuthResultVO authResult;
+
+    @ApiModelProperty("错误详情")
+    @JsonProperty("errorDetail")
+    private ErrorDetailDTO errorDetail;
 
     public WebResponse(Integer errorCode, T data) {
         this.code = errorCode;
@@ -106,5 +111,12 @@ public class WebResponse<T> {
 
     public static <T> WebResponse<T> buildValidateFailResp(ValidateResult validateResult) {
         return new WebResponse<>(validateResult.getErrorCode(), validateResult.getErrorParams(), null);
+    }
+
+    public static <T> WebResponse<T> buildCommonFailResp(Integer errorCode,
+                                                         ErrorDetailDTO errorDetail) {
+        WebResponse<T> resp = buildCommonFailResp(errorCode);
+        resp.setErrorDetail(errorDetail);
+        return resp;
     }
 }

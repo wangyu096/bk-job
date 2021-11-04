@@ -36,6 +36,7 @@ import com.tencent.bk.job.common.exception.ServiceException;
 import com.tencent.bk.job.common.exception.UnauthenticatedException;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.service.AuthService;
+import com.tencent.bk.job.common.model.error.ErrorDetailDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.ConversionNotSupportedException;
 import org.springframework.beans.TypeMismatchException;
@@ -62,7 +63,6 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.NoHandlerFoundException;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.ConstraintViolationException;
@@ -72,7 +72,7 @@ import javax.validation.ConstraintViolationException;
  */
 @ControllerAdvice(annotations = {EsbAPI.class})
 @Slf4j
-public class EsbExceptionControllerAdvice extends ResponseEntityExceptionHandler {
+public class EsbExceptionControllerAdvice extends ExceptionControllerAdviceBase {
     private final AuthService authService;
 
     @Autowired
@@ -159,7 +159,8 @@ public class EsbExceptionControllerAdvice extends ResponseEntityExceptionHandler
     @ResponseBody
     ResponseEntity<?> handleConstraintViolationException(HttpServletRequest request,
                                                          ConstraintViolationException ex) {
-        log.warn("Handle ConstraintViolationException", ex);
+        ErrorDetailDTO errorDetail = buildErrorDetail(ex);
+        log.warn("handleConstraintViolationException - errorDetail: {}", errorDetail);
         EsbResp<?> resp = EsbResp.buildCommonFailResp(ErrorCode.BAD_REQUEST);
         return new ResponseEntity<>(resp, HttpStatus.OK);
     }
@@ -267,14 +268,9 @@ public class EsbExceptionControllerAdvice extends ResponseEntityExceptionHandler
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
                                                                   HttpHeaders headers, HttpStatus status,
                                                                   WebRequest request) {
-        log.warn("Handle MethodArgumentNotValidException", ex);
         BindingResult bindingResult = ex.getBindingResult();
-        if (bindingResult.hasFieldErrors()) {
-            bindingResult.getFieldErrors().forEach(fieldError -> {
-                log.info("Field: {}, errorMsg: {}, rejectedValue: {}",
-                    fieldError.getField(), fieldError.getDefaultMessage(), fieldError.getRejectedValue());
-            });
-        }
+        ErrorDetailDTO errorDetail = buildErrorDetail(ex);
+        log.warn("HandleMethodArgumentNotValid - errorDetail: {}", errorDetail);
         EsbResp<?> resp = EsbResp.buildCommonFailResp(ErrorCode.BAD_REQUEST);
         return new ResponseEntity<>(resp, HttpStatus.OK);
     }

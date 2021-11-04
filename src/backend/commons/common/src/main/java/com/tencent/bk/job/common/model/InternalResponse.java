@@ -27,7 +27,7 @@ package com.tencent.bk.job.common.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.ServiceException;
-import com.tencent.bk.job.common.model.error.ErrorDetail;
+import com.tencent.bk.job.common.model.error.ErrorDetailDTO;
 import com.tencent.bk.job.common.model.error.ErrorType;
 import com.tencent.bk.job.common.model.iam.AuthResultDTO;
 import com.tencent.bk.job.common.util.I18nUtil;
@@ -72,7 +72,7 @@ public class InternalResponse<T> {
 
     @ApiModelProperty("错误详情")
     @JsonProperty("errorDetail")
-    private ErrorDetail errorDetail;
+    private ErrorDetailDTO errorDetail;
 
     public InternalResponse(ErrorType errorType, Integer errorCode, T data) {
         this.code = errorCode;
@@ -121,7 +121,7 @@ public class InternalResponse<T> {
     }
 
     public static <T> InternalResponse<T> buildCommonFailResp(ErrorType errorType, Integer errorCode,
-                                                              ErrorDetail errorDetail) {
+                                                              ErrorDetailDTO errorDetail) {
         InternalResponse<T> resp = buildCommonFailResp(errorType, errorCode);
         resp.setErrorDetail(errorDetail);
         return resp;

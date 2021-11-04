@@ -32,6 +32,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 
@@ -46,6 +47,7 @@ public class EsbFastExecuteScriptV3Request extends EsbReq {
      */
     @JsonProperty("bk_biz_id")
     @NotNull(message = "业务ID不能为空")
+    @Min(value = 1L, message = "bk_biz_id should be greater than 0")
     private Long appId;
 
     /**

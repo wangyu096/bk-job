@@ -36,21 +36,25 @@ import com.tencent.bk.job.common.exception.UnauthenticatedException;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.InternalResponse;
+import com.tencent.bk.job.common.model.error.ErrorDetailDTO;
 import com.tencent.bk.job.common.model.error.ErrorType;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import org.springframework.web.context.request.WebRequest;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.ConstraintViolationException;
 
 @ControllerAdvice(annotations = {InternalAPI.class})
 @Slf4j
-public class ServiceExceptionControllerAdvice extends ResponseEntityExceptionHandler {
+public class ServiceExceptionControllerAdvice extends ExceptionControllerAdviceBase {
 
     @ExceptionHandler(Throwable.class)
     @ResponseBody
@@ -131,5 +135,28 @@ public class ServiceExceptionControllerAdvice extends ResponseEntityExceptionHan
         String errorMsg = "Handle UnauthenticatedException, uri: " + request.getRequestURI();
         log.error(errorMsg, ex);
         return InternalResponse.buildCommonFailResp(ex);
+    }
+
+    @SuppressWarnings("all")
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
+                                                                  HttpHeaders headers, HttpStatus status,
+                                                                  WebRequest request) {
+        ErrorDetailDTO errorDetail = buildErrorDetail(ex);
+        log.warn("HandleMethodArgumentNotValid - errorDetail: {}", errorDetail);
+        InternalResponse<?> resp = InternalResponse.buildCommonFailResp(ErrorType.INVALID_PARAM,
+            ErrorCode.ILLEGAL_PARAM, errorDetail);
+        return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseBody
+    ResponseEntity<?> handleConstraintViolationException(HttpServletRequest request,
+                                                         ConstraintViolationException ex) {
+        ErrorDetailDTO errorDetail = buildErrorDetail(ex);
+        log.warn("handleConstraintViolationException - errorDetail: {}", errorDetail);
+        InternalResponse<?> resp = InternalResponse.buildCommonFailResp(ErrorType.INVALID_PARAM,
+            ErrorCode.ILLEGAL_PARAM, errorDetail);
+        return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
     }
 }

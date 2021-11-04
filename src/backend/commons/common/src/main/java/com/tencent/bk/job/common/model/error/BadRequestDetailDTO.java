@@ -29,37 +29,24 @@ package com.tencent.bk.job.common.model.error;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class BadRequestDetail {
+@NoArgsConstructor
+public class BadRequestDetailDTO {
 
     @JsonProperty("field_violations")
-    private List<FieldViolation> fieldViolations;
+    private List<FieldViolationDTO> fieldViolations;
 
-    public BadRequestDetail(String field, String rejectedValue, String description) {
-        this.fieldViolations = new ArrayList<>();
-        this.fieldViolations.add(new FieldViolation(field, rejectedValue, description));
-    }
-
-    @Data
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    private static class FieldViolation {
-        @JsonProperty("field")
-        private String field;
-        @JsonProperty("rejected_value")
-        private String rejectedValue;
-        @JsonProperty("description")
-        private String description;
-
-        FieldViolation(String field, String rejectedValue, String description) {
-            this.field = field;
-            this.rejectedValue = rejectedValue;
-            this.description = description;
+    public void addFieldViolation(FieldViolationDTO fieldViolation) {
+        if (fieldViolations == null) {
+            this.fieldViolations = new ArrayList<>();
         }
+        this.fieldViolations.add(fieldViolation);
     }
 
 }

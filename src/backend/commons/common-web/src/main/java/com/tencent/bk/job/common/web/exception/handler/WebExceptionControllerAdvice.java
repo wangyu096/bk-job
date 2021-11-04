@@ -37,22 +37,27 @@ import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.iam.service.WebAuthService;
 import com.tencent.bk.job.common.model.WebResponse;
+import com.tencent.bk.job.common.model.error.ErrorDetailDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import org.springframework.web.context.request.WebRequest;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.ConstraintViolationException;
 
 @ControllerAdvice(annotations = {WebAPI.class})
 @Slf4j
-public class WebExceptionControllerAdvice extends ResponseEntityExceptionHandler {
+public class WebExceptionControllerAdvice extends ExceptionControllerAdviceBase {
     private final WebAuthService webAuthService;
 
     @Autowired
@@ -143,5 +148,27 @@ public class WebExceptionControllerAdvice extends ResponseEntityExceptionHandler
         String errorMsg = "Handle UnauthenticatedException, uri: " + request.getRequestURI();
         log.error(errorMsg, ex);
         return WebResponse.buildCommonFailResp(ex.getErrorCode());
+    }
+
+    @SuppressWarnings("all")
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
+                                                                  HttpHeaders headers, HttpStatus status,
+                                                                  WebRequest request) {
+        BindingResult bindingResult = ex.getBindingResult();
+        ErrorDetailDTO errorDetail = buildErrorDetail(ex);
+        log.warn("HandleMethodArgumentNotValid - errorDetail: {}", errorDetail);
+        WebResponse<?> resp = WebResponse.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM, errorDetail);
+        return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseBody
+    ResponseEntity<?> handleConstraintViolationException(HttpServletRequest request,
+                                                         ConstraintViolationException ex) {
+        ErrorDetailDTO errorDetail = buildErrorDetail(ex);
+        log.warn("handleConstraintViolationException - errorDetail: {}", errorDetail);
+        WebResponse<?> resp = WebResponse.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM, errorDetail);
+        return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
     }
 }
