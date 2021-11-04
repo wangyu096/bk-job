@@ -26,6 +26,7 @@
  */
 package com.tencent.bk.job.common.web.validation;
 
+import com.google.common.base.Strings;
 import org.hibernate.validator.HibernateValidatorConfiguration;
 import org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator;
 import org.hibernate.validator.spi.messageinterpolation.LocaleResolver;
@@ -35,11 +36,20 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.core.LocalVariableTableParameterNameDiscoverer;
+import org.springframework.core.ParameterNameDiscoverer;
+import org.springframework.core.PrioritizedParameterNameDiscoverer;
+import org.springframework.core.StandardReflectionParameterNameDiscoverer;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.validation.beanvalidation.MessageSourceResourceBundleLocator;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.validation.ConstraintViolation;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Executable;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
@@ -51,7 +61,9 @@ public class ValidationConfiguration {
     @Primary
     public LocalValidatorFactoryBean localValidatorFactoryBean(
         @Qualifier("messageSource") MessageSource messageSource) {
-        return new JobLocalValidatorFactoryBean(messageSource);
+        LocalValidatorFactoryBean localValidatorFactoryBean = new JobLocalValidatorFactoryBean(messageSource);
+        localValidatorFactoryBean.setParameterNameDiscoverer(new CustomParameterNameDiscoverer());
+        return localValidatorFactoryBean;
     }
 
     public class JobLocalValidatorFactoryBean extends LocalValidatorFactoryBean {
@@ -87,6 +99,51 @@ public class ValidationConfiguration {
             locales.add(Locale.ENGLISH);
             locales.add(Locale.US);
             return locales;
+        }
+    }
+
+    public class CustomParameterNameDiscoverer extends PrioritizedParameterNameDiscoverer {
+
+        public CustomParameterNameDiscoverer() {
+            this.addDiscoverer(new ReqParamNamesDiscoverer());
+            this.addDiscoverer(new StandardReflectionParameterNameDiscoverer());
+            this.addDiscoverer(new LocalVariableTableParameterNameDiscoverer());
+        }
+    }
+
+    public class ReqParamNamesDiscoverer implements ParameterNameDiscoverer {
+
+        public ReqParamNamesDiscoverer() {
+        }
+
+        @Override
+        public String[] getParameterNames(Method method) {
+            return doGetParameterNames(method);
+        }
+
+        @Override
+        public String[] getParameterNames(Constructor<?> constructor) {
+            return doGetParameterNames(constructor);
+        }
+
+        private String[] doGetParameterNames(Executable executable) {
+            Parameter[] parameters = executable.getParameters();
+            String[] parameterNames = new String[parameters.length];
+            for (int i = 0; i < parameters.length; ++i) {
+                Parameter param = parameters[i];
+                if (!param.isNamePresent()) {
+                    return null;
+                }
+                String paramName = param.getName();
+                if (param.isAnnotationPresent(RequestParam.class)) {
+                    RequestParam requestParamAnnotation = param.getAnnotation(RequestParam.class);
+                    if (!Strings.isNullOrEmpty(requestParamAnnotation.value())) {
+                        paramName = requestParamAnnotation.value();
+                    }
+                }
+                parameterNames[i] = paramName;
+            }
+            return parameterNames;
         }
     }
 
