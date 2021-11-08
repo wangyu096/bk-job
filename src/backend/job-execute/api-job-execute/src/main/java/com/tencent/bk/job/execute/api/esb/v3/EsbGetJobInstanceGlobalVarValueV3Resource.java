@@ -38,8 +38,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.validation.constraints.Min;
-
 /**
  * 获取作业实例全局变量的值-V3
  */
@@ -58,7 +56,6 @@ public interface EsbGetJobInstanceGlobalVarValueV3Resource {
         @RequestHeader(value = JobCommonHeaders.USERNAME) String username,
         @RequestHeader(value = JobCommonHeaders.APP_CODE) String appCode,
         @RequestParam(value = "bk_biz_id") Long appId,
-        @Min(value = 1L, message = "xxx")
         @RequestParam(value = "job_instance_id") Long taskInstanceId);
 
 
