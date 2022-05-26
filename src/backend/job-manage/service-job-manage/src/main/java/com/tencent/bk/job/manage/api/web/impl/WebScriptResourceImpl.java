@@ -596,7 +596,10 @@ public class WebScriptResourceImpl implements WebScriptResource {
             }
         }
 
-        resultVOS = excludeNotOnlinePublicScriptVersion(username, appResourceScope, scriptId, resultVOS);
+        // 公共脚本由于查询权限对所有用户开放，所以对于脚本版本的查看需要特殊处理，仅包含online状态的脚本版本
+        if (appResourceScope == null) {
+            resultVOS = excludeNotOnlinePublicScriptVersion(username, appResourceScope, scriptId, resultVOS);
+        }
         return Response.buildSuccessResp(resultVOS);
     }
 
