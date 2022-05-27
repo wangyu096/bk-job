@@ -51,11 +51,6 @@ public class CacheHostDO {
     private Long hostId;
 
     /**
-     * 业务ID
-     */
-    private Long appId;
-
-    /**
      * CMDB业务ID
      */
     private Long bizId;

@@ -1388,7 +1388,7 @@ public class HostServiceImpl implements HostService {
         if (CollectionUtils.isNotEmpty(appHosts)) {
             for (ApplicationHostDTO appHost : appHosts) {
                 if (appHost.getBizId() == null || appHost.getBizId() <= 0) {
-                    log.info("Host: {} missing bizId, skip!", appHost.getCloudIp());
+                    log.info("Synced host: {} missing bizId, skip check!", appHost.getCloudIp());
                     // DB中缓存的主机可能没有业务信息(依赖的主机事件还没有处理),那么暂时跳过该主机
                     continue;
                 }
@@ -1415,7 +1415,7 @@ public class HostServiceImpl implements HostService {
                     .map(host -> new IpDTO(host.getCloudAreaId(), host.getIp()))
                     .collect(Collectors.toList());
                 notExistHosts.removeAll(cmdbExistHostIps);
-                log.info("sync new hosts from cmdb, hosts:{}", cmdbExistHosts);
+                log.info("Get hosts from cmdb, cmdbExistHosts:{}", cmdbExistHosts);
 
                 hostCache.addOrUpdateHosts(cmdbExistHosts);
 
@@ -1427,7 +1427,7 @@ public class HostServiceImpl implements HostService {
                 });
             }
         } catch (Exception e) {
-            log.warn("Handle hosts that may not be synchronized from cmdb fail!", e);
+            log.error("Check hosts that may not be synchronized from cmdb fail!", e);
         }
     }
 
