@@ -25,6 +25,7 @@
 package com.tencent.bk.job.common.config;
 
 import com.tencent.bk.job.common.util.json.JsonUtils;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -54,8 +55,7 @@ public class FeatureToggleConfig {
     /**
      * 特性开关配置
      */
-    @ToString
-    @Setter
+    @Data
     public static class ToggleConfig {
         /**
          * 特性开关是否开启
@@ -86,19 +86,16 @@ public class FeatureToggleConfig {
                 // 未开启灰度，全量开启
                 return true;
             }
-            // 如果配置exclude参数，需要优先判断灰度黑名单
-            if (CollectionUtils.isNotEmpty(exclude) && exclude.contains(value)) {
-                return false;
+            // 灰度分为两种模式:exclude(黑名单)和include(白名单)。如果同时配置exclude和include,那么只有exclude生效
+            if (CollectionUtils.isNotEmpty(exclude)) {
+                return !exclude.contains(value);
+            } else if (CollectionUtils.isNotEmpty(include)) {
+                return include.contains(value);
+            } else {
+                // 如果没有配置exclude和include,那么默认不启用灰度,全量开启
+                return true;
             }
-            // 是否在灰度白名单中
-            return CollectionUtils.isNotEmpty(include) && include.contains(value);
-        }
 
-        /**
-         * 判断是否开启特性
-         */
-        public boolean isOpen() {
-            return enabled;
         }
 
     }

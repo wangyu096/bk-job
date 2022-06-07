@@ -62,7 +62,7 @@ public class FeatureToggle {
     public static boolean isCmdbBizSetEnabled() {
         FeatureToggleConfig featureToggleConfig = get();
         FeatureToggleConfig.ToggleConfig cmdbBizSetConfig = featureToggleConfig.getCmdbBizSet();
-        return cmdbBizSetConfig.isOpen();
+        return cmdbBizSetConfig.isEnabled();
     }
 
     /**
@@ -71,6 +71,6 @@ public class FeatureToggle {
     public static boolean isBkBizIdEnabled() {
         FeatureToggleConfig featureToggleConfig = get();
         FeatureToggleConfig.ToggleConfig toggleConfig = featureToggleConfig.getEsbApiParamBkBizId();
-        return toggleConfig.isOpen();
+        return toggleConfig.isEnabled();
     }
 }
