@@ -108,11 +108,11 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
             ExecuteMetricsConstants.TAG_KEY_START_MODE, ExecuteMetricsConstants.TAG_VALUE_START_MODE_WEB,
             ExecuteMetricsConstants.TAG_KEY_TASK_TYPE, ExecuteMetricsConstants.TAG_VALUE_TASK_TYPE_EXECUTE_PLAN
         })
-    public Response<TaskExecuteVO> executeTask(String username,
-                                               AppResourceScope appResourceScope,
-                                               String scopeType,
-                                               String scopeId,
-                                               WebTaskExecuteRequest request) {
+    public TaskExecuteVO executeTask(String username,
+                                     AppResourceScope appResourceScope,
+                                     String scopeType,
+                                     String scopeId,
+                                     WebTaskExecuteRequest request) {
         log.info("Execute task, request={}", request);
 
         if (!checkExecuteTaskRequest(request)) {
@@ -128,7 +128,7 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
         TaskExecuteVO result = new TaskExecuteVO();
         result.setTaskInstanceId(taskInstanceDTO.getId());
         result.setName(taskInstanceDTO.getName());
-        return Response.buildSuccessResp(result);
+        return result;
     }
 
     private boolean checkExecuteTaskRequest(WebTaskExecuteRequest request) {
@@ -224,11 +224,11 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
             ExecuteMetricsConstants.TAG_KEY_START_MODE, ExecuteMetricsConstants.TAG_VALUE_START_MODE_WEB,
             ExecuteMetricsConstants.TAG_KEY_TASK_TYPE, ExecuteMetricsConstants.TAG_VALUE_TASK_TYPE_FAST_SCRIPT
         })
-    public Response<StepExecuteVO> fastExecuteScript(String username,
-                                                     AppResourceScope appResourceScope,
-                                                     String scopeType,
-                                                     String scopeId,
-                                                     WebFastExecuteScriptRequest request) {
+    public StepExecuteVO fastExecuteScript(String username,
+                                           AppResourceScope appResourceScope,
+                                           String scopeType,
+                                           String scopeId,
+                                           WebFastExecuteScriptRequest request) {
         log.debug("Fast execute script, scope={}, operator={}, request={}", appResourceScope, username, request);
 
         if (!checkFastExecuteScriptRequest(request)) {
@@ -343,7 +343,7 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
             ExecuteMetricsConstants.TAG_KEY_START_MODE, ExecuteMetricsConstants.TAG_VALUE_START_MODE_WEB,
             ExecuteMetricsConstants.TAG_KEY_TASK_TYPE, ExecuteMetricsConstants.TAG_VALUE_TASK_TYPE_FAST_FILE
         })
-    public Response<StepExecuteVO> fastPushFile(String username,
+    public StepExecuteVO fastPushFile(String username,
                                                 AppResourceScope appResourceScope,
                                                 String scopeType,
                                                 String scopeId,
@@ -364,10 +364,10 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
         return createAndStartFastTask(false, taskInstance, stepInstance, rollingConfig);
     }
 
-    private Response<StepExecuteVO> createAndStartFastTask(boolean isRedoTask,
-                                                           TaskInstanceDTO taskInstance,
-                                                           StepInstanceDTO stepInstance,
-                                                           StepRollingConfigDTO rollingConfig) {
+    private StepExecuteVO createAndStartFastTask(boolean isRedoTask,
+                                                 TaskInstanceDTO taskInstance,
+                                                 StepInstanceDTO stepInstance,
+                                                 StepRollingConfigDTO rollingConfig) {
         FastTaskDTO fastTask = FastTaskDTO.builder().taskInstance(taskInstance).stepInstance(stepInstance)
             .rollingConfig(rollingConfig).build();
         long taskInstanceId;
@@ -380,7 +380,7 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
         stepExecuteVO.setTaskInstanceId(taskInstanceId);
         stepExecuteVO.setStepInstanceId(stepInstance.getId());
         stepExecuteVO.setStepName(stepInstance.getName());
-        return Response.buildSuccessResp(stepExecuteVO);
+        return stepExecuteVO;
     }
 
     private boolean checkFastPushFileRequest(WebFastPushFileRequest request) {
@@ -518,7 +518,8 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
         if (CollectionUtils.isNotEmpty(hostNode.getNodeList())) {
             List<DynamicServerTopoNodeDTO> topoNodes = new ArrayList<>();
             hostNode.getNodeList().forEach(
-                topoNode -> topoNodes.add(new DynamicServerTopoNodeDTO(topoNode.getInstanceId(), topoNode.getObjectId())));
+                topoNode -> topoNodes.add(new DynamicServerTopoNodeDTO(topoNode.getInstanceId(),
+                    topoNode.getObjectId())));
             serversDTO.setTopoNodes(topoNodes);
         }
         return serversDTO;

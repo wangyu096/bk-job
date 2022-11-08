@@ -59,7 +59,7 @@ public interface WebExecuteTaskResource {
 
     @ApiOperation(value = "执行作业", produces = "application/json")
     @PostMapping(value = {"/task-execution"})
-    Response<TaskExecuteVO> executeTask(
+    TaskExecuteVO executeTask(
         @ApiParam("用户名，网关自动传入")
         @RequestHeader("username")
             String username,
@@ -99,7 +99,7 @@ public interface WebExecuteTaskResource {
 
     @ApiOperation(value = "快速执行脚本", produces = "application/json")
     @PostMapping(value = {"/fast-execute-script"})
-    Response<StepExecuteVO> fastExecuteScript(
+    StepExecuteVO fastExecuteScript(
         @ApiParam("用户名，网关自动传入")
         @RequestHeader("username")
             String username,
@@ -120,7 +120,7 @@ public interface WebExecuteTaskResource {
 
     @ApiOperation(value = "快速分发文件", produces = "application/json")
     @PostMapping(value = {"/fast-push-file"})
-    Response<StepExecuteVO> fastPushFile(
+    StepExecuteVO fastPushFile(
         @ApiParam("用户名，网关自动传入")
         @RequestHeader("username")
             String username,
