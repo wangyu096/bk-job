@@ -42,6 +42,7 @@
         </bk-button>
         <template #right>
           <jb-search-select
+            ref="searchSelect"
             :data="searchSelect"
             :placeholder="$t('script.选择匹配的字段并输入关键字进行搜索')"
             :show-condition="false"
@@ -105,8 +106,8 @@
               <template slot-scope="{ row }">
                 <bk-button
                   v-bk-tooltips.allowHtml="`
-                                    <div>${$t('script.作业模板引用')}: ${row.relatedTaskTemplateNum}</div>
-                                    <div>${$t('script.执行方案引用')}: ${row.relatedTaskPlanNum}</div>`"
+                    <div>${$t('script.作业模板引用')}: ${row.relatedTaskTemplateNum}</div>
+                    <div>${$t('script.执行方案引用')}: ${row.relatedTaskPlanNum}</div>`"
                   class="mr20"
                   text
                   @click="handleShowRelated(row)">
@@ -262,6 +263,25 @@
                 :size="tableSize"
                 @setting-change="handleSettingChange" />
             </bk-table-column>
+            <empty
+              v-if="isSearching"
+              slot="empty"
+              type="search">
+              <div>
+                <div style="font-size: 14px; color: #63656e;">
+                  {{ $t('搜索结果为空') }}
+                </div>
+                <div style="margin-top: 8px; font-size: 12px; line-height: 16px; color: #979ba5;">
+                  <span>{{ $t('可以尝试调整关键词') }}</span>
+                  <span>{{ $t('或') }}</span>
+                  <bk-button
+                    text
+                    @click="handleClearSearch">
+                    {{ $t('清空搜索条件') }}
+                  </bk-button>
+                </div>
+              </div>
+            </empty>
           </bk-table>
           <template slot="flod">
             <component
@@ -359,6 +379,7 @@
   } from '@utils/assist';
   import { listColumnsCache } from '@utils/cache-helper';
 
+  import Empty from '@components/empty';
   import JbPopoverConfirm from '@components/jb-popover-confirm';
   import JbSearchSelect from '@components/jb-search-select';
   import ListActionLayout from '@components/list-action-layout';
@@ -380,6 +401,7 @@
   export default {
     name: 'ScriptVersion',
     components: {
+      Empty,
       ListActionLayout,
       JbPopoverConfirm,
       JbSearchSelect,
@@ -392,11 +414,12 @@
       ScriptBasic,
       NewVersion,
     },
-    data () {
+    data() {
       return {
         isLoading: false,
         isListFlod: false,
         isShowNewVersion: false,
+        isSearching: false,
         showDiff: false,
         dataMemo: [],
         data: [],
@@ -417,14 +440,14 @@
        * @desc 骨架屏 Loading
        * @returns { Boolean }
        */
-      isSkeletonLoading () {
+      isSkeletonLoading() {
         return this.isLoading;
       },
       /**
        * @desc 脚本展示状态组件
        * @returns { Object }
        */
-      curCom () {
+      curCom() {
         if (!this.displayCom) {
           return 'div';
         }
@@ -439,7 +462,7 @@
        * @desc 列表数据
        * @returns { Array }
        */
-      renderList () {
+      renderList() {
         return [
           ...this.dataAppendList,
           ...this.data,
@@ -449,14 +472,14 @@
        * @desc 已存在未上线版本不允许新建版本
        * @returns { Boolean }
        */
-      isCopyCreateDisabled () {
+      isCopyCreateDisabled() {
         return !!_.find(this.dataMemo, scriptVersion => scriptVersion.isDraft);
       },
       /**
        * @desc 选中的脚本版本
        * @returns { Object }
        */
-      selectVersion () {
+      selectVersion() {
         const current = _.find(this.renderList, _ => _.scriptVersionId === this.selectVersionId);
         if (!current) {
           return {};
@@ -467,14 +490,14 @@
        * @desc 需要选中两个脚本才能对比
        * @returns { Boolean }
        */
-      disableDiff () {
+      disableDiff() {
         return Object.keys(this.choosedMap).length < 2;
       },
       /**
        * @desc 将要对比的脚本数据
        * @returns { Object }
        */
-      diffInfo () {
+      diffInfo() {
         const diffVersion = Object.keys(this.choosedMap);
         return {
           oldVersionId: parseInt(diffVersion[0], 10) || '',
@@ -485,7 +508,7 @@
        * @desc 当前脚本版本的 name
        * @returns { String }
        */
-      currentVersionName () {
+      currentVersionName() {
         if (this.dataMemo.length < 1) {
           return '';
         }
@@ -495,7 +518,7 @@
        * @desc 展示的列表列
        * @returns { Object }
        */
-      allColumnMap () {
+      allColumnMap() {
         if (this.isListFlod) {
           return {
             version: true,
@@ -509,14 +532,14 @@
       },
     },
     watch: {
-      displayCom (displayCom) {
+      displayCom(displayCom) {
         // 当右侧详情面板切换时，需要重置dataAppendList
         if (displayCom !== 'copyCreate') {
           this.dataAppendList = [];
         }
       },
     },
-    created () {
+    created() {
       // 缓存状态切换中的中间状态
       this.lastSelectScriptVersionId = '';
       // 缓存脚本版本的完整数据列表——用于脚本搜索
@@ -594,7 +617,7 @@
         ]);
       }
     },
-    mounted () {
+    mounted() {
       this.calcTableHeight();
       window.addEventListener('resize', this.calcTableHeight);
       this.$once('hook:beforeDestroy', () => {
@@ -608,7 +631,7 @@
        *
        * 需要解析url参数
        */
-      fetchData (isFirst) {
+      fetchData(isFirst) {
         this.isLoading = true;
         return this.serviceHandler.scriptVersionList({
           id: this.scriptId,
@@ -633,7 +656,7 @@
        *
        * 进入脚本详情模式
        */
-      parseUrl () {
+      parseUrl() {
         const scriptVersionId = parseInt(this.$route.query.scriptVersionId, 10);
         if (scriptVersionId) {
           this.handleShowDetail({
@@ -644,19 +667,19 @@
       /**
        * @desc 计算表格高度
        */
-      calcTableHeight () {
+      calcTableHeight() {
         const { top } = getOffset(this.$refs.list);
         const windowHeight = window.innerHeight;
         this.tableHeight = windowHeight - top - 20;
       },
 
-      rowClassName ({ row }) {
+      rowClassName({ row }) {
         return row.scriptVersionId === this.selectVersionId ? 'active' : '';
       },
       /**
        * @desc 新建脚本版本
        */
-      handlNewVersion () {
+      handlNewVersion() {
         if (!this.isCopyCreateDisabled) {
           this.isShowNewVersion = true;
           return;
@@ -686,7 +709,7 @@
       /**
        * @desc 编辑最新的未上线脚本版本
        */
-      handleEditDraftVersion () {
+      handleEditDraftVersion() {
         const lastestDraftScriptVersion = _.find(this.dataMemo, scriptVersion => scriptVersion.isDraft);
         this.handleEdit(lastestDraftScriptVersion);
         this.newVersionPopperInstance.hide();
@@ -694,7 +717,7 @@
       /**
        * @desc 取消新建版本
        */
-      handleNewVersionClose () {
+      handleNewVersionClose() {
         this.newVersionPopperInstance && this.newVersionPopperInstance.hide();
         this.isShowNewVersion = false;
       },
@@ -702,7 +725,7 @@
        * @desc 列表搜索
        * @param {Object} payload 搜索字段
        */
-      handleSearch (payload) {
+      handleSearch(payload) {
         let scriptVersionList = this.dataMemo;
         Object.keys(payload).forEach((key) => {
           const reg = new RegExp(encodeRegexp(payload[key]));
@@ -713,13 +736,20 @@
           });
         });
         this.data = Object.freeze(scriptVersionList);
+        this.isSearching = Object.keys(payload).length > 0;
         this.handleLayoutFlod();
+      },
+      /**
+       * @desc 清空搜索
+       */
+      handleClearSearch() {
+        this.$refs.searchSelect.reset();
       },
       /**
        * @desc 列表排序
        * @param {Object} payload 排序字段
        */
-      handleSortChange (payload) {
+      handleSortChange(payload) {
         if (payload.prop) {
           const key = payload.prop;
           const list = [
@@ -736,7 +766,7 @@
       /**
        * @desc 自定义列表配置
        */
-      handleSettingChange ({ fields, size }) {
+      handleSettingChange({ fields, size }) {
         this.selectedTableColumn = Object.freeze(fields);
         this.tableSize = size;
         listColumnsCache.setItem(TABLE_COLUMN_CACHE, {
@@ -747,7 +777,7 @@
       /**
        * @desc 布局切换
        */
-      handleLayoutFlod () {
+      handleLayoutFlod() {
         this.displayCom = '';
         this.isListFlod = false;
         if (this.selectVersionId === -1) {
@@ -761,7 +791,7 @@
        * @param {Object} payload 脚本数据
        * @param {Boolean} checked 选择状态
        */
-      handleSelectionChange (payload, checked) {
+      handleSelectionChange(payload, checked) {
         if (checked) {
           this.choosedMap[payload.scriptVersionId] = true;
         } else {
@@ -773,7 +803,7 @@
        * @desc 点击版本名查看详情
        * @param {Object} row 脚本数据
        */
-      handleShowDetail (row) {
+      handleShowDetail(row) {
         leaveConfirm()
           .then(() => {
             this.selectVersionId = row.scriptVersionId;
@@ -785,7 +815,7 @@
        * @desc 鼠标选中一行
        * @param {Object} row 脚本数据
        */
-      handleRowSelect (row) {
+      handleRowSelect(row) {
         if (this.isListFlod) {
           this.handleShowDetail(row);
         }
@@ -795,7 +825,7 @@
        * @param {Number} id 脚本id
        * @param {String} versionId
        */
-      handleOffline (id, versionId) {
+      handleOffline(id, versionId) {
         return this.serviceHandler.scriptVersionOffline({
           id,
           versionId,
@@ -809,7 +839,7 @@
        * @param {Number} id 脚本id
        * @param {String} versionId 脚本版本id
        */
-      handleOnline (id, versionId) {
+      handleOnline(id, versionId) {
         return this.serviceHandler.scriptVersionOnline({
           id,
           versionId,
@@ -822,7 +852,7 @@
        * @desc 删除
        * @param {String} versionId 脚本版本id
        */
-      handleRemove (versionId) {
+      handleRemove(versionId) {
         return this.serviceHandler.scriptVersionRemove({
           versionId,
         }).then(() => {
@@ -834,7 +864,7 @@
        * @desc 执行
        * @param {Object} payload 脚本数据
        */
-      handleGoExce (payload) {
+      handleGoExce(payload) {
         this.$router.push({
           name: 'fastExecuteScript',
           params: {
@@ -850,7 +880,7 @@
        * @desc 同步
        * @param {Object} row 脚本数据
        */
-      handleSync (row) {
+      handleSync(row) {
         const routerName = this.isPublicScript ? 'scriptPublicSync' : 'scriptSync';
 
         this.$router.push({
@@ -865,7 +895,7 @@
        * @desc 编辑脚本版本
        * @param {Object} scriptInfo 脚本数据
        */
-      handleEdit (scriptInfo) {
+      handleEdit(scriptInfo) {
         this.selectVersionId = scriptInfo.scriptVersionId;
         this.displayCom = 'edit';
         this.isListFlod = true;
@@ -876,7 +906,7 @@
        * @param {String} mode 引用的模板、执行方案
        * @param {Object} payload 脚本数据
        */
-      handleShowRelated (payload) {
+      handleShowRelated(payload) {
         this.showRelated = true;
         this.relatedScriptInfo = payload;
       },
@@ -884,26 +914,26 @@
        * @desc 显示脚本差异弹层
        * @param {Object} payload
        */
-      handlShowDiff () {
+      handlShowDiff() {
         this.showDiff = true;
       },
       /**
        * @desc 脚本对比版本切换
        * @param {Object} payload
        */
-      handleDiffVersionChange (payload) {
+      handleDiffVersionChange(payload) {
         this.choosedMap = payload;
       },
       /**
        * @desc 关闭脚本对比弹层
        */
-      handleDiffClose () {
+      handleDiffClose() {
         this.showDiff = false;
       },
       /**
        * @desc 编辑成功刷新列表
        */
-      handleScriptChangeSubmit () {
+      handleScriptChangeSubmit() {
         this.fetchData();
       },
       /**
@@ -911,14 +941,14 @@
        *
        * 更新布局、刷新列表
        */
-      handleDeleteSubmit () {
+      handleDeleteSubmit() {
         this.handleLayoutFlod();
         this.fetchData();
       },
       /**
        * @desc 切换到复制并新建状态
        */
-      handleToggleCopyCreate ({ scriptVersionId }) {
+      handleToggleCopyCreate({ scriptVersionId }) {
         this.selectVersionId = scriptVersionId;
         const currentScriptVersion = _.find(this.dataMemo, _ => _.scriptVersionId === scriptVersionId);
         const newScriptVersion = new ScriptModel({
@@ -938,13 +968,13 @@
       /**
        * @desc 编辑脚本
        */
-      handleToggleEdit () {
+      handleToggleEdit() {
         this.displayCom = 'edit';
       },
       /**
        * @desc 取消新建脚本版本
        */
-      handleCreateCancel () {
+      handleCreateCancel() {
         this.displayCom = 'detail';
         this.selectVersionId = this.lastSelectScriptVersionId;
       },
@@ -953,7 +983,7 @@
        *
        * 并选中新版本
        */
-      handleCreateSubmit ({ scriptVersionId }) {
+      handleCreateSubmit({ scriptVersionId }) {
         this.fetchData()
           .then(() => {
             setTimeout(() => {
@@ -967,7 +997,7 @@
        * @param {Number} scriptVersionId 脚本版本id
        * @param {Object} payload 脚本数据
        */
-      handleCreateValueChange (scriptVersionId, payload) {
+      handleCreateValueChange(scriptVersionId, payload) {
         const data = [
           ...this.dataAppendList,
         ];
@@ -983,14 +1013,14 @@
        * 显示脚本详情
        * 刷新列表数据
        */
-      handleEditSubmit () {
+      handleEditSubmit() {
         this.displayCom = 'detail';
         this.fetchData();
       },
       /**
        * @desc 编辑取消
        */
-      handleEditCancel () {
+      handleEditCancel() {
         this.displayCom = 'detail';
       },
 
@@ -998,7 +1028,7 @@
        * @desc 判断是否可以选中
        * @param {Object} row 脚本数据
        */
-      isRowSelectable (row) {
+      isRowSelectable(row) {
         if (this.disableDiff) {
           return true;
         }
@@ -1008,13 +1038,13 @@
        * @desc 判断是否选中
        * @param {Object} row 脚本数据
        */
-      isRowChecked (row) {
+      isRowChecked(row) {
         return this.choosedMap[row.scriptVersionId];
       },
       /**
        * @desc 自定义表头
        */
-      renderHeader (h, data) {
+      renderHeader(h, data) {
         return (
                     <span>
                         <span>{ data.column.label }</span>
@@ -1033,7 +1063,7 @@
       /**
        * @desc 路由回退
        */
-      routerBack () {
+      routerBack() {
         if (this.isPublicScript) {
           this.$router.push({
             name: 'publicScriptList',

@@ -2,6 +2,7 @@
   <div class="host-dropdown-menu">
     <div
       ref="handleRef"
+      @click="handleShow"
       @mouseenter="handleShow">
       <slot />
     </div>
@@ -44,10 +45,10 @@
       interactive: true,
       boundary: 'window',
       distance: 6,
-      onShow () {
+      onShow() {
         isActive.value = true;
       },
-      onHide () {
+      onHide() {
         isActive.value = false;
       },
     });

@@ -57,7 +57,7 @@ public abstract class AbstractBkApiClient {
         this.appSecret = appSecret;
     }
 
-    private <T> String doPostAndGetRespStr(String uri, T body, ExtHttpHelper httpHelper) {
+    private <T> String postForString(String uri, T body, ExtHttpHelper httpHelper) {
 
         if (httpHelper == null) {
             httpHelper = defaultHttpHelper;
@@ -117,9 +117,7 @@ public abstract class AbstractBkApiClient {
         }
 
         try {
-            requestApiAndWrapResponse(HttpMethod.POST, apiContext, typeReference, httpHelper);
-            apiContext.setSuccess(true);
-            return apiContext.getResp();
+            return requestApiAndWrapResponse(HttpMethod.POST, apiContext, typeReference, httpHelper);
         } finally {
             apiContext.setCostTime(System.currentTimeMillis() - startTime);
             if (logStrategy != null) {
@@ -134,10 +132,10 @@ public abstract class AbstractBkApiClient {
         }
     }
 
-    private <T, R> void requestApiAndWrapResponse(HttpMethod httpMethod,
-                                                  BkApiContext<T, R> apiContext,
-                                                  TypeReference<EsbResp<R>> typeReference,
-                                                  ExtHttpHelper httpHelper) {
+    private <T, R> EsbResp<R> requestApiAndWrapResponse(HttpMethod httpMethod,
+                                                        BkApiContext<T, R> apiContext,
+                                                        TypeReference<EsbResp<R>> typeReference,
+                                                        ExtHttpHelper httpHelper) {
         String uri = apiContext.getUri();
         T reqBody = apiContext.getReq();
         String reqStr = JsonUtils.toJsonWithoutSkippedFields(apiContext.getReq());
@@ -182,12 +180,15 @@ public abstract class AbstractBkApiClient {
                     respStr
                 );
             }
+            apiContext.setSuccess(true);
+            return esbResp;
         } catch (Throwable e) {
             String errorMsg = "Fail to request api|method=" + httpMethod.name()
                 + "|uri=" + uri
                 + "|reqStr=" + reqStr
                 + "|respStr=" + respStr;
             log.error(errorMsg, e);
+            apiContext.setSuccess(false);
             throw new InternalException("Fail to request bk api", e, ErrorCode.API_ERROR);
         }
     }
@@ -199,7 +200,7 @@ public abstract class AbstractBkApiClient {
         String respStr = null;
         switch (httpMethod) {
             case POST:
-                respStr = doPostAndGetRespStr(uri, reqBody, httpHelper);
+                respStr = postForString(uri, reqBody, httpHelper);
                 break;
             default:
                 log.warn("Unimplemented http method: {}", httpMethod.name());

@@ -59,6 +59,7 @@
         align="left"
         :label="$t('ticket.凭证ID')"
         prop="id"
+        show-overflow-tooltip
         width="300">
         <template slot-scope="{ row }">
           <span>{{ row.id }}</span>
@@ -83,6 +84,7 @@
         :filters="sourceFilters"
         :label="$t('ticket.类型.colHead')"
         prop="type"
+        show-overflow-tooltip
         width="180">
         <template slot-scope="{ row }">
           <span>{{ typeMap[row.type] }}</span>
@@ -94,7 +96,8 @@
         align="left"
         :label="$t('ticket.描述')"
         min-width="150"
-        prop="description">
+        prop="description"
+        show-overflow-tooltip>
         <template slot-scope="{ row }">
           <span>{{ row.description || '--' }}</span>
         </template>
@@ -131,6 +134,7 @@
         align="left"
         :label="$t('ticket.创建人')"
         prop="creator"
+        show-overflow-tooltip
         width="120" />
       <bk-table-column
         v-if="allRenderColumnMap.createTime"
@@ -138,6 +142,7 @@
         align="left"
         :label="$t('ticket.创建时间')"
         prop="createTime"
+        show-overflow-tooltip
         width="180" />
       <bk-table-column
         v-if="allRenderColumnMap.lastModifyUser"
@@ -145,6 +150,7 @@
         align="left"
         :label="$t('ticket.更新人')"
         prop="lastModifyUser"
+        show-overflow-tooltip
         width="120" />
       <bk-table-column
         v-if="allRenderColumnMap.lastModifyTime"
@@ -152,6 +158,7 @@
         align="left"
         :label="$t('ticket.更新时间')"
         prop="lastModifyTime"
+        show-overflow-tooltip
         width="180" />
       <bk-table-column
         key="action"
@@ -240,7 +247,7 @@
       JbPopoverConfirm,
       RelatedTicket,
     },
-    data () {
+    data() {
       return {
         isLoading: false,
         tableSize: 'small',
@@ -254,21 +261,21 @@
       };
     },
     computed: {
-      isSkeletonLoading () {
+      isSkeletonLoading() {
         return this.isLoading;
       },
-      allRenderColumnMap () {
+      allRenderColumnMap() {
         return this.selectedTableColumn.reduce((result, item) => {
           result[item.id] = true;
           return result;
         }, {});
       },
-      operationSidesliderInfo () {
+      operationSidesliderInfo() {
         if (!this.ticketDetailInfo.id) {
           return {
             title: I18n.t('ticket.新建凭证'),
             okText: I18n.t('ticket.提交'),
-                        
+
           };
         }
         return {
@@ -277,7 +284,7 @@
         };
       },
     },
-    created () {
+    created() {
       this.getTicketList = TicketService.fetchListWithRelate;
       this.sourceFilters = [
         {
@@ -393,7 +400,7 @@
       /**
        * @desc 获取凭证数据列表
        */
-      fetchData () {
+      fetchData() {
         this.$refs.list.$emit('onFetch', {
           ...this.searchParams,
         });
@@ -404,7 +411,7 @@
        *
        * 显示新建凭证模板
        */
-      handleCreate () {
+      handleCreate() {
         this.showOpertionSideslider = true;
         this.ticketDetailInfo = {};
       },
@@ -415,7 +422,7 @@
        *
        * 显示被引用模板详情
        */
-      handleShowRelated (id) {
+      handleShowRelated(id) {
         this.credentialId = id;
         this.showRelatedSideslider = true;
       },
@@ -426,7 +433,7 @@
        *
        * 重新拉取数据
        */
-      handleSearch (searchParams) {
+      handleSearch(searchParams) {
         this.searchParams = searchParams;
         this.fetchData();
       },
@@ -434,7 +441,7 @@
       /**
        * @desc 设置表格显示列/表格size
        */
-      handleSettingChange ({ fields, size }) {
+      handleSettingChange({ fields, size }) {
         this.selectedTableColumn = Object.freeze(fields);
         this.tableSize = size;
         listColumnsCache.setItem(TABLE_COLUMN_CACHE, {
@@ -448,13 +455,13 @@
        *
        * 重新拉取列表数据
        */
-      handleChange () {
+      handleChange() {
         this.fetchData();
         this.relatedNum = [];
         this.fetchCitedNum();
       },
 
-      handelFilterType (value, row, column) {
+      handelFilterType(value, row, column) {
         const { property } = column;
         return row[property] === value;
       },
@@ -465,7 +472,7 @@
        *
        * 显示编辑凭证数据模板
        */
-      handleEdit (payload) {
+      handleEdit(payload) {
         this.ticketDetailInfo = payload;
         this.showOpertionSideslider = true;
       },
@@ -476,7 +483,7 @@
        *
        * 删除成功重新拉取列表数据
        */
-      handleDelete (id) {
+      handleDelete(id) {
         TicketService.remove({
           id,
         }).then(() => {

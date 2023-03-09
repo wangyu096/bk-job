@@ -35,6 +35,7 @@
       @click.stop="handleBlockShowEdit">
       <div
         ref="valueTextBox"
+        v-bk-overflow-tips="renderText"
         class="render-text-box"
         :style="boxStyles"
         @copy="handleCopy">
@@ -127,16 +128,12 @@
         type: Function,
         default: () => Promise.resolve(),
       },
-      rules: {
-        type: Array,
-        default: () => [],
-      },
       readonly: {
         type: Boolean,
         default: false,
       },
     },
-    data () {
+    data() {
       return {
         isEditing: false,
         isSubmiting: false,
@@ -146,7 +143,7 @@
       };
     },
     computed: {
-      renderText () {
+      renderText() {
         if (this.newVal.length === this.renderLength) {
           return this.newVal;
         }
@@ -161,10 +158,10 @@
         }
         return `${this.newVal.slice(0, this.renderLength)}...`;
       },
-      isShowMore () {
+      isShowMore() {
         return this.newVal.length > this.renderLength && this.renderLength > 0;
       },
-      boxStyles () {
+      boxStyles() {
         const styles = {
           'max-height': this.isExpand ? 'unset' : '78px',
         };
@@ -176,13 +173,13 @@
         }
         return styles;
       },
-      isBlock () {
+      isBlock() {
         return this.mode === 'block';
       },
     },
     watch: {
       value: {
-        handler (newVal) {
+        handler(newVal) {
           this.newVal = newVal;
           if (this.newVal) {
             this.calcEllTextLength();
@@ -191,7 +188,7 @@
         immediate: true,
       },
     },
-    mounted () {
+    mounted() {
       document.body.addEventListener('click', this.handleHideInput);
       this.$once('hook:beforeDestroy', () => {
         document.body.removeEventListener('click', this.handleHideInput);
@@ -203,7 +200,7 @@
        *
        * settimeout 保证计算过程在组件渲染之后
        */
-      calcEllTextLength () {
+      calcEllTextLength() {
         if (this.$slots.default) {
           return;
         }
@@ -253,7 +250,7 @@
       /**
        * @desc 切换编辑状态
        */
-      handleBlockShowEdit () {
+      handleBlockShowEdit() {
         if (!this.isBlock) {
           return;
         }
@@ -265,7 +262,7 @@
        * 阻止事件的冒泡
        * 手动触发body的 click 事件，
        */
-      handleShowInput () {
+      handleShowInput() {
         document.body.click();
         this.isEditing = true;
         this.$nextTick(() => {
@@ -277,7 +274,7 @@
        *
        * 值没有改变不需要提交
        */
-      handleInputBlur () {
+      handleInputBlur() {
         this.isEditing = false;
         if (this.newVal === this.value) {
           return;
@@ -299,7 +296,7 @@
       /**
        * @desc 退出编辑状态
        */
-      handleHideInput (event) {
+      handleHideInput(event) {
         const eventPath = event.composedPath();
         // eslint-disable-next-line no-plusplus
         for (let i = 0; i < eventPath.length; i++) {
@@ -316,7 +313,7 @@
        *
        * 删除内容的开头和结尾的换行符
        */
-      handleCopy (event) {
+      handleCopy(event) {
         const clipboardData = event.clipboardData || window.clipboardData;
         if (!clipboardData) {
           return;
@@ -333,7 +330,7 @@
       /**
        * @desc 查看态的文本展开收起
        */
-      handleExpandAll () {
+      handleExpandAll() {
         this.isExpand = !this.isExpand;
       },
     },

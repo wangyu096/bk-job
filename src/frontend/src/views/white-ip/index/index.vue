@@ -65,43 +65,50 @@
         key="scopeText"
         align="left"
         :label="$t('whiteIP.生效范围.colHead')"
-        prop="scopeText" />
+        prop="scopeText"
+        show-overflow-tooltip />
       <bk-table-column
         v-if="allRenderColumnMap.appText"
         key="appText"
         align="left"
         :label="$t('whiteIP.目标业务.colHead')"
-        prop="appText" />
+        prop="appText"
+        show-overflow-tooltip />
       <bk-table-column
         v-if="allRenderColumnMap.remark"
         key="remark"
         align="left"
         :label="$t('whiteIP.备注.colHead')"
-        prop="remark" />
+        prop="remark"
+        show-overflow-tooltip />
       <bk-table-column
         v-if="allRenderColumnMap.creator"
         key="creator"
         align="left"
         :label="$t('whiteIP.创建人')"
-        prop="creator" />
+        prop="creator"
+        show-overflow-tooltip />
       <bk-table-column
         v-if="allRenderColumnMap.createTime"
         key="createTime"
         align="left"
         :label="$t('whiteIP.创建时间')"
-        prop="createTime" />
+        prop="createTime"
+        show-overflow-tooltip />
       <bk-table-column
         v-if="allRenderColumnMap.lastModifier"
         key="lastModifier"
         align="left"
         :label="$t('whiteIP.更新人')"
-        prop="lastModifier" />
+        prop="lastModifier"
+        show-overflow-tooltip />
       <bk-table-column
         v-if="allRenderColumnMap.lastModifyTime"
         key="lastModifyTime"
         align="left"
         :label="$t('whiteIP.更新时间')"
-        prop="lastModifyTime" />
+        prop="lastModifyTime"
+        show-overflow-tooltip />
       <bk-table-column
         key="action"
         align="left"
@@ -186,7 +193,7 @@
       JbPopoverConfirm,
       Operation,
     },
-    data () {
+    data() {
       return {
         searchParams: [],
         isShowCreateWhiteIp: false,
@@ -196,16 +203,16 @@
       };
     },
     computed: {
-      isSkeletonLoading () {
+      isSkeletonLoading() {
         return this.$refs.list.isLoading;
       },
-      allRenderColumnMap () {
+      allRenderColumnMap() {
         return this.selectedTableColumn.reduce((result, item) => {
           result[item.id] = true;
           return result;
         }, {});
       },
-      operationSidesliderInfo () {
+      operationSidesliderInfo() {
         if (this.editInfo.id) {
           return {
             title: I18n.t('whiteIP.编辑IP白名单'),
@@ -218,7 +225,7 @@
         };
       },
     },
-    created () {
+    created() {
       this.getWhiteList = WhiteIpService.whiteIpList;
       this.searchSelect = [
         {
@@ -299,25 +306,25 @@
       /**
        * @desc 获取表单数据
        */
-      fetchData () {
+      fetchData() {
         this.$refs.list.$emit('onFetch', this.searchParams);
       },
       /**
        * @desc 获取拥有权限的业务列表
        */
-      fetchAppList () {
+      fetchAppList() {
         return AppManageService.fetchAppList();
       },
       /**
        * @desc 获取生效范围列表
        */
-      fetchActionScope () {
+      fetchActionScope() {
         return WhiteIpService.getScope();
       },
       /**
        * @desc 列表展示列设置
        */
-      handleSettingChange ({ fields, size }) {
+      handleSettingChange({ fields, size }) {
         this.selectedTableColumn = Object.freeze(fields);
         this.tableSize = size;
         listColumnsCache.setItem(TABLE_COLUMN_CACHE, {
@@ -328,7 +335,7 @@
       /**
        * @desc 显示新建弹层
        */
-      handleCreate () {
+      handleCreate() {
         this.editInfo = {};
         this.isShowCreateWhiteIp = true;
       },
@@ -336,7 +343,7 @@
        * @desc 列表字段搜索
        * @param {Object} params 搜索条件
        */
-      handleSearch (params) {
+      handleSearch(params) {
         this.searchParams = params;
         this.fetchData();
       },
@@ -344,7 +351,7 @@
        * @desc 编辑一行数据
        * @param {Object} data  列表莫一行的数据
        */
-      handleEdit (data) {
+      handleEdit(data) {
         this.isShowCreateWhiteIp = true;
         this.editInfo = data;
       },
@@ -352,7 +359,7 @@
        * @desc 删除一行数据
        * @param {Object} data 列表莫一行的数据
        */
-      handleDelete (data) {
+      handleDelete(data) {
         return WhiteIpService.whiteDelete({
           id: data.id,
         }).then(() => {
@@ -363,7 +370,7 @@
       /**
        * @desc 刷新列表数据
        */
-      handleWhiteIpUpdate () {
+      handleWhiteIpUpdate() {
         this.fetchData();
       },
     },
