@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.common.audit.config;
 
-import com.tencent.bk.audit.EventExporter;
+import com.tencent.bk.audit.AuditEventManager;
 import com.tencent.bk.audit.LogFileExporter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -40,7 +40,13 @@ public class AuditAutoConfiguration {
 
     @Bean("logFileEventExporter")
     @ConditionalOnProperty(name = "audit.exporter.type", havingValue = EXPORTER_TYPE_LOG_FILE, matchIfMissing = true)
-    EventExporter logFileEventExporter() {
+    LogFileExporter logFileEventExporter() {
         return new LogFileExporter();
+    }
+
+    @Bean("auditEventManager")
+    @ConditionalOnProperty(name = "audit.exporter.type", havingValue = EXPORTER_TYPE_LOG_FILE, matchIfMissing = true)
+    AuditEventManager auditEventManager(LogFileExporter logFileExporter) {
+        return new AuditEventManager(logFileExporter);
     }
 }
