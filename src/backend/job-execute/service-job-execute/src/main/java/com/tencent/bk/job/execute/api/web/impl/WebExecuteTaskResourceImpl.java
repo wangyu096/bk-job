@@ -24,10 +24,15 @@
 
 package com.tencent.bk.job.execute.api.web.impl;
 
+import com.tencent.bk.audit.AuditManagerRegistry;
+import com.tencent.bk.audit.model.AuditEvent;
 import com.tencent.bk.job.common.annotation.CompatibleImplementation;
+import com.tencent.bk.job.common.audit.AuditRecord;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
 import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.iam.constant.ActionId;
+import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
 import com.tencent.bk.job.common.model.dto.HostDTO;
@@ -108,12 +113,16 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
             ExecuteMetricsConstants.TAG_KEY_START_MODE, ExecuteMetricsConstants.TAG_VALUE_START_MODE_WEB,
             ExecuteMetricsConstants.TAG_KEY_TASK_TYPE, ExecuteMetricsConstants.TAG_VALUE_TASK_TYPE_EXECUTE_PLAN
         })
+    @AuditRecord(actionId = ActionId.LAUNCH_JOB_PLAN, resourceType = ResourceTypeId.HOST)
     public Response<TaskExecuteVO> executeTask(String username,
                                                AppResourceScope appResourceScope,
                                                String scopeType,
                                                String scopeId,
                                                WebTaskExecuteRequest request) {
         log.info("Execute task, request={}", request);
+
+        AuditEvent auditEvent = AuditManagerRegistry.get().currentEvent();
+        auditEvent.setExtendData(request);
 
         if (!checkExecuteTaskRequest(request)) {
             throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);

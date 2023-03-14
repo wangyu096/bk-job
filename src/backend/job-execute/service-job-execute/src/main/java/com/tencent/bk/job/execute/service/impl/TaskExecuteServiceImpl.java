@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.execute.service.impl;
 
-import com.tencent.bk.audit.AuditEventManager;
+import com.tencent.bk.audit.AuditManagerRegistry;
 import com.tencent.bk.audit.model.AuditEvent;
 import com.tencent.bk.job.common.audit.utils.AuditInstanceUtils;
 import com.tencent.bk.job.common.constant.ErrorCode;
@@ -38,8 +38,6 @@ import com.tencent.bk.job.common.exception.ServiceException;
 import com.tencent.bk.job.common.gse.constants.AgentStatusEnum;
 import com.tencent.bk.job.common.gse.service.AgentStateClient;
 import com.tencent.bk.job.common.gse.v2.model.resp.AgentState;
-import com.tencent.bk.job.common.iam.constant.ActionId;
-import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.InternalResponse;
@@ -166,7 +164,6 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
     private final JobExecuteConfig jobExecuteConfig;
     private final TaskEvictPolicyExecutor taskEvictPolicyExecutor;
     private final AppScopeMappingService appScopeMappingService;
-    private final AuditEventManager auditEventManager;
 
     private static final Logger TASK_MONITOR_LOGGER = LoggerFactory.TASK_MONITOR_LOGGER;
 
@@ -187,8 +184,7 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
                                   JobExecuteConfig jobExecuteConfig,
                                   TaskEvictPolicyExecutor taskEvictPolicyExecutor,
                                   RollingConfigService rollingConfigService,
-                                  AppScopeMappingService appScopeMappingService,
-                                  AuditEventManager auditEventManager) {
+                                  AppScopeMappingService appScopeMappingService) {
         this.accountService = accountService;
         this.taskInstanceService = taskInstanceService;
         this.taskExecuteMQEventDispatcher = taskExecuteMQEventDispatcher;
@@ -206,7 +202,6 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
         this.jobExecuteConfig = jobExecuteConfig;
         this.taskEvictPolicyExecutor = taskEvictPolicyExecutor;
         this.appScopeMappingService = appScopeMappingService;
-        this.auditEventManager = auditEventManager;
     }
 
     @Override
@@ -1196,8 +1191,7 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
     @Override
     public TaskInstanceDTO executeJobPlan(TaskExecuteParam executeParam) {
         StopWatch watch = new StopWatch("createTaskInstanceForTask");
-        AuditEvent auditEvent = auditEventManager.currentEvent();
-        auditEvent.setActionId(ActionId.LAUNCH_JOB_PLAN);
+        AuditEvent auditEvent = AuditManagerRegistry.get().currentEvent();
 
         try {
             TaskInfo taskInfo = buildTaskInfoFromExecuteParam(executeParam, watch);
@@ -1220,7 +1214,6 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
             watch.start("acquireAndSetHosts");
             ServiceListAppHostResultDTO hosts =
                 acquireAndSetHosts(taskInstance, stepInstanceList, finalVariableValueMap.values());
-            auditEvent.setResourceTypeId(ResourceTypeId.HOST);
             auditEvent.setInstanceId(AuditInstanceUtils.extract(hosts.getValidHosts(),
                 host -> host.getHostId().toString()));
             auditEvent.setInstanceName(AuditInstanceUtils.extract(hosts.getValidHosts(), HostDTO::getPrimaryIp));

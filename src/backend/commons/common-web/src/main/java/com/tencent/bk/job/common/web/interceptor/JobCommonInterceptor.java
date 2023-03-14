@@ -26,10 +26,6 @@ package com.tencent.bk.job.common.web.interceptor;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.tencent.bk.audit.AuditEventManager;
-import com.tencent.bk.audit.constants.AccessTypeEnum;
-import com.tencent.bk.audit.constants.UserIdentifyTypeEnum;
-import com.tencent.bk.audit.model.AuditEvent;
 import com.tencent.bk.job.common.constant.HttpRequestSourceEnum;
 import com.tencent.bk.job.common.constant.JobCommonHeaders;
 import com.tencent.bk.job.common.constant.ResourceScopeTypeEnum;
@@ -77,7 +73,6 @@ public class JobCommonInterceptor implements AsyncHandlerInterceptor {
     private Tracer.SpanInScope spanInScope = null;
 
     private AppScopeMappingService appScopeMappingService;
-    private final AuditEventManager auditEventManager;
 
     /**
      * 通过Set方式，同时使用@Lazy，避免Bean循环依赖
@@ -91,9 +86,8 @@ public class JobCommonInterceptor implements AsyncHandlerInterceptor {
     }
 
     @Autowired
-    public JobCommonInterceptor(Tracer tracer, AuditEventManager auditEventManager) {
+    public JobCommonInterceptor(Tracer tracer) {
         this.tracer = tracer;
-        this.auditEventManager = auditEventManager;
     }
 
     @Override
@@ -113,8 +107,6 @@ public class JobCommonInterceptor implements AsyncHandlerInterceptor {
         addUsername(request);
         addLang(request);
         addAppResourceScope(request);
-
-        startAudit(request);
 
         return true;
     }
@@ -343,37 +335,6 @@ public class JobCommonInterceptor implements AsyncHandlerInterceptor {
         return null;
     }
 
-    private void startAudit(HttpServletRequest httpServletRequest) {
-        AccessTypeEnum accessType = getAccessType(httpServletRequest);
-        if (accessType != null) {
-            AuditEvent auditEvent = auditEventManager.start();
-            auditEvent.setUsername(JobContextUtil.getUsername());
-            auditEvent.setAccessType(accessType.getValue());
-            auditEvent.setAccessSourceIp(getClientIp(httpServletRequest));
-            auditEvent.setUserIdentifyType(UserIdentifyTypeEnum.PERSONAL.getValue());
-        }
-    }
-
-    public String getClientIp(HttpServletRequest request) {
-        String xff = request.getHeader("X-Forwarded-For");
-        if (xff == null) {
-            return request.getRemoteAddr();
-        } else {
-            return xff.contains(",") ? xff.split(",")[0] : xff;
-        }
-    }
-
-    private AccessTypeEnum getAccessType(HttpServletRequest request) {
-        String uri = request.getRequestURI();
-        if (uri.startsWith("/web/")) {
-            return AccessTypeEnum.WEB;
-        } else if (uri.startsWith("/esb/")) {
-            return AccessTypeEnum.API;
-        } else {
-            return null;
-        }
-    }
-
     @Override
     public void postHandle(@NonNull HttpServletRequest request,
                            @NonNull HttpServletResponse response,
@@ -412,7 +373,6 @@ public class JobCommonInterceptor implements AsyncHandlerInterceptor {
                 spanInScope.close();
             }
             JobContextUtil.unsetContext();
-            auditEventManager.stop();
         }
     }
 

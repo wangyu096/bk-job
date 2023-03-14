@@ -299,11 +299,11 @@ public class NotifyServiceImpl implements NotifyService {
             locale = Locale.ENGLISH;
         }
         if (taskNotifyDTO.getResourceType() == ResourceTypeEnum.SCRIPT.getType()) {
-            variablesMap.put("task.type", i18nService.getI18n("task.type.name.fast_execute_script", locale));
+            variablesMap.put("task.type", i18nService.getI18n(locale, "task.type.name.fast_execute_script"));
         } else if (taskNotifyDTO.getResourceType() == ResourceTypeEnum.FILE.getType()) {
-            variablesMap.put("task.type", i18nService.getI18n("task.type.name.fast_push_file", locale));
+            variablesMap.put("task.type", i18nService.getI18n(locale, "task.type.name.fast_push_file"));
         } else if (taskNotifyDTO.getResourceType() == ResourceTypeEnum.JOB.getType()) {
-            variablesMap.put("task.type", i18nService.getI18n("task.type.name.job", locale));
+            variablesMap.put("task.type", i18nService.getI18n(locale, "task.type.name.job"));
         } else {
             variablesMap.put("task.type", "Unknown");
             log.error("Not supported resourceType:{}", taskNotifyDTO.getResourceType());

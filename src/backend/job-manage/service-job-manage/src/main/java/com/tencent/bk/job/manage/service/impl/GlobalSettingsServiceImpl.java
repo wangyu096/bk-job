@@ -309,14 +309,14 @@ public class GlobalSettingsServiceImpl implements GlobalSettingsService {
                 GlobalSettingKeys.KEY_DEFAULT_NAME_RULES_EN);
             if (defaultNameRulesDTO == null) {
                 defaultNameRules.add(new AccountNameRule(OSTypeEnum.LINUX, "^[a-z_][a-z0-9_-]{2,31}$",
-                    i18nService.getI18n("job.manage.globalsettings.defaultNameRules.description.linux",
-                        Locale.ENGLISH)));
+                    i18nService.getI18n(Locale.ENGLISH,
+                        "job.manage.globalsettings.defaultNameRules.description.linux")));
                 defaultNameRules.add(new AccountNameRule(OSTypeEnum.WINDOWS, "^[a-æA-Æ0-9-]{1,32}$",
-                    i18nService.getI18n("job.manage.globalsettings.defaultNameRules.description.windows",
-                        Locale.ENGLISH)));
+                    i18nService.getI18n(Locale.ENGLISH,
+                        "job.manage.globalsettings.defaultNameRules.description.windows")));
                 defaultNameRules.add(new AccountNameRule(OSTypeEnum.DATABASE, "^[a-zA-Z0-9\\.\\-\\_]{1,16}$",
-                    i18nService.getI18n("job.manage.globalsettings.defaultNameRules.description.database",
-                        Locale.ENGLISH)));
+                    i18nService.getI18n(Locale.ENGLISH,
+                        "job.manage.globalsettings.defaultNameRules.description.database")));
                 defaultNameRulesDTO = new GlobalSettingDTO(GlobalSettingKeys.KEY_DEFAULT_NAME_RULES_EN,
                     JsonUtils.toJson(defaultNameRules),
                     "默认命名规则JSON串(default json-serialized name rules)");
@@ -338,14 +338,14 @@ public class GlobalSettingsServiceImpl implements GlobalSettingsService {
                 GlobalSettingKeys.KEY_DEFAULT_NAME_RULES);
             if (defaultNameRulesDTO == null) {
                 defaultNameRules.add(new AccountNameRule(OSTypeEnum.LINUX, "^[a-z_][a-z0-9_-]{2,31}$",
-                    i18nService.getI18n("job.manage.globalsettings.defaultNameRules.description.linux",
-                        Locale.CHINA)));
+                    i18nService.getI18n(Locale.CHINA,
+                        "job.manage.globalsettings.defaultNameRules.description.linux")));
                 defaultNameRules.add(new AccountNameRule(OSTypeEnum.WINDOWS, "^[a-æA-Æ0-9-]{1,32}$",
-                    i18nService.getI18n("job.manage.globalsettings.defaultNameRules.description.windows",
-                        Locale.CHINA)));
+                    i18nService.getI18n(Locale.CHINA,
+                        "job.manage.globalsettings.defaultNameRules.description.windows")));
                 defaultNameRules.add(new AccountNameRule(OSTypeEnum.DATABASE, "^[a-zA-Z0-9\\.\\-\\_]{1,16}$",
-                    i18nService.getI18n("job.manage.globalsettings.defaultNameRules.description.database",
-                        Locale.CHINA)));
+                    i18nService.getI18n(Locale.CHINA,
+                        "job.manage.globalsettings.defaultNameRules.description.database")));
                 defaultNameRulesDTO = new GlobalSettingDTO(GlobalSettingKeys.KEY_DEFAULT_NAME_RULES,
                     JsonUtils.toJson(defaultNameRules),
                     "默认命名规则JSON串(default json-serialized name rules)");
