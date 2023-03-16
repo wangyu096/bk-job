@@ -25,7 +25,6 @@
 package com.tencent.bk.job.execute.service.impl;
 
 import com.tencent.bk.audit.AuditManagerRegistry;
-import com.tencent.bk.audit.model.AuditEvent;
 import com.tencent.bk.job.common.audit.utils.AuditInstanceUtils;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
@@ -1191,11 +1190,12 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
     @Override
     public TaskInstanceDTO executeJobPlan(TaskExecuteParam executeParam) {
         StopWatch watch = new StopWatch("createTaskInstanceForTask");
-        AuditEvent auditEvent = AuditManagerRegistry.get().currentEvent();
 
         try {
             TaskInfo taskInfo = buildTaskInfoFromExecuteParam(executeParam, watch);
-            auditEvent.setContent("执行了作业" + taskInfo.getJobPlan().getName());
+            AuditManagerRegistry.get().updateAuditEvent(
+                auditEvent -> auditEvent.setContent("执行了作业" + taskInfo.getJobPlan().getName()));
+
 
             TaskInstanceDTO taskInstance = taskInfo.getTaskInstance();
             List<StepInstanceDTO> stepInstanceList = taskInfo.getStepInstances();
@@ -1214,9 +1214,11 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
             watch.start("acquireAndSetHosts");
             ServiceListAppHostResultDTO hosts =
                 acquireAndSetHosts(taskInstance, stepInstanceList, finalVariableValueMap.values());
-            auditEvent.setInstanceId(AuditInstanceUtils.extract(hosts.getValidHosts(),
-                host -> host.getHostId().toString()));
-            auditEvent.setInstanceName(AuditInstanceUtils.extract(hosts.getValidHosts(), HostDTO::getPrimaryIp));
+            AuditManagerRegistry.get().updateAuditEvent(auditEvent -> {
+                auditEvent.setInstanceId(AuditInstanceUtils.extract(hosts.getValidHosts(),
+                    host -> host.getHostId().toString()));
+                auditEvent.setInstanceName(AuditInstanceUtils.extract(hosts.getValidHosts(), HostDTO::getPrimaryIp));
+            });
             watch.stop();
 
             //检查主机

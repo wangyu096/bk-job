@@ -24,8 +24,6 @@
 
 package com.tencent.bk.job.execute.api.web.impl;
 
-import com.tencent.bk.audit.AuditManagerRegistry;
-import com.tencent.bk.audit.model.AuditEvent;
 import com.tencent.bk.job.common.annotation.CompatibleImplementation;
 import com.tencent.bk.job.common.audit.AuditRecord;
 import com.tencent.bk.job.common.constant.ErrorCode;
@@ -120,9 +118,6 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
                                                String scopeId,
                                                WebTaskExecuteRequest request) {
         log.info("Execute task, request={}", request);
-
-        AuditEvent auditEvent = AuditManagerRegistry.get().currentEvent();
-        auditEvent.setExtendData(request);
 
         if (!checkExecuteTaskRequest(request)) {
             throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
