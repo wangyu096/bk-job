@@ -249,8 +249,8 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
     @AuditRecord(
         actionId = ActionId.EDIT_JOB_TEMPLATE,
         resourceType = ResourceTypeId.TEMPLATE,
-        instanceId = "#taskTemplateCreateUpdateReq.id",
-        logContent = "Save template [{name}]({id})"
+        instanceId = "#templateId",
+        logContent = "Save template [{name}](#templateId)"
     )
     public Response<Long> saveTemplate(String username,
                                        AppResourceScope appResourceScope,
