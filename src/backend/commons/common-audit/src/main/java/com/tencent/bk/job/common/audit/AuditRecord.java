@@ -56,4 +56,8 @@ public @interface AuditRecord {
      * 资源实例敏感等级,范围0-9
      */
     int sensitivity() default 0;
+
+    String instanceId() default "";
+
+    String logContent() default "";
 }

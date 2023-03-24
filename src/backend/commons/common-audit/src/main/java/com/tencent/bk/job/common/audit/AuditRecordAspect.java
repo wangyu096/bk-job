@@ -34,10 +34,17 @@ import com.tencent.bk.job.common.exception.ServiceException;
 import com.tencent.bk.job.common.util.I18nUtil;
 import com.tencent.bk.job.common.util.JobContextUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.core.DefaultParameterNameDiscoverer;
+import org.springframework.expression.EvaluationContext;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.expression.spel.support.StandardEvaluationContext;
 
 import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Method;
@@ -48,6 +55,13 @@ import java.util.Locale;
 @Slf4j
 public class AuditRecordAspect {
     private final AuditManager auditManager;
+    /**
+     * 参数名发现器
+     */
+    private final DefaultParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
+
+    // SpEL表达式解析器
+    private final SpelExpressionParser spelExpressionParser = new SpelExpressionParser();
 
     public AuditRecordAspect(AuditManager auditManager) {
         this.auditManager = auditManager;
@@ -55,15 +69,37 @@ public class AuditRecordAspect {
     }
 
 
-    @Around("execution (@com.tencent.bk.job.common.audit.AuditRecord * *.*(..))")
+    // 声明AOP切入点
+    @Pointcut("@annotation(AuditRecord)")
+    public void audit() {
+    }
+
+    @Around("audit()")
     public Object record(ProceedingJoinPoint pjp) throws Throwable {
         log.debug("Start audit");
         AuditEvent auditEvent = null;
         try {
             Method method = ((MethodSignature) pjp.getSignature()).getMethod();
             AuditRecord record = method.getAnnotation(AuditRecord.class);
-            auditEvent = startAudit(record);
+            auditEvent = startAudit(pjp, method, record);
             auditEvent.setResultCode(ErrorCode.RESULT_OK);
+
+//            Object[] args = pjp.getArgs();
+//            args[0].getClass().getA
+//            // 请求方法参数名称
+//            LocalVariableTableParameterNameDiscoverer u = new LocalVariableTableParameterNameDiscoverer();
+//            String[] paramNames = u.getParameterNames(method);
+//            if (args != null && paramNames != null) {
+//                String params = "";
+//                for (int i = 0; i < args.length; i++) {
+//                    params += "  " + paramNames[i] + ": " + args[i];
+//                }
+//                // 长度超过1000字符串的大参数也不记录
+//                if (params.length() <= MAX_LENGTH_TO_RECORD_PARAMS) {
+//                    log.setParams(params);
+//
+//                }
+//            }
             return pjp.proceed();
         } catch (Throwable e) {
             recordException(auditEvent, e);
@@ -74,7 +110,7 @@ public class AuditRecordAspect {
         }
     }
 
-    private AuditEvent startAudit(AuditRecord record) {
+    private AuditEvent startAudit(ProceedingJoinPoint joinPoint, Method method, AuditRecord record) {
         HttpServletRequest request = JobContextUtil.getRequest();
         AuditEvent auditEvent = auditManager.startAudit();
         auditEvent.setActionId(record.actionId());
@@ -87,7 +123,29 @@ public class AuditRecordAspect {
         auditEvent.setBkAppCode(request.getHeader(JobCommonHeaders.APP_CODE));
         auditEvent.setRequestId(JobContextUtil.getRequestId());
         auditEvent.setAccessUserAgent(getUserAgent(request));
+        if (StringUtils.isNotBlank(record.instanceId())) {
+            auditEvent.setInstanceId(resolveInstanceId(joinPoint, method, record.instanceId()));
+        }
         return auditEvent;
+    }
+
+    private String resolveInstanceId(JoinPoint joinPoint, Method method, String instanceIdExpr) {
+        // SpEL表达式解析日志信息
+        String[] parameterNames = parameterNameDiscoverer.getParameterNames(method);
+        if (parameterNames == null || parameterNames.length == 0) {
+            return null;
+        }
+
+        EvaluationContext context = new StandardEvaluationContext();
+        //获取方法参数值
+        Object[] args = joinPoint.getArgs();
+        for (int i = 0; i < args.length; i++) {
+            context.setVariable(parameterNames[i], args[i]);
+        }
+
+        Object value = spelExpressionParser.parseExpression(instanceIdExpr)
+            .getValue(context);
+        return value == null ? null : value.toString();
     }
 
     public String getClientIp(HttpServletRequest request) {
@@ -115,7 +173,7 @@ public class AuditRecordAspect {
     }
 
     private void stopAudit() {
-        if (auditManager.currentEvent() != null) {
+        if (auditManager.currentAuditEvent() != null) {
             auditManager.stopAudit();
         }
     }

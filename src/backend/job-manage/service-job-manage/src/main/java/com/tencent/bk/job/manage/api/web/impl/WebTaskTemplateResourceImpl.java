@@ -25,10 +25,14 @@
 package com.tencent.bk.job.manage.api.web.impl;
 
 import com.google.common.base.CaseFormat;
+import com.tencent.bk.audit.AuditManagerRegistry;
+import com.tencent.bk.job.common.audit.AuditRecord;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobResourceTypeEnum;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.iam.constant.ActionId;
+import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
@@ -242,6 +246,12 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
     }
 
     @Override
+    @AuditRecord(
+        actionId = ActionId.EDIT_JOB_TEMPLATE,
+        resourceType = ResourceTypeId.TEMPLATE,
+        instanceId = "#taskTemplateCreateUpdateReq.id",
+        logContent = "Save template [{name}]({id})"
+    )
     public Response<Long> saveTemplate(String username,
                                        AppResourceScope appResourceScope,
                                        String scopeType,
@@ -303,6 +313,7 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
     }
 
     @Override
+    @AuditRecord(actionId = ActionId.EDIT_JOB_TEMPLATE, resourceType = ResourceTypeId.TEMPLATE)
     public Response<Boolean> updateTemplateBasicInfo(String username,
                                                      AppResourceScope appResourceScope,
                                                      String scopeType,
@@ -315,6 +326,9 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
         } else {
             throw new NotFoundException(ErrorCode.TEMPLATE_NOT_EXIST);
         }
+        AuditManagerRegistry.get().updateAuditEvent(auditEvent -> {
+            auditEvent.setInstanceId(templateId.toString());
+        });
         AuthResult authResult = templateAuthService.authEditJobTemplate(username, appResourceScope,
             templateId);
         if (!authResult.isPass()) {
