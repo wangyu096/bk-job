@@ -36,19 +36,25 @@ import com.tencent.bk.job.common.util.JobContextUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.JoinPoint;
-import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.After;
+import org.aspectj.lang.annotation.AfterReturning;
+import org.aspectj.lang.annotation.AfterThrowing;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletRequest;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 
 @Aspect
@@ -69,52 +75,70 @@ public class AuditRecordAspect {
     }
 
 
-    // 声明AOP切入点
+    // 声明审计 AOP 切入点
     @Pointcut("@annotation(AuditRecord)")
     public void audit() {
     }
 
-    @Around("audit()")
-    public Object record(ProceedingJoinPoint pjp) throws Throwable {
+    @Before("audit()")
+    public void startAudit(JoinPoint jp) {
         log.debug("Start audit");
-        AuditEvent auditEvent = null;
         try {
-            Method method = ((MethodSignature) pjp.getSignature()).getMethod();
+            Method method = ((MethodSignature) jp.getSignature()).getMethod();
             AuditRecord record = method.getAnnotation(AuditRecord.class);
-            auditEvent = startAudit(pjp, method, record);
-            auditEvent.setResultCode(ErrorCode.RESULT_OK);
-
-//            Object[] args = pjp.getArgs();
-//            args[0].getClass().getA
-//            // 请求方法参数名称
-//            LocalVariableTableParameterNameDiscoverer u = new LocalVariableTableParameterNameDiscoverer();
-//            String[] paramNames = u.getParameterNames(method);
-//            if (args != null && paramNames != null) {
-//                String params = "";
-//                for (int i = 0; i < args.length; i++) {
-//                    params += "  " + paramNames[i] + ": " + args[i];
-//                }
-//                // 长度超过1000字符串的大参数也不记录
-//                if (params.length() <= MAX_LENGTH_TO_RECORD_PARAMS) {
-//                    log.setParams(params);
-//
-//                }
-//            }
-            return pjp.proceed();
+            startAudit(jp, method, record);
         } catch (Throwable e) {
-            recordException(auditEvent, e);
-            throw e;
-        } finally {
-            log.debug("Stop audit");
-            stopAudit();
+            // 忽略审计错误，避免影响业务代码执行
+            log.error("Start audit caught exception", e);
         }
     }
 
-    private AuditEvent startAudit(ProceedingJoinPoint joinPoint, Method method, AuditRecord record) {
+    @AfterReturning(value = "audit()", returning = "result")
+    public void afterReturning(JoinPoint jp, Object result) {
+        AuditEvent auditEvent = auditManager.currentAuditEvent();
+        if (auditEvent == null) {
+            return;
+        }
+
+        if (log.isDebugEnabled()) {
+            log.debug("AfterReturning");
+        }
+        Method method = ((MethodSignature) jp.getSignature()).getMethod();
+        AuditRecord record = method.getAnnotation(AuditRecord.class);
+
+        EvaluationContext context = buildEvaluationContext(jp, method, result);
+
+        if (StringUtils.isEmpty(auditEvent.getInstanceId()) && StringUtils.isNotBlank(record.instanceId())) {
+            auditEvent.setInstanceId(parseBySpel(context, record.instanceId()).toString());
+        }
+        if (StringUtils.isEmpty(auditEvent.getInstanceName()) && StringUtils.isNotBlank(record.instanceName())) {
+            auditEvent.setInstanceName(parseBySpel(context, record.instanceName()).toString());
+        }
+        if (StringUtils.isEmpty(auditEvent.getContent()) && StringUtils.isNotBlank(record.logContent())) {
+            auditEvent.setContent(parseBySpel(context, record.logContent()).toString());
+        }
+    }
+
+    @AfterThrowing(value = "audit()", throwing = "throwable")
+    public void afterThrowing(JoinPoint jp, Throwable throwable) {
+        if (log.isDebugEnabled()) {
+            log.debug("AfterThrowing");
+        }
+        recordException(auditManager.currentAuditEvent(), throwable);
+    }
+
+    @After(value = "audit()")
+    public void after(JoinPoint jp) {
+        if (log.isDebugEnabled()) {
+            log.debug("After");
+        }
+        stopAudit();
+    }
+
+    private void startAudit(JoinPoint jp, Method method, AuditRecord record) {
         HttpServletRequest request = JobContextUtil.getRequest();
         AuditEvent auditEvent = auditManager.startAudit();
         auditEvent.setActionId(record.actionId());
-        auditEvent.setResourceTypeId(record.resourceType());
         auditEvent.setInstanceSensitivity(record.sensitivity());
         auditEvent.setUsername(JobContextUtil.getUsername());
         auditEvent.setAccessType(getAccessType(request).getValue());
@@ -123,29 +147,57 @@ public class AuditRecordAspect {
         auditEvent.setBkAppCode(request.getHeader(JobCommonHeaders.APP_CODE));
         auditEvent.setRequestId(JobContextUtil.getRequestId());
         auditEvent.setAccessUserAgent(getUserAgent(request));
-        if (StringUtils.isNotBlank(record.instanceId())) {
-            auditEvent.setInstanceId(resolveInstanceId(joinPoint, method, record.instanceId()));
+        if (StringUtils.isNotBlank(record.resourceType())) {
+            auditEvent.setResourceTypeId(record.resourceType());
         }
-        return auditEvent;
+        recordRequest(jp, method, auditEvent, request);
     }
 
-    private String resolveInstanceId(JoinPoint joinPoint, Method method, String instanceIdExpr) {
-        // SpEL表达式解析日志信息
-        String[] parameterNames = parameterNameDiscoverer.getParameterNames(method);
-        if (parameterNames == null || parameterNames.length == 0) {
-            return null;
-        }
+    private void recordRequest(JoinPoint jp, Method method, AuditEvent auditEvent, HttpServletRequest request) {
+        AuditHttpRequest auditHttpRequest = new AuditHttpRequest(request.getRequestURI(),
+            request.getQueryString(), null);
+        Object[] args = jp.getArgs();
 
+        Annotation[][] annotations = method.getParameterAnnotations();
+        for (int i = 0; i < annotations.length; i++) {
+            Object arg = args[i];
+            Annotation[] argAnnotations = annotations[i];
+            if (argAnnotations == null || argAnnotations.length == 0) {
+                continue;
+            }
+            for (Annotation annotation : argAnnotations) {
+                if (annotation.annotationType().equals(RequestBody.class)) {
+                    auditHttpRequest.setBody(arg);
+                    return;
+                }
+            }
+        }
+        Map<String, Object> extendData = new HashMap<>();
+        extendData.put("request", auditHttpRequest);
+        auditEvent.setExtendData(extendData);
+    }
+
+    private Object parseBySpel(EvaluationContext context, String spel) {
+        // SpEL表达式解析
+        return spelExpressionParser.parseExpression(spel).getValue(context);
+    }
+
+    private EvaluationContext buildEvaluationContext(JoinPoint jp, Method method, Object result) {
         EvaluationContext context = new StandardEvaluationContext();
-        //获取方法参数值
-        Object[] args = joinPoint.getArgs();
-        for (int i = 0; i < args.length; i++) {
-            context.setVariable(parameterNames[i], args[i]);
+        // 获取方法参数名，并设置方法参数到EvaluationContext
+        String[] parameterNames = parameterNameDiscoverer.getParameterNames(method);
+        if (parameterNames != null && parameterNames.length > 0) {
+            Object[] args = jp.getArgs();
+            for (int i = 0; i < args.length; i++) {
+                context.setVariable(parameterNames[i], args[i]);
+            }
         }
 
-        Object value = spelExpressionParser.parseExpression(instanceIdExpr)
-            .getValue(context);
-        return value == null ? null : value.toString();
+        if (result != null) {
+            context.setVariable("$", result);
+        }
+
+        return context;
     }
 
     public String getClientIp(HttpServletRequest request) {

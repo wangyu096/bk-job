@@ -117,7 +117,7 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
                                                                 Integer pageSize,
                                                                 String orderField,
                                                                 Integer order) {
-        
+
         Long appId = appResourceScope.getAppId();
         List<Long> favoriteList = taskFavoriteService.listFavorites(appId, username);
 
@@ -220,7 +220,7 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
                                                     String scopeType,
                                                     String scopeId,
                                                     Long templateId) {
-        
+
         AuthResult authResult = templateAuthService.authViewJobTemplate(username, appResourceScope,
             templateId);
         if (!authResult.isPass()) {
@@ -247,38 +247,65 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
 
     @Override
     @AuditRecord(
-        actionId = ActionId.EDIT_JOB_TEMPLATE,
+        actionId = ActionId.CREATE_JOB_TEMPLATE,
         resourceType = ResourceTypeId.TEMPLATE,
-        instanceId = "#templateId",
-        logContent = "Save template [{name}](#templateId)"
+        instanceId = "$?.data",
+        instanceName = "#request?.name",
+        logContent = "Create template [#request?.name]({#$?.data)"
     )
-    public Response<Long> saveTemplate(String username,
-                                       AppResourceScope appResourceScope,
-                                       String scopeType,
-                                       String scopeId,
-                                       Long templateId,
-                                       TaskTemplateCreateUpdateReq taskTemplateCreateUpdateReq) {
-        
-        AuthResult authResult;
-        if (templateId > 0) {
-            taskTemplateCreateUpdateReq.setId(templateId);
-            authResult = templateAuthService.authEditJobTemplate(username, appResourceScope, templateId);
-        } else {
-            authResult = templateAuthService.authCreateJobTemplate(username, appResourceScope);
-        }
+    public Response<Long> createTemplate(String username,
+                                         AppResourceScope appResourceScope,
+                                         String scopeType,
+                                         String scopeId,
+                                         TaskTemplateCreateUpdateReq request) {
+
+        AuthResult authResult = templateAuthService.authCreateJobTemplate(username, appResourceScope);
         if (!authResult.isPass()) {
             throw new PermissionDeniedException(authResult);
         }
 
-        if (taskTemplateCreateUpdateReq.validate()) {
-            Long finalTemplateId = templateService
-                .saveTaskTemplate(TaskTemplateInfoDTO.fromReq(username, appResourceScope.getAppId(),
-                    taskTemplateCreateUpdateReq));
-            templateAuthService.registerTemplate(finalTemplateId, taskTemplateCreateUpdateReq.getName(), username);
-            return Response.buildSuccessResp(finalTemplateId);
-        } else {
+        if (!request.validate()) {
             throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
         }
+
+        long templateId = createOrUpdateTemplate(username, appResourceScope, request);
+        return Response.buildSuccessResp(templateId);
+    }
+
+    private long createOrUpdateTemplate(String username,
+                                        AppResourceScope appResourceScope,
+                                        TaskTemplateCreateUpdateReq request) {
+        Long finalTemplateId = templateService
+            .saveTaskTemplate(TaskTemplateInfoDTO.fromReq(username, appResourceScope.getAppId(),
+                request));
+        templateAuthService.registerTemplate(finalTemplateId, request.getName(), username);
+        return finalTemplateId;
+    }
+
+    @Override
+    @AuditRecord(
+        actionId = ActionId.EDIT_JOB_TEMPLATE,
+        resourceType = ResourceTypeId.TEMPLATE,
+        instanceId = "#templateId",
+        logContent = "Update template [{#request.name](#templateId)"
+    )
+    public Response<Long> updateTemplate(String username,
+                                         AppResourceScope appResourceScope,
+                                         String scopeType,
+                                         String scopeId,
+                                         Long templateId,
+                                         TaskTemplateCreateUpdateReq request) {
+        AuthResult authResult = templateAuthService.authEditJobTemplate(username, appResourceScope, templateId);
+        if (!authResult.isPass()) {
+            throw new PermissionDeniedException(authResult);
+        }
+
+        if (!request.validate()) {
+            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+        }
+
+        createOrUpdateTemplate(username, appResourceScope, request);
+        return Response.buildSuccessResp(templateId);
     }
 
     @Override
@@ -288,7 +315,7 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
                                             String scopeType,
                                             String scopeId,
                                             Long templateId) {
-        
+
         AuthResult authResult = templateAuthService.authDeleteJobTemplate(username, appResourceScope,
             templateId);
         if (!authResult.isPass()) {
@@ -308,7 +335,7 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
                                                     AppResourceScope appResourceScope,
                                                     String scopeType,
                                                     String scopeId) {
-        
+
         return Response.buildSuccessResp(templateService.getTagTemplateCount(appResourceScope.getAppId()));
     }
 
@@ -320,7 +347,7 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
                                                      String scopeId,
                                                      Long templateId,
                                                      TemplateBasicInfoUpdateReq templateBasicInfoUpdateReq) {
-        
+
         if (templateId > 0) {
             templateBasicInfoUpdateReq.setId(templateId);
         } else {
@@ -346,7 +373,7 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
                                          String scopeType,
                                          String scopeId,
                                          Long templateId) {
-        
+
         return Response.buildSuccessResp(taskFavoriteService.addFavorite(appResourceScope.getAppId(), username,
             templateId));
     }
@@ -357,7 +384,7 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
                                             String scopeType,
                                             String scopeId,
                                             Long templateId) {
-        
+
         return Response.buildSuccessResp(taskFavoriteService.deleteFavorite(appResourceScope.getAppId(), username,
             templateId));
     }
@@ -369,7 +396,7 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
                                                String scopeId,
                                                Long templateId,
                                                String name) {
-        
+
         return Response.buildSuccessResp(templateService.checkTemplateName(appResourceScope.getAppId(), templateId,
             name));
     }
@@ -380,7 +407,7 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
                                                                      String scopeType,
                                                                      String scopeId,
                                                                      List<Long> templateIds) {
-        
+
         List<TaskTemplateInfoDTO> taskTemplateBasicInfo =
             templateService.listTaskTemplateBasicInfoByIds(appResourceScope.getAppId(), templateIds);
         List<TaskTemplateVO> templateBasicInfoVOList = taskTemplateBasicInfo.stream()
@@ -394,7 +421,7 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
                                                     String scopeType,
                                                     String scopeId,
                                                     TemplateTagBatchPatchReq req) {
-        
+
         ValidateResult validateResult = checkTemplateTagBatchPatchReq(req);
         if (!validateResult.isPass()) {
             throw new InvalidParamException(validateResult);
