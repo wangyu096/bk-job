@@ -246,13 +246,6 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
     }
 
     @Override
-    @AuditRecord(
-        actionId = ActionId.CREATE_JOB_TEMPLATE,
-        resourceType = ResourceTypeId.TEMPLATE,
-        instanceId = "$?.data",
-        instanceName = "#request?.name",
-        logContent = "Create template [#request?.name]({#$?.data)"
-    )
     public Response<Long> createTemplate(String username,
                                          AppResourceScope appResourceScope,
                                          String scopeType,
@@ -283,12 +276,6 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
     }
 
     @Override
-    @AuditRecord(
-        actionId = ActionId.EDIT_JOB_TEMPLATE,
-        resourceType = ResourceTypeId.TEMPLATE,
-        instanceId = "#templateId",
-        logContent = "Update template [{#request.name](#templateId)"
-    )
     public Response<Long> updateTemplate(String username,
                                          AppResourceScope appResourceScope,
                                          String scopeType,

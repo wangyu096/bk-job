@@ -82,7 +82,7 @@ public class AuditRecordAspect {
 
     @Before("audit()")
     public void startAudit(JoinPoint jp) {
-        log.debug("Start audit");
+        log.info("Start audit");
         try {
             Method method = ((MethodSignature) jp.getSignature()).getMethod();
             AuditRecord record = method.getAnnotation(AuditRecord.class);
@@ -100,9 +100,8 @@ public class AuditRecordAspect {
             return;
         }
 
-        if (log.isDebugEnabled()) {
-            log.debug("AfterReturning");
-        }
+        log.info("AfterReturning");
+
         Method method = ((MethodSignature) jp.getSignature()).getMethod();
         AuditRecord record = method.getAnnotation(AuditRecord.class);
 
@@ -121,17 +120,13 @@ public class AuditRecordAspect {
 
     @AfterThrowing(value = "audit()", throwing = "throwable")
     public void afterThrowing(JoinPoint jp, Throwable throwable) {
-        if (log.isDebugEnabled()) {
-            log.debug("AfterThrowing");
-        }
+        log.info("AfterThrowing");
         recordException(auditManager.currentAuditEvent(), throwable);
     }
 
     @After(value = "audit()")
     public void after(JoinPoint jp) {
-        if (log.isDebugEnabled()) {
-            log.debug("After");
-        }
+        log.info("After");
         stopAudit();
     }
 
@@ -157,7 +152,6 @@ public class AuditRecordAspect {
         AuditHttpRequest auditHttpRequest = new AuditHttpRequest(request.getRequestURI(),
             request.getQueryString(), null);
         Object[] args = jp.getArgs();
-
         Annotation[][] annotations = method.getParameterAnnotations();
         for (int i = 0; i < annotations.length; i++) {
             Object arg = args[i];
