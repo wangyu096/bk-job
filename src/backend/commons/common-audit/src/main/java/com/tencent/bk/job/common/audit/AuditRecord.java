@@ -60,4 +60,8 @@ public @interface AuditRecord {
     String instanceId() default "";
 
     String logContent() default "";
+
+    Class originInstanceData() default EmptyAuditDataQuery.class;
+
+
 }
