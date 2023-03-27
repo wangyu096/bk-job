@@ -27,6 +27,7 @@ package com.tencent.bk.job.manage.api.web.impl;
 import com.google.common.base.CaseFormat;
 import com.tencent.bk.audit.AuditManagerRegistry;
 import com.tencent.bk.job.common.audit.AuditRecord;
+import com.tencent.bk.job.common.audit.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobResourceTypeEnum;
 import com.tencent.bk.job.common.exception.InvalidParamException;
@@ -246,11 +247,18 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
     }
 
     @Override
+    @AuditRecord(
+        actionId = ActionId.CREATE_JOB_TEMPLATE,
+        resourceType = ResourceTypeId.TEMPLATE,
+        instanceId = "#$?.data",
+        instanceName = "#request?.name",
+        logContent = "Create template [#request?.name]({#$?.data)"
+    )
     public Response<Long> createTemplate(String username,
                                          AppResourceScope appResourceScope,
                                          String scopeType,
                                          String scopeId,
-                                         TaskTemplateCreateUpdateReq request) {
+                                         @AuditRequestBody TaskTemplateCreateUpdateReq request) {
 
         AuthResult authResult = templateAuthService.authCreateJobTemplate(username, appResourceScope);
         if (!authResult.isPass()) {
@@ -275,6 +283,12 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
         return finalTemplateId;
     }
 
+    @AuditRecord(
+        actionId = ActionId.EDIT_JOB_TEMPLATE,
+        resourceType = ResourceTypeId.TEMPLATE,
+        instanceId = "#templateId",
+        logContent = "Update template [{#request.name](#templateId)"
+    )
     @Override
     public Response<Long> updateTemplate(String username,
                                          AppResourceScope appResourceScope,

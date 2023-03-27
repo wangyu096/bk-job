@@ -25,9 +25,6 @@
 package com.tencent.bk.job.manage.api.web;
 
 import com.tencent.bk.job.common.annotation.WebAPI;
-import com.tencent.bk.job.common.audit.AuditRecord;
-import com.tencent.bk.job.common.iam.constant.ActionId;
-import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
@@ -140,13 +137,6 @@ public interface WebTaskTemplateResource {
 
     @ApiOperation(value = "新建模版", produces = "application/json")
     @PostMapping
-    @AuditRecord(
-        actionId = ActionId.CREATE_JOB_TEMPLATE,
-        resourceType = ResourceTypeId.TEMPLATE,
-        instanceId = "#$?.data",
-        instanceName = "#request?.name",
-        logContent = "Create template [#request?.name]({#$?.data)"
-    )
     Response<Long> createTemplate(
         @ApiParam(value = "用户名，网关自动传入")
         @RequestHeader("username")
@@ -168,12 +158,6 @@ public interface WebTaskTemplateResource {
 
     @ApiOperation(value = "更新模版", produces = "application/json")
     @PutMapping("/{templateId}")
-    @AuditRecord(
-        actionId = ActionId.EDIT_JOB_TEMPLATE,
-        resourceType = ResourceTypeId.TEMPLATE,
-        instanceId = "#templateId",
-        logContent = "Update template [{#request.name](#templateId)"
-    )
     Response<Long> updateTemplate(
         @ApiParam(value = "用户名，网关自动传入")
         @RequestHeader("username")

@@ -47,7 +47,6 @@ import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletRequest;
 import java.lang.annotation.Annotation;
@@ -160,7 +159,7 @@ public class AuditRecordAspect {
                 continue;
             }
             for (Annotation annotation : argAnnotations) {
-                if (annotation.annotationType().equals(RequestBody.class)) {
+                if (annotation.annotationType().equals(AuditRequestBody.class)) {
                     auditHttpRequest.setBody(arg);
                     return;
                 }
