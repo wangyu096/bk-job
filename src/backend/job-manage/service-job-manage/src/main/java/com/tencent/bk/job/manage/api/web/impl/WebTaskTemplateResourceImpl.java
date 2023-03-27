@@ -252,7 +252,7 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
         resourceType = ResourceTypeId.TEMPLATE,
         instanceId = "#$?.data",
         instanceName = "#request?.name",
-        logContent = "Create template [#request?.name]({#$?.data)"
+        logContent = "'Create template [' + #request?.name + '](' + #$?.data + ')'"
     )
     public Response<Long> createTemplate(String username,
                                          AppResourceScope appResourceScope,
@@ -287,7 +287,7 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
         actionId = ActionId.EDIT_JOB_TEMPLATE,
         resourceType = ResourceTypeId.TEMPLATE,
         instanceId = "#templateId",
-        logContent = "Update template [{#request.name](#templateId)"
+        logContent = "'Update template [' + #request?.name + '](' + #templateId + ')'"
     )
     @Override
     public Response<Long> updateTemplate(String username,
