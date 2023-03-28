@@ -290,8 +290,8 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
     }
 
     @Override
-    @Transactional(rollbackFor = ServiceException.class)
-    public Long saveTaskTemplate(TaskTemplateInfoDTO taskTemplateInfo) {
+    @Transactional(rollbackFor = Throwable.class)
+    public TaskTemplateInfoDTO saveTaskTemplate(TaskTemplateInfoDTO taskTemplateInfo) {
         String lockKey = null;
         try {
             boolean isCreate = false;
@@ -379,7 +379,8 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
             taskVariableService.batchInsertVariable(newVariables);
 
             templateStatusUpdateService.offerMessage(templateId);
-            return templateId;
+
+            return getTaskTemplateById(taskTemplateInfo.getAppId(), templateId);
         } catch (ServiceException e) {
             throw e;
         } catch (Exception e) {

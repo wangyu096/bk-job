@@ -22,17 +22,33 @@
  * IN THE SOFTWARE.
  */
 
-dependencies {
-    api project(':commons:common')
-    api project(':commons:common-i18n')
-    api project(':commons:common-iam')
-    api project(':commons:common-audit')
-    api project(':job-execute:api-job-execute')
-    api(project(":commons:common-api"))
-    implementation "org.springframework:spring-web"
-    implementation "javax.ws.rs:javax.ws.rs-api"
-    implementation("org.apache.commons:commons-collections4")
-    implementation 'com.fasterxml.jackson.core:jackson-core'
-    implementation 'com.fasterxml.jackson.core:jackson-databind'
-    implementation 'com.fasterxml.jackson.core:jackson-annotations'
+package com.tencent.bk.job.manage.model.esb.v3.response;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.tencent.bk.audit.model.AuditInstanceData;
+import com.tencent.bk.job.common.esb.model.job.v3.EsbGlobalVarV3DTO;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
+import java.util.List;
+
+/**
+ * 作业模版信息
+ */
+@Getter
+@Setter
+@ToString
+public class EsbTemplateInfoV3DTO extends EsbTemplateBasicInfoV3DTO implements AuditInstanceData {
+    /**
+     * 步骤信息
+     */
+    @JsonProperty("step_list")
+    private List<EsbStepV3DTO> stepList;
+
+    /**
+     * 全局变量信息
+     */
+    @JsonProperty("global_var_list")
+    private List<EsbGlobalVarV3DTO> globalVarList;
 }

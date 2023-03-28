@@ -70,4 +70,10 @@ public class EsbTemplateBasicInfoV3DTO extends EsbAppScopeDTO {
      */
     @JsonProperty("last_modify_time")
     private Long lastModifyTime;
+
+    /**
+     * 模板描述
+     */
+    @JsonProperty("description")
+    private String description;
 }

@@ -81,7 +81,11 @@ public class AuditRecordAspect {
 
     @Before("audit()")
     public void startAudit(JoinPoint jp) {
-        log.info("Start audit");
+        if (log.isInfoEnabled()) {
+            log.info("Start audit");
+        }
+
+        long start = System.currentTimeMillis();
         try {
             Method method = ((MethodSignature) jp.getSignature()).getMethod();
             AuditRecord record = method.getAnnotation(AuditRecord.class);
@@ -89,22 +93,42 @@ public class AuditRecordAspect {
         } catch (Throwable e) {
             // 忽略审计错误，避免影响业务代码执行
             log.error("Start audit caught exception", e);
+        } finally {
+            if (log.isInfoEnabled()) {
+                log.info("Start audit cost: {}", System.currentTimeMillis() - start);
+            }
         }
     }
 
     @AfterReturning(value = "audit()", returning = "result")
-    public void afterReturning(JoinPoint jp, Object result) {
+    public void auditDone(JoinPoint jp, Object result) {
+        if (log.isInfoEnabled()) {
+            log.info("Audit done");
+        }
+
         AuditEvent auditEvent = auditManager.currentAuditEvent();
         if (auditEvent == null) {
+            if (log.isInfoEnabled()) {
+                log.info("AuditEvent is empty");
+            }
             return;
         }
 
-        log.info("AfterReturning");
 
+        long start = System.currentTimeMillis();
         Method method = ((MethodSignature) jp.getSignature()).getMethod();
-        AuditRecord record = method.getAnnotation(AuditRecord.class);
 
         EvaluationContext context = buildEvaluationContext(jp, method, result);
+        fillAuditEvent(auditEvent, jp, context);
+
+        if (log.isInfoEnabled()) {
+            log.info("Record audit cost: {}", System.currentTimeMillis() - start);
+        }
+    }
+
+    private void fillAuditEvent(AuditEvent auditEvent, JoinPoint jp, EvaluationContext context) {
+        Method method = ((MethodSignature) jp.getSignature()).getMethod();
+        AuditRecord record = method.getAnnotation(AuditRecord.class);
 
         if (StringUtils.isEmpty(auditEvent.getInstanceId()) && StringUtils.isNotBlank(record.instanceId())) {
             auditEvent.setInstanceId(parseBySpel(context, record.instanceId()).toString());
@@ -118,15 +142,37 @@ public class AuditRecordAspect {
     }
 
     @AfterThrowing(value = "audit()", throwing = "throwable")
-    public void afterThrowing(JoinPoint jp, Throwable throwable) {
-        log.info("AfterThrowing");
+    public void auditException(JoinPoint jp, Throwable throwable) {
+        if (log.isInfoEnabled()) {
+            log.info("Audit exception");
+        }
+
+        AuditEvent auditEvent = auditManager.currentAuditEvent();
+        if (auditEvent == null) {
+            if (log.isInfoEnabled()) {
+                log.info("AuditEvent is empty");
+            }
+            return;
+        }
+
+        Method method = ((MethodSignature) jp.getSignature()).getMethod();
+
+        EvaluationContext context = buildEvaluationContext(jp, method, null);
+        fillAuditEvent(auditEvent, jp, context);
+
         recordException(auditManager.currentAuditEvent(), throwable);
     }
 
     @After(value = "audit()")
-    public void after(JoinPoint jp) {
-        log.info("After");
+    public void stopAudit(JoinPoint jp) {
+        if (log.isInfoEnabled()) {
+            log.info("Stop and export audit record");
+        }
+        long start = System.currentTimeMillis();
         stopAudit();
+        if (log.isInfoEnabled()) {
+            log.info("Record audit cost: {}", System.currentTimeMillis() - start);
+        }
     }
 
     private void startAudit(JoinPoint jp, Method method, AuditRecord record) {
@@ -154,15 +200,20 @@ public class AuditRecordAspect {
         Annotation[][] annotations = method.getParameterAnnotations();
         for (int i = 0; i < annotations.length; i++) {
             Object arg = args[i];
+            boolean found = false;
             Annotation[] argAnnotations = annotations[i];
             if (argAnnotations == null || argAnnotations.length == 0) {
                 continue;
             }
             for (Annotation annotation : argAnnotations) {
                 if (annotation.annotationType().equals(AuditRequestBody.class)) {
-                    auditHttpRequest.setBody(arg);
-                    return;
+                    found = true;
+                    break;
                 }
+            }
+            if (found) {
+                auditHttpRequest.setBody(arg);
+                break;
             }
         }
         Map<String, Object> extendData = new HashMap<>();
@@ -175,7 +226,7 @@ public class AuditRecordAspect {
         return spelExpressionParser.parseExpression(spel).getValue(context);
     }
 
-    private EvaluationContext buildEvaluationContext(JoinPoint jp, Method method, Object result) {
+    private EvaluationContext buildEvaluationContext(JoinPoint jp, Method method, Object returnValue) {
         EvaluationContext context = new StandardEvaluationContext();
         // 获取方法参数名，并设置方法参数到EvaluationContext
         String[] parameterNames = parameterNameDiscoverer.getParameterNames(method);
@@ -186,8 +237,8 @@ public class AuditRecordAspect {
             }
         }
 
-        if (result != null) {
-            context.setVariable("$", result);
+        if (returnValue != null) {
+            context.setVariable("$", returnValue);
         }
 
         return context;

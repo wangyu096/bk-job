@@ -269,18 +269,21 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
             throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
         }
 
-        long templateId = createOrUpdateTemplate(username, appResourceScope, request);
-        return Response.buildSuccessResp(templateId);
+        TaskTemplateInfoDTO template = createOrUpdateTemplate(username, appResourceScope, request);
+        AuditManagerRegistry.get().updateAuditEvent(
+            auditEvent -> auditEvent.setInstanceData(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(template)));
+        return Response.buildSuccessResp(template.getId());
     }
 
-    private long createOrUpdateTemplate(String username,
-                                        AppResourceScope appResourceScope,
-                                        TaskTemplateCreateUpdateReq request) {
-        Long finalTemplateId = templateService
+    private TaskTemplateInfoDTO createOrUpdateTemplate(String username,
+                                                       AppResourceScope appResourceScope,
+                                                       TaskTemplateCreateUpdateReq request) {
+        TaskTemplateInfoDTO template = templateService
             .saveTaskTemplate(TaskTemplateInfoDTO.fromReq(username, appResourceScope.getAppId(),
                 request));
-        templateAuthService.registerTemplate(finalTemplateId, request.getName(), username);
-        return finalTemplateId;
+
+        templateAuthService.registerTemplate(template.getId(), request.getName(), username);
+        return template;
     }
 
     @AuditRecord(
@@ -305,7 +308,14 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
             throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
         }
 
-        createOrUpdateTemplate(username, appResourceScope, request);
+        AuditManagerRegistry.get().updateAuditEvent(
+            auditEvent -> auditEvent.setInstanceOriginData(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(
+                templateService.getTaskTemplateById(appResourceScope.getAppId(), templateId))));
+
+        TaskTemplateInfoDTO template = createOrUpdateTemplate(username, appResourceScope, request);
+
+        AuditManagerRegistry.get().updateAuditEvent(
+            auditEvent -> auditEvent.setInstanceData(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(template)));
         return Response.buildSuccessResp(templateId);
     }
 
