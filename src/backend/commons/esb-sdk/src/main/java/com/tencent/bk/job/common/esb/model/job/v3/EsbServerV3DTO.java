@@ -66,12 +66,12 @@ public class EsbServerV3DTO {
     private List<EsbCmdbTopoNodeDTO> topoNodes;
 
     /**
-     * 是否包含执行主机的参数
+     * 检查执行主机的参数是否非空
      */
-    public boolean isHostParamsEmpty() {
-        return CollectionUtils.isEmpty(hostIds)
-            && CollectionUtils.isEmpty(ips)
-            && CollectionUtils.isEmpty(topoNodes)
-            && CollectionUtils.isEmpty(dynamicGroups);
+    public boolean checkHostParamsNonEmpty() {
+        return CollectionUtils.isNotEmpty(hostIds)
+            || CollectionUtils.isNotEmpty(ips)
+            || CollectionUtils.isNotEmpty(topoNodes)
+            || CollectionUtils.isNotEmpty(dynamicGroups);
     }
 }

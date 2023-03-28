@@ -65,7 +65,9 @@ public class AuditRecordAspect {
      */
     private final DefaultParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
 
-    // SpEL表达式解析器
+    /**
+     * SpEL表达式解析器
+     */
     private final SpelExpressionParser spelExpressionParser = new SpelExpressionParser();
 
     public AuditRecordAspect(AuditManager auditManager) {
@@ -131,13 +133,13 @@ public class AuditRecordAspect {
         AuditRecord record = method.getAnnotation(AuditRecord.class);
 
         if (StringUtils.isEmpty(auditEvent.getInstanceId()) && StringUtils.isNotBlank(record.instanceId())) {
-            auditEvent.setInstanceId(parseBySpel(context, record.instanceId()).toString());
+            auditEvent.setInstanceId(parseStringBySpel(context, record.instanceId()));
         }
         if (StringUtils.isEmpty(auditEvent.getInstanceName()) && StringUtils.isNotBlank(record.instanceName())) {
-            auditEvent.setInstanceName(parseBySpel(context, record.instanceName()).toString());
+            auditEvent.setInstanceName(parseStringBySpel(context, record.instanceName()));
         }
         if (StringUtils.isEmpty(auditEvent.getContent()) && StringUtils.isNotBlank(record.logContent())) {
-            auditEvent.setContent(parseBySpel(context, record.logContent()).toString());
+            auditEvent.setContent(parseStringBySpel(context, record.logContent()));
         }
     }
 
@@ -219,6 +221,12 @@ public class AuditRecordAspect {
         Map<String, Object> extendData = new HashMap<>();
         extendData.put("request", auditHttpRequest);
         auditEvent.setExtendData(extendData);
+    }
+
+    private String parseStringBySpel(EvaluationContext context, String spel) {
+        // SpEL表达式解析
+        Object object = parseBySpel(context, spel);
+        return object == null ? null : object.toString();
     }
 
     private Object parseBySpel(EvaluationContext context, String spel) {
