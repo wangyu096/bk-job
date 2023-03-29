@@ -235,9 +235,9 @@ public interface WebTaskTemplateResource {
         @ApiParam(value = "模版ID", required = true)
         @PathVariable("templateId")
             Long templateId,
-        @ApiParam(value = "模版元数据更新请求报文", name = "templateBasicInfoUpdateReq", required = true)
+        @ApiParam(value = "模版元数据更新请求报文", name = "request", required = true)
         @RequestBody
-            TemplateBasicInfoUpdateReq templateBasicInfoUpdateReq
+            TemplateBasicInfoUpdateReq request
     );
 
     @ApiOperation(value = "新增收藏", produces = "application/json")

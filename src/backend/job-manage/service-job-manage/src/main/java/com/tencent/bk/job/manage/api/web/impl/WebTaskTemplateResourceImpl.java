@@ -64,7 +64,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
@@ -216,6 +215,13 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
     }
 
     @Override
+    @AuditRecord(
+        actionId = ActionId.VIEW_JOB_TEMPLATE,
+        resourceType = ResourceTypeId.TEMPLATE,
+        instanceId = "#templateId",
+        instanceName = "#$?.data?.name",
+        logContent = "'View template [' + #$?.data?.name + '](' + #templateId + ')'"
+    )
     public Response<TaskTemplateVO> getTemplateById(String username,
                                                     AppResourceScope appResourceScope,
                                                     String scopeType,
@@ -286,19 +292,19 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
         return template;
     }
 
+    @Override
     @AuditRecord(
         actionId = ActionId.EDIT_JOB_TEMPLATE,
         resourceType = ResourceTypeId.TEMPLATE,
         instanceId = "#templateId",
         logContent = "'Update template [' + #request?.name + '](' + #templateId + ')'"
     )
-    @Override
     public Response<Long> updateTemplate(String username,
                                          AppResourceScope appResourceScope,
                                          String scopeType,
                                          String scopeId,
                                          Long templateId,
-                                         TaskTemplateCreateUpdateReq request) {
+                                         @AuditRequestBody TaskTemplateCreateUpdateReq request) {
         AuthResult authResult = templateAuthService.authEditJobTemplate(username, appResourceScope, templateId);
         if (!authResult.isPass()) {
             throw new PermissionDeniedException(authResult);
@@ -320,7 +326,12 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
     }
 
     @Override
-    @Transactional(rollbackFor = {Exception.class, Error.class})
+    @AuditRecord(
+        actionId = ActionId.DELETE_JOB_TEMPLATE,
+        resourceType = ResourceTypeId.TEMPLATE,
+        instanceId = "#templateId",
+        logContent = "'Delete template [' + #instanceName + '](' + #templateId + ')'"
+    )
     public Response<Boolean> deleteTemplate(String username,
                                             AppResourceScope appResourceScope,
                                             String scopeType,
@@ -334,11 +345,18 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
         }
 
         Long appId = appResourceScope.getAppId();
-        if (templateService.deleteTaskTemplate(appId, templateId)) {
-            taskFavoriteService.deleteFavorite(appId, username, templateId);
-            return Response.buildSuccessResp(true);
+        TaskTemplateInfoDTO deletedTemplate =
+            templateService.deleteTaskTemplate(appId, templateId);
+        taskFavoriteService.deleteFavorite(appId, username, templateId);
+
+        // 审计
+        if (deletedTemplate != null) {
+            AuditManagerRegistry.get().updateAuditEvent(auditEvent -> {
+                auditEvent.setInstanceData(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(deletedTemplate));
+                auditEvent.setInstanceName(deletedTemplate.getName());
+            });
         }
-        return Response.buildSuccessResp(false);
+        return Response.buildSuccessResp(true);
     }
 
     @Override
@@ -351,31 +369,41 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
     }
 
     @Override
-    @AuditRecord(actionId = ActionId.EDIT_JOB_TEMPLATE, resourceType = ResourceTypeId.TEMPLATE)
+    @AuditRecord(
+        actionId = ActionId.EDIT_JOB_TEMPLATE,
+        resourceType = ResourceTypeId.TEMPLATE,
+        instanceId = "#templateId",
+        logContent = "'Update template [' + #request?.name + '](' + #templateId + ')'"
+    )
     public Response<Boolean> updateTemplateBasicInfo(String username,
                                                      AppResourceScope appResourceScope,
                                                      String scopeType,
                                                      String scopeId,
                                                      Long templateId,
-                                                     TemplateBasicInfoUpdateReq templateBasicInfoUpdateReq) {
+                                                     @AuditRequestBody TemplateBasicInfoUpdateReq request) {
 
         if (templateId > 0) {
-            templateBasicInfoUpdateReq.setId(templateId);
+            request.setId(templateId);
         } else {
             throw new NotFoundException(ErrorCode.TEMPLATE_NOT_EXIST);
         }
-        AuditManagerRegistry.get().updateAuditEvent(auditEvent -> {
-            auditEvent.setInstanceId(templateId.toString());
-        });
+
         AuthResult authResult = templateAuthService.authEditJobTemplate(username, appResourceScope,
             templateId);
         if (!authResult.isPass()) {
             throw new PermissionDeniedException(authResult);
         }
 
-        return Response.buildSuccessResp(
-            templateService.saveTaskTemplateBasicInfo(
-                TaskTemplateInfoDTO.fromBasicReq(username, appResourceScope.getAppId(), templateBasicInfoUpdateReq)));
+        AuditManagerRegistry.get().updateAuditEvent(
+            auditEvent -> auditEvent.setInstanceOriginData(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(
+                templateService.getTaskTemplateById(appResourceScope.getAppId(), templateId))));
+
+        templateService.saveTaskTemplateBasicInfo(
+            TaskTemplateInfoDTO.fromBasicReq(username, appResourceScope.getAppId(), request))
+
+        AuditManagerRegistry.get().updateAuditEvent(
+            auditEvent -> auditEvent.setInstanceData(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(template)));
+        return Response.buildSuccessResp(true);
     }
 
     @Override

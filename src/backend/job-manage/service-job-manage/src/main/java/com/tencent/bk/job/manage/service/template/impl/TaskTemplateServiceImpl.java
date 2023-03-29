@@ -113,7 +113,6 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
     }
 
 
-
     @Autowired
     public TaskTemplateServiceImpl(
         @Qualifier("TaskTemplateStepServiceImpl") AbstractTaskStepService taskStepService,
@@ -473,7 +472,13 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
 
     @Override
     @Transactional
-    public Boolean deleteTaskTemplate(Long appId, Long templateId) {
+    public TaskTemplateInfoDTO deleteTaskTemplate(Long appId, Long templateId) {
+        TaskTemplateInfoDTO template = getTaskTemplateById(appId, templateId);
+        if (template == null) {
+            log.warn("Delete job template, the template is not exist");
+            throw new NotFoundException(ErrorCode.TEMPLATE_NOT_EXIST);
+        }
+
         List<TaskPlanInfoDTO> taskPlanInfoList = taskPlanService.listTaskPlansBasicInfo(appId, templateId);
         if (CollectionUtils.isNotEmpty(taskPlanInfoList)) {
             List<Long> taskPlanIdList =
@@ -493,7 +498,7 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
         taskPlanService.deleteTaskPlanByTemplate(appId, templateId);
         taskTemplateDAO.deleteTaskTemplateById(appId, templateId);
         tagService.batchDeleteResourceTags(appId, JobResourceTypeEnum.TEMPLATE.getValue(), String.valueOf(templateId));
-        return true;
+        return template;
     }
 
     @Override

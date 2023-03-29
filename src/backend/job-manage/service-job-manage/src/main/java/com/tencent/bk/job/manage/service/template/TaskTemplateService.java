@@ -77,9 +77,9 @@ public interface TaskTemplateService {
      *
      * @param appId      业务 ID
      * @param templateId 模版 ID
-     * @return 是否删除成功
+     * @return 被删除的模板
      */
-    Boolean deleteTaskTemplate(Long appId, Long templateId);
+    TaskTemplateInfoDTO deleteTaskTemplate(Long appId, Long templateId);
 
     /**
      * 获取标签关联的模版数量
