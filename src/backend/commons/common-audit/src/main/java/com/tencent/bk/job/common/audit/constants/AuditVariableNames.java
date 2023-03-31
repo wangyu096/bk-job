@@ -22,37 +22,9 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.audit.config;
+package com.tencent.bk.job.common.audit.constants;
 
-import com.tencent.bk.audit.AuditManager;
-import com.tencent.bk.audit.LogFileExporter;
-import com.tencent.bk.job.common.audit.AuditRecordAspect;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-
-
-@Configuration(proxyBeanMethods = false)
-@EnableConfigurationProperties(AuditProperties.class)
-@ConditionalOnProperty(name = "auditEntry.enabled", havingValue = "true", matchIfMissing = true)
-public class AuditAutoConfiguration {
-    private static final String EXPORTER_TYPE_LOG_FILE = "log_file";
-
-    @Bean("logFileEventExporter")
-    @ConditionalOnProperty(name = "auditEntry.exporter.type", havingValue = EXPORTER_TYPE_LOG_FILE, matchIfMissing = true)
-    LogFileExporter logFileEventExporter() {
-        return new LogFileExporter();
-    }
-
-    @Bean("auditManager")
-    @ConditionalOnProperty(name = "auditEntry.exporter.type", havingValue = EXPORTER_TYPE_LOG_FILE, matchIfMissing = true)
-    AuditManager auditManager(LogFileExporter logFileExporter) {
-        return new AuditManager(logFileExporter);
-    }
-
-    @Bean("auditRecordAspect")
-    public AuditRecordAspect auditRecordAspect(AuditManager auditManager) {
-        return new AuditRecordAspect(auditManager);
-    }
+public interface AuditVariableNames {
+    String INSTANCE_ID = "@INSTANCE_ID";
+    String INSTANCE_NAME = "@INSTANCE_NAME";
 }

@@ -25,7 +25,7 @@
 package com.tencent.bk.job.execute.api.web.impl;
 
 import com.tencent.bk.job.common.annotation.CompatibleImplementation;
-import com.tencent.bk.job.common.audit.AuditRecord;
+import com.tencent.bk.job.common.audit.AuditEntry;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
 import com.tencent.bk.job.common.exception.InvalidParamException;
@@ -111,7 +111,7 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
             ExecuteMetricsConstants.TAG_KEY_START_MODE, ExecuteMetricsConstants.TAG_VALUE_START_MODE_WEB,
             ExecuteMetricsConstants.TAG_KEY_TASK_TYPE, ExecuteMetricsConstants.TAG_VALUE_TASK_TYPE_EXECUTE_PLAN
         })
-    @AuditRecord(actionId = ActionId.LAUNCH_JOB_PLAN, resourceType = ResourceTypeId.HOST)
+    @AuditEntry(actionId = ActionId.LAUNCH_JOB_PLAN, resourceType = ResourceTypeId.HOST)
     public Response<TaskExecuteVO> executeTask(String username,
                                                AppResourceScope appResourceScope,
                                                String scopeType,

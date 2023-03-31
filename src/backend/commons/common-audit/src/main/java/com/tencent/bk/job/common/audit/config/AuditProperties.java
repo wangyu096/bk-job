@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 /**
  * 审计中心配置
  */
-@ConfigurationProperties(prefix = "audit")
+@ConfigurationProperties(prefix = "auditEntry")
 @Getter
 @Setter
 @ToString

@@ -76,25 +76,30 @@ public class AuditRecordAspect {
     }
 
 
-    // 声明审计 AOP 切入点
-    @Pointcut("@annotation(AuditRecord)")
-    public void audit() {
+    // 声明审计事件入口切入点
+    @Pointcut("@annotation(com.tencent.bk.job.common.audit.AuditEntry)")
+    public void auditEntry() {
     }
 
-    @Before("audit()")
+    // 声明审计事件记录切入点
+    @Pointcut("@annotation(com.tencent.bk.job.common.audit.AuditEventRecord)")
+    public void auditEventRecord() {
+    }
+
+    @Before("auditEntry()")
     public void startAudit(JoinPoint jp) {
         if (log.isInfoEnabled()) {
-            log.info("Start audit");
+            log.info("Start audit, entry: {}", jp.getSignature().toShortString());
         }
 
         long start = System.currentTimeMillis();
         try {
             Method method = ((MethodSignature) jp.getSignature()).getMethod();
-            AuditRecord record = method.getAnnotation(AuditRecord.class);
+            AuditEntry record = method.getAnnotation(AuditEntry.class);
             startAudit(jp, method, record);
         } catch (Throwable e) {
             // 忽略审计错误，避免影响业务代码执行
-            log.error("Start audit caught exception", e);
+            log.error("Start auditEntry caught exception", e);
         } finally {
             if (log.isInfoEnabled()) {
                 log.info("Audit start, cost: {}", System.currentTimeMillis() - start);
@@ -102,8 +107,59 @@ public class AuditRecordAspect {
         }
     }
 
-    @AfterReturning(value = "audit()", returning = "result")
-    public void auditDone(JoinPoint jp, Object result) {
+    @After(value = "auditEntry()")
+    public void stopAudit(JoinPoint jp) {
+        if (log.isInfoEnabled()) {
+            log.info("Stop and export auditEntry record");
+        }
+        long start = System.currentTimeMillis();
+
+        try {
+            stopAudit();
+        } catch (Throwable e) {
+            // 忽略审计错误，避免影响业务代码执行
+            log.error("Audit stop caught exception", e);
+        } finally {
+            if (log.isInfoEnabled()) {
+                log.info("Audit stop, cost: {}", System.currentTimeMillis() - start);
+            }
+        }
+    }
+
+    @AfterThrowing(value = "auditEntry()", throwing = "throwable")
+    public void auditException(JoinPoint jp, Throwable throwable) {
+        long start = System.currentTimeMillis();
+        if (log.isInfoEnabled()) {
+            log.info("Audit exception");
+        }
+
+        try {
+            AuditEvent auditEvent = auditManager.currentAuditEvent();
+            if (auditEvent == null) {
+                if (log.isInfoEnabled()) {
+                    log.info("AuditEvent is empty");
+                }
+                return;
+            }
+
+            Method method = ((MethodSignature) jp.getSignature()).getMethod();
+
+            EvaluationContext context = buildEvaluationContext(jp, method, null);
+            fillAuditEvent(auditEvent, jp, context);
+
+            recordException(auditManager.currentAuditEvent(), throwable);
+        } catch (Throwable e) {
+            // 忽略审计错误，避免影响业务代码执行
+            log.error("Audit exception caught exception", e);
+        } finally {
+            if (log.isInfoEnabled()) {
+                log.info("Audit exception, cost: {}", System.currentTimeMillis() - start);
+            }
+        }
+    }
+
+    @AfterReturning(value = "auditEventRecord()", returning = "result")
+    public void auditEventDone(JoinPoint jp, Object result) {
         long start = System.currentTimeMillis();
         if (log.isInfoEnabled()) {
             log.info("Audit done");
@@ -136,71 +192,25 @@ public class AuditRecordAspect {
 
     private void fillAuditEvent(AuditEvent auditEvent, JoinPoint jp, EvaluationContext context) {
         Method method = ((MethodSignature) jp.getSignature()).getMethod();
-        AuditRecord record = method.getAnnotation(AuditRecord.class);
-
-        if (StringUtils.isEmpty(auditEvent.getInstanceId()) && StringUtils.isNotBlank(record.instanceId())) {
-            auditEvent.setInstanceId(parseStringBySpel(context, record.instanceId()));
-        }
-        if (StringUtils.isEmpty(auditEvent.getInstanceName()) && StringUtils.isNotBlank(record.instanceName())) {
-            auditEvent.setInstanceName(parseStringBySpel(context, record.instanceName()));
-        }
-        if (StringUtils.isEmpty(auditEvent.getContent()) && StringUtils.isNotBlank(record.logContent())) {
-            auditEvent.setContent(parseStringBySpel(context, record.logContent()));
-        }
-    }
-
-    @AfterThrowing(value = "audit()", throwing = "throwable")
-    public void auditException(JoinPoint jp, Throwable throwable) {
-        long start = System.currentTimeMillis();
-        if (log.isInfoEnabled()) {
-            log.info("Audit exception");
+        AuditEntry record = method.getAnnotation(AuditEntry.class);
+        if (record == null) {
+            return;
         }
 
-        try {
-            AuditEvent auditEvent = auditManager.currentAuditEvent();
-            if (auditEvent == null) {
-                if (log.isInfoEnabled()) {
-                    log.info("AuditEvent is empty");
-                }
-                return;
-            }
+        AuditEventRecord eventRecord = record.event();
 
-            Method method = ((MethodSignature) jp.getSignature()).getMethod();
-
-            EvaluationContext context = buildEvaluationContext(jp, method, null);
-            fillAuditEvent(auditEvent, jp, context);
-
-            recordException(auditManager.currentAuditEvent(), throwable);
-        } catch (Throwable e) {
-            // 忽略审计错误，避免影响业务代码执行
-            log.error("Audit exception caught exception", e);
-        } finally {
-            if (log.isInfoEnabled()) {
-                log.info("Audit exception, cost: {}", System.currentTimeMillis() - start);
-            }
+        if (StringUtils.isEmpty(auditEvent.getInstanceId()) && StringUtils.isNotBlank(eventRecord.instanceId())) {
+            auditEvent.setInstanceId(parseStringBySpel(context, eventRecord.instanceId()));
+        }
+        if (StringUtils.isEmpty(auditEvent.getInstanceName()) && StringUtils.isNotBlank(eventRecord.instanceName())) {
+            auditEvent.setInstanceName(parseStringBySpel(context, eventRecord.instanceName()));
+        }
+        if (StringUtils.isEmpty(auditEvent.getContent()) && StringUtils.isNotBlank(eventRecord.content())) {
+            auditEvent.setContent(parseStringBySpel(context, eventRecord.content()));
         }
     }
 
-    @After(value = "audit()")
-    public void stopAudit(JoinPoint jp) {
-        if (log.isInfoEnabled()) {
-            log.info("Stop and export audit record");
-        }
-        long start = System.currentTimeMillis();
-
-        try {
-            stopAudit();
-        } catch (Throwable e) {
-            // 忽略审计错误，避免影响业务代码执行
-            log.error("Audit stop caught exception", e);
-        } finally {
-            if (log.isInfoEnabled()) {
-                log.info("Audit stop, cost: {}", System.currentTimeMillis() - start);
-            }
-        }
-    }
-
-    private void startAudit(JoinPoint jp, Method method, AuditRecord record) {
+    private void startAudit(JoinPoint jp, Method method, AuditEntry record) {
         HttpServletRequest request = JobContextUtil.getRequest();
         AuditEvent auditEvent = auditManager.startAudit();
         auditEvent.setActionId(record.actionId());

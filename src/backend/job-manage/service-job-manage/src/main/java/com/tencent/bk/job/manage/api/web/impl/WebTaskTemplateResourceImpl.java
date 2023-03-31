@@ -26,8 +26,10 @@ package com.tencent.bk.job.manage.api.web.impl;
 
 import com.google.common.base.CaseFormat;
 import com.tencent.bk.audit.AuditManagerRegistry;
-import com.tencent.bk.job.common.audit.AuditRecord;
+import com.tencent.bk.job.common.audit.AuditEntry;
+import com.tencent.bk.job.common.audit.AuditEventRecord;
 import com.tencent.bk.job.common.audit.AuditRequestBody;
+import com.tencent.bk.job.common.audit.AuditVariable;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobResourceTypeEnum;
 import com.tencent.bk.job.common.exception.InvalidParamException;
@@ -72,6 +74,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
+import static com.tencent.bk.job.common.audit.constants.AuditVariableNames.INSTANCE_ID;
+import static com.tencent.bk.job.common.audit.constants.AuditVariableNames.INSTANCE_NAME;
 
 /**
  * @since 16/10/2019 16:16
@@ -215,12 +220,18 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
     }
 
     @Override
-    @AuditRecord(
-        actionId = ActionId.VIEW_JOB_TEMPLATE,
-        resourceType = ResourceTypeId.TEMPLATE,
-        instanceId = "#templateId",
-        instanceName = "#$?.data?.name",
-        logContent = "'View template [' + #$?.data?.name + '](' + #templateId + ')'"
+    @AuditEntry(
+        event = @AuditEventRecord(
+            actionId = ActionId.VIEW_JOB_TEMPLATE,
+            resourceType = ResourceTypeId.TEMPLATE,
+            instanceId = INSTANCE_ID,
+            content = "View template [" + INSTANCE_NAME + "](" + INSTANCE_ID + ")",
+            recordOnlyRoot = true,
+            variables = {
+                @AuditVariable(name = INSTANCE_ID, value = "#templateId"),
+            }
+        ),
+        recordSubEvent = false
     )
     public Response<TaskTemplateVO> getTemplateById(String username,
                                                     AppResourceScope appResourceScope,
@@ -253,12 +264,17 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
     }
 
     @Override
-    @AuditRecord(
-        actionId = ActionId.CREATE_JOB_TEMPLATE,
-        resourceType = ResourceTypeId.TEMPLATE,
-        instanceId = "#$?.data",
-        instanceName = "#request?.name",
-        logContent = "'Create template [' + #request?.name + '](' + #$?.data + ')'"
+    @AuditEntry(
+        event = @AuditEventRecord(
+            actionId = ActionId.CREATE_JOB_TEMPLATE,
+            resourceType = ResourceTypeId.TEMPLATE,
+            instanceId = INSTANCE_ID,
+            content = "Create template [" + INSTANCE_NAME + "](" + INSTANCE_ID + ")",
+            variables = {
+                @AuditVariable(name = INSTANCE_NAME, value = "#request?.name")
+            }
+        ),
+        recordSubEvent = true
     )
     public Response<Long> createTemplate(String username,
                                          AppResourceScope appResourceScope,
@@ -276,28 +292,69 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
         }
 
         TaskTemplateInfoDTO template = createOrUpdateTemplate(username, appResourceScope, request);
-        AuditManagerRegistry.get().updateAuditEvent(
-            auditEvent -> auditEvent.setInstanceData(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(template)));
         return Response.buildSuccessResp(template.getId());
+    }
+
+    @Override
+    @AuditEntry(
+        event = @AuditEventRecord(
+            actionId = ActionId.DELETE_JOB_TEMPLATE,
+            resourceType = ResourceTypeId.TEMPLATE,
+            instanceId = INSTANCE_ID,
+            content = "Delete template [" + INSTANCE_NAME + "](" + INSTANCE_ID + ")",
+            variables = {
+                @AuditVariable(name = INSTANCE_ID, value = "#templateId")
+            }
+        )
+    )
+    public Response<Boolean> deleteTemplate(String username,
+                                            AppResourceScope appResourceScope,
+                                            String scopeType,
+                                            String scopeId,
+                                            Long templateId) {
+
+        AuthResult authResult = templateAuthService.authDeleteJobTemplate(username, appResourceScope,
+            templateId);
+        if (!authResult.isPass()) {
+            throw new PermissionDeniedException(authResult);
+        }
+
+        Long appId = appResourceScope.getAppId();
+        taskFavoriteService.deleteFavorite(appId, username, templateId);
+
+        return Response.buildSuccessResp(true);
     }
 
     private TaskTemplateInfoDTO createOrUpdateTemplate(String username,
                                                        AppResourceScope appResourceScope,
                                                        TaskTemplateCreateUpdateReq request) {
-        TaskTemplateInfoDTO template = templateService
-            .saveTaskTemplate(TaskTemplateInfoDTO.fromReq(username, appResourceScope.getAppId(),
-                request));
+        TaskTemplateInfoDTO template;
+        if (request.getId() != null) {
+            template = templateService
+                .updateTaskTemplate(TaskTemplateInfoDTO.fromReq(username, appResourceScope.getAppId(),
+                    request));
+        } else {
+            template = templateService
+                .saveTaskTemplate(TaskTemplateInfoDTO.fromReq(username, appResourceScope.getAppId(),
+                    request));
+        }
 
         templateAuthService.registerTemplate(template.getId(), request.getName(), username);
         return template;
     }
 
     @Override
-    @AuditRecord(
-        actionId = ActionId.EDIT_JOB_TEMPLATE,
-        resourceType = ResourceTypeId.TEMPLATE,
-        instanceId = "#templateId",
-        logContent = "'Update template [' + #request?.name + '](' + #templateId + ')'"
+    @AuditEntry(
+        event = @AuditEventRecord(
+            actionId = ActionId.EDIT_JOB_TEMPLATE,
+            resourceType = ResourceTypeId.TEMPLATE,
+            instanceId = INSTANCE_ID,
+            content = "Modify template [" + INSTANCE_NAME + "](" + INSTANCE_ID + ")",
+            variables = {
+                @AuditVariable(name = INSTANCE_ID, value = "#request?.d")
+            }
+        ),
+        recordSubEvent = true
     )
     public Response<Long> updateTemplate(String username,
                                          AppResourceScope appResourceScope,
@@ -326,40 +383,6 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
     }
 
     @Override
-    @AuditRecord(
-        actionId = ActionId.DELETE_JOB_TEMPLATE,
-        resourceType = ResourceTypeId.TEMPLATE,
-        instanceId = "#templateId",
-        logContent = "'Delete template [' + #instanceName + '](' + #templateId + ')'"
-    )
-    public Response<Boolean> deleteTemplate(String username,
-                                            AppResourceScope appResourceScope,
-                                            String scopeType,
-                                            String scopeId,
-                                            Long templateId) {
-
-        AuthResult authResult = templateAuthService.authDeleteJobTemplate(username, appResourceScope,
-            templateId);
-        if (!authResult.isPass()) {
-            throw new PermissionDeniedException(authResult);
-        }
-
-        Long appId = appResourceScope.getAppId();
-        TaskTemplateInfoDTO deletedTemplate =
-            templateService.deleteTaskTemplate(appId, templateId);
-        taskFavoriteService.deleteFavorite(appId, username, templateId);
-
-        // 审计
-        if (deletedTemplate != null) {
-            AuditManagerRegistry.get().updateAuditEvent(auditEvent -> {
-                auditEvent.setInstanceData(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(deletedTemplate));
-                auditEvent.setInstanceName(deletedTemplate.getName());
-            });
-        }
-        return Response.buildSuccessResp(true);
-    }
-
-    @Override
     public Response<TagCountVO> getTagTemplateCount(String username,
                                                     AppResourceScope appResourceScope,
                                                     String scopeType,
@@ -369,11 +392,17 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
     }
 
     @Override
-    @AuditRecord(
-        actionId = ActionId.EDIT_JOB_TEMPLATE,
-        resourceType = ResourceTypeId.TEMPLATE,
-        instanceId = "#templateId",
-        logContent = "'Update template [' + #request?.name + '](' + #templateId + ')'"
+    @AuditEntry(
+        event = @AuditEventRecord(
+            actionId = ActionId.EDIT_JOB_TEMPLATE,
+            resourceType = ResourceTypeId.TEMPLATE,
+            instanceId = INSTANCE_ID,
+            content = "Modify template [" + INSTANCE_NAME + "](" + INSTANCE_ID + ")",
+            variables = {
+                @AuditVariable(name = INSTANCE_ID, value = "#request?.d")
+            }
+        ),
+        recordSubEvent = true
     )
     public Response<Boolean> updateTemplateBasicInfo(String username,
                                                      AppResourceScope appResourceScope,
@@ -394,15 +423,8 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
             throw new PermissionDeniedException(authResult);
         }
 
-        AuditManagerRegistry.get().updateAuditEvent(
-            auditEvent -> auditEvent.setInstanceOriginData(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(
-                templateService.getTaskTemplateById(appResourceScope.getAppId(), templateId))));
-
         templateService.saveTaskTemplateBasicInfo(
-            TaskTemplateInfoDTO.fromBasicReq(username, appResourceScope.getAppId(), request))
-
-        AuditManagerRegistry.get().updateAuditEvent(
-            auditEvent -> auditEvent.setInstanceData(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(template)));
+            TaskTemplateInfoDTO.fromBasicReq(username, appResourceScope.getAppId(), request));
         return Response.buildSuccessResp(true);
     }
 

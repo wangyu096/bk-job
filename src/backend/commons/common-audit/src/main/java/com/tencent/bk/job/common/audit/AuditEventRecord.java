@@ -22,37 +22,53 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.audit.config;
+package com.tencent.bk.job.common.audit;
 
-import com.tencent.bk.audit.AuditManager;
-import com.tencent.bk.audit.LogFileExporter;
-import com.tencent.bk.job.common.audit.AuditRecordAspect;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
+/**
+ * 用于标识审计记录
+ */
+@Target({ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+@Inherited
+public @interface AuditEventRecord {
 
-@Configuration(proxyBeanMethods = false)
-@EnableConfigurationProperties(AuditProperties.class)
-@ConditionalOnProperty(name = "auditEntry.enabled", havingValue = "true", matchIfMissing = true)
-public class AuditAutoConfiguration {
-    private static final String EXPORTER_TYPE_LOG_FILE = "log_file";
+    /**
+     * 操作ID
+     */
+    String actionId();
 
-    @Bean("logFileEventExporter")
-    @ConditionalOnProperty(name = "auditEntry.exporter.type", havingValue = EXPORTER_TYPE_LOG_FILE, matchIfMissing = true)
-    LogFileExporter logFileEventExporter() {
-        return new LogFileExporter();
-    }
+    /**
+     * 资源类型ID
+     */
+    String resourceType() default "";
 
-    @Bean("auditManager")
-    @ConditionalOnProperty(name = "auditEntry.exporter.type", havingValue = EXPORTER_TYPE_LOG_FILE, matchIfMissing = true)
-    AuditManager auditManager(LogFileExporter logFileExporter) {
-        return new AuditManager(logFileExporter);
-    }
+    /**
+     * 资源实例敏感等级,范围0-9
+     */
+    int sensitivity() default 0;
 
-    @Bean("auditRecordAspect")
-    public AuditRecordAspect auditRecordAspect(AuditManager auditManager) {
-        return new AuditRecordAspect(auditManager);
-    }
+    /**
+     * 操作实例ID
+     */
+    String instanceId() default "";
+
+    /**
+     * 操作实例名称
+     */
+    String instanceName() default "";
+
+    /**
+     * 事件描述
+     */
+    String content() default "";
+
+    AuditVariable[] variables() default {};
+
+    boolean recordOnlyRoot() default false;
 }

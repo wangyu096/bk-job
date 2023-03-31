@@ -65,12 +65,20 @@ public interface TaskTemplateService {
     TaskTemplateInfoDTO getTaskTemplateById(Long appId, Long templateId);
 
     /**
-     * 新增、保存模版信息
+     * 新增作业模板
      *
-     * @param taskTemplateInfo 待新增、保存的模版信息
+     * @param taskTemplateInfo 模版信息
      * @return 模版
      */
     TaskTemplateInfoDTO saveTaskTemplate(TaskTemplateInfoDTO taskTemplateInfo);
+
+    /**
+     * 更新作业模板
+     *
+     * @param taskTemplateInfo 模版信息
+     * @return 模版
+     */
+    TaskTemplateInfoDTO updateTaskTemplate(TaskTemplateInfoDTO taskTemplateInfo);
 
     /**
      * 删除模版

@@ -24,6 +24,9 @@
 
 package com.tencent.bk.job.manage.service.template.impl;
 
+import com.tencent.bk.audit.AuditManagerRegistry;
+import com.tencent.bk.job.common.audit.AuditEventRecord;
+import com.tencent.bk.job.common.audit.AuditVariable;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobResourceTypeEnum;
 import com.tencent.bk.job.common.exception.AbortedException;
@@ -33,6 +36,8 @@ import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.exception.NotFoundException;
 import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.iam.constant.ActionId;
+import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.redis.util.LockUtils;
@@ -85,6 +90,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static com.tencent.bk.job.common.audit.constants.AuditVariableNames.INSTANCE_ID;
+import static com.tencent.bk.job.common.audit.constants.AuditVariableNames.INSTANCE_NAME;
 
 @Slf4j
 @Service("TaskTemplateServiceImpl")
@@ -275,6 +283,17 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
     }
 
     @Override
+    @AuditEventRecord(
+        actionId = ActionId.VIEW_JOB_TEMPLATE,
+        resourceType = ResourceTypeId.TEMPLATE,
+        instanceId = INSTANCE_ID,
+        content = "View template [" + INSTANCE_NAME + "](" + INSTANCE_ID + ")",
+        recordOnlyRoot = true,
+        variables = {
+            @AuditVariable(name = INSTANCE_ID, value = "#templateId"),
+            @AuditVariable(name = INSTANCE_NAME, value = "#$?.name")
+        }
+    )
     public TaskTemplateInfoDTO getTaskTemplateById(Long appId, Long templateId) {
         TaskTemplateInfoDTO templateInfo = taskTemplateDAO.getTaskTemplateById(appId, templateId);
         if (templateInfo != null) {
@@ -290,7 +309,48 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
+    @AuditEventRecord(
+        actionId = ActionId.CREATE_JOB_TEMPLATE,
+        resourceType = ResourceTypeId.TEMPLATE,
+        instanceId = INSTANCE_ID,
+        content = "Create template [" + INSTANCE_NAME + "](" + INSTANCE_ID + ")",
+        variables = {
+            @AuditVariable(name = INSTANCE_ID, value = "#$?.id"),
+            @AuditVariable(name = INSTANCE_NAME, value = "#$?.name")
+        }
+    )
     public TaskTemplateInfoDTO saveTaskTemplate(TaskTemplateInfoDTO taskTemplateInfo) {
+        return saveOrUpdateTaskTemplate(taskTemplateInfo);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Throwable.class)
+    @AuditEventRecord(
+        actionId = ActionId.EDIT_JOB_TEMPLATE,
+        resourceType = ResourceTypeId.TEMPLATE,
+        instanceId = INSTANCE_ID,
+        content = "Modify template [" + INSTANCE_NAME + "](" + INSTANCE_ID + ")",
+        variables = {
+            @AuditVariable(name = INSTANCE_ID, value = "#taskTemplateInfo?.id"),
+            @AuditVariable(name = INSTANCE_NAME, value = "#taskTemplateInfo?.name")
+        }
+    )
+    public TaskTemplateInfoDTO updateTaskTemplate(TaskTemplateInfoDTO taskTemplateInfo) {
+        // 审计记录 - 原始数据
+        AuditManagerRegistry.get().updateAuditEvent(
+            auditEvent -> auditEvent.setInstanceOriginData(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(
+                getTaskTemplateById(taskTemplateInfo.getAppId(), taskTemplateInfo.getId()))));
+
+        TaskTemplateInfoDTO template = saveOrUpdateTaskTemplate(taskTemplateInfo);
+
+        // 审计记录 - 更新后数据
+        AuditManagerRegistry.get().updateAuditEvent(
+            auditEvent -> auditEvent.setInstanceData(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(template)));
+
+        return template;
+    }
+
+    private TaskTemplateInfoDTO saveOrUpdateTaskTemplate(TaskTemplateInfoDTO taskTemplateInfo) {
         String lockKey = null;
         try {
             boolean isCreate = false;
@@ -472,6 +532,16 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
 
     @Override
     @Transactional
+    @AuditEventRecord(
+        actionId = ActionId.DELETE_JOB_TEMPLATE,
+        resourceType = ResourceTypeId.TEMPLATE,
+        instanceId = INSTANCE_ID,
+        content = "Delete template [" + INSTANCE_NAME + "](" + INSTANCE_ID + ")",
+        variables = {
+            @AuditVariable(name = INSTANCE_ID, value = "#templateId"),
+            @AuditVariable(name = INSTANCE_NAME, value = "#$?.name")
+        }
+    )
     public TaskTemplateInfoDTO deleteTaskTemplate(Long appId, Long templateId) {
         TaskTemplateInfoDTO template = getTaskTemplateById(appId, templateId);
         if (template == null) {

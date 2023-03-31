@@ -24,44 +24,15 @@
 
 package com.tencent.bk.job.common.audit;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import com.tencent.bk.audit.model.AuditEvent;
 
-/**
- * 审计记录注解
- */
-@Target({ElementType.TYPE, ElementType.METHOD})
-@Retention(RetentionPolicy.RUNTIME)
-@Inherited
-public @interface AuditRecord {
+import java.util.List;
+import java.util.Map;
 
-    /**
-     * 操作ID
-     *
-     * @see com.tencent.bk.job.common.iam.constant.ActionId
-     */
-    String actionId() default "";
-
-    /**
-     * 资源类型ID
-     *
-     * @see com.tencent.bk.job.common.iam.constant.ResourceTypeId
-     */
-    String resourceType() default "";
-
-    /**
-     * 资源实例敏感等级,范围0-9
-     */
-    int sensitivity() default 0;
-
-    String instanceId() default "";
-
-    String instanceName() default "";
-
-    String logContent() default "";
-
-
+public class AuditContext {
+    private AuditEvent rootEvent;
+    private AuditEvent currentEvent;
+    private List<AuditEvent> subEvents;
+    private Map<String, AuditEvent> events;
+    private boolean root;
 }
