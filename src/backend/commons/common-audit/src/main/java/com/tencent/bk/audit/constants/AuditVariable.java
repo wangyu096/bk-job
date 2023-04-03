@@ -22,18 +22,29 @@
  * IN THE SOFTWARE.
  */
 
-dependencies {
-//    api files("libs/bk-audit-java-sdk-1.0.0.jar")
-    api project(":commons:common")
-    api project(":commons:common-iam")
-    implementation 'io.micrometer:micrometer-registry-prometheus'
-    implementation("org.springframework.boot:spring-boot-autoconfigure")
-    implementation 'org.springframework:spring-web'
-    implementation 'org.aspectj:aspectjrt'
-    implementation 'org.aspectj:aspectjweaver'
-    implementation 'com.fasterxml.jackson.module:jackson-module-jsonSchema:2.13.4'
-    compileOnly 'org.projectlombok:lombok'
-    annotationProcessor 'org.projectlombok:lombok'
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+package com.tencent.bk.audit.constants;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * 审计 - 变量注解
+ */
+@Target({ElementType.FIELD})
+@Retention(RetentionPolicy.RUNTIME)
+@Inherited
+public @interface AuditVariable {
+
+    /**
+     * 变量名
+     */
+    String name();
+
+    /**
+     * 变量值
+     */
+    String value();
 }

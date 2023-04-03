@@ -22,29 +22,42 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.audit;
+package com.tencent.bk.audit;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import com.tencent.bk.audit.constants.Constants;
+import com.tencent.bk.audit.model.AuditEvent;
+import com.tencent.bk.audit.utils.EventIdGenerator;
+import com.tencent.bk.audit.utils.json.JsonUtils;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Collection;
 
 /**
- * 审计 - 变量注解
+ * 审计日志文件导出
  */
-@Target({ElementType.FIELD})
-@Retention(RetentionPolicy.RUNTIME)
-@Inherited
-public @interface AuditVariable {
+public class LogFileExporter implements EventExporter {
+    private final Logger LOGGER;
 
-    /**
-     * 变量名
-     */
-    String name();
+    public LogFileExporter() {
+        this.LOGGER = LoggerFactory.getLogger(Constants.AUDIT_LOGGER_NAME);
+    }
 
-    /**
-     * 变量值
-     */
-    String value();
+    @Override
+    public void export(AuditEvent event) {
+        if (StringUtils.isBlank(event.getId())) {
+            event.setId(EventIdGenerator.generateId());
+        }
+        LOGGER.info(JsonUtils.toJson(event));
+    }
+
+    @Override
+    public void export(Collection<AuditEvent> events) {
+        if (CollectionUtils.isEmpty(events)) {
+            return;
+        }
+        events.forEach(event -> LOGGER.info(JsonUtils.toJson(event)));
+    }
 }

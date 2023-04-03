@@ -22,18 +22,37 @@
  * IN THE SOFTWARE.
  */
 
-dependencies {
-//    api files("libs/bk-audit-java-sdk-1.0.0.jar")
-    api project(":commons:common")
-    api project(":commons:common-iam")
-    implementation 'io.micrometer:micrometer-registry-prometheus'
-    implementation("org.springframework.boot:spring-boot-autoconfigure")
-    implementation 'org.springframework:spring-web'
-    implementation 'org.aspectj:aspectjrt'
-    implementation 'org.aspectj:aspectjweaver'
-    implementation 'com.fasterxml.jackson.module:jackson-module-jsonSchema:2.13.4'
-    compileOnly 'org.projectlombok:lombok'
-    annotationProcessor 'org.projectlombok:lombok'
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+package com.tencent.bk.audit;
+
+import com.tencent.bk.audit.constants.AccessTypeEnum;
+import com.tencent.bk.audit.constants.UserIdentifyTypeEnum;
+
+import javax.annotation.concurrent.ThreadSafe;
+import javax.servlet.http.HttpServletRequest;
+
+@ThreadSafe
+public interface AuditRequestProvider {
+    HttpServletRequest getRequest();
+
+    String getUsername();
+
+    UserIdentifyTypeEnum getUserIdentifyType();
+
+    default String getUserIdentifyTenantId() {
+        return null;
+    }
+
+    AccessTypeEnum getAccessType();
+
+    default String getRequestId() {
+        return null;
+    }
+
+    default String getBkAppCode() {
+        return null;
+    }
+
+    String getClientIp();
+
+    String getUserAgent();
 }

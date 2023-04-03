@@ -25,8 +25,8 @@
 package com.tencent.bk.job.manage.service.template.impl;
 
 import com.tencent.bk.audit.AuditManagerRegistry;
-import com.tencent.bk.job.common.audit.AuditEventRecord;
-import com.tencent.bk.job.common.audit.AuditVariable;
+import com.tencent.bk.audit.constants.AuditEventRecord;
+import com.tencent.bk.audit.constants.AuditVariable;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobResourceTypeEnum;
 import com.tencent.bk.job.common.exception.AbortedException;
@@ -91,8 +91,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.tencent.bk.job.common.audit.constants.AuditVariableNames.INSTANCE_ID;
-import static com.tencent.bk.job.common.audit.constants.AuditVariableNames.INSTANCE_NAME;
+import static com.tencent.bk.audit.constants.AuditVariableNames.INSTANCE_ID;
+import static com.tencent.bk.audit.constants.AuditVariableNames.INSTANCE_NAME;
 
 @Slf4j
 @Service("TaskTemplateServiceImpl")

@@ -22,17 +22,21 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.audit;
+package com.tencent.bk.audit;
 
-import com.tencent.bk.audit.model.AuditEvent;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.List;
-import java.util.Map;
+@Data
+@NoArgsConstructor
+public class AuditHttpRequest {
+    private String uri;
+    private String queryParams;
+    private Object body;
 
-public class AuditContext {
-    private AuditEvent rootEvent;
-    private AuditEvent currentEvent;
-    private List<AuditEvent> subEvents;
-    private Map<String, AuditEvent> events;
-    private boolean root;
+    public AuditHttpRequest(String uri, String queryParams, Object body) {
+        this.uri = uri;
+        this.queryParams = queryParams;
+        this.body = body;
+    }
 }

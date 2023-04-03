@@ -24,9 +24,11 @@
 
 package com.tencent.bk.job.common.audit.config;
 
+import com.tencent.bk.audit.AuditAspect;
+import com.tencent.bk.audit.AuditExceptionResolver;
 import com.tencent.bk.audit.AuditManager;
+import com.tencent.bk.audit.AuditRequestProvider;
 import com.tencent.bk.audit.LogFileExporter;
-import com.tencent.bk.job.common.audit.AuditRecordAspect;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -40,19 +42,33 @@ public class AuditAutoConfiguration {
     private static final String EXPORTER_TYPE_LOG_FILE = "log_file";
 
     @Bean("logFileEventExporter")
-    @ConditionalOnProperty(name = "auditEntry.exporter.type", havingValue = EXPORTER_TYPE_LOG_FILE, matchIfMissing = true)
+    @ConditionalOnProperty(name = "auditEntry.exporter.type", havingValue = EXPORTER_TYPE_LOG_FILE, matchIfMissing =
+        true)
     LogFileExporter logFileEventExporter() {
         return new LogFileExporter();
     }
 
     @Bean("auditManager")
-    @ConditionalOnProperty(name = "auditEntry.exporter.type", havingValue = EXPORTER_TYPE_LOG_FILE, matchIfMissing = true)
+    @ConditionalOnProperty(name = "auditEntry.exporter.type", havingValue = EXPORTER_TYPE_LOG_FILE, matchIfMissing =
+        true)
     AuditManager auditManager(LogFileExporter logFileExporter) {
         return new AuditManager(logFileExporter);
     }
 
+    @Bean("auditRequestProvider")
+    public AuditRequestProvider auditRequestProvider() {
+        return new JobAuditRequestProvider();
+    }
+
     @Bean("auditRecordAspect")
-    public AuditRecordAspect auditRecordAspect(AuditManager auditManager) {
-        return new AuditRecordAspect(auditManager);
+    public AuditAspect auditRecordAspect(AuditManager auditManager,
+                                         AuditRequestProvider auditRequestProvider,
+                                         AuditExceptionResolver auditExceptionResolver) {
+        return new AuditAspect(auditManager, auditRequestProvider, auditExceptionResolver);
+    }
+
+    @Bean("auditExceptionResolver")
+    public JobAuditExceptionResolver auditExceptionResolver() {
+        return new JobAuditExceptionResolver();
     }
 }

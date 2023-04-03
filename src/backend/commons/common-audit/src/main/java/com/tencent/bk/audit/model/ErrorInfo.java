@@ -22,28 +22,25 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.audit;
+package com.tencent.bk.audit.model;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-/**
- * 用于标识记录审计事件入口
- */
-@Target({ElementType.METHOD})
-@Retention(RetentionPolicy.RUNTIME)
-@Inherited
-public @interface AuditEntry {
+@Data
+@NoArgsConstructor
+public class ErrorInfo {
     /**
-     * 审计事件
+     * 错误码
      */
-    AuditEventRecord event();
-
+    private Integer errorCode;
     /**
-     * 是否记录子事件
+     * 错误描述
      */
-    boolean recordSubEvent() default true;
+    private String errorMessage;
+
+    public ErrorInfo(Integer errorCode, String errorMessage) {
+        this.errorCode = errorCode;
+        this.errorMessage = errorMessage;
+    }
 }

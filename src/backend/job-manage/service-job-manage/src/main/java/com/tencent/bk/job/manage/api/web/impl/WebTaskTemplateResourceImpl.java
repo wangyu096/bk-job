@@ -26,10 +26,10 @@ package com.tencent.bk.job.manage.api.web.impl;
 
 import com.google.common.base.CaseFormat;
 import com.tencent.bk.audit.AuditManagerRegistry;
-import com.tencent.bk.job.common.audit.AuditEntry;
-import com.tencent.bk.job.common.audit.AuditEventRecord;
-import com.tencent.bk.job.common.audit.AuditRequestBody;
-import com.tencent.bk.job.common.audit.AuditVariable;
+import com.tencent.bk.audit.constants.AuditEntry;
+import com.tencent.bk.audit.constants.AuditEventRecord;
+import com.tencent.bk.audit.constants.AuditRequestBody;
+import com.tencent.bk.audit.constants.AuditVariable;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobResourceTypeEnum;
 import com.tencent.bk.job.common.exception.InvalidParamException;
@@ -75,8 +75,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static com.tencent.bk.job.common.audit.constants.AuditVariableNames.INSTANCE_ID;
-import static com.tencent.bk.job.common.audit.constants.AuditVariableNames.INSTANCE_NAME;
+import static com.tencent.bk.audit.constants.AuditVariableNames.INSTANCE_ID;
+import static com.tencent.bk.audit.constants.AuditVariableNames.INSTANCE_NAME;
 
 /**
  * @since 16/10/2019 16:16

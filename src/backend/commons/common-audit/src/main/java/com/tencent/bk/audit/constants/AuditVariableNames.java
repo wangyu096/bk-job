@@ -22,7 +22,7 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.audit.constants;
+package com.tencent.bk.audit.constants;
 
 public interface AuditVariableNames {
     String INSTANCE_ID = "@INSTANCE_ID";

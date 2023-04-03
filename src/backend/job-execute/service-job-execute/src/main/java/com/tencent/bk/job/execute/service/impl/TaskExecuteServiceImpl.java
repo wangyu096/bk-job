@@ -25,7 +25,7 @@
 package com.tencent.bk.job.execute.service.impl;
 
 import com.tencent.bk.audit.AuditManagerRegistry;
-import com.tencent.bk.job.common.audit.utils.AuditInstanceUtils;
+import com.tencent.bk.audit.utils.AuditInstanceUtils;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
 import com.tencent.bk.job.common.exception.AbortedException;
