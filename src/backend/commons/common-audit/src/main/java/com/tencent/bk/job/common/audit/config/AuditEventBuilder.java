@@ -22,11 +22,10 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.audit.constants;
+package com.tencent.bk.job.common.audit.config;
 
-public interface AuditVariableNames {
-    String INSTANCE_ID = "@INSTANCE_ID";
-    String INSTANCE_NAME = "@INSTANCE_NAME";
-    String ORIGIN_INSTANCE = "@ORIGIN_INSTANCE";
-    String INSTANCE = "@INSTANCE";
+import com.tencent.bk.audit.model.AuditEvent;
+
+public interface AuditEventBuilder {
+    AuditEvent build();
 }

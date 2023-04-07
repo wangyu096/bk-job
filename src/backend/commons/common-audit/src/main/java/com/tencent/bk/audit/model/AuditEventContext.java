@@ -22,11 +22,27 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.audit.constants;
+package com.tencent.bk.audit.model;
 
-public interface AuditVariableNames {
-    String INSTANCE_ID = "@INSTANCE_ID";
-    String INSTANCE_NAME = "@INSTANCE_NAME";
-    String ORIGIN_INSTANCE = "@ORIGIN_INSTANCE";
-    String INSTANCE = "@INSTANCE";
+import lombok.Data;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@Data
+public class AuditEventContext {
+
+    private String eventId;
+
+    private Long startTime;
+
+    private Long endTime;
+
+    private Map<String, Object> attributes = new HashMap<>();
+
+
+    public void addAttribute(String key, Object value) {
+        attributes.put(key, value);
+    }
+
 }

@@ -45,6 +45,7 @@ import com.tencent.bk.job.common.util.JobContextUtil;
 import com.tencent.bk.job.common.util.PageUtil;
 import com.tencent.bk.job.common.util.date.DateUtils;
 import com.tencent.bk.job.crontab.model.CronJobVO;
+import com.tencent.bk.job.manage.audit.EditJobTemplateAuditEventBuilder;
 import com.tencent.bk.job.manage.common.consts.JobResourceStatusEnum;
 import com.tencent.bk.job.manage.common.consts.task.TaskFileTypeEnum;
 import com.tencent.bk.job.manage.common.consts.task.TaskScriptSourceEnum;
@@ -326,10 +327,7 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
     @Override
     @Transactional(rollbackFor = Throwable.class)
     @AuditEventRecord(
-        actionId = ActionId.EDIT_JOB_TEMPLATE,
-        resourceType = ResourceTypeId.TEMPLATE,
-        instanceId = INSTANCE_ID,
-        content = "Modify template [" + INSTANCE_NAME + "](" + INSTANCE_ID + ")",
+        builder = EditJobTemplateAuditEventBuilder.class,
         variables = {
             @AuditVariable(name = INSTANCE_ID, value = "#taskTemplateInfo?.id"),
             @AuditVariable(name = INSTANCE_NAME, value = "#taskTemplateInfo?.name")
@@ -338,8 +336,8 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
     public TaskTemplateInfoDTO updateTaskTemplate(TaskTemplateInfoDTO taskTemplateInfo) {
         // 审计记录 - 原始数据
         AuditManagerRegistry.get().updateAuditEvent(
-            auditEvent -> auditEvent.setInstanceOriginData(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(
-                getTaskTemplateById(taskTemplateInfo.getAppId(), taskTemplateInfo.getId()))));
+                    auditEvent -> auditEvent.setInstanceOriginData(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(
+                        getTaskTemplateById(taskTemplateInfo.getAppId(), taskTemplateInfo.getId()))));
 
         TaskTemplateInfoDTO template = saveOrUpdateTaskTemplate(taskTemplateInfo);
 

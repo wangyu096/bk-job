@@ -31,15 +31,11 @@ import com.tencent.bk.audit.model.AuditContext;
 import com.tencent.bk.audit.model.AuditEvent;
 import com.tencent.bk.audit.model.ErrorInfo;
 import com.tencent.bk.audit.utils.EventIdGenerator;
+import com.tencent.bk.job.common.audit.config.AuditEventBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.JoinPoint;
-import org.aspectj.lang.annotation.After;
-import org.aspectj.lang.annotation.AfterReturning;
-import org.aspectj.lang.annotation.AfterThrowing;
-import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
-import org.aspectj.lang.annotation.Pointcut;
+import org.aspectj.lang.annotation.*;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.expression.EvaluationContext;
@@ -248,7 +244,7 @@ public class AuditAspect {
 //    }
 
     @AfterReturning(value = "auditEventRecord()", returning = "result")
-    public void handleAuditEventResult(JoinPoint jp, Object result) {
+    public void auditEventReturning(JoinPoint jp, Object result) {
         long start = System.currentTimeMillis();
         if (log.isInfoEnabled()) {
             log.info("Audit done");
@@ -333,8 +329,39 @@ public class AuditAspect {
     }
 
     @After(value = "auditEventRecord()")
-    public void auditEventDone(JoinPoint jp) {
+    public void auditEventAfter(JoinPoint jp) {
+        long start = System.currentTimeMillis();
+        if (log.isInfoEnabled()) {
+            log.info("Audit done");
+        }
 
+        try {
+            AuditContext auditContext = auditManager.current();
+            if (auditContext == null) {
+                if (log.isInfoEnabled()) {
+                    log.info("AuditContext is empty");
+                }
+                return;
+            }
+
+            Method method = ((MethodSignature) jp.getSignature()).getMethod();
+            AuditEventRecord record = method.getAnnotation(AuditEventRecord.class);
+            if (record == null) {
+                return;
+            }
+
+            Class<? extends AuditEventBuilder> builderClass = record.builder();
+            AuditEventBuilder builder = builderClass.newInstance();
+            AuditEvent auditEvent = builder.build();
+            auditContext.addAuditEvent(auditEvent);
+        } catch (Throwable e) {
+            // 忽略审计错误，避免影响业务代码执行
+            log.error("Audit done caught exception", e);
+        } finally {
+            if (log.isInfoEnabled()) {
+                log.info("Audit done, cost: {}", System.currentTimeMillis() - start);
+            }
+        }
     }
 
 
