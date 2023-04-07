@@ -22,7 +22,7 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.audit.constants;
+package com.tencent.bk.audit.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
@@ -31,19 +31,20 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 用于标识记录审计事件入口
+ * 审计 - 变量注解
  */
-@Target({ElementType.METHOD})
+@Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
-public @interface AuditEntry {
-    /**
-     * 操作ID
-     */
-    String actionId();
+public @interface AuditVariable {
 
     /**
-     * 是否记录审计子事件
+     * 变量名
      */
-    boolean recordSubEvent() default true;
+    String name();
+
+    /**
+     * 变量值
+     */
+    String value();
 }

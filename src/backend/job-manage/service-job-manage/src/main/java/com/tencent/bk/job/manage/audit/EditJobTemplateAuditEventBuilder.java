@@ -24,10 +24,10 @@
 
 package com.tencent.bk.job.manage.audit;
 
+import com.tencent.bk.audit.AuditEventBuilder;
 import com.tencent.bk.audit.constants.AuditVariableNames;
 import com.tencent.bk.audit.model.AuditEvent;
 import com.tencent.bk.audit.utils.EventIdGenerator;
-import com.tencent.bk.job.common.audit.config.AuditEventBuilder;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
 import com.tencent.bk.job.manage.model.dto.task.TaskTemplateInfoDTO;

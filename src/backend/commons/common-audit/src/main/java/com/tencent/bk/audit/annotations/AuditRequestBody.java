@@ -22,9 +22,7 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.audit.constants;
-
-import com.tencent.bk.job.common.audit.config.AuditEventBuilder;
+package com.tencent.bk.audit.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
@@ -33,46 +31,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 用于标识审计记录
+ * 用于标识审计数据-用户请求Body
  */
-@Target({ElementType.METHOD})
+@Target({ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
-public @interface AuditEventRecord {
-
-//    /**
-//     * 操作ID
-//     */
-//    String actionId();
-//
-//    /**
-//     * 资源类型ID
-//     */
-//    String resourceType() default "";
-//
-//    /**
-//     * 资源实例敏感等级,范围0-9
-//     */
-//    int sensitivity() default 0;
-//
-//    /**
-//     * 操作实例ID
-//     */
-//    String instanceId() default "";
-//
-//    /**
-//     * 操作实例名称
-//     */
-//    String instanceName() default "";
-//
-//    /**
-//     * 事件描述
-//     */
-//    String content() default "";
-
-    AuditVariable[] variables() default {};
-
-//    boolean recordOnlyRoot() default false;
-
-    Class<? extends AuditEventBuilder> builder();
+public @interface AuditRequestBody {
 }

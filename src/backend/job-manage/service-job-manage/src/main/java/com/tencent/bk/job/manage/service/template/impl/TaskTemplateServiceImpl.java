@@ -25,8 +25,8 @@
 package com.tencent.bk.job.manage.service.template.impl;
 
 import com.tencent.bk.audit.AuditManagerRegistry;
-import com.tencent.bk.audit.constants.AuditEventRecord;
-import com.tencent.bk.audit.constants.AuditVariable;
+import com.tencent.bk.audit.annotations.AuditEventRecord;
+import com.tencent.bk.audit.annotations.AuditVariable;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobResourceTypeEnum;
 import com.tencent.bk.job.common.exception.AbortedException;
@@ -92,6 +92,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.tencent.bk.audit.constants.AuditVariableNames.INSTANCE;
 import static com.tencent.bk.audit.constants.AuditVariableNames.INSTANCE_ID;
 import static com.tencent.bk.audit.constants.AuditVariableNames.INSTANCE_NAME;
 
@@ -329,12 +330,12 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
     @AuditEventRecord(
         builder = EditJobTemplateAuditEventBuilder.class,
         variables = {
-            @AuditVariable(name = INSTANCE_ID, value = "#taskTemplateInfo?.id"),
-            @AuditVariable(name = INSTANCE_NAME, value = "#taskTemplateInfo?.name")
+            @AuditVariable(name = INSTANCE, value = "#$")
         }
     )
     public TaskTemplateInfoDTO updateTaskTemplate(TaskTemplateInfoDTO taskTemplateInfo) {
         // 审计记录 - 原始数据
+        AuditManagerRegistry.get().current().
         AuditManagerRegistry.get().updateAuditEvent(
                     auditEvent -> auditEvent.setInstanceOriginData(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(
                         getTaskTemplateById(taskTemplateInfo.getAppId(), taskTemplateInfo.getId()))));

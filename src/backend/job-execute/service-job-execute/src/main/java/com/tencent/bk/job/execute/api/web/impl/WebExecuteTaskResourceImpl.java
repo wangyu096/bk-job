@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.execute.api.web.impl;
 
-import com.tencent.bk.audit.constants.AuditEntry;
+import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.job.common.annotation.CompatibleImplementation;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;

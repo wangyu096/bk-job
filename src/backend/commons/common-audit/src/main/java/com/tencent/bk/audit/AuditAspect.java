@@ -24,18 +24,22 @@
 
 package com.tencent.bk.audit;
 
-import com.tencent.bk.audit.constants.AuditEntry;
-import com.tencent.bk.audit.constants.AuditEventRecord;
-import com.tencent.bk.audit.constants.AuditRequestBody;
+import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.annotations.AuditEventRecord;
+import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.audit.model.AuditContext;
 import com.tencent.bk.audit.model.AuditEvent;
 import com.tencent.bk.audit.model.ErrorInfo;
 import com.tencent.bk.audit.utils.EventIdGenerator;
-import com.tencent.bk.job.common.audit.config.AuditEventBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.JoinPoint;
-import org.aspectj.lang.annotation.*;
+import org.aspectj.lang.annotation.After;
+import org.aspectj.lang.annotation.AfterReturning;
+import org.aspectj.lang.annotation.AfterThrowing;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.expression.EvaluationContext;
@@ -73,12 +77,12 @@ public class AuditAspect {
 
 
     // 声明审计事件入口切入点
-    @Pointcut("@annotation(com.tencent.bk.audit.constants.AuditEntry)")
+    @Pointcut("@annotation(com.tencent.bk.audit.annotations.AuditEntry)")
     public void auditEntry() {
     }
 
     // 声明审计事件记录切入点
-    @Pointcut("@annotation(com.tencent.bk.audit.constants.AuditEventRecord)")
+    @Pointcut("@annotation(com.tencent.bk.audit.annotations.AuditEventRecord)")
     public void auditEventRecord() {
     }
 

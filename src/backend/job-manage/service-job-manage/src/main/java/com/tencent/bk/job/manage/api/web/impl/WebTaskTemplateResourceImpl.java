@@ -26,10 +26,10 @@ package com.tencent.bk.job.manage.api.web.impl;
 
 import com.google.common.base.CaseFormat;
 import com.tencent.bk.audit.AuditManagerRegistry;
-import com.tencent.bk.audit.constants.AuditEntry;
-import com.tencent.bk.audit.constants.AuditEventRecord;
-import com.tencent.bk.audit.constants.AuditRequestBody;
-import com.tencent.bk.audit.constants.AuditVariable;
+import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.annotations.AuditEventRecord;
+import com.tencent.bk.audit.annotations.AuditRequestBody;
+import com.tencent.bk.audit.annotations.AuditVariable;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobResourceTypeEnum;
 import com.tencent.bk.job.common.exception.InvalidParamException;
