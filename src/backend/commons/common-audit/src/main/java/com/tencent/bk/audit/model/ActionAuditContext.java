@@ -62,21 +62,13 @@ public class ActionAuditContext {
         attributes.put(key, value);
     }
 
-//    public void addEvent(AuditKey key, AuditEvent value) {
-//        events.put(key, value);
-//    }
-//
-//    public AuditEvent findAuditEvent(AuditKey auditKey) {
-//        return events.get(auditKey);
-//    }
-
     public void addAuditEvent(AuditEvent auditEvent) {
         events.add(auditEvent);
     }
 
-    public void clearAllAuditEvent() {
-        events.clear();
-    }
+//    public ActionAuditScope makeCurrent() {
+//        AuditContext.current().setCurrentActionAuditContext(this);
+//    }
 
     public static ActionAuditContext current() {
         return AuditManagerRegistry.get().current().currentActionAuditContext();

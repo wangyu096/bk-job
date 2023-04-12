@@ -24,14 +24,17 @@
 
 package com.tencent.bk.audit;
 
+import com.tencent.bk.audit.constants.AuditKey;
+import com.tencent.bk.audit.exporter.EventExporter;
 import com.tencent.bk.audit.model.ActionAuditContext;
 import com.tencent.bk.audit.model.AuditContext;
 import com.tencent.bk.audit.model.AuditEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -61,18 +64,6 @@ public class AuditManager {
         return auditContextHolder.current();
     }
 
-//    public void updateAuditEvent(AuditKey auditKey, Consumer<AuditEvent> auditEventUpdater) {
-//        AuditContext auditContext = current();
-//        if (auditContext == null) {
-//            return;
-//        }
-//        AuditEvent auditEvent = auditContext.findAuditEvent(auditKey);
-//        if (auditEvent == null) {
-//            return;
-//        }
-//        auditEventUpdater.accept(auditEvent);
-//    }
-
     public void stopAudit() {
         try {
             AuditContext auditContext = auditContextHolder.current();
@@ -81,18 +72,19 @@ public class AuditManager {
                 return;
             }
             auditContext.setEndTime(System.currentTimeMillis());
-            List<AuditEvent> auditEvents = new ArrayList<>();
+            Map<AuditKey, AuditEvent> auditEvents = new HashMap<>();
             List<ActionAuditContext> actionAuditContexts = auditContext.getActionAuditContexts();
             if (auditContext.isRecordSubEvent()) {
                 actionAuditContexts = actionAuditContexts.stream()
                     .filter(actionAuditContext -> actionAuditContext.getActionId().equals(auditContext.getActionId()))
                     .collect(Collectors.toList());
             }
-            actionAuditContexts.forEach(actionAuditContext -> {
-                List<AuditEvent> actionEvents = actionAuditContext.getEvents();
-
-            });
-            eventExporter.export(auditEvents);
+            actionAuditContexts.forEach(actionAuditContext ->
+                actionAuditContext.getEvents().forEach(
+                    auditEvent -> auditEvents.put(auditEvent.toAuditKey(), auditEvent)
+                )
+            );
+            eventExporter.export(auditEvents.values());
         } finally {
             auditContextHolder.reset();
         }

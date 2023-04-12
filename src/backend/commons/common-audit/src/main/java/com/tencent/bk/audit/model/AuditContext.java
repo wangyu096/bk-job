@@ -78,11 +78,6 @@ public class AuditContext {
         this.actionId = actionId;
     }
 
-    //    /**
-//     * 审计事件
-//     */
-//    private List<AuditEvent> auditEvents;
-
     public static AuditContext current() {
         return AuditManagerRegistry.get().current();
     }

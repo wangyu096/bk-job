@@ -113,6 +113,7 @@ public class AuditAspect {
         AuditContext auditContext = auditManager.startAudit(record.actionId());
         HttpServletRequest request = auditRequestProvider.getRequest();
         auditContext.setActionId(record.actionId());
+        auditContext.setRecordSubEvent(record.recordSubEvent());
         auditContext.setUsername(auditRequestProvider.getUsername());
         auditContext.setAccessType(auditRequestProvider.getAccessType());
         auditContext.setAccessSourceIp(auditRequestProvider.getClientIp());
@@ -177,7 +178,7 @@ public class AuditAspect {
 
         try {
             AuditEvent auditEvent = recordFailAuditEvent(throwable);
-            ActionAuditContext actionAuditContext = new ActionAuditContext();
+            ActionAuditContext actionAuditContext = ActionAuditContext.current();
             actionAuditContext.addAuditEvent(auditEvent);
             auditManager.current().clearActionAuditContext();
             auditManager.current().addActionAuditContext(actionAuditContext);
@@ -289,7 +290,7 @@ public class AuditAspect {
 
         Method method = ((MethodSignature) pjp.getSignature()).getMethod();
         ActionAuditRecord record = method.getAnnotation(ActionAuditRecord.class);
-        try (ActionAuditScope ignored = AuditManagerRegistry.get().current().startAuditAction(null)) {
+        try (ActionAuditScope ignored = AuditManagerRegistry.get().current().startAuditAction(record.actionId())) {
             result = pjp.proceed();
             return result;
         } finally {

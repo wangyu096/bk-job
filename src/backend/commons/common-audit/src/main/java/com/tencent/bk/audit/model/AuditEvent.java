@@ -2,6 +2,7 @@ package com.tencent.bk.audit.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.tencent.bk.audit.constants.AccessTypeEnum;
+import com.tencent.bk.audit.constants.AuditKey;
 import com.tencent.bk.audit.constants.UserIdentifyTypeEnum;
 import lombok.Data;
 
@@ -161,6 +162,10 @@ public class AuditEvent {
             extendData = new HashMap<>();
         }
         extendData.put(key, value);
+    }
+
+    public AuditKey toAuditKey() {
+        return AuditKey.build(actionId, resourceTypeId, instanceId);
     }
 
 

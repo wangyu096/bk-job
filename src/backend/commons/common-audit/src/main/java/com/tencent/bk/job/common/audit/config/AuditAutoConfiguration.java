@@ -28,7 +28,7 @@ import com.tencent.bk.audit.AuditAspect;
 import com.tencent.bk.audit.AuditExceptionResolver;
 import com.tencent.bk.audit.AuditManager;
 import com.tencent.bk.audit.AuditRequestProvider;
-import com.tencent.bk.audit.LogFileExporter;
+import com.tencent.bk.audit.exporter.LogFileExporter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
