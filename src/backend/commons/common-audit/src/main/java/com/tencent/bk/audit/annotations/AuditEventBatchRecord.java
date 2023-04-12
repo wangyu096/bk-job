@@ -70,7 +70,7 @@ public @interface AuditEventBatchRecord {
 //     */
 //    String content() default "";
 
-    AuditVariable[] variables() default {};
+    AuditAttribute[] variables() default {};
 
 //    boolean recordOnlyRoot() default false;
 

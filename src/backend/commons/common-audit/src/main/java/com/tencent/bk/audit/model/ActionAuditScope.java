@@ -22,29 +22,7 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.audit.annotations;
+package com.tencent.bk.audit.model;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-/**
- * 审计 - 变量注解
- */
-@Target({ElementType.FIELD})
-@Retention(RetentionPolicy.RUNTIME)
-@Inherited
-public @interface AuditVariable {
-
-    /**
-     * 变量名
-     */
-    String name();
-
-    /**
-     * 变量值
-     */
-    String value();
+public interface ActionAuditScope extends AutoCloseable {
 }

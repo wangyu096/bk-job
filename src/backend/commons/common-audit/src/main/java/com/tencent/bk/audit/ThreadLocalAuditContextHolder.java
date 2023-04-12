@@ -22,27 +22,23 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.audit.model;
+package com.tencent.bk.audit;
 
-import lombok.Data;
+import com.tencent.bk.audit.model.AuditContext;
 
-import java.util.HashMap;
-import java.util.Map;
+public class ThreadLocalAuditContextHolder {
 
-@Data
-public class AuditEventContext {
+    private final ThreadLocal<AuditContext> AUDIT_CONTEXT_HOLDER = new ThreadLocal<>();
 
-    private String eventId;
-
-    private Long startTime;
-
-    private Long endTime;
-
-    private Map<String, Object> attributes = new HashMap<>();
-
-
-    public void addAttribute(String key, Object value) {
-        attributes.put(key, value);
+    public void set(AuditContext auditContext) {
+        AUDIT_CONTEXT_HOLDER.set(auditContext);
     }
 
+    public AuditContext current() {
+        return AUDIT_CONTEXT_HOLDER.get();
+    }
+
+    public void reset() {
+        AUDIT_CONTEXT_HOLDER.remove();
+    }
 }

@@ -22,12 +22,16 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.audit;
+package com.tencent.bk.audit.constants;
 
-import com.tencent.bk.audit.model.AuditEvent;
+public interface AuditAttributeNames {
+    String INSTANCE_ID = "@INSTANCE_ID";
+    String INSTANCE_NAME = "@INSTANCE_NAME";
+    String ORIGIN_INSTANCE = "@ORIGIN_INSTANCE";
+    String INSTANCE = "@INSTANCE";
 
-import java.util.List;
-
-public interface AuditEventBuilder {
-    List<AuditEvent> build();
+    String INSTANCE_ID_LIST = "@INSTANCE_ID_LIST";
+    String INSTANCE_NAME_LIST = "@INSTANCE_NAME_LIST";
+    String ORIGIN_INSTANCE_LIST = "@ORIGIN_INSTANCE_LIST";
+    String INSTANCE_LIST = "@INSTANCE_LIST";
 }

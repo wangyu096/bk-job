@@ -120,13 +120,13 @@ public class AuditEvent {
      * 资源实例数据。必须符合在审计中心定义的资源Schema
      */
     @JsonProperty("instance_data")
-    private AuditInstanceData instanceData;
+    private Object instanceData;
 
     /**
      * 资源实例原始数据。必须符合在审计中心定义的资源Schema。对于更新/删除操作，建议上报
      */
     @JsonProperty("instance_origin_data")
-    private AuditInstanceData instanceOriginData;
+    private Object instanceOriginData;
 
     /**
      * 操作结果

@@ -22,12 +22,29 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.audit;
+package com.tencent.bk.audit.annotations;
 
-import com.tencent.bk.audit.model.AuditEvent;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import java.util.List;
+/**
+ * 审计事件 - 属性注解
+ */
+@Target({ElementType.FIELD})
+@Retention(RetentionPolicy.RUNTIME)
+@Inherited
+public @interface AuditAttribute {
 
-public interface AuditEventBuilder {
-    List<AuditEvent> build();
+    /**
+     * 属性名
+     */
+    String name();
+
+    /**
+     * 属性值
+     */
+    String value();
 }

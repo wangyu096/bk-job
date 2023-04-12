@@ -26,10 +26,10 @@ package com.tencent.bk.job.manage.api.web.impl;
 
 import com.google.common.base.CaseFormat;
 import com.tencent.bk.audit.AuditManagerRegistry;
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
+import com.tencent.bk.audit.annotations.AuditAttribute;
 import com.tencent.bk.audit.annotations.AuditEntry;
-import com.tencent.bk.audit.annotations.AuditEventRecord;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
-import com.tencent.bk.audit.annotations.AuditVariable;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobResourceTypeEnum;
 import com.tencent.bk.job.common.exception.InvalidParamException;
@@ -75,8 +75,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static com.tencent.bk.audit.constants.AuditVariableNames.INSTANCE_ID;
-import static com.tencent.bk.audit.constants.AuditVariableNames.INSTANCE_NAME;
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_ID;
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_NAME;
 
 /**
  * @since 16/10/2019 16:16
@@ -221,14 +221,14 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
 
     @Override
     @AuditEntry(
-        event = @AuditEventRecord(
+        event = @ActionAuditRecord(
             actionId = ActionId.VIEW_JOB_TEMPLATE,
             resourceType = ResourceTypeId.TEMPLATE,
             instanceId = INSTANCE_ID,
             content = "View template [" + INSTANCE_NAME + "](" + INSTANCE_ID + ")",
             recordOnlyRoot = true,
-            variables = {
-                @AuditVariable(name = INSTANCE_ID, value = "#templateId"),
+            attributes = {
+                @AuditAttribute(name = INSTANCE_ID, value = "#templateId"),
             }
         ),
         recordSubEvent = false
@@ -265,13 +265,13 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
 
     @Override
     @AuditEntry(
-        event = @AuditEventRecord(
+        event = @ActionAuditRecord(
             actionId = ActionId.CREATE_JOB_TEMPLATE,
             resourceType = ResourceTypeId.TEMPLATE,
             instanceId = INSTANCE_ID,
             content = "Create template [" + INSTANCE_NAME + "](" + INSTANCE_ID + ")",
-            variables = {
-                @AuditVariable(name = INSTANCE_NAME, value = "#request?.name")
+            attributes = {
+                @AuditAttribute(name = INSTANCE_NAME, value = "#request?.name")
             }
         ),
         recordSubEvent = true
@@ -297,13 +297,13 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
 
     @Override
     @AuditEntry(
-        event = @AuditEventRecord(
+        event = @ActionAuditRecord(
             actionId = ActionId.DELETE_JOB_TEMPLATE,
             resourceType = ResourceTypeId.TEMPLATE,
             instanceId = INSTANCE_ID,
             content = "Delete template [" + INSTANCE_NAME + "](" + INSTANCE_ID + ")",
-            variables = {
-                @AuditVariable(name = INSTANCE_ID, value = "#templateId")
+            attributes = {
+                @AuditAttribute(name = INSTANCE_ID, value = "#templateId")
             }
         )
     )
@@ -345,13 +345,13 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
 
     @Override
     @AuditEntry(
-        event = @AuditEventRecord(
+        event = @ActionAuditRecord(
             actionId = ActionId.EDIT_JOB_TEMPLATE,
             resourceType = ResourceTypeId.TEMPLATE,
             instanceId = INSTANCE_ID,
             content = "Modify template [" + INSTANCE_NAME + "](" + INSTANCE_ID + ")",
-            variables = {
-                @AuditVariable(name = INSTANCE_ID, value = "#request?.d")
+            attributes = {
+                @AuditAttribute(name = INSTANCE_ID, value = "#request?.d")
             }
         ),
         recordSubEvent = true
@@ -393,13 +393,13 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
 
     @Override
     @AuditEntry(
-        event = @AuditEventRecord(
+        event = @ActionAuditRecord(
             actionId = ActionId.EDIT_JOB_TEMPLATE,
             resourceType = ResourceTypeId.TEMPLATE,
             instanceId = INSTANCE_ID,
             content = "Modify template [" + INSTANCE_NAME + "](" + INSTANCE_ID + ")",
-            variables = {
-                @AuditVariable(name = INSTANCE_ID, value = "#request?.d")
+            attributes = {
+                @AuditAttribute(name = INSTANCE_ID, value = "#request?.d")
             }
         ),
         recordSubEvent = true

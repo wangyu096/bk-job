@@ -25,7 +25,7 @@
 package com.tencent.bk.job.manage.audit;
 
 import com.tencent.bk.audit.AuditEventBuilder;
-import com.tencent.bk.audit.constants.AuditVariableNames;
+import com.tencent.bk.audit.constants.AuditAttributeNames;
 import com.tencent.bk.audit.model.AuditEvent;
 import com.tencent.bk.audit.utils.EventIdGenerator;
 import com.tencent.bk.job.common.iam.constant.ActionId;
@@ -49,10 +49,10 @@ public class EditJobTemplateAuditEventBuilder implements AuditEventBuilder {
         auditEvent.setResourceTypeId(ResourceTypeId.TEMPLATE);
 
         // 审计记录 - 原始数据
-        TaskTemplateInfoDTO originInstance = (TaskTemplateInfoDTO) attributes.get(AuditVariableNames.ORIGIN_INSTANCE);
+        TaskTemplateInfoDTO originInstance = (TaskTemplateInfoDTO) attributes.get(AuditAttributeNames.ORIGIN_INSTANCE);
         auditEvent.setInstanceOriginData(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(originInstance));
 
-        TaskTemplateInfoDTO instance = (TaskTemplateInfoDTO) attributes.get(AuditVariableNames.INSTANCE);
+        TaskTemplateInfoDTO instance = (TaskTemplateInfoDTO) attributes.get(AuditAttributeNames.INSTANCE);
         // 审计记录 - 更新后数据
         auditEvent.setInstanceData(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(instance));
 

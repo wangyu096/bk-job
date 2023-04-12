@@ -22,7 +22,7 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.audit;
+package com.tencent.bk.audit.model;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

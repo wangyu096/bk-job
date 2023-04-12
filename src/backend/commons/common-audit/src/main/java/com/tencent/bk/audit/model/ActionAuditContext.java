@@ -22,57 +22,65 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.audit.annotations;
+package com.tencent.bk.audit.model;
 
-import com.tencent.bk.audit.AuditEventBuilder;
+import com.tencent.bk.audit.AuditManagerRegistry;
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
+import lombok.Data;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-/**
- * 用于标识审计记录
- */
-@Target({ElementType.METHOD})
-@Retention(RetentionPolicy.RUNTIME)
-@Inherited
-public @interface AuditEventRecord {
+@Data
+public class ActionAuditContext {
 
-//    /**
-//     * 操作ID
-//     */
-//    String actionId();
+    private String actionId;
+
+    private Long startTime;
+
+    private Long endTime;
+
+    private String resourceType;
+
+    private List<String> instanceIdList;
+
+    private List<String> instanceNameList;
+
+    private List<Object> originInstanceList;
+
+    private List<Object> instanceList;
+
+    private Map<String, Object> attributes = new HashMap<>();
+
+    private List<AuditEvent> events = new ArrayList<>();
+
+    private ActionAuditRecord actionAuditRecord;
+
+    public void addAttribute(String key, Object value) {
+        attributes.put(key, value);
+    }
+
+//    public void addEvent(AuditKey key, AuditEvent value) {
+//        events.put(key, value);
+//    }
 //
-//    /**
-//     * 资源类型ID
-//     */
-//    String resourceType() default "";
-//
-//    /**
-//     * 资源实例敏感等级,范围0-9
-//     */
-//    int sensitivity() default 0;
-//
-//    /**
-//     * 操作实例ID
-//     */
-//    String instanceId() default "";
-//
-//    /**
-//     * 操作实例名称
-//     */
-//    String instanceName() default "";
-//
-//    /**
-//     * 事件描述
-//     */
-//    String content() default "";
+//    public AuditEvent findAuditEvent(AuditKey auditKey) {
+//        return events.get(auditKey);
+//    }
 
-    AuditVariable[] variables() default {};
+    public void addAuditEvent(AuditEvent auditEvent) {
+        events.add(auditEvent);
+    }
 
-//    boolean recordOnlyRoot() default false;
+    public void clearAllAuditEvent() {
+        events.clear();
+    }
 
-    Class<? extends AuditEventBuilder> builder();
+    public static ActionAuditContext current() {
+        return AuditManagerRegistry.get().current().currentActionAuditContext();
+    }
+
+
 }

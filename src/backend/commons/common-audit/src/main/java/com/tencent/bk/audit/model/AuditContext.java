@@ -24,14 +24,14 @@
 
 package com.tencent.bk.audit.model;
 
-import com.tencent.bk.audit.AuditHttpRequest;
+import com.tencent.bk.audit.AuditManagerRegistry;
 import com.tencent.bk.audit.constants.AccessTypeEnum;
-import com.tencent.bk.audit.constants.AuditKey;
 import com.tencent.bk.audit.constants.UserIdentifyTypeEnum;
 import lombok.Data;
 
-import java.util.HashMap;
-import java.util.Map;
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 public class AuditContext {
@@ -65,10 +65,35 @@ public class AuditContext {
      */
     private String actionId;
 
-    private Map<AuditKey, AuditEvent> events = new HashMap<>();
-
     private AuditHttpRequest httpRequest;
 
+    private List<ActionAuditContext> actionAuditContexts = new ArrayList<>();
+
+    private ActionAuditContext currentActionAuditContext;
+
+    private boolean recordSubEvent;
+
+
+    public AuditContext(String actionId) {
+        this.actionId = actionId;
+    }
+
+    //    /**
+//     * 审计事件
+//     */
+//    private List<AuditEvent> auditEvents;
+
+    public static AuditContext current() {
+        return AuditManagerRegistry.get().current();
+    }
+
+
+
+    public ActionAuditScope startAuditAction(String actionId) {
+        ActionAuditContext actionAuditContext = new ActionAuditContext();
+        actionAuditContext.setActionId(actionId);
+        return new ActionAuditScopeImpl(ActionAuditContext.current(), actionAuditContext);
+    }
 
     public void addContextAttributes(AuditEvent auditEvent) {
         auditEvent.setRequestId(requestId);
@@ -91,16 +116,38 @@ public class AuditContext {
         }
     }
 
-    public AuditEvent findAuditEvent(AuditKey auditKey) {
-        return events.get(auditKey);
+    public ActionAuditContext currentActionAuditContext() {
+        return currentActionAuditContext;
     }
 
-    public void addAuditEvent(AuditEvent auditEvent) {
-        events.put(AuditKey.build(auditEvent.getActionId(), auditEvent.getResourceTypeId(),
-            auditEvent.getInstanceId()), auditEvent);
+    public void clearActionAuditContext() {
+        actionAuditContexts.clear();
     }
 
-    public void clearAllAuditEvent() {
-        events.clear();
+    public void addActionAuditContext(ActionAuditContext actionAuditContext) {
+        actionAuditContexts.add(actionAuditContext);
     }
+
+    private static class ActionAuditScopeImpl implements ActionAuditScope {
+
+        @Nullable
+        private final ActionAuditContext beforeAttach;
+        private final ActionAuditContext toAttach;
+        private boolean closed;
+
+        private ActionAuditScopeImpl(@Nullable ActionAuditContext beforeAttach, ActionAuditContext toAttach) {
+            this.beforeAttach = beforeAttach;
+            this.toAttach = toAttach;
+        }
+
+        @Override
+        public void close() {
+            if (!closed && ActionAuditContext.current() == toAttach) {
+                closed = true;
+                current().setCurrentActionAuditContext(beforeAttach);
+            }
+        }
+    }
+
+
 }

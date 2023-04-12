@@ -1300,7 +1300,7 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
         Long appId = executeParam.getAppId();
         Long planId = executeParam.getPlanId();
         String operator = executeParam.getOperator();
-        log.info("Create task instance for task, appId={}, planId={}, operator={}, variables={}", appId, planId,
+        log.info("Create task instance for task, appId={}, planId={}, operator={}, attributes={}", appId, planId,
             operator, executeParam.getExecuteVariableValues());
         watch.start("getPlan");
         ServiceTaskPlanDTO taskPlan = taskPlanService.getPlanById(appId, planId);
@@ -1526,7 +1526,7 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
     public TaskInstanceDTO createTaskInstanceForRedo(Long appId, Long taskInstanceId, String operator,
                                                      List<TaskVariableDTO> executeVariableValues)
         throws ServiceException {
-        log.info("Create task instance for redo, appId={}, taskInstanceId={}, operator={}, variables={}", appId,
+        log.info("Create task instance for redo, appId={}, taskInstanceId={}, operator={}, attributes={}", appId,
             taskInstanceId, operator, executeVariableValues);
         TaskInstanceDTO originTaskInstance = taskInstanceService.getTaskInstanceDetail(taskInstanceId);
         if (originTaskInstance == null) {

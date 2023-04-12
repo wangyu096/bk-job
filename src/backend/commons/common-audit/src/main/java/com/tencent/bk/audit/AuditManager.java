@@ -24,18 +24,20 @@
 
 package com.tencent.bk.audit;
 
-import com.tencent.bk.audit.constants.AuditKey;
+import com.tencent.bk.audit.model.ActionAuditContext;
 import com.tencent.bk.audit.model.AuditContext;
 import com.tencent.bk.audit.model.AuditEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.function.Consumer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class AuditManager {
 
-    private final AuditContextThreadLocalHolder auditContextHolder = new AuditContextThreadLocalHolder();
+    private final ThreadLocalAuditContextHolder auditContextHolder = new ThreadLocalAuditContextHolder();
     private final EventExporter eventExporter;
 
     @Autowired
@@ -44,30 +46,32 @@ public class AuditManager {
         AuditManagerRegistry.register(this);
     }
 
-    public void startAudit(AuditContext auditContext) {
+    public AuditContext startAudit(String actionId) {
         if (auditContextHolder.current() != null) {
             log.error("Current audit context is already exist! ");
-            return;
+            return null;
         }
+        AuditContext auditContext = new AuditContext(actionId);
         auditContext.setStartTime(System.currentTimeMillis());
         auditContextHolder.set(auditContext);
+        return auditContext;
     }
 
     public AuditContext current() {
         return auditContextHolder.current();
     }
 
-    public void updateAuditEvent(AuditKey auditKey, Consumer<AuditEvent> auditEventUpdater) {
-        AuditContext auditContext = current();
-        if (auditContext == null) {
-            return;
-        }
-        AuditEvent auditEvent = auditContext.findAuditEvent(auditKey);
-        if (auditEvent == null) {
-            return;
-        }
-        auditEventUpdater.accept(auditEvent);
-    }
+//    public void updateAuditEvent(AuditKey auditKey, Consumer<AuditEvent> auditEventUpdater) {
+//        AuditContext auditContext = current();
+//        if (auditContext == null) {
+//            return;
+//        }
+//        AuditEvent auditEvent = auditContext.findAuditEvent(auditKey);
+//        if (auditEvent == null) {
+//            return;
+//        }
+//        auditEventUpdater.accept(auditEvent);
+//    }
 
     public void stopAudit() {
         try {
@@ -77,9 +81,18 @@ public class AuditManager {
                 return;
             }
             auditContext.setEndTime(System.currentTimeMillis());
-            if (auditContext.getEvents() != null && !auditContext.getEvents().isEmpty()) {
-                eventExporter.export(auditContext.getEvents().values());
+            List<AuditEvent> auditEvents = new ArrayList<>();
+            List<ActionAuditContext> actionAuditContexts = auditContext.getActionAuditContexts();
+            if (auditContext.isRecordSubEvent()) {
+                actionAuditContexts = actionAuditContexts.stream()
+                    .filter(actionAuditContext -> actionAuditContext.getActionId().equals(auditContext.getActionId()))
+                    .collect(Collectors.toList());
             }
+            actionAuditContexts.forEach(actionAuditContext -> {
+                List<AuditEvent> actionEvents = actionAuditContext.getEvents();
+
+            });
+            eventExporter.export(auditEvents);
         } finally {
             auditContextHolder.reset();
         }

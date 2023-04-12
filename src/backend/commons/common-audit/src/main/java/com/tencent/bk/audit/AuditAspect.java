@@ -24,19 +24,21 @@
 
 package com.tencent.bk.audit;
 
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
 import com.tencent.bk.audit.annotations.AuditEntry;
-import com.tencent.bk.audit.annotations.AuditEventRecord;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
+import com.tencent.bk.audit.model.ActionAuditContext;
+import com.tencent.bk.audit.model.ActionAuditScope;
 import com.tencent.bk.audit.model.AuditContext;
 import com.tencent.bk.audit.model.AuditEvent;
+import com.tencent.bk.audit.model.AuditHttpRequest;
 import com.tencent.bk.audit.model.ErrorInfo;
-import com.tencent.bk.audit.utils.EventIdGenerator;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.After;
-import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.AfterThrowing;
+import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
@@ -81,9 +83,9 @@ public class AuditAspect {
     public void auditEntry() {
     }
 
-    // 声明审计事件记录切入点
-    @Pointcut("@annotation(com.tencent.bk.audit.annotations.AuditEventRecord)")
-    public void auditEventRecord() {
+    // 声明操作审计事件记录切入点
+    @Pointcut("@annotation(com.tencent.bk.audit.annotations.ActionAuditRecord)")
+    public void actionAuditRecord() {
     }
 
     @Before("auditEntry()")
@@ -108,7 +110,7 @@ public class AuditAspect {
     }
 
     private void startAudit(JoinPoint jp, Method method, AuditEntry record) {
-        AuditContext auditContext = new AuditContext();
+        AuditContext auditContext = auditManager.startAudit(record.actionId());
         HttpServletRequest request = auditRequestProvider.getRequest();
         auditContext.setActionId(record.actionId());
         auditContext.setUsername(auditRequestProvider.getUsername());
@@ -119,7 +121,6 @@ public class AuditAspect {
         auditContext.setRequestId(auditRequestProvider.getRequestId());
         auditContext.setAccessUserAgent(auditRequestProvider.getUserAgent());
         recordRequest(jp, method, auditContext, request);
-        auditManager.startAudit(auditContext);
     }
 
     private void recordRequest(JoinPoint jp, Method method, AuditContext auditContext, HttpServletRequest request) {
@@ -176,8 +177,10 @@ public class AuditAspect {
 
         try {
             AuditEvent auditEvent = recordFailAuditEvent(throwable);
-            auditManager.current().clearAllAuditEvent();
-            auditManager.current().addAuditEvent(auditEvent);
+            ActionAuditContext actionAuditContext = new ActionAuditContext();
+            actionAuditContext.addAuditEvent(auditEvent);
+            auditManager.current().clearActionAuditContext();
+            auditManager.current().addActionAuditContext(actionAuditContext);
         } catch (Throwable e) {
             // 忽略审计错误，避免影响业务代码执行
             log.error("Audit exception caught exception", e);
@@ -205,7 +208,7 @@ public class AuditAspect {
         auditEvent.setResultContent(errorInfo.getErrorMessage());
     }
 
-//    @Before("auditEventRecord()")
+//    @Before("actionAuditRecord()")
 //    public void startAuditEvent(JoinPoint jp) {
 //        if (auditManager.current() == null) {
 //            return;
@@ -247,60 +250,93 @@ public class AuditAspect {
 //        }
 //    }
 
-    @AfterReturning(value = "auditEventRecord()", returning = "result")
-    public void auditEventReturning(JoinPoint jp, Object result) {
+//    @AfterReturning(value = "actionAuditRecord()", returning = "result")
+//    public void auditEventReturning(JoinPoint jp, Object result) {
+//        long start = System.currentTimeMillis();
+//        if (log.isInfoEnabled()) {
+//            log.info("Audit done");
+//        }
+//
+//        try {
+//            AuditContext auditContext = auditManager.current();
+//            if (auditContext == null) {
+//                if (log.isInfoEnabled()) {
+//                    log.info("AuditContext is empty");
+//                }
+//                return;
+//            }
+//
+//            Method method = ((MethodSignature) jp.getSignature()).getMethod();
+//
+//            EvaluationContext context = buildEvaluationContext(jp, method, result);
+//            fillAuditEvent(auditContext, jp, context);
+//        } catch (Throwable e) {
+//            // 忽略审计错误，避免影响业务代码执行
+//            log.error("Audit done caught exception", e);
+//        } finally {
+//            if (log.isInfoEnabled()) {
+//                log.info("Audit done, cost: {}", System.currentTimeMillis() - start);
+//            }
+//        }
+//
+//
+//    }
+
+    @Around("actionAuditRecord()")
+    public Object actionAuditRecord(ProceedingJoinPoint pjp) throws Throwable {
+        Object result;
         long start = System.currentTimeMillis();
-        if (log.isInfoEnabled()) {
-            log.info("Audit done");
-        }
 
-        try {
-            AuditContext auditContext = auditManager.current();
-            if (auditContext == null) {
-                if (log.isInfoEnabled()) {
-                    log.info("AuditContext is empty");
-                }
-                return;
-            }
-
-            Method method = ((MethodSignature) jp.getSignature()).getMethod();
-
-            EvaluationContext context = buildEvaluationContext(jp, method, result);
-            fillAuditEvent(auditContext, jp, context);
-        } catch (Throwable e) {
-            // 忽略审计错误，避免影响业务代码执行
-            log.error("Audit done caught exception", e);
+        Method method = ((MethodSignature) pjp.getSignature()).getMethod();
+        ActionAuditRecord record = method.getAnnotation(ActionAuditRecord.class);
+        try (ActionAuditScope ignored = AuditManagerRegistry.get().current().startAuditAction(null)) {
+            result = pjp.proceed();
+            return result;
         } finally {
-            if (log.isInfoEnabled()) {
-                log.info("Audit done, cost: {}", System.currentTimeMillis() - start);
+            try {
+                AuditContext auditContext = auditManager.current();
+                if (auditContext != null) {
+                    if (log.isInfoEnabled()) {
+                        log.info("Audit action {}, cost: {}", record.actionId(), System.currentTimeMillis() - start);
+                    }
+                    ActionAuditContext auditActionContext = new ActionAuditContext();
+                    auditContext.setCurrentActionAuditContext(auditActionContext);
+                    auditManager.stopAudit();
+//                    fillAuditEvent(auditContext, pjp, context);
+                }
+            } catch (Throwable e) {
+                // 忽略审计错误，避免影响业务代码执行
+                log.error("Audit action caught exception", e);
             }
+
         }
 
 
     }
 
-    private void fillAuditEvent(AuditContext auditContext, JoinPoint jp, EvaluationContext context) {
-        Method method = ((MethodSignature) jp.getSignature()).getMethod();
-        AuditEventRecord record = method.getAnnotation(AuditEventRecord.class);
-        if (record == null) {
-            return;
-        }
 
-        AuditEvent auditEvent = new AuditEvent();
-        auditEvent.setId(EventIdGenerator.generateId());
-
-        if (StringUtils.isEmpty(auditEvent.getInstanceId()) && StringUtils.isNotBlank(record.instanceId())) {
-            auditEvent.setInstanceId(parseStringBySpel(context, record.instanceId()));
-        }
-        if (StringUtils.isEmpty(auditEvent.getInstanceName()) && StringUtils.isNotBlank(record.instanceName())) {
-            auditEvent.setInstanceName(parseStringBySpel(context, record.instanceName()));
-        }
-        if (StringUtils.isEmpty(auditEvent.getContent()) && StringUtils.isNotBlank(record.content())) {
-            auditEvent.setContent(parseStringBySpel(context, record.content()));
-        }
-
-        auditContext.addAuditEvent(auditEvent);
-    }
+//    private void fillAuditEvent(AuditContext auditContext, JoinPoint jp, EvaluationContext context) {
+//        Method method = ((MethodSignature) jp.getSignature()).getMethod();
+//        ActionAuditRecord record = method.getAnnotation(ActionAuditRecord.class);
+//        if (record == null) {
+//            return;
+//        }
+//
+//        AuditEvent auditEvent = new AuditEvent();
+//        auditEvent.setId(EventIdGenerator.generateId());
+//
+//        if (StringUtils.isEmpty(auditEvent.getInstanceId()) && StringUtils.isNotBlank(record.instanceId())) {
+//            auditEvent.setInstanceId(parseStringBySpel(context, record.instanceId()));
+//        }
+//        if (StringUtils.isEmpty(auditEvent.getInstanceName()) && StringUtils.isNotBlank(record.instanceName())) {
+//            auditEvent.setInstanceName(parseStringBySpel(context, record.instanceName()));
+//        }
+//        if (StringUtils.isEmpty(auditEvent.getContent()) && StringUtils.isNotBlank(record.content())) {
+//            auditEvent.setContent(parseStringBySpel(context, record.content()));
+//        }
+//
+//        auditContext.addAuditEvent(auditEvent);
+//    }
 
 
     private String parseStringBySpel(EvaluationContext context, String spel) {
@@ -332,41 +368,41 @@ public class AuditAspect {
         return context;
     }
 
-    @After(value = "auditEventRecord()")
-    public void auditEventAfter(JoinPoint jp) {
-        long start = System.currentTimeMillis();
-        if (log.isInfoEnabled()) {
-            log.info("Audit done");
-        }
-
-        try {
-            AuditContext auditContext = auditManager.current();
-            if (auditContext == null) {
-                if (log.isInfoEnabled()) {
-                    log.info("AuditContext is empty");
-                }
-                return;
-            }
-
-            Method method = ((MethodSignature) jp.getSignature()).getMethod();
-            AuditEventRecord record = method.getAnnotation(AuditEventRecord.class);
-            if (record == null) {
-                return;
-            }
-
-            Class<? extends AuditEventBuilder> builderClass = record.builder();
-            AuditEventBuilder builder = builderClass.newInstance();
-            AuditEvent auditEvent = builder.build();
-            auditContext.addAuditEvent(auditEvent);
-        } catch (Throwable e) {
-            // 忽略审计错误，避免影响业务代码执行
-            log.error("Audit done caught exception", e);
-        } finally {
-            if (log.isInfoEnabled()) {
-                log.info("Audit done, cost: {}", System.currentTimeMillis() - start);
-            }
-        }
-    }
+//    @After(value = "actionAuditRecord()")
+//    public void auditEventAfter(JoinPoint jp) {
+//        long start = System.currentTimeMillis();
+//        if (log.isInfoEnabled()) {
+//            log.info("Audit done");
+//        }
+//
+//        try {
+//            AuditContext auditContext = auditManager.current();
+//            if (auditContext == null) {
+//                if (log.isInfoEnabled()) {
+//                    log.info("AuditContext is empty");
+//                }
+//                return;
+//            }
+//
+//            Method method = ((MethodSignature) jp.getSignature()).getMethod();
+//            ActionAuditRecord record = method.getAnnotation(ActionAuditRecord.class);
+//            if (record == null) {
+//                return;
+//            }
+//
+//            Class<? extends AuditEventBuilder> builderClass = record.builder();
+//            AuditEventBuilder builder = builderClass.newInstance();
+//            List<AuditEvent> auditEvents = builder.build();
+//            auditContext.sete(auditEvent);
+//        } catch (Throwable e) {
+//            // 忽略审计错误，避免影响业务代码执行
+//            log.error("Audit done caught exception", e);
+//        } finally {
+//            if (log.isInfoEnabled()) {
+//                log.info("Audit done, cost: {}", System.currentTimeMillis() - start);
+//            }
+//        }
+//    }
 
 
 }

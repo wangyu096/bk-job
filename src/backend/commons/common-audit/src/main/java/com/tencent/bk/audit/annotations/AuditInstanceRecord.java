@@ -22,11 +22,43 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.audit.constants;
+package com.tencent.bk.audit.annotations;
 
-public interface AuditVariableNames {
-    String INSTANCE_ID = "@INSTANCE_ID";
-    String INSTANCE_NAME = "@INSTANCE_NAME";
-    String ORIGIN_INSTANCE = "@ORIGIN_INSTANCE";
-    String INSTANCE = "@INSTANCE";
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * 用于标识操作实例
+ */
+@Target({ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+@Inherited
+public @interface AuditInstanceRecord {
+    /**
+     * 操作实例资源类型ID
+     */
+    String resourceType() default "";
+
+    /**
+     * 操作实例ID
+     */
+    String instanceIds() default "";
+
+    /**
+     * 操作实例名称
+     */
+    String instanceNames() default "";
+
+    /**
+     * 原始实例
+     */
+    String originInstances() default "";
+
+    /**
+     * 当前实例
+     */
+    String instances() default "";
 }

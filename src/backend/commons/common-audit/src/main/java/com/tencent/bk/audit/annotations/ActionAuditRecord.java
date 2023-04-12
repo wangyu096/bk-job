@@ -22,23 +22,46 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.audit;
+package com.tencent.bk.audit.annotations;
 
-import com.tencent.bk.audit.model.AuditContext;
+import com.tencent.bk.audit.AuditEventBuilder;
+import com.tencent.bk.audit.DefaultAuditEventBuilder;
 
-public class AuditContextThreadLocalHolder {
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-    private final ThreadLocal<AuditContext> AUDIT_CONTEXT_HOLDER = new ThreadLocal<>();
+/**
+ * 用于标识操作审计记录
+ */
+@Target({ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+@Inherited
+public @interface ActionAuditRecord {
 
-    public void set(AuditContext auditContext) {
-        AUDIT_CONTEXT_HOLDER.set(auditContext);
-    }
+    /**
+     * 操作ID
+     */
+    String actionId();
 
-    public AuditContext current() {
-        return AUDIT_CONTEXT_HOLDER.get();
-    }
+    /**
+     * 资源实例敏感等级,范围0-9
+     */
+    int sensitivity() default 0;
 
-    public void reset() {
-        AUDIT_CONTEXT_HOLDER.remove();
-    }
+    /**
+     * 事件描述
+     */
+    String content() default "";
+
+    AuditInstanceRecord instance() default @AuditInstanceRecord;
+
+    /**
+     * 事件其它属性
+     */
+    AuditAttribute[] attributes() default {};
+
+    Class<? extends AuditEventBuilder> builder() default DefaultAuditEventBuilder.class;
 }
