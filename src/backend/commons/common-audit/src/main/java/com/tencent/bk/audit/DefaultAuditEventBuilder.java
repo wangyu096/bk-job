@@ -99,7 +99,7 @@ public class DefaultAuditEventBuilder implements AuditEventBuilder {
         AuditEvent auditEvent = new AuditEvent();
         auditEvent.setId(EventIdGenerator.generateId());
         auditEvent.setActionId(actionAuditContext.getActionAuditRecord().actionId());
-        auditEvent.setResourceTypeId(actionAuditContext.getActionAuditRecord().resourceType());
+        auditEvent.setResourceTypeId(actionAuditContext.getResourceType());
         auditEvent.setStartTime(actionAuditContext.getStartTime());
         auditEvent.setEndTime(actionAuditContext.getEndTime());
         auditEvent.setResultCode(ErrorCode.RESULT_OK);

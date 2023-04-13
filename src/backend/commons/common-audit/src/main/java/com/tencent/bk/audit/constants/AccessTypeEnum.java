@@ -34,13 +34,13 @@ public enum AccessTypeEnum {
 
     public static AccessTypeEnum valOf(String value) {
         if (StringUtils.isEmpty(value)) {
-            return AccessTypeEnum.OTHER;
+            return OTHER;
         }
 
         try {
             return valOf(Integer.parseInt(value));
         } catch (NumberFormatException e) {
-            return AccessTypeEnum.OTHER;
+            return OTHER;
         }
     }
 
@@ -50,6 +50,6 @@ public enum AccessTypeEnum {
                 return type;
             }
         }
-        return AccessTypeEnum.OTHER;
+        return OTHER;
     }
 }

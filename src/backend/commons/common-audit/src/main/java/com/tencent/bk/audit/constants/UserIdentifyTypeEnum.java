@@ -30,13 +30,13 @@ public enum UserIdentifyTypeEnum {
 
     public static UserIdentifyTypeEnum valOf(String value) {
         if (StringUtils.isEmpty(value)) {
-            return UserIdentifyTypeEnum.UNKNOWN;
+            return UNKNOWN;
         }
 
         try {
             return valOf(Integer.parseInt(value));
         } catch (NumberFormatException e) {
-            return UserIdentifyTypeEnum.UNKNOWN;
+            return UNKNOWN;
         }
     }
 
@@ -46,6 +46,6 @@ public enum UserIdentifyTypeEnum {
                 return type;
             }
         }
-        return UserIdentifyTypeEnum.UNKNOWN;
+        return UNKNOWN;
     }
 }
