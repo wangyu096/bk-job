@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.execute.service.impl;
 
-import com.tencent.bk.audit.AuditManagerRegistry;
+import com.tencent.bk.audit.GlobalAuditRegistry;
 import com.tencent.bk.audit.utils.AuditInstanceUtils;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
@@ -1179,7 +1179,7 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
 
         try {
             TaskInfo taskInfo = buildTaskInfoFromExecuteParam(executeParam, watch);
-            AuditManagerRegistry.get().updateAuditEvent(
+            GlobalAuditRegistry.get().updateAuditEvent(
                 auditEvent -> auditEvent.setContent("执行了作业" + taskInfo.getJobPlan().getName()));
 
 
@@ -1200,7 +1200,7 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
             watch.start("acquireAndSetHosts");
             ServiceListAppHostResultDTO hosts =
                 acquireAndSetHosts(taskInstance, stepInstanceList, finalVariableValueMap.values());
-            AuditManagerRegistry.get().updateAuditEvent(auditEvent -> {
+            GlobalAuditRegistry.get().updateAuditEvent(auditEvent -> {
                 auditEvent.setInstanceId(AuditInstanceUtils.extract(hosts.getValidHosts(),
                     host -> host.getHostId().toString()));
                 auditEvent.setInstanceName(AuditInstanceUtils.extract(hosts.getValidHosts(), HostDTO::getPrimaryIp));

@@ -25,7 +25,6 @@
 package com.tencent.bk.job.manage.model.esb.v3.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.tencent.bk.audit.model.AuditInstanceData;
 import com.tencent.bk.job.common.esb.model.job.v3.EsbGlobalVarV3DTO;
 import lombok.Getter;
 import lombok.Setter;
@@ -39,7 +38,7 @@ import java.util.List;
 @Getter
 @Setter
 @ToString
-public class EsbTemplateInfoV3DTO extends EsbTemplateBasicInfoV3DTO implements AuditInstanceData {
+public class EsbTemplateInfoV3DTO extends EsbTemplateBasicInfoV3DTO {
     /**
      * 步骤信息
      */

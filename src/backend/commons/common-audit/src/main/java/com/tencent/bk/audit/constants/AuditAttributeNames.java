@@ -24,14 +24,10 @@
 
 package com.tencent.bk.audit.constants;
 
+/**
+ * 审计 - 标准化的属性名称
+ */
 public interface AuditAttributeNames {
     String INSTANCE_ID = "@INSTANCE_ID";
     String INSTANCE_NAME = "@INSTANCE_NAME";
-    String ORIGIN_INSTANCE = "@ORIGIN_INSTANCE";
-    String INSTANCE = "@INSTANCE";
-
-    String INSTANCE_ID_LIST = "@INSTANCE_ID_LIST";
-    String INSTANCE_NAME_LIST = "@INSTANCE_NAME_LIST";
-    String ORIGIN_INSTANCE_LIST = "@ORIGIN_INSTANCE_LIST";
-    String INSTANCE_LIST = "@INSTANCE_LIST";
 }

@@ -43,22 +43,22 @@ public @interface AuditInstanceRecord {
     String resourceType() default "";
 
     /**
-     * 操作实例ID
+     * 操作实例ID - SpEL表达式
      */
     String instanceIds() default "";
 
     /**
-     * 操作实例名称
+     * 操作实例名称 - SpEL 表达式
      */
     String instanceNames() default "";
 
     /**
-     * 原始实例
+     * 原始实例 - SpEL 表达式
      */
     String originInstances() default "";
 
     /**
-     * 当前实例
+     * 当前实例 - SpEL 表达式
      */
     String instances() default "";
 }

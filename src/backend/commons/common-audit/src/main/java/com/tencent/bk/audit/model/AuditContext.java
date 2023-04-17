@@ -24,37 +24,42 @@
 
 package com.tencent.bk.audit.model;
 
-import com.tencent.bk.audit.AuditManagerRegistry;
+import com.tencent.bk.audit.GlobalAuditRegistry;
 import com.tencent.bk.audit.constants.AccessTypeEnum;
+import com.tencent.bk.audit.constants.AuditEventKey;
 import com.tencent.bk.audit.constants.UserIdentifyTypeEnum;
-import lombok.Data;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-@Data
+/**
+ * 审计上下文
+ */
 public class AuditContext {
 
-    private String requestId;
+    private final String requestId;
 
-    private String username;
+    private final String username;
 
-    private UserIdentifyTypeEnum userIdentifyType;
+    private final UserIdentifyTypeEnum userIdentifyType;
 
-    private String userIdentifyTenantId;
+    private final String userIdentifyTenantId;
 
-    private Long startTime;
+    private final Long startTime;
 
     private Long endTime;
 
-    private String bkAppCode;
+    private final String bkAppCode;
 
-    private AccessTypeEnum accessType;
+    private final AccessTypeEnum accessType;
 
-    private String accessSourceIp;
+    private final String accessSourceIp;
 
-    private String accessUserAgent;
+    private final String accessUserAgent;
 
     private int resultCode;
 
@@ -63,31 +68,63 @@ public class AuditContext {
     /**
      * 操作ID
      */
-    private String actionId;
+    private final String actionId;
 
-    private AuditHttpRequest httpRequest;
+    private final AuditHttpRequest httpRequest;
 
     private List<ActionAuditContext> actionAuditContexts = new ArrayList<>();
 
+    private final List<AuditEvent> events = new ArrayList<>();
+
     private ActionAuditContext currentActionAuditContext;
 
-    private boolean recordSubEvent;
+    private final boolean recordSubEvent;
 
 
-    public AuditContext(String actionId) {
+    public static AuditContext start(String actionId,
+                                     String requestId,
+                                     String username,
+                                     UserIdentifyTypeEnum userIdentifyType,
+                                     String userIdentifyTenantId,
+                                     String bkAppCode,
+                                     AccessTypeEnum accessType,
+                                     String accessSourceIp,
+                                     String accessUserAgent,
+                                     AuditHttpRequest httpRequest,
+                                     boolean recordSubEvent) {
+        return new AuditContext(actionId, requestId, username, userIdentifyType, userIdentifyTenantId,
+            System.currentTimeMillis(), bkAppCode, accessType, accessSourceIp, accessUserAgent, httpRequest,
+            recordSubEvent);
+    }
+
+    private AuditContext(String actionId,
+                         String requestId,
+                         String username,
+                         UserIdentifyTypeEnum userIdentifyType,
+                         String userIdentifyTenantId,
+                         Long startTime,
+                         String bkAppCode,
+                         AccessTypeEnum accessType,
+                         String accessSourceIp,
+                         String accessUserAgent,
+                         AuditHttpRequest httpRequest,
+                         boolean recordSubEvent) {
         this.actionId = actionId;
+        this.requestId = requestId;
+        this.username = username;
+        this.userIdentifyType = userIdentifyType;
+        this.userIdentifyTenantId = userIdentifyTenantId;
+        this.startTime = startTime;
+        this.bkAppCode = bkAppCode;
+        this.accessType = accessType;
+        this.accessSourceIp = accessSourceIp;
+        this.accessUserAgent = accessUserAgent;
+        this.httpRequest = httpRequest;
+        this.recordSubEvent = recordSubEvent;
     }
 
     public static AuditContext current() {
-        return AuditManagerRegistry.get().current();
-    }
-
-
-
-    public ActionAuditScope startAuditAction(String actionId) {
-        ActionAuditContext actionAuditContext = new ActionAuditContext();
-        actionAuditContext.setActionId(actionId);
-        return new ActionAuditScopeImpl(ActionAuditContext.current(), actionAuditContext);
+        return GlobalAuditRegistry.get().current();
     }
 
     public void addContextAttributes(AuditEvent auditEvent) {
@@ -115,34 +152,48 @@ public class AuditContext {
         return currentActionAuditContext;
     }
 
-    public void clearActionAuditContext() {
-        actionAuditContexts.clear();
-    }
-
     public void addActionAuditContext(ActionAuditContext actionAuditContext) {
         actionAuditContexts.add(actionAuditContext);
     }
 
-    private static class ActionAuditScopeImpl implements ActionAuditScope {
-
-        @Nullable
-        private final ActionAuditContext beforeAttach;
-        private final ActionAuditContext toAttach;
-        private boolean closed;
-
-        private ActionAuditScopeImpl(@Nullable ActionAuditContext beforeAttach, ActionAuditContext toAttach) {
-            this.beforeAttach = beforeAttach;
-            this.toAttach = toAttach;
+    private void buildAuditEvents() {
+        Map<AuditEventKey, AuditEvent> auditEvents = new HashMap<>();
+        if (recordSubEvent) {
+            actionAuditContexts = actionAuditContexts.stream()
+                .filter(actionAuditContext -> actionAuditContext.getActionId().equals(actionId))
+                .collect(Collectors.toList());
         }
-
-        @Override
-        public void close() {
-            if (!closed && ActionAuditContext.current() == toAttach) {
-                closed = true;
-                current().setCurrentActionAuditContext(beforeAttach);
-            }
-        }
+        actionAuditContexts.forEach(actionAuditContext ->
+            actionAuditContext.getEvents().forEach(
+                auditEvent -> auditEvents.put(auditEvent.toAuditKey(), auditEvent)
+            )
+        );
+        auditEvents.values().forEach(this::addContextAttributes);
     }
 
+    public void end() {
+        this.endTime = System.currentTimeMillis();
+        buildAuditEvents();
+    }
 
+    public void setCurrentActionAuditContext(ActionAuditContext actionAuditContext) {
+        this.currentActionAuditContext = actionAuditContext;
+    }
+
+    public void error(int resultCode, String resultContent) {
+        this.resultCode = resultCode;
+        this.resultContent = resultContent;
+        this.actionAuditContexts.clear();
+        this.events.clear();
+        AuditEvent auditEvent = new AuditEvent(actionId);
+        addContextAttributes(auditEvent);
+        auditEvent.setEndTime(System.currentTimeMillis());
+        auditEvent.setResultCode(this.resultCode);
+        auditEvent.setResultContent(this.resultContent);
+        this.events.add(auditEvent);
+    }
+
+    public List<AuditEvent> getEvents() {
+        return Collections.unmodifiableList(events);
+    }
 }

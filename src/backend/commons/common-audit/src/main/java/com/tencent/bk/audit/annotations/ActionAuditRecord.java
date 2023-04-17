@@ -48,15 +48,13 @@ public @interface ActionAuditRecord {
     String actionId();
 
     /**
-     * 资源实例敏感等级,范围0-9
-     */
-    int sensitivity() default 0;
-
-    /**
      * 事件描述
      */
     String content() default "";
 
+    /**
+     * 资源实例定义
+     */
     AuditInstanceRecord instance() default @AuditInstanceRecord;
 
     /**
@@ -64,5 +62,8 @@ public @interface ActionAuditRecord {
      */
     AuditAttribute[] attributes() default {};
 
+    /**
+     * 自定义审计事件Builder
+     */
     Class<? extends AuditEventBuilder> builder() default DefaultAuditEventBuilder.class;
 }

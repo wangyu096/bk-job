@@ -22,55 +22,44 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.audit.constants;
+package com.tencent.bk.audit.model;
 
-import org.apache.commons.lang3.StringUtils;
+import com.tencent.bk.audit.AuditEventBuilder;
 
-import java.util.Objects;
-
-public class AuditKey {
+public class ActionAuditContextBuilder {
     private final String actionId;
-    private final String resourceType;
-    private final String resourceId;
 
-    private AuditKey(String actionId, String resourceType, String resourceId) {
+    private String resourceType;
+
+    private String content;
+
+    public Class<? extends AuditEventBuilder> eventBuilder;
+
+    public static ActionAuditContextBuilder builder(String actionId) {
+        return new ActionAuditContextBuilder(actionId);
+    }
+
+
+    private ActionAuditContextBuilder(String actionId) {
         this.actionId = actionId;
+    }
+
+    public ActionAuditContextBuilder setResourceType(String resourceType) {
         this.resourceType = resourceType;
-        this.resourceId = resourceId;
+        return this;
     }
 
-    public static AuditKey build(String actionId, String resourceType, String resourceId) {
-        return new AuditKey(actionId, resourceType, resourceId);
+    public ActionAuditContextBuilder setContent(String content) {
+        this.content = content;
+        return this;
     }
 
-    public static AuditKey build(String actionId) {
-        return new AuditKey(actionId, null, null);
+    public ActionAuditContextBuilder setEventBuilder(Class<? extends AuditEventBuilder> eventBuilder) {
+        this.eventBuilder = eventBuilder;
+        return this;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        AuditKey auditKey = (AuditKey) o;
-        return Objects.equals(actionId, auditKey.actionId) &&
-            Objects.equals(resourceType, auditKey.resourceType) &&
-            Objects.equals(resourceId, auditKey.resourceId);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(actionId, resourceType, resourceId);
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder(actionId);
-        if (StringUtils.isNotBlank(resourceType)) {
-            sb.append(":").append(resourceType);
-        }
-        if (StringUtils.isNotBlank(resourceId)) {
-            sb.append(":").append(resourceId);
-        }
-        return sb.toString();
+    public ActionAuditContext start() {
+        return ActionAuditContext.start(actionId, resourceType, content, eventBuilder);
     }
 }

@@ -32,7 +32,17 @@ import java.util.Collection;
  * 审计事件导出
  */
 public interface EventExporter {
+    /**
+     * 导出审计事件
+     *
+     * @param event 审计事件
+     */
     void export(AuditEvent event);
 
+    /**
+     * 批量导出审计事件
+     *
+     * @param events 审计事件列表
+     */
     void export(Collection<AuditEvent> events);
 }

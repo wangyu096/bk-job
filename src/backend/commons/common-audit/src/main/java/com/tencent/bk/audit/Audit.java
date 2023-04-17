@@ -24,38 +24,31 @@
 
 package com.tencent.bk.audit;
 
-import com.tencent.bk.audit.constants.AuditKey;
 import com.tencent.bk.audit.exporter.EventExporter;
-import com.tencent.bk.audit.model.ActionAuditContext;
 import com.tencent.bk.audit.model.AuditContext;
-import com.tencent.bk.audit.model.AuditEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
+/**
+ * 审计SDK 入口
+ */
 @Slf4j
-public class AuditManager {
+public class Audit {
 
     private final ThreadLocalAuditContextHolder auditContextHolder = new ThreadLocalAuditContextHolder();
     private final EventExporter eventExporter;
 
     @Autowired
-    public AuditManager(EventExporter eventExporter) {
+    public Audit(EventExporter eventExporter) {
         this.eventExporter = eventExporter;
-        AuditManagerRegistry.register(this);
+        GlobalAuditRegistry.register(this);
     }
 
-    public AuditContext startAudit(String actionId) {
+    public AuditContext startAudit(AuditContext auditContext) {
         if (auditContextHolder.current() != null) {
             log.error("Current audit context is already exist! ");
             return null;
         }
-        AuditContext auditContext = new AuditContext(actionId);
-        auditContext.setStartTime(System.currentTimeMillis());
         auditContextHolder.set(auditContext);
         return auditContext;
     }
@@ -68,23 +61,14 @@ public class AuditManager {
         try {
             AuditContext auditContext = auditContextHolder.current();
             if (auditContext == null) {
-                log.error("Current audit context is empty! Skip stop audit event");
+                log.error("Current audit context is empty!");
                 return;
             }
-            auditContext.setEndTime(System.currentTimeMillis());
-            Map<AuditKey, AuditEvent> auditEvents = new HashMap<>();
-            List<ActionAuditContext> actionAuditContexts = auditContext.getActionAuditContexts();
-            if (auditContext.isRecordSubEvent()) {
-                actionAuditContexts = actionAuditContexts.stream()
-                    .filter(actionAuditContext -> actionAuditContext.getActionId().equals(auditContext.getActionId()))
-                    .collect(Collectors.toList());
-            }
-            actionAuditContexts.forEach(actionAuditContext ->
-                actionAuditContext.getEvents().forEach(
-                    auditEvent -> auditEvents.put(auditEvent.toAuditKey(), auditEvent)
-                )
-            );
-            eventExporter.export(auditEvents.values());
+            auditContext.end();
+            eventExporter.export(auditContext.getEvents());
+        } catch (Throwable e) {
+            // 忽略审计错误，避免影响业务代码执行
+            log.error("Audit stop caught exception", e);
         } finally {
             auditContextHolder.reset();
         }

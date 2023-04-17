@@ -22,16 +22,27 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.audit;
+package com.tencent.bk.audit.model;
 
-public class AuditManagerRegistry {
-    private static volatile AuditManager auditManager = null;
+import javax.annotation.Nullable;
 
-    public static void register(AuditManager auditManager) {
-        AuditManagerRegistry.auditManager = auditManager;
+class ActionAuditScopeImpl implements ActionAuditScope {
+
+    @Nullable
+    private final ActionAuditContext beforeAttach;
+    private final ActionAuditContext toAttach;
+    private boolean closed;
+
+    ActionAuditScopeImpl(@Nullable ActionAuditContext beforeAttach, ActionAuditContext toAttach) {
+        this.beforeAttach = beforeAttach;
+        this.toAttach = toAttach;
     }
 
-    public static AuditManager get() {
-        return auditManager;
+    @Override
+    public void close() {
+        if (!closed && ActionAuditContext.current() == toAttach) {
+            closed = true;
+            AuditContext.current().setCurrentActionAuditContext(beforeAttach);
+        }
     }
 }

@@ -24,10 +24,9 @@
 
 package com.tencent.bk.job.manage.service.template.impl;
 
-import com.tencent.bk.audit.AuditManagerRegistry;
 import com.tencent.bk.audit.annotations.ActionAuditRecord;
-import com.tencent.bk.audit.annotations.AuditAttribute;
 import com.tencent.bk.audit.annotations.AuditInstanceRecord;
+import com.tencent.bk.audit.model.ActionAuditContext;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobResourceTypeEnum;
 import com.tencent.bk.job.common.exception.AbortedException;
@@ -46,7 +45,6 @@ import com.tencent.bk.job.common.util.JobContextUtil;
 import com.tencent.bk.job.common.util.PageUtil;
 import com.tencent.bk.job.common.util.date.DateUtils;
 import com.tencent.bk.job.crontab.model.CronJobVO;
-import com.tencent.bk.job.manage.audit.EditJobTemplateAuditEventBuilder;
 import com.tencent.bk.job.manage.common.consts.JobResourceStatusEnum;
 import com.tencent.bk.job.manage.common.consts.task.TaskFileTypeEnum;
 import com.tencent.bk.job.manage.common.consts.task.TaskScriptSourceEnum;
@@ -93,7 +91,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE;
 import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_ID;
 import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_NAME;
 
@@ -288,16 +285,12 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
     @Override
     @ActionAuditRecord(
         actionId = ActionId.VIEW_JOB_TEMPLATE,
-        resourceType = ResourceTypeId.TEMPLATE,
-        content = "View template [" + INSTANCE_NAME + "](" + INSTANCE_ID + ")",
-        attributes = {
-            @AuditAttribute(name = INSTANCE_ID, value = "#templateId"),
-            @AuditAttribute(name = INSTANCE_NAME, value = "#$?.name")
-        },
-        instance = @AuditInstanceRecord (
-            instance = ""
-        )
-
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.TEMPLATE,
+            instanceIds = "#templateId",
+            instanceNames = "#$?.name"
+        ),
+        content = "View template [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
     public TaskTemplateInfoDTO getTaskTemplateById(Long appId, Long templateId) {
         TaskTemplateInfoDTO templateInfo = taskTemplateDAO.getTaskTemplateById(appId, templateId);
@@ -316,13 +309,12 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
     @Transactional(rollbackFor = Throwable.class)
     @ActionAuditRecord(
         actionId = ActionId.CREATE_JOB_TEMPLATE,
-        resourceType = ResourceTypeId.TEMPLATE,
-        instanceId = INSTANCE_ID,
-        content = "Create template [" + INSTANCE_NAME + "](" + INSTANCE_ID + ")",
-        attributes = {
-            @AuditAttribute(name = INSTANCE_ID, value = "#$?.id"),
-            @AuditAttribute(name = INSTANCE_NAME, value = "#$?.name")
-        }
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.TEMPLATE,
+            instanceIds = "#$?.id",
+            instanceNames = "#$?.name"
+        ),
+        content = "Create template [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
     public TaskTemplateInfoDTO saveTaskTemplate(TaskTemplateInfoDTO taskTemplateInfo) {
         return saveOrUpdateTaskTemplate(taskTemplateInfo);
@@ -331,23 +323,23 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
     @Override
     @Transactional(rollbackFor = Throwable.class)
     @ActionAuditRecord(
-        builder = EditJobTemplateAuditEventBuilder.class,
-        attributes = {
-            @AuditAttribute(name = INSTANCE, value = "#$")
-        }
+        actionId = ActionId.EDIT_JOB_TEMPLATE,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.TEMPLATE
+        ),
+        content = "Modify template [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
     public TaskTemplateInfoDTO updateTaskTemplate(TaskTemplateInfoDTO taskTemplateInfo) {
         // 审计记录 - 原始数据
-        AuditManagerRegistry.get().current().
-        AuditManagerRegistry.get().updateAuditEvent(
-                    auditEvent -> auditEvent.setInstanceOriginData(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(
-                        getTaskTemplateById(taskTemplateInfo.getAppId(), taskTemplateInfo.getId()))));
+        ActionAuditContext.current().setOriginInstanceList(Collections.singletonList(
+            TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(
+                getTaskTemplateById(taskTemplateInfo.getAppId(), taskTemplateInfo.getId()))));
 
         TaskTemplateInfoDTO template = saveOrUpdateTaskTemplate(taskTemplateInfo);
 
         // 审计记录 - 更新后数据
-        AuditManagerRegistry.get().updateAuditEvent(
-            auditEvent -> auditEvent.setInstanceData(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(template)));
+        ActionAuditContext.current().setInstanceList(Collections.singletonList(
+            TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(template)));
 
         return template;
     }
@@ -536,13 +528,12 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
     @Transactional
     @ActionAuditRecord(
         actionId = ActionId.DELETE_JOB_TEMPLATE,
-        resourceType = ResourceTypeId.TEMPLATE,
-        instanceId = INSTANCE_ID,
-        content = "Delete template [" + INSTANCE_NAME + "](" + INSTANCE_ID + ")",
-        attributes = {
-            @AuditAttribute(name = INSTANCE_ID, value = "#templateId"),
-            @AuditAttribute(name = INSTANCE_NAME, value = "#$?.name")
-        }
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.TEMPLATE,
+            instanceIds = "#templateId",
+            instanceNames = "#$?.name"
+        ),
+        content = "Delete template [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
     public TaskTemplateInfoDTO deleteTaskTemplate(Long appId, Long templateId) {
         TaskTemplateInfoDTO template = getTaskTemplateById(appId, templateId);

@@ -31,7 +31,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 用于标识记录审计事件入口
+ * 用于标识操作审计入口
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)

@@ -25,6 +25,8 @@
 package com.tencent.bk.job.manage.model.esb.v3.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.tencent.bk.audit.model.AuditInstance;
+import com.tencent.bk.audit.model.BasicAuditInstance;
 import com.tencent.bk.job.common.esb.model.EsbAppScopeDTO;
 import lombok.Getter;
 import lombok.Setter;
@@ -36,7 +38,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class EsbTemplateBasicInfoV3DTO extends EsbAppScopeDTO {
+public class EsbTemplateBasicInfoV3DTO extends EsbAppScopeDTO implements AuditInstance {
 
     /**
      * 作业模版 ID
@@ -76,4 +78,9 @@ public class EsbTemplateBasicInfoV3DTO extends EsbAppScopeDTO {
      */
     @JsonProperty("description")
     private String description;
+
+    @Override
+    public BasicAuditInstance toBasicAuditInstance() {
+        return new BasicAuditInstance(String.valueOf(id), name);
+    }
 }

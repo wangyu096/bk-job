@@ -22,42 +22,58 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.audit.exporter;
+package com.tencent.bk.audit.constants;
 
-import com.tencent.bk.audit.constants.Constants;
-import com.tencent.bk.audit.model.AuditEvent;
-import com.tencent.bk.audit.utils.EventIdGenerator;
-import com.tencent.bk.audit.utils.json.JsonUtils;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
+import java.util.Objects;
 
 /**
- * 审计事件 - 文件方式导出
+ * 审计事件唯一KEY
  */
-public class LogFileExporter implements EventExporter {
-    private final Logger LOGGER;
+public class AuditEventKey {
+    private final String actionId;
+    private final String resourceType;
+    private final String resourceId;
 
-    public LogFileExporter() {
-        this.LOGGER = LoggerFactory.getLogger(Constants.AUDIT_LOGGER_NAME);
+    private AuditEventKey(String actionId, String resourceType, String resourceId) {
+        this.actionId = actionId;
+        this.resourceType = resourceType;
+        this.resourceId = resourceId;
+    }
+
+    public static AuditEventKey build(String actionId, String resourceType, String resourceId) {
+        return new AuditEventKey(actionId, resourceType, resourceId);
+    }
+
+    public static AuditEventKey build(String actionId) {
+        return new AuditEventKey(actionId, null, null);
     }
 
     @Override
-    public void export(AuditEvent event) {
-        if (StringUtils.isBlank(event.getId())) {
-            event.setId(EventIdGenerator.generateId());
-        }
-        LOGGER.info(JsonUtils.toJson(event));
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AuditEventKey auditEventKey = (AuditEventKey) o;
+        return Objects.equals(actionId, auditEventKey.actionId) &&
+            Objects.equals(resourceType, auditEventKey.resourceType) &&
+            Objects.equals(resourceId, auditEventKey.resourceId);
     }
 
     @Override
-    public void export(Collection<AuditEvent> events) {
-        if (CollectionUtils.isEmpty(events)) {
-            return;
+    public int hashCode() {
+        return Objects.hash(actionId, resourceType, resourceId);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder(actionId);
+        if (StringUtils.isNotBlank(resourceType)) {
+            sb.append(":").append(resourceType);
         }
-        events.forEach(event -> LOGGER.info(JsonUtils.toJson(event)));
+        if (StringUtils.isNotBlank(resourceId)) {
+            sb.append(":").append(resourceId);
+        }
+        return sb.toString();
     }
 }

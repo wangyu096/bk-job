@@ -25,13 +25,9 @@
 package com.tencent.bk.job.manage.audit;
 
 import com.tencent.bk.audit.AuditEventBuilder;
-import com.tencent.bk.audit.constants.AuditAttributeNames;
 import com.tencent.bk.audit.model.AuditEvent;
-import com.tencent.bk.audit.utils.EventIdGenerator;
-import com.tencent.bk.job.common.iam.constant.ActionId;
-import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
-import com.tencent.bk.job.manage.model.dto.task.TaskTemplateInfoDTO;
 
+import java.util.List;
 import java.util.Map;
 
 public class EditJobTemplateAuditEventBuilder implements AuditEventBuilder {
@@ -42,26 +38,27 @@ public class EditJobTemplateAuditEventBuilder implements AuditEventBuilder {
     }
 
     @Override
-    public AuditEvent build() {
-        AuditEvent auditEvent = new AuditEvent();
-        auditEvent.setId(EventIdGenerator.generateId());
-        auditEvent.setActionId(ActionId.EDIT_JOB_TEMPLATE);
-        auditEvent.setResourceTypeId(ResourceTypeId.TEMPLATE);
+    public List<AuditEvent> build() {
+//        AuditEvent auditEvent = new AuditEvent();
+//        auditEvent.setId(EventIdGenerator.generateId());
+//        auditEvent.setActionId(ActionId.EDIT_JOB_TEMPLATE);
+//        auditEvent.setResourceTypeId(ResourceTypeId.TEMPLATE);
+//
+//        // 审计记录 - 原始数据
+//        TaskTemplateInfoDTO originInstance = (TaskTemplateInfoDTO) attributes.get(AuditAttributeNames
+//        .ORIGIN_INSTANCE);
+//        auditEvent.setInstanceOriginData(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(originInstance));
+//
+//        TaskTemplateInfoDTO instance = (TaskTemplateInfoDTO) attributes.get(AuditAttributeNames.INSTANCE);
+//        // 审计记录 - 更新后数据
+//        auditEvent.setInstanceData(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(instance));
+//
+//        auditEvent.setInstanceId(originInstance.getId().toString());
+//        auditEvent.setInstanceName(originInstance.getName());
+//
+//        auditEvent.setContent("Edit job template [" + originInstance.getId().toString() + "]("
+//            + originInstance.getName() + ")");
 
-        // 审计记录 - 原始数据
-        TaskTemplateInfoDTO originInstance = (TaskTemplateInfoDTO) attributes.get(AuditAttributeNames.ORIGIN_INSTANCE);
-        auditEvent.setInstanceOriginData(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(originInstance));
-
-        TaskTemplateInfoDTO instance = (TaskTemplateInfoDTO) attributes.get(AuditAttributeNames.INSTANCE);
-        // 审计记录 - 更新后数据
-        auditEvent.setInstanceData(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(instance));
-
-        auditEvent.setInstanceId(originInstance.getId().toString());
-        auditEvent.setInstanceName(originInstance.getName());
-
-        auditEvent.setContent("Edit job template [" + originInstance.getId().toString() + "]("
-            + originInstance.getName() + ")");
-
-        return auditEvent;
+        return null;
     }
 }

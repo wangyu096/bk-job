@@ -27,51 +27,63 @@ package com.tencent.bk.audit;
 import com.tencent.bk.audit.constants.AuditAttributeNames;
 import com.tencent.bk.audit.model.ActionAuditContext;
 import com.tencent.bk.audit.model.AuditEvent;
+import com.tencent.bk.audit.model.AuditInstance;
+import com.tencent.bk.audit.model.BasicAuditInstance;
 import com.tencent.bk.audit.utils.EventIdGenerator;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.util.StringUtil;
+import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class DefaultAuditEventBuilder implements AuditEventBuilder {
     private final ActionAuditContext actionAuditContext;
-    private final Map<String, Object> attributes;
 
-    public DefaultAuditEventBuilder(ActionAuditContext actionAuditContext) {
-        this.actionAuditContext = actionAuditContext;
-        this.attributes = actionAuditContext.getAttributes();
+    public DefaultAuditEventBuilder() {
+        this.actionAuditContext = ActionAuditContext.current();
     }
 
     @Override
     public List<AuditEvent> build() {
         List<AuditEvent> events = new ArrayList<>();
-        if (hasMultiResourceInstance()) {
-            List<Object> instanceIdList = safeCastList(attributes.get(AuditAttributeNames.INSTANCE_ID_LIST));
-            List<Object> instanceNameList = safeCastList(attributes.get(AuditAttributeNames.INSTANCE_NAME_LIST));
-            List<Object> originInstanceList = safeCastList(attributes.get(AuditAttributeNames.ORIGIN_INSTANCE_LIST));
-            List<Object> instanceList = safeCastList(attributes.get(AuditAttributeNames.INSTANCE_LIST));
-            Map<String, Object> eventAttributes = new HashMap<>();
+        Map<String, Object> eventAttributes = new HashMap<>(actionAuditContext.getAttributes());
 
-            for (int index = 0; index < instanceIdList.size(); index++) {
-                Object instanceId = safeGetElement(instanceIdList, index);
-                Object instanceName = safeGetElement(instanceNameList, index);
-                Object originInstance = safeGetElement(originInstanceList, index);
-                Object instance = safeGetElement(instanceList, index);
-                AuditEvent auditEvent = buildAuditEvent(instanceId, instanceName, originInstance, instance,
-                    eventAttributes);
-                events.add(auditEvent);
+        if (actionAuditContext.hasResource()) {
+            List<String> instanceIdList = actionAuditContext.getInstanceIdList();
+            List<String> instanceNameList = actionAuditContext.getInstanceNameList();
+            List<AuditInstance> originInstanceList = actionAuditContext.getOriginInstanceList();
+            List<AuditInstance> instanceList = actionAuditContext.getInstanceList();
+            // 优先使用instanceList, 包含资源实例的ID/Name数据
+            if (CollectionUtils.isNotEmpty(instanceList)) {
+                for (int index = 0; index < instanceList.size(); index++) {
+                    AuditInstance originInstance = safeGetElement(originInstanceList, index);
+                    AuditInstance instance = safeGetElement(instanceList, index);
+                    if (instance != null) {
+                        BasicAuditInstance basicAuditInstance = instance.toBasicAuditInstance();
+                        eventAttributes.put(AuditAttributeNames.INSTANCE_ID, basicAuditInstance.getId());
+                        eventAttributes.put(AuditAttributeNames.INSTANCE_NAME, basicAuditInstance.getName());
+                        AuditEvent auditEvent = buildAuditEvent(basicAuditInstance.getId(), basicAuditInstance.getName(),
+                            originInstance, instance, eventAttributes);
+                        events.add(auditEvent);
+                    }
+                }
+            } else if (CollectionUtils.isNotEmpty(instanceIdList)) {
+                for (int index = 0; index < instanceIdList.size(); index++) {
+                    String instanceId = safeGetElement(instanceIdList, index);
+                    String instanceName = safeGetElement(instanceNameList, index);
+                    eventAttributes.put(AuditAttributeNames.INSTANCE_ID, instanceId);
+                    eventAttributes.put(AuditAttributeNames.INSTANCE_NAME, instanceName);
+                    AuditEvent auditEvent = buildAuditEvent(instanceId, instanceName, null, null,
+                        eventAttributes);
+                    events.add(auditEvent);
+                }
+
             }
         } else {
-            Object instanceId = attributes.get(AuditAttributeNames.INSTANCE_ID);
-            Object instanceName = attributes.get(AuditAttributeNames.INSTANCE_NAME);
-            Object originInstance = attributes.get(AuditAttributeNames.ORIGIN_INSTANCE);
-            Object instance = attributes.get(AuditAttributeNames.INSTANCE);
-            Map<String, Object> eventAttributes = new HashMap<>(attributes);
-            AuditEvent auditEvent = buildAuditEvent(instanceId, instanceName, originInstance, instance,
+            AuditEvent auditEvent = buildAuditEvent(null, null, null, null,
                 eventAttributes);
             events.add(auditEvent);
         }
@@ -79,26 +91,18 @@ public class DefaultAuditEventBuilder implements AuditEventBuilder {
         return events;
     }
 
-    private String safeToString(Object object) {
-        return Objects.toString(object, null);
-    }
-
-    private List<Object> safeCastList(Object listObj) {
-        return listObj == null ? null : (listObj instanceof List ? (List<Object>) listObj : null);
-    }
-
-    private Object safeGetElement(List<Object> list, int index) {
+    private <T> T safeGetElement(List<T> list, int index) {
         return list != null && list.size() > index ? list.get(index) : null;
     }
 
-    private AuditEvent buildAuditEvent(Object instanceId,
-                                       Object instanceName,
-                                       Object originInstance,
-                                       Object instance,
+    private AuditEvent buildAuditEvent(String instanceId,
+                                       String instanceName,
+                                       AuditInstance originInstance,
+                                       AuditInstance instance,
                                        Map<String, Object> eventAttributes) {
         AuditEvent auditEvent = new AuditEvent();
         auditEvent.setId(EventIdGenerator.generateId());
-        auditEvent.setActionId(actionAuditContext.getActionAuditRecord().actionId());
+        auditEvent.setActionId(actionAuditContext.getActionId());
         auditEvent.setResourceTypeId(actionAuditContext.getResourceType());
         auditEvent.setStartTime(actionAuditContext.getStartTime());
         auditEvent.setEndTime(actionAuditContext.getEndTime());
@@ -110,15 +114,11 @@ public class DefaultAuditEventBuilder implements AuditEventBuilder {
         // 审计记录 - 更新后数据
         auditEvent.setInstanceData(instance);
 
-        auditEvent.setInstanceId(safeToString(instanceId));
-        auditEvent.setInstanceName(safeToString(instanceName));
-        auditEvent.setContent(resolveContent(actionAuditContext.getActionAuditRecord().content(),
+        auditEvent.setInstanceId(instanceId);
+        auditEvent.setInstanceName(instanceName);
+        auditEvent.setContent(resolveContent(actionAuditContext.getContent(),
             eventAttributes));
         return auditEvent;
-    }
-
-    boolean hasMultiResourceInstance() {
-        return attributes.containsKey(AuditAttributeNames.INSTANCE_ID_LIST);
     }
 
     private String resolveContent(String contentTemplate, Map<String, Object> eventAttributes) {

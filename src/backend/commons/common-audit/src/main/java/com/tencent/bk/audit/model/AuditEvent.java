@@ -2,12 +2,16 @@ package com.tencent.bk.audit.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.tencent.bk.audit.constants.AccessTypeEnum;
-import com.tencent.bk.audit.constants.AuditKey;
+import com.tencent.bk.audit.constants.AuditEventKey;
+import com.tencent.bk.audit.constants.Constants;
 import com.tencent.bk.audit.constants.UserIdentifyTypeEnum;
 import lombok.Data;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.tencent.bk.audit.constants.Constants.RESULT_CODE_SUCCESS;
+import static com.tencent.bk.audit.constants.Constants.RESULT_MESSAGE_SUCCESS;
 
 /**
  * 审计事件
@@ -112,40 +116,37 @@ public class AuditEvent {
     private String instanceName;
 
     /**
-     * 资源实例敏感等级,范围0-9
-     */
-    @JsonProperty("instance_sensitivity")
-    private int instanceSensitivity;
-
-    /**
      * 资源实例数据。必须符合在审计中心定义的资源Schema
      */
     @JsonProperty("instance_data")
-    private Object instanceData;
+    private AuditInstance instanceData;
 
     /**
      * 资源实例原始数据。必须符合在审计中心定义的资源Schema。对于更新/删除操作，建议上报
      */
     @JsonProperty("instance_origin_data")
-    private Object instanceOriginData;
+    private AuditInstance instanceOriginData;
 
     /**
      * 操作结果
      */
     @JsonProperty("result_code")
-    private int resultCode;
+    private int resultCode = RESULT_CODE_SUCCESS;
 
     /**
      * 操作结果描述
      */
     @JsonProperty("result_content")
-    private String resultContent = "Success";
+    private String resultContent = RESULT_MESSAGE_SUCCESS;
 
     /**
      * 拓展信息，各个系统可以根据具体需要扩展增加上报数据字段
      */
     @JsonProperty("extend_data")
     private Map<String, Object> extendData;
+
+    @JsonProperty("audit_event_signature")
+    private String auditEventSignature = Constants.AUDIT_EVENT_SIGNATURE;
 
     public AuditEvent() {
     }
@@ -164,8 +165,8 @@ public class AuditEvent {
         extendData.put(key, value);
     }
 
-    public AuditKey toAuditKey() {
-        return AuditKey.build(actionId, resourceTypeId, instanceId);
+    public AuditEventKey toAuditKey() {
+        return AuditEventKey.build(actionId, resourceTypeId, instanceId);
     }
 
 

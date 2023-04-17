@@ -25,9 +25,6 @@
 package com.tencent.bk.job.manage.api.web.impl;
 
 import com.google.common.base.CaseFormat;
-import com.tencent.bk.audit.AuditManagerRegistry;
-import com.tencent.bk.audit.annotations.ActionAuditRecord;
-import com.tencent.bk.audit.annotations.AuditAttribute;
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
@@ -35,7 +32,6 @@ import com.tencent.bk.job.common.constant.JobResourceTypeEnum;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.exception.NotFoundException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
-import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
@@ -74,9 +70,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
-import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_ID;
-import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_NAME;
 
 /**
  * @since 16/10/2019 16:16
@@ -221,16 +214,7 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
 
     @Override
     @AuditEntry(
-        event = @ActionAuditRecord(
-            actionId = ActionId.VIEW_JOB_TEMPLATE,
-            resourceType = ResourceTypeId.TEMPLATE,
-            instanceId = INSTANCE_ID,
-            content = "View template [" + INSTANCE_NAME + "](" + INSTANCE_ID + ")",
-            recordOnlyRoot = true,
-            attributes = {
-                @AuditAttribute(name = INSTANCE_ID, value = "#templateId"),
-            }
-        ),
+        actionId = ActionId.VIEW_JOB_TEMPLATE,
         recordSubEvent = false
     )
     public Response<TaskTemplateVO> getTemplateById(String username,
@@ -265,16 +249,7 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
 
     @Override
     @AuditEntry(
-        event = @ActionAuditRecord(
-            actionId = ActionId.CREATE_JOB_TEMPLATE,
-            resourceType = ResourceTypeId.TEMPLATE,
-            instanceId = INSTANCE_ID,
-            content = "Create template [" + INSTANCE_NAME + "](" + INSTANCE_ID + ")",
-            attributes = {
-                @AuditAttribute(name = INSTANCE_NAME, value = "#request?.name")
-            }
-        ),
-        recordSubEvent = true
+        actionId = ActionId.CREATE_JOB_TEMPLATE
     )
     public Response<Long> createTemplate(String username,
                                          AppResourceScope appResourceScope,
@@ -297,15 +272,7 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
 
     @Override
     @AuditEntry(
-        event = @ActionAuditRecord(
-            actionId = ActionId.DELETE_JOB_TEMPLATE,
-            resourceType = ResourceTypeId.TEMPLATE,
-            instanceId = INSTANCE_ID,
-            content = "Delete template [" + INSTANCE_NAME + "](" + INSTANCE_ID + ")",
-            attributes = {
-                @AuditAttribute(name = INSTANCE_ID, value = "#templateId")
-            }
-        )
+        actionId = ActionId.DELETE_JOB_TEMPLATE
     )
     public Response<Boolean> deleteTemplate(String username,
                                             AppResourceScope appResourceScope,
@@ -345,16 +312,7 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
 
     @Override
     @AuditEntry(
-        event = @ActionAuditRecord(
-            actionId = ActionId.EDIT_JOB_TEMPLATE,
-            resourceType = ResourceTypeId.TEMPLATE,
-            instanceId = INSTANCE_ID,
-            content = "Modify template [" + INSTANCE_NAME + "](" + INSTANCE_ID + ")",
-            attributes = {
-                @AuditAttribute(name = INSTANCE_ID, value = "#request?.d")
-            }
-        ),
-        recordSubEvent = true
+        actionId = ActionId.EDIT_JOB_TEMPLATE
     )
     public Response<Long> updateTemplate(String username,
                                          AppResourceScope appResourceScope,
@@ -371,14 +329,8 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
             throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
         }
 
-        AuditManagerRegistry.get().updateAuditEvent(
-            auditEvent -> auditEvent.setInstanceOriginData(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(
-                templateService.getTaskTemplateById(appResourceScope.getAppId(), templateId))));
-
         TaskTemplateInfoDTO template = createOrUpdateTemplate(username, appResourceScope, request);
 
-        AuditManagerRegistry.get().updateAuditEvent(
-            auditEvent -> auditEvent.setInstanceData(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(template)));
         return Response.buildSuccessResp(templateId);
     }
 
@@ -393,16 +345,7 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
 
     @Override
     @AuditEntry(
-        event = @ActionAuditRecord(
-            actionId = ActionId.EDIT_JOB_TEMPLATE,
-            resourceType = ResourceTypeId.TEMPLATE,
-            instanceId = INSTANCE_ID,
-            content = "Modify template [" + INSTANCE_NAME + "](" + INSTANCE_ID + ")",
-            attributes = {
-                @AuditAttribute(name = INSTANCE_ID, value = "#request?.d")
-            }
-        ),
-        recordSubEvent = true
+        actionId = ActionId.EDIT_JOB_TEMPLATE
     )
     public Response<Boolean> updateTemplateBasicInfo(String username,
                                                      AppResourceScope appResourceScope,
