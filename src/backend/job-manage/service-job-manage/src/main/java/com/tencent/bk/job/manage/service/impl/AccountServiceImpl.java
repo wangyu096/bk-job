@@ -26,19 +26,11 @@ package com.tencent.bk.job.manage.service.impl;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.encrypt.Encryptor;
-import com.tencent.bk.job.common.exception.AlreadyExistsException;
-import com.tencent.bk.job.common.exception.InternalException;
-import com.tencent.bk.job.common.exception.InvalidParamException;
-import com.tencent.bk.job.common.exception.NotFoundException;
-import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.exception.*;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.util.Utils;
-import com.tencent.bk.job.common.util.check.IlegalCharChecker;
-import com.tencent.bk.job.common.util.check.MaxLengthChecker;
-import com.tencent.bk.job.common.util.check.NotEmptyChecker;
-import com.tencent.bk.job.common.util.check.StringCheckHelper;
-import com.tencent.bk.job.common.util.check.TrimChecker;
+import com.tencent.bk.job.common.util.check.*;
 import com.tencent.bk.job.common.util.check.exception.StringCheckException;
 import com.tencent.bk.job.common.util.crypto.AESUtils;
 import com.tencent.bk.job.common.util.date.DateUtils;
@@ -131,7 +123,7 @@ public class AccountServiceImpl implements AccountService {
         Map<Long, AccountDisplayDTO> map = new HashMap<>();
         List<AccountDisplayDTO> accountDisplayDTOList = accountDAO.listAccountDisplayInfoByIds(accountIds);
         for (AccountDisplayDTO accountDisplayDTO : accountDisplayDTOList) {
-            map.put(accountDisplayDTO.getId(),accountDisplayDTO);
+            map.put(accountDisplayDTO.getId(), accountDisplayDTO);
         }
         return map;
     }
@@ -143,6 +135,20 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public void updateAccount(AccountDTO account) throws ServiceException {
+        AccountDTO existAccount = accountDAO.getAccount(
+            account.getAppId(),
+            account.getCategory(),
+            account.getAlias()
+        );
+        if (existAccount != null && !existAccount.getId().equals(account.getId())) {
+            log.info(
+                "Another same alias exists:(appId={}, category={}, alias={})",
+                existAccount.getAppId(),
+                existAccount.getCategory(),
+                existAccount.getAlias()
+            );
+            throw new AlreadyExistsException(ErrorCode.ACCOUNT_ALIAS_EXIST);
+        }
         if (StringUtils.isNotEmpty(account.getPassword())) {
             account.setPassword(encryptor.encrypt(account.getPassword()));
         }
