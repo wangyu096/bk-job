@@ -45,5 +45,5 @@ public @interface AuditEntry {
     /**
      * 是否记录审计子事件
      */
-    boolean recordSubEvent() default true;
+    String[] subActionIds() default {};
 }

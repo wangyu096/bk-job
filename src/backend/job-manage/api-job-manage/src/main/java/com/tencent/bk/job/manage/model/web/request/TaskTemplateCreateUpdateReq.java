@@ -24,7 +24,6 @@
 
 package com.tencent.bk.job.manage.model.web.request;
 
-import com.tencent.bk.job.common.util.JobContextUtil;
 import com.tencent.bk.job.common.util.check.IlegalCharChecker;
 import com.tencent.bk.job.common.util.check.MaxLengthChecker;
 import com.tencent.bk.job.common.util.check.NotEmptyChecker;
@@ -73,7 +72,7 @@ public class TaskTemplateCreateUpdateReq extends TemplateBasicInfoUpdateReq {
                 new IlegalCharChecker(), new MaxLengthChecker(60));
             this.setName(stringCheckHelper.checkAndGetResult(this.getName()));
         } catch (StringCheckException e) {
-            log.warn("Template name is invalid:", e);
+            log.warn("Template name is invalid", e);
             return false;
         }
         if (this.getDescription() == null) {
@@ -85,14 +84,14 @@ public class TaskTemplateCreateUpdateReq extends TemplateBasicInfoUpdateReq {
         }
         if (isCreate) {
             if (CollectionUtils.isEmpty(steps)) {
-                JobContextUtil.addDebugMessage("Empty template step!");
+                log.warn("Empty template step!");
                 return false;
             }
         }
         if (CollectionUtils.isNotEmpty(steps)) {
             for (TaskStepVO step : steps) {
                 if (!step.validate(isCreate)) {
-                    JobContextUtil.addDebugMessage("Validate step failed!");
+                    log.warn("Validate step failed!");
                     return false;
                 }
                 try {
@@ -109,11 +108,11 @@ public class TaskTemplateCreateUpdateReq extends TemplateBasicInfoUpdateReq {
             Set<String> variableNameList = new HashSet<>();
             for (TaskVariableVO variable : variables) {
                 if (!variable.validate(isCreate)) {
-                    JobContextUtil.addDebugMessage("Validate variable failed!");
+                    log.warn("Validate variable failed!");
                     return false;
                 }
                 if (variableNameList.contains(variable.getName())) {
-                    JobContextUtil.addDebugMessage("Variable name duplicated!");
+                    log.warn("Variable name duplicated!");
                     return false;
                 }
                 if (variable.getDelete() != 1) {

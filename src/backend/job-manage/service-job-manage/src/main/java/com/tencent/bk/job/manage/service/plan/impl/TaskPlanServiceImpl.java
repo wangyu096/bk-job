@@ -24,6 +24,9 @@
 
 package com.tencent.bk.job.manage.service.plan.impl;
 
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
+import com.tencent.bk.audit.annotations.AuditInstanceRecord;
+import com.tencent.bk.audit.model.ActionAuditContext;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.AlreadyExistsException;
 import com.tencent.bk.job.common.exception.FailedPreconditionException;
@@ -31,6 +34,8 @@ import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.exception.NotFoundException;
 import com.tencent.bk.job.common.exception.ServiceException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
+import com.tencent.bk.job.common.iam.constant.ActionId;
+import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.util.JobContextUtil;
@@ -70,6 +75,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_ID;
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_NAME;
 
 /**
  * @since 19/11/2019 16:43
@@ -680,7 +688,23 @@ public class TaskPlanServiceImpl implements TaskPlanService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.DELETE_JOB_PLAN,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PLAN
+        ),
+        content = "Delete plan [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public boolean deleteTaskPlanByTemplate(Long appId, Long templateId) {
+        // 审计
+        List<TaskPlanInfoDTO> deletePlans = listTaskPlansBasicInfo(appId, templateId);
+        if (CollectionUtils.isNotEmpty(deletePlans)) {
+            ActionAuditContext.current().setInstanceIdList(
+                deletePlans.stream().map(plan -> plan.getId().toString()).collect(Collectors.toList()));
+            ActionAuditContext.current().setInstanceNameList(
+                deletePlans.stream().map(TaskPlanInfoDTO::getName).collect(Collectors.toList()));
+        }
+
         return taskPlanDAO.deleteTaskPlanByTemplate(appId, templateId);
     }
 

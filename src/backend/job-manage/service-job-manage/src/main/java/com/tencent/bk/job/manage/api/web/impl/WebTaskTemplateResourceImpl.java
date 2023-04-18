@@ -72,7 +72,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * @since 16/10/2019 16:16
+ * 作业模板Resource
  */
 @Slf4j
 @RestController
@@ -214,8 +214,7 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
 
     @Override
     @AuditEntry(
-        actionId = ActionId.VIEW_JOB_TEMPLATE,
-        recordSubEvent = false
+        actionId = ActionId.VIEW_JOB_TEMPLATE
     )
     public Response<TaskTemplateVO> getTemplateById(String username,
                                                     AppResourceScope appResourceScope,
@@ -272,7 +271,8 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
 
     @Override
     @AuditEntry(
-        actionId = ActionId.DELETE_JOB_TEMPLATE
+        actionId = ActionId.DELETE_JOB_TEMPLATE,
+        subActionIds = {ActionId.DELETE_JOB_PLAN}
     )
     public Response<Boolean> deleteTemplate(String username,
                                             AppResourceScope appResourceScope,
@@ -328,8 +328,6 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
         if (!request.validate()) {
             throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
         }
-
-        TaskTemplateInfoDTO template = createOrUpdateTemplate(username, appResourceScope, request);
 
         return Response.buildSuccessResp(templateId);
     }

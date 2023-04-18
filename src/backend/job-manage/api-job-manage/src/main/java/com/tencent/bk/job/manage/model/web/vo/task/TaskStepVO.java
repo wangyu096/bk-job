@@ -24,10 +24,10 @@
 
 package com.tencent.bk.job.manage.model.web.vo.task;
 
-import com.tencent.bk.job.common.util.JobContextUtil;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.validation.Valid;
@@ -38,6 +38,7 @@ import java.util.List;
  */
 @Data
 @ApiModel("任务步骤信息")
+@Slf4j
 public class TaskStepVO {
 
     @ApiModelProperty("步骤 ID 仅在更新、删除时填写")
@@ -76,11 +77,11 @@ public class TaskStepVO {
     public boolean validate(boolean isCreate) {
         if (isCreate) {
             if (id != null && id > 0) {
-                JobContextUtil.addDebugMessage("Create request has step id!");
+                log.warn("Create request has step id!");
                 return false;
             }
             if (StringUtils.isBlank(name)) {
-                JobContextUtil.addDebugMessage("Create request missing step name!");
+                log.warn("Create request missing step name!");
                 return false;
             }
         }
@@ -90,19 +91,19 @@ public class TaskStepVO {
         switch (type) {
             case 1:
                 if (scriptStepInfo == null || !scriptStepInfo.validate(isCreate)) {
-                    JobContextUtil.addDebugMessage("Script step info validate failed!");
+                    log.warn("Script step info validate failed!");
                     return false;
                 }
                 break;
             case 2:
                 if (fileStepInfo == null || !fileStepInfo.validate(isCreate)) {
-                    JobContextUtil.addDebugMessage("File step info validate failed!");
+                    log.warn("File step info validate failed!");
                     return false;
                 }
                 break;
             case 3:
                 if (approvalStepInfo == null || !approvalStepInfo.validate(isCreate)) {
-                    JobContextUtil.addDebugMessage("Approval step info validate failed!");
+                    log.warn("Approval step info validate failed!");
                     return false;
                 }
                 break;

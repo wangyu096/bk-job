@@ -843,6 +843,15 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_JOB_TEMPLATE,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.TEMPLATE,
+            instanceIds = "#templateId",
+            instanceNames = "#$?.name"
+        ),
+        content = "View template [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public TaskTemplateInfoDTO getTemplateById(long templateId) {
         return taskTemplateDAO.getTemplateById(templateId);
     }

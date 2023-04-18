@@ -241,6 +241,9 @@ Default job logback configuration provided for import
             <appender-ref ref="paas-appender"/>
             <appender-ref ref="error-appender"/>
         </logger>
+        <logger name="bk_audit" level="INFO" additivity="false">
+            <appender-ref ref="audit-event-appender"/>
+        </logger>
         <root level="INFO">
             <appender-ref ref="async-app-appender"/>
             <appender-ref ref="error-appender"/>
@@ -281,6 +284,9 @@ Default job logback configuration provided for import
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="paas-appender"/>
             <appender-ref ref="error-appender"/>
+        </logger>
+        <logger name="bk_audit" level="INFO" additivity="false">
+            <appender-ref ref="audit-event-appender"/>
         </logger>
         <root level="INFO" additivity="false">
             <appender-ref ref="CONSOLE"/>
@@ -323,6 +329,9 @@ Default job logback configuration provided for import
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="paas-appender"/>
             <appender-ref ref="error-appender"/>
+        </logger>
+        <logger name="bk_audit" level="INFO" additivity="false">
+            <appender-ref ref="audit-event-appender"/>
         </logger>
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
