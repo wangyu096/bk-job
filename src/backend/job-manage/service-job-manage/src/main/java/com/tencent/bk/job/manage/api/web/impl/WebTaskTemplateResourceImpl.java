@@ -288,6 +288,7 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
 
         Long appId = appResourceScope.getAppId();
         taskFavoriteService.deleteFavorite(appId, username, templateId);
+        templateService.deleteTaskTemplate(appId, templateId);
 
         return Response.buildSuccessResp(true);
     }
