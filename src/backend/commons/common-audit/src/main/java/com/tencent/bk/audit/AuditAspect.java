@@ -57,6 +57,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -120,7 +121,7 @@ public class AuditAspect {
 
     private void startAudit(JoinPoint jp, Method method, AuditEntry record) {
         AuditContext auditContext = AuditContextBuilder.builder(record.actionId())
-            .setRecordSubEvent(record.recordSubEvent())
+            .setSubActionIds(record.subActionIds().length == 0 ? null : Arrays.asList(record.subActionIds()))
             .setUsername(auditRequestProvider.getUsername())
             .setAccessType(auditRequestProvider.getAccessType())
             .setAccessSourceIp(auditRequestProvider.getClientIp())

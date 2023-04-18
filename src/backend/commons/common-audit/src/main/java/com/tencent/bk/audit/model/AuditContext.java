@@ -34,7 +34,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * 审计上下文
@@ -78,7 +77,7 @@ public class AuditContext {
 
     private ActionAuditContext currentActionAuditContext;
 
-    private final boolean recordSubEvent;
+    private final List<String> subActionIds;
 
 
     public static AuditContext start(String actionId,
@@ -91,10 +90,10 @@ public class AuditContext {
                                      String accessSourceIp,
                                      String accessUserAgent,
                                      AuditHttpRequest httpRequest,
-                                     boolean recordSubEvent) {
+                                     List<String> subActionIds) {
         return new AuditContext(actionId, requestId, username, userIdentifyType, userIdentifyTenantId,
             System.currentTimeMillis(), bkAppCode, accessType, accessSourceIp, accessUserAgent, httpRequest,
-            recordSubEvent);
+            subActionIds);
     }
 
     private AuditContext(String actionId,
@@ -108,7 +107,7 @@ public class AuditContext {
                          String accessSourceIp,
                          String accessUserAgent,
                          AuditHttpRequest httpRequest,
-                         boolean recordSubEvent) {
+                         List<String> subActionIds) {
         this.actionId = actionId;
         this.requestId = requestId;
         this.username = username;
@@ -120,7 +119,7 @@ public class AuditContext {
         this.accessSourceIp = accessSourceIp;
         this.accessUserAgent = accessUserAgent;
         this.httpRequest = httpRequest;
-        this.recordSubEvent = recordSubEvent;
+        this.subActionIds = subActionIds == null ? Collections.emptyList() : subActionIds;
     }
 
     public static AuditContext current() {
@@ -158,18 +157,19 @@ public class AuditContext {
 
     private void buildAuditEvents() {
         Map<AuditEventKey, AuditEvent> auditEvents = new HashMap<>();
-        if (recordSubEvent) {
-            actionAuditContexts = actionAuditContexts.stream()
-                .filter(actionAuditContext -> actionAuditContext.getActionId().equals(actionId))
-                .collect(Collectors.toList());
-        }
-        actionAuditContexts.forEach(actionAuditContext ->
-            actionAuditContext.getEvents().forEach(
-                auditEvent -> auditEvents.put(auditEvent.toAuditKey(), auditEvent)
-            )
-        );
+        actionAuditContexts.stream()
+            .filter(actionAuditContext -> isActionRecordable(actionAuditContext.getActionId()))
+            .forEach(actionAuditContext ->
+                actionAuditContext.getEvents().forEach(
+                    auditEvent -> auditEvents.put(auditEvent.toAuditKey(), auditEvent)
+                )
+            );
         auditEvents.values().forEach(this::addContextAttributes);
         this.events.addAll(auditEvents.values());
+    }
+
+    private boolean isActionRecordable(String actionId) {
+        return this.actionId.equals(actionId) || this.subActionIds.contains(actionId);
     }
 
     public void end() {

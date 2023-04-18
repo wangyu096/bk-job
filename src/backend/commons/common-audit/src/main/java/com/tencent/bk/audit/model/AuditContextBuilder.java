@@ -27,6 +27,8 @@ package com.tencent.bk.audit.model;
 import com.tencent.bk.audit.constants.AccessTypeEnum;
 import com.tencent.bk.audit.constants.UserIdentifyTypeEnum;
 
+import java.util.List;
+
 public class AuditContextBuilder {
 
     private String requestId;
@@ -52,7 +54,10 @@ public class AuditContextBuilder {
 
     private AuditHttpRequest httpRequest;
 
-    private boolean recordSubEvent;
+    /**
+     * 子操作
+     */
+    private List<String> subActionIds;
 
 
     public static AuditContextBuilder builder(String actionId) {
@@ -108,14 +113,14 @@ public class AuditContextBuilder {
         return this;
     }
 
-    public AuditContextBuilder setRecordSubEvent(boolean recordSubEvent) {
-        this.recordSubEvent = recordSubEvent;
+    public AuditContextBuilder setSubActionIds(List<String> subActionIds) {
+        this.subActionIds = subActionIds;
         return this;
     }
 
     public AuditContext start() {
         return AuditContext.start(actionId, requestId, username, userIdentifyType, userIdentifyTenantId,
-            bkAppCode, accessType, accessSourceIp, accessUserAgent, httpRequest, recordSubEvent);
+            bkAppCode, accessType, accessSourceIp, accessUserAgent, httpRequest, subActionIds);
 
     }
 }
