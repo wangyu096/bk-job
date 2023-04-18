@@ -26,7 +26,7 @@ package com.tencent.bk.job.manage.service.plan.impl;
 
 import com.tencent.bk.audit.annotations.ActionAuditRecord;
 import com.tencent.bk.audit.annotations.AuditInstanceRecord;
-import com.tencent.bk.audit.model.ActionAuditContext;
+import com.tencent.bk.audit.model.SdkActionAuditContext;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.AlreadyExistsException;
 import com.tencent.bk.job.common.exception.FailedPreconditionException;
@@ -699,9 +699,9 @@ public class TaskPlanServiceImpl implements TaskPlanService {
         // 审计
         List<TaskPlanInfoDTO> deletePlans = listTaskPlansBasicInfo(appId, templateId);
         if (CollectionUtils.isNotEmpty(deletePlans)) {
-            ActionAuditContext.current().setInstanceIdList(
+            SdkActionAuditContext.current().setInstanceIdList(
                 deletePlans.stream().map(plan -> plan.getId().toString()).collect(Collectors.toList()));
-            ActionAuditContext.current().setInstanceNameList(
+            SdkActionAuditContext.current().setInstanceNameList(
                 deletePlans.stream().map(TaskPlanInfoDTO::getName).collect(Collectors.toList()));
         }
 

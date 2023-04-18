@@ -26,7 +26,7 @@ package com.tencent.bk.job.manage.service.template.impl;
 
 import com.tencent.bk.audit.annotations.ActionAuditRecord;
 import com.tencent.bk.audit.annotations.AuditInstanceRecord;
-import com.tencent.bk.audit.model.ActionAuditContext;
+import com.tencent.bk.audit.model.SdkActionAuditContext;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobResourceTypeEnum;
 import com.tencent.bk.job.common.exception.AbortedException;
@@ -331,14 +331,14 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
     )
     public TaskTemplateInfoDTO updateTaskTemplate(TaskTemplateInfoDTO taskTemplateInfo) {
         // 审计记录 - 原始数据
-        ActionAuditContext.current().setOriginInstanceList(Collections.singletonList(
+        SdkActionAuditContext.current().setOriginInstanceList(Collections.singletonList(
             TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(
                 getTaskTemplateById(taskTemplateInfo.getAppId(), taskTemplateInfo.getId()))));
 
         TaskTemplateInfoDTO template = saveOrUpdateTaskTemplate(taskTemplateInfo);
 
         // 审计记录 - 更新后数据
-        ActionAuditContext.current().setInstanceList(Collections.singletonList(
+        SdkActionAuditContext.current().setInstanceList(Collections.singletonList(
             TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(template)));
 
         return template;

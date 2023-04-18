@@ -118,8 +118,8 @@ public class AuditContextBuilder {
         return this;
     }
 
-    public AuditContext start() {
-        return AuditContext.start(actionId, requestId, username, userIdentifyType, userIdentifyTenantId,
+    public SdkAuditContext start() {
+        return SdkAuditContext.start(actionId, requestId, username, userIdentifyType, userIdentifyTenantId,
             bkAppCode, accessType, accessSourceIp, accessUserAgent, httpRequest, subActionIds);
 
     }

@@ -63,7 +63,8 @@ public class Audit {
      * @return 当前审计上下文
      */
     public AuditContext currentAuditContext() {
-        return auditContextHolder.current();
+        AuditContext auditContext = auditContextHolder.current();
+        return auditContext != null ? auditContext : AuditContext.INVALID;
     }
 
     /**

@@ -24,57 +24,9 @@
 
 package com.tencent.bk.audit.model;
 
-import java.util.List;
-import java.util.Map;
-
-/**
- * 操作审计上下文实现
- */
-public interface ActionAuditContext {
-    ActionAuditContext INVALID = new InvalidActionAuditContext();
-
-    /**
-     * 返回当前操作审计上下文
-     */
-    static ActionAuditContext current() {
-        return AuditContext.current().currentActionAuditContext();
+public class NoopActionAuditScope implements ActionAuditScope {
+    @Override
+    public void close() throws Exception {
+        // do nothing
     }
-
-    ActionAuditScope makeCurrent();
-
-    void addAttribute(String name, Object value);
-
-    boolean hasResource();
-
-    void end();
-
-    String getActionId();
-
-    Long getStartTime();
-
-    Long getEndTime();
-
-    String getResourceType();
-
-    List<String> getInstanceIdList();
-
-    List<String> getInstanceNameList();
-
-    List<AuditInstance> getOriginInstanceList();
-
-    List<AuditInstance> getInstanceList();
-
-    String getContent();
-
-    Map<String, Object> getAttributes();
-
-    List<AuditEvent> getEvents();
-
-    void setInstanceIdList(List<String> instanceIdList);
-
-    void setInstanceNameList(List<String> instanceNameList);
-
-    void setOriginInstanceList(List<AuditInstance> originInstanceList);
-
-    void setInstanceList(List<AuditInstance> instanceList);
 }

@@ -25,178 +25,25 @@
 package com.tencent.bk.audit.model;
 
 import com.tencent.bk.audit.GlobalAuditRegistry;
-import com.tencent.bk.audit.constants.AccessTypeEnum;
-import com.tencent.bk.audit.constants.AuditEventKey;
-import com.tencent.bk.audit.constants.UserIdentifyTypeEnum;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-/**
- * 审计上下文
- */
-public class AuditContext {
+public interface AuditContext {
+    AuditContext INVALID = new InvalidAuditContext();
 
-    private final String requestId;
-
-    private final String username;
-
-    private final UserIdentifyTypeEnum userIdentifyType;
-
-    private final String userIdentifyTenantId;
-
-    private final Long startTime;
-
-    private Long endTime;
-
-    private final String bkAppCode;
-
-    private final AccessTypeEnum accessType;
-
-    private final String accessSourceIp;
-
-    private final String accessUserAgent;
-
-    private int resultCode;
-
-    private String resultContent;
-
-    /**
-     * 操作ID
-     */
-    private final String actionId;
-
-    private final AuditHttpRequest httpRequest;
-
-    private List<ActionAuditContext> actionAuditContexts = new ArrayList<>();
-
-    private final List<AuditEvent> events = new ArrayList<>();
-
-    private ActionAuditContext currentActionAuditContext;
-
-    private final List<String> subActionIds;
-
-
-    public static AuditContext start(String actionId,
-                                     String requestId,
-                                     String username,
-                                     UserIdentifyTypeEnum userIdentifyType,
-                                     String userIdentifyTenantId,
-                                     String bkAppCode,
-                                     AccessTypeEnum accessType,
-                                     String accessSourceIp,
-                                     String accessUserAgent,
-                                     AuditHttpRequest httpRequest,
-                                     List<String> subActionIds) {
-        return new AuditContext(actionId, requestId, username, userIdentifyType, userIdentifyTenantId,
-            System.currentTimeMillis(), bkAppCode, accessType, accessSourceIp, accessUserAgent, httpRequest,
-            subActionIds);
-    }
-
-    private AuditContext(String actionId,
-                         String requestId,
-                         String username,
-                         UserIdentifyTypeEnum userIdentifyType,
-                         String userIdentifyTenantId,
-                         Long startTime,
-                         String bkAppCode,
-                         AccessTypeEnum accessType,
-                         String accessSourceIp,
-                         String accessUserAgent,
-                         AuditHttpRequest httpRequest,
-                         List<String> subActionIds) {
-        this.actionId = actionId;
-        this.requestId = requestId;
-        this.username = username;
-        this.userIdentifyType = userIdentifyType;
-        this.userIdentifyTenantId = userIdentifyTenantId;
-        this.startTime = startTime;
-        this.bkAppCode = bkAppCode;
-        this.accessType = accessType;
-        this.accessSourceIp = accessSourceIp;
-        this.accessUserAgent = accessUserAgent;
-        this.httpRequest = httpRequest;
-        this.subActionIds = subActionIds == null ? Collections.emptyList() : subActionIds;
-    }
-
-    public static AuditContext current() {
+    static AuditContext current() {
         return GlobalAuditRegistry.get().currentAuditContext();
     }
 
-    public void addContextAttributes(AuditEvent auditEvent) {
-        auditEvent.setRequestId(requestId);
-        auditEvent.setBkAppCode(bkAppCode);
+    void setCurrentActionAuditContext(ActionAuditContext actionAuditContext);
 
-        if (accessType != null) {
-            auditEvent.setAccessType(accessType.getValue());
-        }
-        auditEvent.setAccessUserAgent(accessUserAgent);
-        auditEvent.setAccessSourceIp(accessSourceIp);
+    ActionAuditContext currentActionAuditContext();
 
-        auditEvent.setUsername(username);
-        if (userIdentifyType != null) {
-            auditEvent.setUserIdentifyType(UserIdentifyTypeEnum.PERSONAL.getValue());
-        }
-        auditEvent.setUserIdentifyTenantId(userIdentifyTenantId);
+    void addActionAuditContext(ActionAuditContext actionAuditContext);
 
-        if (httpRequest != null) {
-            auditEvent.addExtendData("request", httpRequest);
-        }
-    }
+    void end();
 
-    public ActionAuditContext currentActionAuditContext() {
-        return currentActionAuditContext;
-    }
+    void error(int resultCode, String resultContent);
 
-    public void addActionAuditContext(ActionAuditContext actionAuditContext) {
-        actionAuditContexts.add(actionAuditContext);
-    }
-
-    private void buildAuditEvents() {
-        Map<AuditEventKey, AuditEvent> auditEvents = new HashMap<>();
-        actionAuditContexts.stream()
-            .filter(actionAuditContext -> isActionRecordable(actionAuditContext.getActionId()))
-            .forEach(actionAuditContext ->
-                actionAuditContext.getEvents().forEach(
-                    auditEvent -> auditEvents.put(auditEvent.toAuditKey(), auditEvent)
-                )
-            );
-        auditEvents.values().forEach(this::addContextAttributes);
-        this.events.addAll(auditEvents.values());
-    }
-
-    private boolean isActionRecordable(String actionId) {
-        return this.actionId.equals(actionId) || this.subActionIds.contains(actionId);
-    }
-
-    public void end() {
-        this.endTime = System.currentTimeMillis();
-        buildAuditEvents();
-    }
-
-    public void setCurrentActionAuditContext(ActionAuditContext actionAuditContext) {
-        this.currentActionAuditContext = actionAuditContext;
-    }
-
-    public void error(int resultCode, String resultContent) {
-        this.resultCode = resultCode;
-        this.resultContent = resultContent;
-        this.endTime = System.currentTimeMillis();
-        this.actionAuditContexts.clear();
-        this.events.clear();
-        AuditEvent auditEvent = new AuditEvent(actionId);
-        addContextAttributes(auditEvent);
-        auditEvent.setStartTime(startTime);
-        auditEvent.setEndTime(this.endTime);
-        auditEvent.setResultCode(this.resultCode);
-        auditEvent.setResultContent(this.resultContent);
-        this.events.add(auditEvent);
-    }
-
-    public List<AuditEvent> getEvents() {
-        return Collections.unmodifiableList(events);
-    }
+    List<AuditEvent> getEvents();
 }

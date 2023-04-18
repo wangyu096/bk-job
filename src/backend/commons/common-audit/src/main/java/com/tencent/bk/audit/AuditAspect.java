@@ -31,11 +31,12 @@ import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.audit.model.ActionAuditContext;
 import com.tencent.bk.audit.model.ActionAuditContextBuilder;
 import com.tencent.bk.audit.model.ActionAuditScope;
-import com.tencent.bk.audit.model.AuditContext;
 import com.tencent.bk.audit.model.AuditContextBuilder;
 import com.tencent.bk.audit.model.AuditHttpRequest;
 import com.tencent.bk.audit.model.AuditInstance;
 import com.tencent.bk.audit.model.ErrorInfo;
+import com.tencent.bk.audit.model.SdkActionAuditContext;
+import com.tencent.bk.audit.model.SdkAuditContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -120,7 +121,7 @@ public class AuditAspect {
     }
 
     private void startAudit(JoinPoint jp, Method method, AuditEntry record) {
-        AuditContext auditContext = AuditContextBuilder.builder(record.actionId())
+        SdkAuditContext auditContext = AuditContextBuilder.builder(record.actionId())
             .setSubActionIds(record.subActionIds().length == 0 ? null : Arrays.asList(record.subActionIds()))
             .setUsername(auditRequestProvider.getUsername())
             .setAccessType(auditRequestProvider.getAccessType())
@@ -215,7 +216,7 @@ public class AuditAspect {
         if (isAuditRecording) {
             method = ((MethodSignature) pjp.getSignature()).getMethod();
             record = method.getAnnotation(ActionAuditRecord.class);
-            ActionAuditContext startActionAuditContext =
+            SdkActionAuditContext startActionAuditContext =
                 ActionAuditContextBuilder.builder(record.actionId())
                     .setResourceType(record.instance().resourceType())
                     .setEventBuilder(record.builder())

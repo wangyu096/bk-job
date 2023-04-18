@@ -25,56 +25,35 @@
 package com.tencent.bk.audit.model;
 
 import java.util.List;
-import java.util.Map;
 
-/**
- * 操作审计上下文实现
- */
-public interface ActionAuditContext {
-    ActionAuditContext INVALID = new InvalidActionAuditContext();
-
-    /**
-     * 返回当前操作审计上下文
-     */
-    static ActionAuditContext current() {
-        return AuditContext.current().currentActionAuditContext();
+public class InvalidAuditContext implements AuditContext {
+    @Override
+    public ActionAuditContext currentActionAuditContext() {
+        return ActionAuditContext.INVALID;
     }
 
-    ActionAuditScope makeCurrent();
+    @Override
+    public void addActionAuditContext(ActionAuditContext actionAuditContext) {
 
-    void addAttribute(String name, Object value);
+    }
 
-    boolean hasResource();
+    @Override
+    public void end() {
 
-    void end();
+    }
 
-    String getActionId();
+    @Override
+    public void setCurrentActionAuditContext(ActionAuditContext actionAuditContext) {
 
-    Long getStartTime();
+    }
 
-    Long getEndTime();
+    @Override
+    public void error(int resultCode, String resultContent) {
 
-    String getResourceType();
+    }
 
-    List<String> getInstanceIdList();
-
-    List<String> getInstanceNameList();
-
-    List<AuditInstance> getOriginInstanceList();
-
-    List<AuditInstance> getInstanceList();
-
-    String getContent();
-
-    Map<String, Object> getAttributes();
-
-    List<AuditEvent> getEvents();
-
-    void setInstanceIdList(List<String> instanceIdList);
-
-    void setInstanceNameList(List<String> instanceNameList);
-
-    void setOriginInstanceList(List<AuditInstance> originInstanceList);
-
-    void setInstanceList(List<AuditInstance> instanceList);
+    @Override
+    public List<AuditEvent> getEvents() {
+        return null;
+    }
 }

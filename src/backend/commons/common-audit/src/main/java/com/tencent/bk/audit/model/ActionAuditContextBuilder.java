@@ -59,7 +59,7 @@ public class ActionAuditContextBuilder {
         return this;
     }
 
-    public ActionAuditContext start() {
-        return ActionAuditContext.start(actionId, resourceType, content, eventBuilder);
+    public SdkActionAuditContext start() {
+        return SdkActionAuditContext.start(actionId, resourceType, content, eventBuilder);
     }
 }
