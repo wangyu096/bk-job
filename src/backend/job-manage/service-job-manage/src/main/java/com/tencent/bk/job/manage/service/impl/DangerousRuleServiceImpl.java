@@ -71,7 +71,7 @@ public class DangerousRuleServiceImpl implements DangerousRuleService {
         if (req.getId() == -1) {
             //新增
             int maxPriority = dangerousRuleDAO.getMaxPriority(dslContext);
-            log.info(String.format("current maxPriority:%d", maxPriority));
+            log.info(String.format("currentAuditContext maxPriority:%d", maxPriority));
             dangerousRuleDAO.insertDangerousRule(dslContext, new DangerousRuleDTO(null, req.getExpression(),
                 req.getDescription(), maxPriority + 1, scriptType, username, System.currentTimeMillis(), username,
                 System.currentTimeMillis(), req.getAction(), EnableStatusEnum.DISABLED.getValue()));

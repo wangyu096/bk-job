@@ -105,7 +105,7 @@ public class AccountServiceImpl implements AccountService {
                 throw new NotFoundException(ErrorCode.DB_SYSTEM_ACCOUNT_IS_INVALID);
             }
             if (!dbSystemAccount.getAppId().equals(account.getAppId())) {
-                log.warn("DB related system account is not in current app, systemAccountId={}, systemAccountAppId={}"
+                log.warn("DB related system account is not in currentAuditContext app, systemAccountId={}, systemAccountAppId={}"
                     , account.getDbSystemAccountId(), dbSystemAccount.getAppId());
                 throw new NotFoundException(ErrorCode.DB_SYSTEM_ACCOUNT_IS_INVALID);
             }

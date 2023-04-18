@@ -200,44 +200,47 @@ public class AuditAspect {
 
     private void recordException(Throwable e) {
         ErrorInfo errorInfo = auditExceptionResolver.resolveException(e);
-        audit.current().error(errorInfo.getErrorCode(), errorInfo.getErrorMessage());
+        audit.currentAuditContext().error(errorInfo.getErrorCode(), errorInfo.getErrorMessage());
     }
 
     @Around("actionAuditRecord()")
     public Object actionAuditRecord(ProceedingJoinPoint pjp) throws Throwable {
         Object result = null;
         long start = System.currentTimeMillis();
-
-        Method method = ((MethodSignature) pjp.getSignature()).getMethod();
-        ActionAuditRecord record = method.getAnnotation(ActionAuditRecord.class);
-        ActionAuditContext startActionAuditContext =
-            ActionAuditContextBuilder.builder(record.actionId())
-                .setResourceType(record.instance().resourceType())
-                .setEventBuilder(record.builder())
-                .setContent(record.content())
-                .start();
-        ActionAuditScope scope = startActionAuditContext.makeCurrent();
+        Method method = null;
+        ActionAuditRecord record = null;
+        ActionAuditScope scope = null;
+        boolean isAuditRecording = audit.isRecording();
+        if (isAuditRecording) {
+            method = ((MethodSignature) pjp.getSignature()).getMethod();
+            record = method.getAnnotation(ActionAuditRecord.class);
+            ActionAuditContext startActionAuditContext =
+                ActionAuditContextBuilder.builder(record.actionId())
+                    .setResourceType(record.instance().resourceType())
+                    .setEventBuilder(record.builder())
+                    .setContent(record.content())
+                    .start();
+            scope = startActionAuditContext.makeCurrent();
+        }
         try {
             result = pjp.proceed();
             return result;
         } finally {
-            try {
-                AuditContext auditContext = AuditContext.current();
-                if (auditContext != null) {
+            if (isAuditRecording) {
+                try {
                     ActionAuditContext currentActionAuditContext = ActionAuditContext.current();
                     parseActionAuditRecordSpEL(pjp, record, method, result, currentActionAuditContext);
                     currentActionAuditContext.end();
                     if (log.isInfoEnabled()) {
                         log.info("Audit action {}, cost: {}", record.actionId(), System.currentTimeMillis() - start);
                     }
+                } catch (Throwable e) {
+                    // 忽略审计错误，避免影响业务代码执行
+                    log.error("Audit action caught exception", e);
+                } finally {
+                    scope.close();
                 }
-            } catch (Throwable e) {
-                // 忽略审计错误，避免影响业务代码执行
-                log.error("Audit action caught exception", e);
-            } finally {
-                scope.close();
             }
-
         }
 
 

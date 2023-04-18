@@ -124,7 +124,7 @@ public class AuditContext {
     }
 
     public static AuditContext current() {
-        return GlobalAuditRegistry.get().current();
+        return GlobalAuditRegistry.get().currentAuditContext();
     }
 
     public void addContextAttributes(AuditEvent auditEvent) {
@@ -169,6 +169,7 @@ public class AuditContext {
             )
         );
         auditEvents.values().forEach(this::addContextAttributes);
+        this.events.addAll(auditEvents.values());
     }
 
     public void end() {
@@ -183,11 +184,13 @@ public class AuditContext {
     public void error(int resultCode, String resultContent) {
         this.resultCode = resultCode;
         this.resultContent = resultContent;
+        this.endTime = System.currentTimeMillis();
         this.actionAuditContexts.clear();
         this.events.clear();
         AuditEvent auditEvent = new AuditEvent(actionId);
         addContextAttributes(auditEvent);
-        auditEvent.setEndTime(System.currentTimeMillis());
+        auditEvent.setStartTime(startTime);
+        auditEvent.setEndTime(this.endTime);
         auditEvent.setResultCode(this.resultCode);
         auditEvent.setResultContent(this.resultContent);
         this.events.add(auditEvent);

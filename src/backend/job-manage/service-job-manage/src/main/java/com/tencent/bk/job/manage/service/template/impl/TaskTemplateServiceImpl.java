@@ -761,7 +761,7 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
                 taskStepService.deleteStepById(taskStep.getTemplateId(), taskStep.getId());
                 stepIterator.remove();
             } else {
-                // Update previous step info on current step
+                // Update previous step info on currentAuditContext step
                 if (previousStep == null) {
                     taskStep.setPreviousStepId(0L);
                 } else {
@@ -776,13 +776,13 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
                     taskStep.setId(taskStepService.insertStep(taskStep));
                 }
 
-                // update previous step to point to current step
+                // update previous step to point to currentAuditContext step
                 if (previousStep != null) {
                     previousStep.setNextStepId(taskStep.getId());
                     taskStepService.updateStepById(previousStep);
                 }
 
-                // make previous current
+                // make previous currentAuditContext
                 previousStep = taskStep;
                 if (firstStepId == 0) {
                     firstStepId = taskStep.getId();

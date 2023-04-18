@@ -44,19 +44,38 @@ public class Audit {
         GlobalAuditRegistry.register(this);
     }
 
-    public AuditContext startAudit(AuditContext auditContext) {
+    /**
+     * 开始审计
+     *
+     * @param auditContext 审计上下文
+     */
+    public void startAudit(AuditContext auditContext) {
         if (auditContextHolder.current() != null) {
             log.error("Current audit context is already exist! ");
-            return null;
+            return;
         }
         auditContextHolder.set(auditContext);
-        return auditContext;
     }
 
-    public AuditContext current() {
+    /**
+     * 返回当前审计上下文
+     *
+     * @return 当前审计上下文
+     */
+    public AuditContext currentAuditContext() {
         return auditContextHolder.current();
     }
 
+    /**
+     * 是否正在记录审计事件
+     */
+    public boolean isRecording() {
+        return currentAuditContext() != null;
+    }
+
+    /**
+     * 结束审计
+     */
     public void stopAudit() {
         try {
             AuditContext auditContext = auditContextHolder.current();

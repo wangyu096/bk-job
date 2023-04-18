@@ -562,7 +562,7 @@ public class ScriptServiceImpl implements ScriptService {
         ScriptDTO scriptVersionToBePublished = null;
         for (ScriptDTO scriptVersion : scriptVersions) {
             if (!isPublicScript && !scriptVersion.getAppId().equals(targetAppId)) {
-                log.warn("Publish script, script:{} is not in current app:{}", scriptId, targetAppId);
+                log.warn("Publish script, script:{} is not in currentAuditContext app:{}", scriptId, targetAppId);
                 throw new NotFoundException(ErrorCode.SCRIPT_NOT_IN_APP);
             }
             if (scriptVersion.getScriptVersionId().equals(scriptVersionId)) {
@@ -625,7 +625,7 @@ public class ScriptServiceImpl implements ScriptService {
         ScriptDTO scriptVersionToBeDisabled = null;
         for (ScriptDTO scriptVersion : scriptVersions) {
             if (!scriptVersion.getAppId().equals(targetAppId)) {
-                log.warn("Disable script, script:{} is not in current app:{}", scriptId, targetAppId);
+                log.warn("Disable script, script:{} is not in currentAuditContext app:{}", scriptId, targetAppId);
                 throw new NotFoundException(ErrorCode.SCRIPT_NOT_IN_APP);
             }
             if (scriptVersion.getScriptVersionId().equals(scriptVersionId)) {
@@ -674,7 +674,7 @@ public class ScriptServiceImpl implements ScriptService {
         }
         if (!script.isPublicScript()) {
             if (!script.getAppId().equals(appId)) {
-                log.warn("Script:{} is not in current app:{}", script.getId(), appId);
+                log.warn("Script:{} is not in currentAuditContext app:{}", script.getId(), appId);
                 throw new NotFoundException(ErrorCode.SCRIPT_NOT_IN_APP);
             }
         }
