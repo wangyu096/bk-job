@@ -24,6 +24,7 @@
 
 package com.tencent.bk.job.execute.api.web.impl;
 
+import com.tencent.bk.audit.GlobalAuditRegistry;
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.job.common.annotation.CompatibleImplementation;
 import com.tencent.bk.job.common.constant.ErrorCode;
@@ -228,6 +229,7 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
             ExecuteMetricsConstants.TAG_KEY_START_MODE, ExecuteMetricsConstants.TAG_VALUE_START_MODE_WEB,
             ExecuteMetricsConstants.TAG_KEY_TASK_TYPE, ExecuteMetricsConstants.TAG_VALUE_TASK_TYPE_FAST_SCRIPT
         })
+    @AuditEntry(actionId = ActionId.QUICK_EXECUTE_SCRIPT)
     public Response<StepExecuteVO> fastExecuteScript(String username,
                                                      AppResourceScope appResourceScope,
                                                      String scopeType,
@@ -238,6 +240,11 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
         if (!checkFastExecuteScriptRequest(request)) {
             log.warn("Fast execute script request is illegal!");
             throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+        }
+
+        if (request.getScriptSource()) {
+            GlobalAuditRegistry.get().startAudit();
+
         }
 
         TaskInstanceDTO taskInstance = buildFastScriptTaskInstance(username, appResourceScope.getAppId(), request);
@@ -347,6 +354,7 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
             ExecuteMetricsConstants.TAG_KEY_START_MODE, ExecuteMetricsConstants.TAG_VALUE_START_MODE_WEB,
             ExecuteMetricsConstants.TAG_KEY_TASK_TYPE, ExecuteMetricsConstants.TAG_VALUE_TASK_TYPE_FAST_FILE
         })
+    @AuditEntry(actionId = ActionId.QUICK_TRANSFER_FILE)
     public Response<StepExecuteVO> fastPushFile(String username,
                                                 AppResourceScope appResourceScope,
                                                 String scopeType,
