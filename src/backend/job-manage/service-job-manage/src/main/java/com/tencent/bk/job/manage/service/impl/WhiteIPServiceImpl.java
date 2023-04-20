@@ -63,7 +63,6 @@ import com.tencent.bk.job.manage.model.inner.ServiceWhiteIPInfo;
 import com.tencent.bk.job.manage.model.web.request.ipchooser.HostIdWithMeta;
 import com.tencent.bk.job.manage.model.web.request.whiteip.WhiteIPRecordCreateUpdateReq;
 import com.tencent.bk.job.manage.model.web.vo.whiteip.ActionScopeVO;
-import com.tencent.bk.job.manage.model.web.vo.whiteip.ScopeVO;
 import com.tencent.bk.job.manage.model.web.vo.whiteip.WhiteIPRecordVO;
 import com.tencent.bk.job.manage.service.ApplicationService;
 import com.tencent.bk.job.manage.service.WhiteIPService;
@@ -453,7 +452,43 @@ public class WhiteIPServiceImpl implements WhiteIPService {
     }
 
     @Override
-    public Long saveWhiteIP(String username, WhiteIPRecordCreateUpdateReq createUpdateReq) {
+    public WhiteIPRecordDTO createWhiteIP(String username, WhiteIPRecordCreateUpdateReq createUpdateReq) {
+        LOG.infoWithRequestId("Input(" + username + "," + createUpdateReq.toString() + ")");
+        // 1.参数校验、预处理
+        List<String> ipv4List = checkReqAndGetIpList(createUpdateReq);
+        List<HostIdWithMeta> hostList = createUpdateReq.getHostList();
+        // 2.appId转换
+        List<Long> appIdList = parseTargetAppIds(createUpdateReq);
+
+        List<Long> actionScopeIdList = createUpdateReq.getActionScopeIdList();
+        val ipDtoList = buildIpDtoList(createUpdateReq.getCloudAreaId(), ipv4List, hostList, username);
+        val actionScopeDtoList = actionScopeIdList.stream().map(actionScopeId -> new WhiteIPActionScopeDTO(
+            null,
+            null,
+            actionScopeId,
+            username,
+            System.currentTimeMillis(),
+            username,
+            System.currentTimeMillis()
+        )).collect(Collectors.toList());
+
+        long recordId = whiteIPRecordDAO.insertWhiteIPRecord(dslContext, new WhiteIPRecordDTO(
+            null,
+            appIdList,
+            createUpdateReq.getRemark(),
+            ipDtoList,
+            actionScopeDtoList,
+            username,
+            System.currentTimeMillis(),
+            username,
+            System.currentTimeMillis()
+        ));
+        LOG.infoWithRequestId("insert success,recordId=" + recordId);
+        return getWhiteIPDetailById(username, recordId);
+    }
+
+    @Override
+    public WhiteIPRecordDTO updateWhiteIP(String username, WhiteIPRecordCreateUpdateReq createUpdateReq) {
         LOG.infoWithRequestId("Input(" + username + "," + createUpdateReq.toString() + ")");
         // 1.参数校验、预处理
         List<String> ipv4List = checkReqAndGetIpList(createUpdateReq);
@@ -473,79 +508,28 @@ public class WhiteIPServiceImpl implements WhiteIPService {
             System.currentTimeMillis()
         )).collect(Collectors.toList());
         var recordId = createUpdateReq.getId();
-        if (recordId != null && recordId > 0) {
-            Long finalRecordId = recordId;
-            ipDtoList.forEach(it -> it.setRecordId(finalRecordId));
-            actionScopeDtoList.forEach(it -> it.setRecordId(finalRecordId));
-            WhiteIPRecordDTO whiteIPRecordDTO = whiteIPRecordDAO.getWhiteIPRecordById(dslContext, recordId);
-            whiteIPRecordDTO.setAppIdList(appIdList);
-            whiteIPRecordDTO.setRemark(createUpdateReq.getRemark());
-            whiteIPRecordDTO.setIpList(ipDtoList);
-            whiteIPRecordDTO.setActionScopeList(actionScopeDtoList);
-            whiteIPRecordDTO.setLastModifier(username);
-            whiteIPRecordDTO.setLastModifyTime(System.currentTimeMillis());
-            //修改
-            int affectedRows = whiteIPRecordDAO.updateWhiteIPRecordById(dslContext, whiteIPRecordDTO);
-            log.info("{} white ip records updated", affectedRows);
-        } else {
-            //新增
-            recordId = whiteIPRecordDAO.insertWhiteIPRecord(dslContext, new WhiteIPRecordDTO(
-                null,
-                appIdList,
-                createUpdateReq.getRemark(),
-                ipDtoList,
-                actionScopeDtoList,
-                username,
-                System.currentTimeMillis(),
-                username,
-                System.currentTimeMillis()
-            ));
-            LOG.infoWithRequestId("insert success,recordId=" + recordId);
-        }
-        return recordId;
-    }
+        ipDtoList.forEach(it -> it.setRecordId(recordId));
+        actionScopeDtoList.forEach(it -> it.setRecordId(recordId));
+        WhiteIPRecordDTO whiteIPRecordDTO = whiteIPRecordDAO.getWhiteIPRecordById(dslContext, recordId);
+        whiteIPRecordDTO.setAppIdList(appIdList);
+        whiteIPRecordDTO.setRemark(createUpdateReq.getRemark());
+        whiteIPRecordDTO.setIpList(ipDtoList);
+        whiteIPRecordDTO.setActionScopeList(actionScopeDtoList);
+        whiteIPRecordDTO.setLastModifier(username);
+        whiteIPRecordDTO.setLastModifyTime(System.currentTimeMillis());
 
-    private boolean isAllScope(List<Long> appIdList) {
-        return appIdList != null
-            && appIdList.size() > 0
-            && new HashSet<>(appIdList).contains(JobConstants.PUBLIC_APP_ID);
+        //修改
+        int affectedRows = whiteIPRecordDAO.updateWhiteIPRecordById(dslContext, whiteIPRecordDTO);
+        log.info("{} white ip records updated", affectedRows);
+        return getWhiteIPDetailById(username, recordId);
     }
 
     @Override
-    public WhiteIPRecordVO getWhiteIPDetailById(String username, Long id) {
-        LOG.infoWithRequestId("Input(" + username + "," + id + ")");
-        val record = whiteIPRecordDAO.getWhiteIPRecordById(dslContext, id);
-        Long cloudAreaId = null;
-        if (record.getIpList().size() > 0) {
-            cloudAreaId = record.getIpList().get(0).getCloudAreaId();
-        }
-        boolean allScope = isAllScope(record.getAppIdList());
-        val applicationInfoList = applicationDAO.listAppsByAppIds(record.getAppIdList());
-        List<ScopeVO> scopeVOList = null;
-        if (!allScope) {
-            scopeVOList = applicationInfoList.stream().map(it -> new ScopeVO(
-                it.getScope().getType().getValue(),
-                it.getScope().getId(),
-                it.getName()
-            )).collect(Collectors.toList());
-        }
-        WhiteIPRecordVO whiteIPRecord = new WhiteIPRecordVO();
-        whiteIPRecord.setId(id);
-        whiteIPRecord.setCloudAreaId(cloudAreaId);
-        whiteIPRecord.setHostList(record.getIpList().stream().map(WhiteIPIPDTO::extractWhiteIPHostVO)
-            .collect(Collectors.toList()));
-        whiteIPRecord.setActionScopeList(record.getActionScopeList().stream().map(actionScopeDTO -> {
-            val actionScopeId = actionScopeDTO.getActionScopeId();
-            return actionScopeDAO.getActionScopeVOById(actionScopeId);
-        }).collect(Collectors.toList()));
-        whiteIPRecord.setAllScope(allScope);
-        whiteIPRecord.setScopeList(scopeVOList);
-        whiteIPRecord.setRemark(record.getRemark());
-        whiteIPRecord.setCreator(record.getCreator());
-        whiteIPRecord.setCreateTime(record.getCreateTime());
-        whiteIPRecord.setLastModifier(record.getLastModifier());
-        whiteIPRecord.setLastModifyTime(record.getLastModifyTime());
-        return whiteIPRecord;
+    public WhiteIPRecordDTO getWhiteIPDetailById(String username, Long id) {
+        WhiteIPRecordDTO record = whiteIPRecordDAO.getWhiteIPRecordById(dslContext, id);
+        List<ApplicationDTO> applicationInfoList = applicationDAO.listAppsByAppIds(record.getAppIdList());
+        record.setAppList(applicationInfoList);
+        return record;
     }
 
     @Override

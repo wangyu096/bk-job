@@ -100,12 +100,20 @@ public interface CronJobService {
     boolean updateCronJobErrorById(CronJobInfoDTO cronJobErrorInfo);
 
     /**
-     * 新增、保存定时任务信息
+     * 创建定时任务
      *
-     * @param cronJobInfo 待新增、保存的定时任务信息
-     * @return 定时任务 ID
+     * @param cronJobInfo 定时任务信息
+     * @return 定时任务
      */
-    Long saveCronJobInfo(CronJobInfoDTO cronJobInfo);
+    CronJobInfoDTO createCronJobInfo(CronJobInfoDTO cronJobInfo);
+
+    /**
+     * 更新定时任务信息
+     *
+     * @param cronJobInfo 定时任务信息
+     * @return 定时任务
+     */
+    CronJobInfoDTO updateCronJobInfo(CronJobInfoDTO cronJobInfo);
 
     /**
      * 删除定时任务

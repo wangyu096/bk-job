@@ -66,29 +66,41 @@ public class DangerousRuleServiceImpl implements DangerousRuleService {
     }
 
     @Override
-    public Boolean addOrUpdateDangerousRule(String username, AddOrUpdateDangerousRuleReq req) {
-        int scriptType = DangerousRuleDTO.encodeScriptType(req.getScriptTypeList());
-        if (req.getId() == -1) {
-            //新增
-            int maxPriority = dangerousRuleDAO.getMaxPriority(dslContext);
-            log.info(String.format("currentAuditContext maxPriority:%d", maxPriority));
-            dangerousRuleDAO.insertDangerousRule(dslContext, new DangerousRuleDTO(null, req.getExpression(),
-                req.getDescription(), maxPriority + 1, scriptType, username, System.currentTimeMillis(), username,
-                System.currentTimeMillis(), req.getAction(), EnableStatusEnum.DISABLED.getValue()));
-        } else {
-            //更新
-            DangerousRuleDTO existDangerousRuleDTO = dangerousRuleDAO.getDangerousRuleById(dslContext, req.getId());
-            if (existDangerousRuleDTO != null) {
-                dangerousRuleDAO.updateDangerousRule(dslContext, new DangerousRuleDTO(req.getId(),
-                    req.getExpression(), req.getDescription(), existDangerousRuleDTO.getPriority(), scriptType, null,
-                    null, username, System.currentTimeMillis(), req.getAction(), req.getStatus()));
-            } else {
-                return false;
-            }
-        }
-        dangerousRuleCache.deleteDangerousRuleCacheByScriptTypes(req.getScriptTypeList());
-        return true;
+    public DangerousRuleDTO getDangerousRuleById(Long id) {
+        return dangerousRuleDAO.getDangerousRuleById(dslContext, id);
     }
+
+    @Override
+    public DangerousRuleDTO createDangerousRule(String username, AddOrUpdateDangerousRuleReq req) {
+        int scriptType = DangerousRuleDTO.encodeScriptType(req.getScriptTypeList());
+        int maxPriority = dangerousRuleDAO.getMaxPriority(dslContext);
+        log.info(String.format("currentAuditContext maxPriority:%d", maxPriority));
+        long id = dangerousRuleDAO.insertDangerousRule(dslContext, new DangerousRuleDTO(null, req.getExpression(),
+            req.getDescription(), maxPriority + 1, scriptType, username, System.currentTimeMillis(), username,
+            System.currentTimeMillis(), req.getAction(), EnableStatusEnum.DISABLED.getValue()));
+
+        // 清理缓存
+        dangerousRuleCache.deleteDangerousRuleCacheByScriptTypes(req.getScriptTypeList());
+
+        return getDangerousRuleById(id);
+    }
+
+    @Override
+    public DangerousRuleDTO updateDangerousRule(String username, AddOrUpdateDangerousRuleReq req) {
+        int scriptType = DangerousRuleDTO.encodeScriptType(req.getScriptTypeList());
+        DangerousRuleDTO existDangerousRuleDTO = dangerousRuleDAO.getDangerousRuleById(dslContext, req.getId());
+        if (existDangerousRuleDTO != null) {
+            dangerousRuleDAO.updateDangerousRule(dslContext, new DangerousRuleDTO(req.getId(),
+                req.getExpression(), req.getDescription(), existDangerousRuleDTO.getPriority(), scriptType, null,
+                null, username, System.currentTimeMillis(), req.getAction(), req.getStatus()));
+        }
+
+        // 清理缓存
+        dangerousRuleCache.deleteDangerousRuleCacheByScriptTypes(req.getScriptTypeList());
+
+        return getDangerousRuleById(req.getId());
+    }
+
 
     @Override
     public Integer moveDangerousRule(String username, MoveDangerousRuleReq req) {

@@ -37,7 +37,6 @@ import com.tencent.bk.job.manage.model.web.request.CredentialCreateUpdateReq;
 import com.tencent.bk.job.manage.model.web.vo.CredentialVO;
 import com.tencent.bk.job.manage.service.CredentialService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -95,22 +94,37 @@ public class WebCredentialResourceImpl implements WebCredentialResource {
     }
 
     @Override
-    public Response<String> saveCredential(String username,
-                                           AppResourceScope appResourceScope,
-                                           String scopeType,
-                                           String scopeId,
-                                           CredentialCreateUpdateReq createUpdateReq) {
-        AuthResult authResult;
-        if (StringUtils.isBlank(createUpdateReq.getId())) {
-            authResult = checkCreateTicketPermission(username, appResourceScope);
-        } else {
-            authResult = checkManageTicketPermission(username, appResourceScope, createUpdateReq.getId());
-        }
+    public Response<CredentialVO> createCredential(String username,
+                                                   AppResourceScope appResourceScope,
+                                                   String scopeType,
+                                                   String scopeId,
+                                                   CredentialCreateUpdateReq createUpdateReq) {
+        AuthResult authResult = checkCreateTicketPermission(username, appResourceScope);
         if (!authResult.isPass()) {
             throw new PermissionDeniedException(authResult);
         }
-        return Response.buildSuccessResp(credentialService.saveCredential(username, appResourceScope.getAppId(),
-            createUpdateReq));
+
+        CredentialDTO credential =
+            credentialService.createCredential(username, appResourceScope.getAppId(), createUpdateReq);
+        return Response.buildSuccessResp(credential.toVO());
+    }
+
+    @Override
+    public Response<CredentialVO> updateCredential(String username,
+                                                   AppResourceScope appResourceScope,
+                                                   String scopeType,
+                                                   String scopeId,
+                                                   String credentialId,
+                                                   CredentialCreateUpdateReq createUpdateReq) {
+        createUpdateReq.setId(credentialId);
+        AuthResult authResult = checkManageTicketPermission(username, appResourceScope, credentialId);
+        if (!authResult.isPass()) {
+            throw new PermissionDeniedException(authResult);
+        }
+
+        CredentialDTO credential = credentialService.updateCredential(username, appResourceScope.getAppId(),
+            createUpdateReq);
+        return Response.buildSuccessResp(credential.toVO());
     }
 
     @Override
@@ -152,7 +166,7 @@ public class WebCredentialResourceImpl implements WebCredentialResource {
     }
 
     private AuthResult checkManageTicketPermission(String username, AppResourceScope appResourceScope,
-                                                  String credentialId) {
+                                                   String credentialId) {
         // 需要拥有在业务下管理某个具体凭证的权限
         return ticketAuthService.authManageTicket(username, appResourceScope, credentialId, null);
     }

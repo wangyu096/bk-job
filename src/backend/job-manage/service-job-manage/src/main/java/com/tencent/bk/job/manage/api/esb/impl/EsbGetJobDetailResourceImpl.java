@@ -113,14 +113,8 @@ public class EsbGetJobDetailResourceImpl implements EsbGetJobDetailResource {
 
         TaskPlanInfoDTO taskPlan = taskPlanService.getTaskPlanById(appId, jobId);
         if (taskPlan == null) {
-            AuthResult authResult =
-                businessAuthService.authAccessBusiness(request.getUserName(), request.getAppResourceScope());
-            if (!authResult.isPass()) {
-                throw new PermissionDeniedException(authResult);
-            } else {
-                log.info("Get job detail, job is not exist! appId={}, jobId={}", appId, jobId);
-                return EsbResp.buildSuccessResp(null);
-            }
+            log.info("Get job detail, job is not exist! appId={}, jobId={}", appId, jobId);
+            return EsbResp.buildSuccessResp(null);
         }
 
         AuthResult authResult =

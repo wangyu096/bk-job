@@ -339,29 +339,66 @@ public class WebCronJobResourceImpl implements WebCronJobResource {
     }
 
     @Override
-    public Response<Long> saveCronJob(String username,
-                                      AppResourceScope appResourceScope,
-                                      String scopeType,
-                                      String scopeId,
-                                      Long cronJobId,
-                                      CronJobCreateUpdateReq cronJobCreateUpdateReq) {
+    public Response<CronJobVO> createCronJob(String username,
+                                             AppResourceScope appResourceScope,
+                                             String scopeType,
+                                             String scopeId,
+                                             CronJobCreateUpdateReq cronJobCreateUpdateReq) {
 
         Long appId = appResourceScope.getAppId();
+        AuthResult authResult = cronAuthService.authCreateCron(username,
+            appResourceScope);
+        if (!authResult.isPass()) {
+            throw new PermissionDeniedException(authResult);
+        }
 
-        if (cronJobId > 0) {
-            cronJobCreateUpdateReq.setId(cronJobId);
-            AuthResult authResult = cronAuthService.authManageCron(username,
-                appResourceScope, cronJobId, null);
-            if (!authResult.isPass()) {
-                throw new PermissionDeniedException(authResult);
+        checkCronName(cronJobCreateUpdateReq);
+        CronJobInfoDTO cronJobInfoDTO = CronJobInfoDTO.fromReq(username, appId, cronJobCreateUpdateReq);
+        if (cronJobInfoDTO.validate()) {
+            try {
+                CronJobInfoDTO createdCronJob = cronJobService.createCronJobInfo(cronJobInfoDTO);
+                return Response.buildSuccessResp(CronJobInfoDTO.toVO(createdCronJob));
+            } catch (TaskExecuteAuthFailedException e) {
+                throw new PermissionDeniedException(e.getAuthResult());
             }
         } else {
-            AuthResult authResult = cronAuthService.authCreateCron(username,
-                appResourceScope);
-            if (!authResult.isPass()) {
-                throw new PermissionDeniedException(authResult);
-            }
+            log.warn("Validate cron job failed!|{}", JobContextUtil.getDebugMessage());
+            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
         }
+    }
+
+    @Override
+    public Response<CronJobVO> updateCronJob(String username,
+                                             AppResourceScope appResourceScope,
+                                             String scopeType,
+                                             String scopeId,
+                                             Long cronJobId,
+                                             CronJobCreateUpdateReq cronJobCreateUpdateReq) {
+
+        Long appId = appResourceScope.getAppId();
+        cronJobCreateUpdateReq.setId(cronJobId);
+        AuthResult authResult = cronAuthService.authManageCron(username,
+            appResourceScope, cronJobId, null);
+        if (!authResult.isPass()) {
+            throw new PermissionDeniedException(authResult);
+        }
+
+        checkCronName(cronJobCreateUpdateReq);
+        CronJobInfoDTO cronJobInfoDTO = CronJobInfoDTO.fromReq(username, appId, cronJobCreateUpdateReq);
+        if (cronJobInfoDTO.validate()) {
+            try {
+                CronJobInfoDTO updatedCronJob = cronJobService.updateCronJobInfo(cronJobInfoDTO);
+                return Response.buildSuccessResp(CronJobInfoDTO.toVO(updatedCronJob));
+            } catch (TaskExecuteAuthFailedException e) {
+                throw new PermissionDeniedException(e.getAuthResult());
+            }
+        } else {
+            log.warn("Validate cron job failed!|{}", JobContextUtil.getDebugMessage());
+            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+        }
+    }
+
+    private void checkCronName(CronJobCreateUpdateReq cronJobCreateUpdateReq) {
         try {
             StringCheckHelper stringCheckHelper = new StringCheckHelper(new TrimChecker(), new NotEmptyChecker(),
                 new IlegalCharChecker(), new MaxLengthChecker(60));
@@ -369,18 +406,6 @@ public class WebCronJobResourceImpl implements WebCronJobResource {
         } catch (StringCheckException e) {
             log.warn("Cron Job Name is invalid:", e);
             throw new InvalidParamException(e, ErrorCode.ILLEGAL_PARAM);
-        }
-        CronJobInfoDTO cronJobInfoDTO = CronJobInfoDTO.fromReq(username, appId, cronJobCreateUpdateReq);
-        if (cronJobInfoDTO.validate()) {
-            try {
-                Long finalCronJobId = cronJobService.saveCronJobInfo(cronJobInfoDTO);
-                return Response.buildSuccessResp(finalCronJobId);
-            } catch (TaskExecuteAuthFailedException e) {
-                throw new PermissionDeniedException(e.getAuthResult());
-            }
-        } else {
-            log.warn("Validate cron job failed!|{}", JobContextUtil.getDebugMessage());
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
         }
     }
 

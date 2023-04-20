@@ -40,7 +40,6 @@ public class TemplateBasicInfoUpdateReq {
     /**
      * 模版 ID
      */
-    @ApiModelProperty(value = "模版 ID, 更新和删除时需要传入")
     private Long id;
 
     /**

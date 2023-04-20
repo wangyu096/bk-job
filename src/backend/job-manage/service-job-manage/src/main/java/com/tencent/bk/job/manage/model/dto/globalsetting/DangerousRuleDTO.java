@@ -113,18 +113,15 @@ public class DangerousRuleDTO {
         this.status = status;
     }
 
-    public static DangerousRuleVO toVO(DangerousRuleDTO dangerousRule) {
-        if (dangerousRule == null) {
-            return null;
-        }
+    public DangerousRuleVO toVO() {
         DangerousRuleVO dangerousRuleVO = new DangerousRuleVO();
-        dangerousRuleVO.setId(dangerousRule.getId());
-        dangerousRuleVO.setExpression(dangerousRule.getExpression());
-        dangerousRuleVO.setScriptTypeList(decodeScriptType(dangerousRule.getScriptType()));
-        dangerousRuleVO.setDescription(dangerousRule.getDescription());
-        dangerousRuleVO.setOrder(dangerousRule.getPriority());
-        dangerousRuleVO.setAction(dangerousRule.getAction());
-        dangerousRuleVO.setStatus(dangerousRule.getStatus());
+        dangerousRuleVO.setId(id);
+        dangerousRuleVO.setExpression(expression);
+        dangerousRuleVO.setScriptTypeList(decodeScriptType(scriptType));
+        dangerousRuleVO.setDescription(description);
+        dangerousRuleVO.setOrder(priority);
+        dangerousRuleVO.setAction(action);
+        dangerousRuleVO.setStatus(status);
         return dangerousRuleVO;
     }
 

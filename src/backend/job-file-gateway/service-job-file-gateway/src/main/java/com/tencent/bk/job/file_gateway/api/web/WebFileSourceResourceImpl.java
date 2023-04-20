@@ -123,11 +123,11 @@ public class WebFileSourceResourceImpl implements WebFileSourceResource {
     }
 
     @Override
-    public Response<Integer> saveFileSource(String username,
-                                            AppResourceScope appResourceScope,
-                                            String scopeType,
-                                            String scopeId,
-                                            FileSourceCreateUpdateReq fileSourceCreateUpdateReq) {
+    public Response<FileSourceVO> saveFileSource(String username,
+                                                 AppResourceScope appResourceScope,
+                                                 String scopeType,
+                                                 String scopeId,
+                                                 FileSourceCreateUpdateReq fileSourceCreateUpdateReq) {
         try {
             Long appId = appResourceScope.getAppId();
             AuthResult authResult = checkCreateFileSourcePermission(username, appResourceScope);
@@ -137,24 +137,25 @@ public class WebFileSourceResourceImpl implements WebFileSourceResource {
 
             checkParam(appId, fileSourceCreateUpdateReq, true);
             FileSourceDTO fileSourceDTO = buildFileSourceDTO(username, appId, fileSourceCreateUpdateReq);
-            Integer fileSourceId = fileSourceService.saveFileSource(appId, fileSourceDTO);
+            FileSourceDTO createdFileSource = fileSourceService.saveFileSource(appId, fileSourceDTO);
             boolean registerResult = fileSourceAuthService.registerFileSource(
-                username, fileSourceId, fileSourceDTO.getAlias());
+                username, createdFileSource.getId(), fileSourceDTO.getAlias());
             if (!registerResult) {
-                log.warn("Fail to register file_source to iam:({},{})", fileSourceId, fileSourceDTO.getAlias());
+                log.warn("Fail to register file_source to iam:({},{})", createdFileSource.getId(),
+                    fileSourceDTO.getAlias());
             }
-            return Response.buildSuccessResp(fileSourceId);
+            return Response.buildSuccessResp(FileSourceDTO.toVO(createdFileSource));
         } catch (ServiceException e) {
             return Response.buildCommonFailResp(e.getErrorCode(), e.getErrorParams());
         }
     }
 
     @Override
-    public Response<Integer> updateFileSource(String username,
-                                              AppResourceScope appResourceScope,
-                                              String scopeType,
-                                              String scopeId,
-                                              FileSourceCreateUpdateReq fileSourceCreateUpdateReq) {
+    public Response<FileSourceVO> updateFileSource(String username,
+                                                   AppResourceScope appResourceScope,
+                                                   String scopeType,
+                                                   String scopeId,
+                                                   FileSourceCreateUpdateReq fileSourceCreateUpdateReq) {
         Long appId = appResourceScope.getAppId();
         log.info("Input=({},{},{})", username, appId, fileSourceCreateUpdateReq);
         FileSourceDTO fileSourceDTO = buildFileSourceDTO(username, appId, fileSourceCreateUpdateReq);
@@ -163,7 +164,9 @@ public class WebFileSourceResourceImpl implements WebFileSourceResource {
             throw new PermissionDeniedException(authResult);
         }
         checkParam(appId, fileSourceCreateUpdateReq, false);
-        return Response.buildSuccessResp(fileSourceService.updateFileSourceById(appId, fileSourceDTO));
+
+        FileSourceDTO updateFileSource = fileSourceService.updateFileSourceById(appId, fileSourceDTO);
+        return Response.buildSuccessResp(FileSourceDTO.toVO(updateFileSource));
     }
 
     @Override

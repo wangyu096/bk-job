@@ -25,6 +25,8 @@
 package com.tencent.bk.job.manage.model.esb.v3.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.tencent.bk.audit.model.AuditInstance;
+import com.tencent.bk.audit.model.BasicAuditInstance;
 import com.tencent.bk.job.common.esb.model.EsbAppScopeDTO;
 import lombok.Data;
 
@@ -34,7 +36,7 @@ import lombok.Data;
  * @since 15/10/2020 17:54
  */
 @Data
-public class EsbPlanBasicInfoV3DTO extends EsbAppScopeDTO {
+public class EsbPlanBasicInfoV3DTO extends EsbAppScopeDTO implements AuditInstance {
     /**
      * 执行方案 ID
      */
@@ -73,4 +75,9 @@ public class EsbPlanBasicInfoV3DTO extends EsbAppScopeDTO {
      */
     @JsonProperty("last_modify_time")
     private Long lastModifyTime;
+
+    @Override
+    public BasicAuditInstance toBasicAuditInstance() {
+        return new BasicAuditInstance(String.valueOf(id), name);
+    }
 }

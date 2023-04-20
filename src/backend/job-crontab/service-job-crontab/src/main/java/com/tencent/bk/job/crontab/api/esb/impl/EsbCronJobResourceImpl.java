@@ -183,7 +183,8 @@ public class EsbCronJobResourceImpl implements EsbCronJobResource {
         esbCronInfoResponse.setId(0L);
         checkRequest(request);
         AuthResult authResult;
-        if (request.getId() != null && request.getId() > 0) {
+        boolean isUpdate = request.getId() != null && request.getId() > 0;
+        if (isUpdate) {
             authResult = cronAuthService.authManageCron(
                 request.getUserName(), request.getAppResourceScope(), request.getId(), null
             );
@@ -198,7 +199,7 @@ public class EsbCronJobResourceImpl implements EsbCronJobResource {
         cronJobInfo.setName(request.getName());
         cronJobInfo.setTaskPlanId(request.getPlanId());
         cronJobInfo.setCronExpression(CronExpressionUtil.fixExpressionForQuartz(request.getCronExpression()));
-        if (cronJobInfo.getId() == null || cronJobInfo.getId() == 0) {
+        if (!isUpdate) {
             cronJobInfo.setCreator(request.getUserName());
             cronJobInfo.setDelete(false);
         }
@@ -206,14 +207,18 @@ public class EsbCronJobResourceImpl implements EsbCronJobResource {
         cronJobInfo.setLastModifyUser(request.getUserName());
         cronJobInfo.setLastModifyTime(DateUtils.currentTimeSeconds());
 
-        Long cronId;
+        CronJobInfoDTO result;
         try {
-            cronId = cronJobService.saveCronJobInfo(cronJobInfo);
+            if (isUpdate) {
+                result = cronJobService.updateCronJobInfo(cronJobInfo);
+            } else {
+                result = cronJobService.createCronJobInfo(cronJobInfo);
+            }
         } catch (TaskExecuteAuthFailedException e) {
             throw new PermissionDeniedException(e.getAuthResult());
         }
-        if (cronId > 0) {
-            esbCronInfoResponse = CronJobInfoDTO.toEsbCronInfo(cronJobService.getCronJobInfoById(cronId));
+        if (result.getId() > 0) {
+            esbCronInfoResponse = CronJobInfoDTO.toEsbCronInfo(cronJobService.getCronJobInfoById(result.getId()));
             return EsbResp.buildSuccessResp(esbCronInfoResponse);
         } else {
             throw new InternalException(ErrorCode.UPDATE_CRON_JOB_FAILED);

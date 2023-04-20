@@ -265,7 +265,7 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
             throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
         }
 
-        TaskTemplateInfoDTO template = createOrUpdateTemplate(username, appResourceScope, request);
+        TaskTemplateInfoDTO template = createTemplate(username, appResourceScope, request);
         return Response.buildSuccessResp(template.getId());
     }
 
@@ -293,20 +293,12 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
         return Response.buildSuccessResp(true);
     }
 
-    private TaskTemplateInfoDTO createOrUpdateTemplate(String username,
-                                                       AppResourceScope appResourceScope,
-                                                       TaskTemplateCreateUpdateReq request) {
-        TaskTemplateInfoDTO template;
-        if (request.getId() != null) {
-            template = templateService
-                .updateTaskTemplate(TaskTemplateInfoDTO.fromReq(username, appResourceScope.getAppId(),
-                    request));
-        } else {
-            template = templateService
-                .saveTaskTemplate(TaskTemplateInfoDTO.fromReq(username, appResourceScope.getAppId(),
-                    request));
-        }
-
+    private TaskTemplateInfoDTO createTemplate(String username,
+                                               AppResourceScope appResourceScope,
+                                               TaskTemplateCreateUpdateReq request) {
+        TaskTemplateInfoDTO template = templateService
+            .saveTaskTemplate(TaskTemplateInfoDTO.fromReq(username, appResourceScope.getAppId(),
+                request));
         templateAuthService.registerTemplate(template.getId(), request.getName(), username);
         return template;
     }
@@ -321,6 +313,7 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
                                          String scopeId,
                                          Long templateId,
                                          @AuditRequestBody TaskTemplateCreateUpdateReq request) {
+        request.setId(templateId);
         AuthResult authResult = templateAuthService.authEditJobTemplate(username, appResourceScope, templateId);
         if (!authResult.isPass()) {
             throw new PermissionDeniedException(authResult);
@@ -329,8 +322,17 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
         if (!request.validate()) {
             throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
         }
+        updateTemplate(username, appResourceScope, request);
 
         return Response.buildSuccessResp(templateId);
+    }
+
+    private void updateTemplate(String username,
+                                AppResourceScope appResourceScope,
+                                TaskTemplateCreateUpdateReq request) {
+        TaskTemplateInfoDTO template = templateService
+            .updateTaskTemplate(TaskTemplateInfoDTO.fromReq(username, appResourceScope.getAppId(), request));
+        templateAuthService.registerTemplate(template.getId(), request.getName(), username);
     }
 
     @Override

@@ -292,7 +292,8 @@ public class EsbCronJobV3ResourceImpl implements EsbCronJobV3Resource {
         checkRequest(request);
         Long appId = request.getAppId();
         AuthResult authResult;
-        if (request.getId() != null && request.getId() > 0) {
+        boolean isUpdate = request.getId() != null && request.getId() > 0;
+        if (isUpdate) {
             authResult = cronAuthService.authManageCron(
                 request.getUserName(),
                 request.getAppResourceScope(),
@@ -308,6 +309,7 @@ public class EsbCronJobV3ResourceImpl implements EsbCronJobV3Resource {
         if (!authResult.isPass()) {
             throw new PermissionDeniedException(authResult);
         }
+
         cronJobInfo.setId(request.getId());
         cronJobInfo.setAppId(appId);
         cronJobInfo.setName(request.getName());
@@ -325,14 +327,19 @@ public class EsbCronJobV3ResourceImpl implements EsbCronJobV3Resource {
         cronJobInfo.setEnable(false);
         cronJobInfo.setLastModifyUser(request.getUserName());
         cronJobInfo.setLastModifyTime(DateUtils.currentTimeSeconds());
-        Long cronId;
+        CronJobInfoDTO result;
         try {
-            cronId = cronJobService.saveCronJobInfo(cronJobInfo);
+            if (isUpdate) {
+                result = cronJobService.updateCronJobInfo(cronJobInfo);
+            } else {
+                result = cronJobService.createCronJobInfo(cronJobInfo);
+            }
         } catch (TaskExecuteAuthFailedException e) {
             throw new PermissionDeniedException(e.getAuthResult());
         }
-        if (cronId > 0) {
-            esbCronInfoV3DTO = CronJobInfoDTO.toEsbCronInfoV3Response(cronJobService.getCronJobInfoById(cronId));
+        if (result.getId() > 0) {
+            esbCronInfoV3DTO =
+                CronJobInfoDTO.toEsbCronInfoV3Response(cronJobService.getCronJobInfoById(result.getId()));
             return EsbResp.buildSuccessResp(esbCronInfoV3DTO);
         } else {
             throw new InternalException(ErrorCode.UPDATE_CRON_JOB_FAILED);

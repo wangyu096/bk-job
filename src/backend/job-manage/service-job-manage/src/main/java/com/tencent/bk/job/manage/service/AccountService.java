@@ -44,16 +44,16 @@ public interface AccountService {
     /**
      * 新增账号
      *
-     * @param account
-     * @return 账号ID
+     * @param account 新增的账号信息
+     * @return 新增的账号
      */
-    long saveAccount(AccountDTO account) throws ServiceException;
+    AccountDTO saveAccount(AccountDTO account) throws ServiceException;
 
     /**
      * 根据ID获取账号信息
      *
      * @param accountId 账号Id
-     * @return
+     * @return 账号
      */
     AccountDTO getAccountById(Long accountId) throws ServiceException;
 
@@ -68,32 +68,33 @@ public interface AccountService {
     /**
      * 根据ID获取账号信息
      *
-     * @param appId
-     * @param account
-     * @return
+     * @param appId   业务ID
+     * @param account 账号名
+     * @return 账号
      */
     AccountDTO getAccountByAccount(Long appId, String account) throws ServiceException;
 
     /**
      * 更新账号
      *
-     * @param account
+     * @param account 更新账号内容
+     * @return 更新完的账号信息
      */
-    void updateAccount(AccountDTO account) throws ServiceException;
+    AccountDTO updateAccount(AccountDTO account) throws ServiceException;
 
     /**
      * 删除账号
      *
-     * @param accountId
+     * @param accountId 账号ID
      */
     void deleteAccount(Long accountId) throws ServiceException;
 
     /**
      * 分页查询账号列表
      *
-     * @param accountQuery
-     * @param baseSearchCondition
-     * @return
+     * @param accountQuery        账号查询条件
+     * @param baseSearchCondition 基础查询条件
+     * @return 账号分页
      */
     PageData<AccountDTO> listPageAccount(AccountDTO accountQuery, BaseSearchCondition baseSearchCondition)
         throws ServiceException;
@@ -101,9 +102,9 @@ public interface AccountService {
     /**
      * 分页搜索账号列表
      *
-     * @param keyword
-     * @param baseSearchCondition
-     * @return
+     * @param keyword             关键字
+     * @param baseSearchCondition 基础查询条件
+     * @return 账号分页
      */
     PageData<AccountDTO> searchPageAccount(
         Long appId, String keyword,
@@ -112,10 +113,10 @@ public interface AccountService {
     /**
      * 根据别名获取账号信息
      *
-     * @param appId
-     * @param category
-     * @param alias
-     * @return
+     * @param appId    业务ID
+     * @param category 账号类别
+     * @param alias    账号别名
+     * @return 账号
      */
     AccountDTO getAccount(Long appId, AccountCategoryEnum category, String alias);
 
@@ -146,7 +147,6 @@ public interface AccountService {
      * 系统账号是否被DB账号依赖
      *
      * @param accountId 系统账号ID
-     * @return
      */
     boolean isSystemAccountRefByDbAccount(Long accountId);
 

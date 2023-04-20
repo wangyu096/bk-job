@@ -26,6 +26,7 @@ package com.tencent.bk.job.manage.api.web.impl;
 
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.manage.api.web.WebDangerousRuleResource;
+import com.tencent.bk.job.manage.model.dto.globalsetting.DangerousRuleDTO;
 import com.tencent.bk.job.manage.model.web.request.globalsetting.AddOrUpdateDangerousRuleReq;
 import com.tencent.bk.job.manage.model.web.request.globalsetting.MoveDangerousRuleReq;
 import com.tencent.bk.job.manage.model.web.vo.globalsetting.DangerousRuleVO;
@@ -51,9 +52,20 @@ public class WebDangerousRuleResourceImpl implements WebDangerousRuleResource {
         return Response.buildSuccessResp(dangerousRuleService.listDangerousRules(username));
     }
 
+
     @Override
-    public Response<Boolean> addOrUpdateDangerousRule(String username, AddOrUpdateDangerousRuleReq req) {
-        return Response.buildSuccessResp(dangerousRuleService.addOrUpdateDangerousRule(username, req));
+    public Response<DangerousRuleVO> createDangerousRule(String username, AddOrUpdateDangerousRuleReq req) {
+        DangerousRuleDTO dangerousRule = dangerousRuleService.createDangerousRule(username, req);
+        return Response.buildSuccessResp(dangerousRule.toVO());
+    }
+
+    @Override
+    public Response<DangerousRuleVO> updateDangerousRule(String username,
+                                                         Long id,
+                                                         AddOrUpdateDangerousRuleReq req) {
+        req.setId(id);
+        DangerousRuleDTO dangerousRule = dangerousRuleService.updateDangerousRule(username, req);
+        return Response.buildSuccessResp(dangerousRule.toVO());
     }
 
     @Override

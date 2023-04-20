@@ -26,7 +26,7 @@ package com.tencent.bk.job.manage.service.plan.impl;
 
 import com.tencent.bk.audit.annotations.ActionAuditRecord;
 import com.tencent.bk.audit.annotations.AuditInstanceRecord;
-import com.tencent.bk.audit.model.SdkActionAuditContext;
+import com.tencent.bk.audit.model.ActionAuditContext;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.AlreadyExistsException;
 import com.tencent.bk.job.common.exception.FailedPreconditionException;
@@ -175,6 +175,15 @@ public class TaskPlanServiceImpl implements TaskPlanService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_JOB_PLAN,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PLAN,
+            instanceIds = "#planId",
+            instanceNames = "#$?.name"
+        ),
+        content = "View plan [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public TaskPlanInfoDTO getTaskPlanById(Long appId, Long templateId, Long planId) {
         checkTemplateExist(appId, templateId);
         TaskPlanInfoDTO taskPlan = taskPlanDAO.getTaskPlanById(appId, templateId, planId, TaskPlanTypeEnum.NORMAL);
@@ -188,6 +197,15 @@ public class TaskPlanServiceImpl implements TaskPlanService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_JOB_PLAN,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PLAN,
+            instanceIds = "#planId",
+            instanceNames = "#$?.name"
+        ),
+        content = "View plan [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public TaskPlanInfoDTO getTaskPlanById(Long planId) {
         TaskPlanInfoDTO taskPlan = taskPlanDAO.getTaskPlanById(planId);
         if (taskPlan != null) {
@@ -206,6 +224,15 @@ public class TaskPlanServiceImpl implements TaskPlanService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_JOB_PLAN,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PLAN,
+            instanceIds = "#planId",
+            instanceNames = "#$?.name"
+        ),
+        content = "View plan [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public TaskPlanInfoDTO getTaskPlanById(Long appId, Long planId) {
         TaskPlanInfoDTO taskPlan = taskPlanDAO.getTaskPlanById(appId, 0L, planId, null);
         if (taskPlan != null) {
@@ -220,83 +247,126 @@ public class TaskPlanServiceImpl implements TaskPlanService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public Long saveTaskPlan(TaskPlanInfoDTO taskPlanInfo) {
-        boolean insert = false;
-        if (taskPlanInfo.getId() == null || taskPlanInfo.getId() <= 0) {
-            TaskTemplateInfoDTO taskTemplate =
-                taskTemplateService.getTaskTemplateById(taskPlanInfo.getAppId(), taskPlanInfo.getTemplateId());
-            TaskPlanInfoDTO.buildPlanInfo(taskPlanInfo, taskTemplate);
-            insert = true;
-        }
+    @ActionAuditRecord(
+        actionId = ActionId.CREATE_JOB_PLAN,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PLAN,
+            instanceIds = "#$?.id",
+            instanceNames = "#$?.name"
+        ),
+        content = "Create plan [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
+    public TaskPlanInfoDTO createTaskPlan(TaskPlanInfoDTO taskPlanInfo) {
+        TaskTemplateInfoDTO taskTemplate =
+            taskTemplateService.getTaskTemplateById(taskPlanInfo.getAppId(), taskPlanInfo.getTemplateId());
+        TaskPlanInfoDTO.buildPlanInfo(taskPlanInfo, taskTemplate);
+
         // process plan id
         Long planId;
         taskPlanInfo.setLastModifyUser(taskPlanInfo.getLastModifyUser());
         taskPlanInfo.setLastModifyTime(taskPlanInfo.getLastModifyTime());
+        taskPlanInfo.setCreateTime(DateUtils.currentTimeSeconds());
+        planId = taskPlanDAO.insertTaskPlan(taskPlanInfo);
+        if (planId == null) {
+            throw new InternalException(ErrorCode.INSERT_TASK_PLAN_FAILED);
+        }
+        taskPlanInfo.setId(planId);
 
-        if (insert) {
-            taskPlanInfo.setCreateTime(DateUtils.currentTimeSeconds());
-            planId = taskPlanDAO.insertTaskPlan(taskPlanInfo);
-            if (planId == null) {
-                throw new InternalException(ErrorCode.INSERT_TASK_PLAN_FAILED);
+        // Save step
+        for (TaskStepDTO taskStep : taskPlanInfo.getStepList()) {
+            taskStep.setPlanId(planId);
+            // Insert give template step id
+            if (taskPlanInfo.getEnableStepList().contains(taskStep.getTemplateStepId())) {
+                taskStep.setEnable(1);
+            } else {
+                taskStep.setEnable(0);
             }
-            taskPlanInfo.setId(planId);
-        } else {
-            if (!taskPlanDAO.updateTaskPlanById(taskPlanInfo)) {
-                throw new InternalException(ErrorCode.UPDATE_TASK_PLAN_FAILED);
-            }
-            planId = taskPlanInfo.getId();
+            // new step, insert to get id
+            taskStep.setId(taskPlanStepService.insertStep(taskStep));
         }
 
-        if (insert) {
-            // Save step
-            for (TaskStepDTO taskStep : taskPlanInfo.getStepList()) {
-                taskStep.setPlanId(planId);
-                // Insert give template step id
-                if (taskPlanInfo.getEnableStepList().contains(taskStep.getTemplateStepId())) {
+        // Insert new variable
+        taskPlanInfo.getVariableList().forEach(variable -> variable.setPlanId(planId));
+        taskPlanVariableService.batchInsertVariable(taskPlanInfo.getVariableList());
+
+        return getTaskPlanById(planId);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Throwable.class)
+    @ActionAuditRecord(
+        actionId = ActionId.EDIT_JOB_PLAN,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PLAN
+        ),
+        content = "Modify plan [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
+    public TaskPlanInfoDTO updateTaskPlan(TaskPlanInfoDTO taskPlanInfo) {
+        Long planId = taskPlanInfo.getId();
+
+        // 审计记录 - 原始数据
+        ActionAuditContext.current().setOriginInstanceList(Collections.singletonList(
+            TaskPlanInfoDTO.toEsbPlanInfoV3(getTaskPlanById(planId))));
+
+        taskPlanInfo.setLastModifyUser(taskPlanInfo.getLastModifyUser());
+        taskPlanInfo.setLastModifyTime(taskPlanInfo.getLastModifyTime());
+
+        if (!taskPlanDAO.updateTaskPlanById(taskPlanInfo)) {
+            throw new InternalException(ErrorCode.UPDATE_TASK_PLAN_FAILED);
+        }
+
+        List<TaskStepDTO> taskStepList = taskPlanStepService.listStepsByParentId(planId);
+        if (CollectionUtils.isNotEmpty(taskStepList)) {
+            for (TaskStepDTO taskStep : taskStepList) {
+                // Update give step id
+                if (taskPlanInfo.getEnableStepList().contains(taskStep.getId())) {
                     taskStep.setEnable(1);
                 } else {
                     taskStep.setEnable(0);
                 }
-                // new step, insert to get id
-                taskStep.setId(taskPlanStepService.insertStep(taskStep));
-            }
-        } else {
-            List<TaskStepDTO> taskStepList = taskPlanStepService.listStepsByParentId(planId);
-            if (CollectionUtils.isNotEmpty(taskStepList)) {
-                for (TaskStepDTO taskStep : taskStepList) {
-                    // Update give step id
-                    if (taskPlanInfo.getEnableStepList().contains(taskStep.getId())) {
-                        taskStep.setEnable(1);
-                    } else {
-                        taskStep.setEnable(0);
-                    }
-                    taskPlanStepService.updateStepById(taskStep);
-                }
+                taskPlanStepService.updateStepById(taskStep);
             }
         }
 
-        if (insert) {
-            // Insert new variable
-            taskPlanInfo.getVariableList().forEach(variable -> variable.setPlanId(planId));
-            taskPlanVariableService.batchInsertVariable(taskPlanInfo.getVariableList());
-        } else {
-            for (TaskVariableDTO taskVariable : taskPlanInfo.getVariableList()) {
-                taskVariable.setPlanId(planId);
-                // Update exist variable
-                taskPlanVariableService.updateVariableById(taskVariable);
-            }
+        for (TaskVariableDTO taskVariable : taskPlanInfo.getVariableList()) {
+            taskVariable.setPlanId(planId);
+            // Update exist variable
+            taskPlanVariableService.updateVariableById(taskVariable);
         }
-        return planId;
+
+        TaskPlanInfoDTO updatedPlan = getTaskPlanById(planId);
+
+        // 审计记录 - 当前数据
+        ActionAuditContext.current().setInstanceList(Collections.singletonList(
+            TaskPlanInfoDTO.toEsbPlanInfoV3(updatedPlan)));
+
+        return updatedPlan;
     }
 
     @Override
-    public Boolean deleteTaskPlan(Long appId, Long templateId, Long planId) {
+    @ActionAuditRecord(
+        actionId = ActionId.DELETE_JOB_PLAN,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PLAN,
+            instanceIds = "#planId",
+            instanceNames = "#$?.name"
+        ),
+        content = "Delete plan [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
+    public TaskPlanInfoDTO deleteTaskPlan(Long appId, Long templateId, Long planId) {
+        TaskPlanInfoDTO plan = getTaskPlanById(appId, templateId, planId);
+        if (plan == null) {
+            throw new NotFoundException(ErrorCode.TASK_PLAN_NOT_EXIST);
+        }
+
         Map<Long, List<CronJobVO>> cronJobMap =
             cronJobService.batchListCronJobByPlanIds(appId, Collections.singletonList(planId));
         if (MapUtils.isNotEmpty(cronJobMap) && CollectionUtils.isNotEmpty(cronJobMap.get(planId))) {
             throw new FailedPreconditionException(ErrorCode.DELETE_PLAN_FAILED_USING_BY_CRON);
         }
-        return taskPlanDAO.deleteTaskPlanById(appId, templateId, planId);
+        taskPlanDAO.deleteTaskPlanById(appId, templateId, planId);
+
+        return plan;
     }
 
     @Override
@@ -330,6 +400,7 @@ public class TaskPlanServiceImpl implements TaskPlanService {
             return taskPlan;
         }
 
+        // 如果不存在调试方案，需要创建一个再查询
         taskPlan = new TaskPlanInfoDTO();
         taskPlan.setAppId(appId);
         taskPlan.setTemplateId(templateId);
@@ -341,7 +412,7 @@ public class TaskPlanServiceImpl implements TaskPlanService {
         taskPlan.setLastModifyUser(username);
         taskPlan.setLastModifyTime(DateUtils.currentTimeSeconds());
         taskPlan.setDebug(true);
-        taskPlan.setId(saveTaskPlan(taskPlan));
+        taskPlan.setId(createTaskPlan(taskPlan).getId());
 
         taskPlan = taskPlanDAO.getTaskPlanById(appId, templateId, taskPlan.getId(), TaskPlanTypeEnum.DEBUG);
         taskPlan.setStepList(taskPlanStepService.listStepsByParentId(taskPlan.getId()));
@@ -352,7 +423,7 @@ public class TaskPlanServiceImpl implements TaskPlanService {
             taskStep.setEnable(1);
             taskPlan.getEnableStepList().add(taskStep.getId());
         }
-        saveTaskPlan(taskPlan);
+        updateTaskPlan(taskPlan);
         return taskPlan;
     }
 
@@ -409,6 +480,14 @@ public class TaskPlanServiceImpl implements TaskPlanService {
 
     @Override
     @Transactional(rollbackFor = {Exception.class, Error.class})
+    @ActionAuditRecord(
+        actionId = ActionId.SYNC_JOB_PLAN,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PLAN,
+            instanceIds = "#planId"
+        ),
+        content = "Delete plan [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public Boolean sync(Long appId, Long templateId, Long planId, String templateVersion) {
         TaskTemplateInfoDTO taskTemplate = taskTemplateService.getTaskTemplateById(appId, templateId);
         if (taskTemplate == null) {
@@ -472,6 +551,10 @@ public class TaskPlanServiceImpl implements TaskPlanService {
         }
 
         syncPlan(taskPlan);
+
+        // 审计 - 实例名称
+        ActionAuditContext.current().setInstanceNameList(Collections.singletonList(taskPlan.getName()));
+
         return true;
     }
 
@@ -599,7 +682,7 @@ public class TaskPlanServiceImpl implements TaskPlanService {
 
                 taskPlan.getEnableStepList().add(taskStep.getId());
             }
-            saveTaskPlan(taskPlan);
+            createTaskPlan(taskPlan);
             return planId;
         } catch (Exception e) {
             log.error("Error while creating debug plan", e);
@@ -699,9 +782,9 @@ public class TaskPlanServiceImpl implements TaskPlanService {
         // 审计
         List<TaskPlanInfoDTO> deletePlans = listTaskPlansBasicInfo(appId, templateId);
         if (CollectionUtils.isNotEmpty(deletePlans)) {
-            SdkActionAuditContext.current().setInstanceIdList(
+            ActionAuditContext.current().setInstanceIdList(
                 deletePlans.stream().map(plan -> plan.getId().toString()).collect(Collectors.toList()));
-            SdkActionAuditContext.current().setInstanceNameList(
+            ActionAuditContext.current().setInstanceNameList(
                 deletePlans.stream().map(TaskPlanInfoDTO::getName).collect(Collectors.toList()));
         }
 

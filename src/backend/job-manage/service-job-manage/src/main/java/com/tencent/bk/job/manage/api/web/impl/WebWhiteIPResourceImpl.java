@@ -32,6 +32,8 @@ import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.common.model.vo.CloudAreaInfoVO;
 import com.tencent.bk.job.manage.api.web.WebWhiteIPResource;
 import com.tencent.bk.job.manage.auth.NoResourceScopeAuthService;
+import com.tencent.bk.job.manage.dao.whiteip.ActionScopeDAO;
+import com.tencent.bk.job.manage.model.dto.whiteip.WhiteIPRecordDTO;
 import com.tencent.bk.job.manage.model.web.request.whiteip.WhiteIPRecordCreateUpdateReq;
 import com.tencent.bk.job.manage.model.web.vo.whiteip.ActionScopeVO;
 import com.tencent.bk.job.manage.model.web.vo.whiteip.WhiteIPRecordVO;
@@ -41,6 +43,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @Slf4j
@@ -48,12 +51,15 @@ public class WebWhiteIPResourceImpl implements WebWhiteIPResource {
 
     private final WhiteIPService whiteIPService;
     private final NoResourceScopeAuthService noResourceScopeAuthService;
+    private final ActionScopeDAO actionScopeDAO;
 
     @Autowired
     public WebWhiteIPResourceImpl(WhiteIPService whiteIPService,
-                                  NoResourceScopeAuthService noResourceScopeAuthService) {
+                                  NoResourceScopeAuthService noResourceScopeAuthService,
+                                  ActionScopeDAO actionScopeDAO) {
         this.whiteIPService = whiteIPService;
         this.noResourceScopeAuthService = noResourceScopeAuthService;
+        this.actionScopeDAO = actionScopeDAO;
     }
 
     @Override
@@ -86,20 +92,38 @@ public class WebWhiteIPResourceImpl implements WebWhiteIPResource {
     }
 
     @Override
-    public Response<Long> saveWhiteIP(String username, WhiteIPRecordCreateUpdateReq createUpdateReq) {
-        Long id = createUpdateReq.getId();
-        if (id != null && id > 0) {
-            AuthResult authResult = noResourceScopeAuthService.authManageWhiteList(username);
-            if (!authResult.isPass()) {
-                throw new PermissionDeniedException(authResult);
-            }
-        } else {
-            AuthResult authResult = noResourceScopeAuthService.authCreateWhiteList(username);
-            if (!authResult.isPass()) {
-                throw new PermissionDeniedException(authResult);
-            }
+    public Response<WhiteIPRecordVO> createWhiteIP(String username, WhiteIPRecordCreateUpdateReq createUpdateReq) {
+        AuthResult authResult = noResourceScopeAuthService.authCreateWhiteList(username);
+        if (!authResult.isPass()) {
+            throw new PermissionDeniedException(authResult);
         }
-        return Response.buildSuccessResp(whiteIPService.saveWhiteIP(username, createUpdateReq));
+
+        WhiteIPRecordDTO record = whiteIPService.createWhiteIP(username, createUpdateReq);
+        return Response.buildSuccessResp(toWhiteIPRecordVO(record));
+    }
+
+    private WhiteIPRecordVO toWhiteIPRecordVO(WhiteIPRecordDTO record) {
+        WhiteIPRecordVO vo = record.toVO();
+        vo.setActionScopeList(record.getActionScopeList().stream().map(actionScope -> {
+            long actionScopeId = actionScope.getActionScopeId();
+            return actionScopeDAO.getActionScopeVOById(actionScopeId);
+        }).collect(Collectors.toList()));
+
+        return vo;
+    }
+
+    @Override
+    public Response<WhiteIPRecordVO> updateWhiteIP(String username,
+                                                   Long id,
+                                                   WhiteIPRecordCreateUpdateReq createUpdateReq) {
+        createUpdateReq.setId(id);
+        AuthResult authResult = noResourceScopeAuthService.authManageWhiteList(username);
+        if (!authResult.isPass()) {
+            throw new PermissionDeniedException(authResult);
+        }
+
+        WhiteIPRecordDTO record = whiteIPService.updateWhiteIP(username, createUpdateReq);
+        return Response.buildSuccessResp(toWhiteIPRecordVO(record));
     }
 
     @Override
@@ -108,7 +132,9 @@ public class WebWhiteIPResourceImpl implements WebWhiteIPResource {
         if (!authResult.isPass()) {
             throw new PermissionDeniedException(authResult);
         }
-        return Response.buildSuccessResp(whiteIPService.getWhiteIPDetailById(username, id));
+
+        WhiteIPRecordDTO record = whiteIPService.getWhiteIPDetailById(username, id);
+        return Response.buildSuccessResp(toWhiteIPRecordVO(record));
     }
 
     @Override

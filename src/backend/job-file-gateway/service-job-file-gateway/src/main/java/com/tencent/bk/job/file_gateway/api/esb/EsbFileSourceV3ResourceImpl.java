@@ -48,13 +48,14 @@ public class EsbFileSourceV3ResourceImpl implements EsbFileSourceV3Resource {
         checkCreateFileSourcePermission(username, req.getAppResourceScope());
         checkCreateParam(req);
         FileSourceDTO fileSourceDTO = buildFileSourceDTO(req.getUserName(), appId, null, req);
-        Integer fileSourceId = fileSourceService.saveFileSource(appId, fileSourceDTO);
+        FileSourceDTO createdFileSource = fileSourceService.saveFileSource(appId, fileSourceDTO);
         boolean registerResult = fileSourceAuthService.registerFileSource(
-            username, fileSourceId, fileSourceDTO.getAlias());
+            username, createdFileSource.getId(), fileSourceDTO.getAlias());
         if (!registerResult) {
-            log.warn("Fail to register file_source to iam:({},{})", fileSourceId, fileSourceDTO.getAlias());
+            log.warn("Fail to register file_source to iam:({},{})", createdFileSource.getId(),
+                fileSourceDTO.getAlias());
         }
-        return EsbResp.buildSuccessResp(new EsbFileSourceSimpleInfoV3DTO(fileSourceId));
+        return EsbResp.buildSuccessResp(new EsbFileSourceSimpleInfoV3DTO(createdFileSource.getId()));
     }
 
     @Override
@@ -65,9 +66,8 @@ public class EsbFileSourceV3ResourceImpl implements EsbFileSourceV3Resource {
         String username = req.getUserName();
         checkManageFileSourcePermission(username, req.getAppResourceScope(), id);
         FileSourceDTO fileSourceDTO = buildFileSourceDTO(req.getUserName(), appId, id, req);
-        int affectedNum = fileSourceService.updateFileSourceById(appId, fileSourceDTO);
-        log.info("{} fileSource updated", affectedNum);
-        return EsbResp.buildSuccessResp(new EsbFileSourceSimpleInfoV3DTO(id));
+        FileSourceDTO updateFileSource = fileSourceService.updateFileSourceById(appId, fileSourceDTO);
+        return EsbResp.buildSuccessResp(new EsbFileSourceSimpleInfoV3DTO(updateFileSource.getId()));
     }
 
     private void checkCommonParam(EsbCreateOrUpdateFileSourceV3Req req) {

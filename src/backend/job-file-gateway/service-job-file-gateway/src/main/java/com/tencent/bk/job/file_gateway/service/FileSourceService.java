@@ -68,9 +68,9 @@ public interface FileSourceService {
         Integer pageSize
     );
 
-    Integer saveFileSource(Long appId, FileSourceDTO fileSourceDTO);
+    FileSourceDTO saveFileSource(Long appId, FileSourceDTO fileSourceDTO);
 
-    int updateFileSourceById(Long appId, FileSourceDTO fileSourceDTO);
+    FileSourceDTO updateFileSourceById(Long appId, FileSourceDTO fileSourceDTO);
 
     int updateFileSourceStatus(Integer fileSourceId, Integer status);
 

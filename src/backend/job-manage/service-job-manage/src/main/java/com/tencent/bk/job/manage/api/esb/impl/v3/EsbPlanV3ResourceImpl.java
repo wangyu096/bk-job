@@ -133,13 +133,6 @@ public class EsbPlanV3ResourceImpl implements EsbPlanV3Resource {
 
         long appId = request.getAppId();
 
-        AuthResult authResult =
-            businessAuthService.authAccessBusiness(
-                request.getUserName(), request.getAppResourceScope());
-        if (!authResult.isPass()) {
-            throw new PermissionDeniedException(authResult);
-        }
-
         TaskPlanQueryDTO taskPlanQueryDTO = new TaskPlanQueryDTO();
         taskPlanQueryDTO.setAppId(appId);
         taskPlanQueryDTO.setName(request.getName());

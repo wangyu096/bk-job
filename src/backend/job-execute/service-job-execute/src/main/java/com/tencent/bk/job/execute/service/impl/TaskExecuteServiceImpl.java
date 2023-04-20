@@ -24,8 +24,6 @@
 
 package com.tencent.bk.job.execute.service.impl;
 
-import com.tencent.bk.audit.GlobalAuditRegistry;
-import com.tencent.bk.audit.utils.AuditInstanceUtils;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
 import com.tencent.bk.job.common.exception.AbortedException;
@@ -1179,9 +1177,6 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
 
         try {
             TaskInfo taskInfo = buildTaskInfoFromExecuteParam(executeParam, watch);
-            GlobalAuditRegistry.get().updateAuditEvent(
-                auditEvent -> auditEvent.setContent("执行了作业" + taskInfo.getJobPlan().getName()));
-
 
             TaskInstanceDTO taskInstance = taskInfo.getTaskInstance();
             List<StepInstanceDTO> stepInstanceList = taskInfo.getStepInstances();
@@ -1200,11 +1195,6 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
             watch.start("acquireAndSetHosts");
             ServiceListAppHostResultDTO hosts =
                 acquireAndSetHosts(taskInstance, stepInstanceList, finalVariableValueMap.values());
-            GlobalAuditRegistry.get().updateAuditEvent(auditEvent -> {
-                auditEvent.setInstanceId(AuditInstanceUtils.extract(hosts.getValidHosts(),
-                    host -> host.getHostId().toString()));
-                auditEvent.setInstanceName(AuditInstanceUtils.extract(hosts.getValidHosts(), HostDTO::getPrimaryIp));
-            });
             watch.stop();
 
             //检查主机

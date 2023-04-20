@@ -26,11 +26,19 @@ package com.tencent.bk.job.manage.service.impl;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.encrypt.Encryptor;
-import com.tencent.bk.job.common.exception.*;
+import com.tencent.bk.job.common.exception.AlreadyExistsException;
+import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.exception.ServiceException;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.util.Utils;
-import com.tencent.bk.job.common.util.check.*;
+import com.tencent.bk.job.common.util.check.IlegalCharChecker;
+import com.tencent.bk.job.common.util.check.MaxLengthChecker;
+import com.tencent.bk.job.common.util.check.NotEmptyChecker;
+import com.tencent.bk.job.common.util.check.StringCheckHelper;
+import com.tencent.bk.job.common.util.check.TrimChecker;
 import com.tencent.bk.job.common.util.check.exception.StringCheckException;
 import com.tencent.bk.job.common.util.crypto.AESUtils;
 import com.tencent.bk.job.common.util.date.DateUtils;
@@ -78,7 +86,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public long saveAccount(AccountDTO account) throws ServiceException {
+    public AccountDTO saveAccount(AccountDTO account) throws ServiceException {
         log.info("Save account, account={}", account);
         AccountDTO existAccount = accountDAO.getAccount(account.getAppId(), account.getCategory(), account.getAlias());
         if (existAccount != null) {
@@ -97,7 +105,8 @@ public class AccountServiceImpl implements AccountService {
                 throw new NotFoundException(ErrorCode.DB_SYSTEM_ACCOUNT_IS_INVALID);
             }
             if (!dbSystemAccount.getAppId().equals(account.getAppId())) {
-                log.warn("DB related system account is not in currentAuditContext app, systemAccountId={}, systemAccountAppId={}"
+                log.warn("DB related system account is not in currentAuditContext app, systemAccountId={}, " +
+                        "systemAccountAppId={}"
                     , account.getDbSystemAccountId(), dbSystemAccount.getAppId());
                 throw new NotFoundException(ErrorCode.DB_SYSTEM_ACCOUNT_IS_INVALID);
             }
@@ -105,11 +114,15 @@ public class AccountServiceImpl implements AccountService {
                 account.setDbPassword(encryptPassword(account.getDbPassword()));
             }
         }
+
+        long accountId;
         if (account.getId() == null) {
-            return accountDAO.saveAccount(account);
+            accountId = accountDAO.saveAccount(account);
         } else {
-            return accountDAO.saveAccountWithId(account);
+            accountId = accountDAO.saveAccountWithId(account);
         }
+
+        return getAccountById(accountId);
     }
 
     @Override
@@ -134,7 +147,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public void updateAccount(AccountDTO account) throws ServiceException {
+    public AccountDTO updateAccount(AccountDTO account) throws ServiceException {
         AccountDTO existAccount = accountDAO.getAccount(
             account.getAppId(),
             account.getCategory(),
@@ -157,6 +170,8 @@ public class AccountServiceImpl implements AccountService {
         }
         log.info("Update account, account={}", account);
         accountDAO.updateAccount(account);
+
+        return getAccountById(account.getId());
     }
 
     private String encryptPassword(String text) throws ServiceException {

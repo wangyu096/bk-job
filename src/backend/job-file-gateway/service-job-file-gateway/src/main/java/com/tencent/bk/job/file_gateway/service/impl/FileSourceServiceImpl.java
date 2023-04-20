@@ -117,17 +117,19 @@ public class FileSourceServiceImpl implements FileSourceService {
     }
 
     @Override
-    public Integer saveFileSource(Long appId, FileSourceDTO fileSourceDTO) {
+    public FileSourceDTO saveFileSource(Long appId, FileSourceDTO fileSourceDTO) {
         if (fileSourceDAO.checkFileSourceExists(dslContext, fileSourceDTO.getAppId(), fileSourceDTO.getAlias())) {
             throw new AlreadyExistsException(ErrorCode.FILE_SOURCE_ALIAS_ALREADY_EXISTS,
                 new String[]{fileSourceDTO.getAlias()});
         }
-        return fileSourceDAO.insertFileSource(dslContext, fileSourceDTO);
+        Integer id = fileSourceDAO.insertFileSource(dslContext, fileSourceDTO);
+        return getFileSourceById(id);
     }
 
     @Override
-    public int updateFileSourceById(Long appId, FileSourceDTO fileSourceDTO) {
-        return fileSourceDAO.updateFileSource(dslContext, fileSourceDTO);
+    public FileSourceDTO updateFileSourceById(Long appId, FileSourceDTO fileSourceDTO) {
+        fileSourceDAO.updateFileSource(dslContext, fileSourceDTO);
+        return getFileSourceById(fileSourceDTO.getId());
     }
 
     @Override

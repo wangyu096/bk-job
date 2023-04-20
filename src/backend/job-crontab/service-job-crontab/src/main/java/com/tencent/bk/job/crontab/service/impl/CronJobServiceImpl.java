@@ -184,45 +184,52 @@ public class CronJobServiceImpl implements CronJobService {
 
     @Override
     @Transactional(rollbackFor = {Exception.class, Error.class})
-    public Long saveCronJobInfo(CronJobInfoDTO cronJobInfo) {
+    public CronJobInfoDTO createCronJobInfo(CronJobInfoDTO cronJobInfo) {
         checkCronJobPlanOrScript(cronJobInfo);
         saveSnapShotForHostVaiableValue(cronJobInfo);
-        if (cronJobInfo.getId() == null || cronJobInfo.getId() == 0) {
-            cronJobInfo.setCreateTime(DateUtils.currentTimeSeconds());
-            cronJobInfo.setEnable(false);
-            Long id = cronJobDAO.insertCronJob(cronJobInfo);
-            cronAuthService.registerCron(id, cronJobInfo.getName(), cronJobInfo.getCreator());
-            return id;
-        } else {
-            processCronJobVariableValueMask(cronJobInfo);
-            if (cronJobInfo.getEnable()) {
-                try {
-                    List<ServiceTaskVariable> taskVariables = null;
-                    if (CollectionUtils.isNotEmpty(cronJobInfo.getVariableValue())) {
-                        taskVariables =
-                            cronJobInfo.getVariableValue().parallelStream()
-                                .map(CronJobVariableDTO::toServiceTaskVariable).collect(Collectors.toList());
-                    }
-                    executeTaskService.authExecuteTask(cronJobInfo.getAppId(), cronJobInfo.getTaskPlanId(),
-                        cronJobInfo.getId(), cronJobInfo.getName(), taskVariables, cronJobInfo.getLastModifyUser());
-                    if (cronJobDAO.updateCronJobById(cronJobInfo)) {
-                        addJob(cronJobInfo.getAppId(), cronJobInfo.getId());
-                    } else {
-                        throw new InternalException(ErrorCode.UPDATE_CRON_JOB_FAILED);
-                    }
-                } catch (TaskExecuteAuthFailedException e) {
-                    log.error("Error while pre auth cron execute!", e);
-                    throw e;
+
+        cronJobInfo.setCreateTime(DateUtils.currentTimeSeconds());
+        cronJobInfo.setEnable(false);
+
+        Long id = cronJobDAO.insertCronJob(cronJobInfo);
+        cronAuthService.registerCron(id, cronJobInfo.getName(), cronJobInfo.getCreator());
+
+        return getCronJobInfoById(id);
+    }
+
+    @Override
+    @Transactional(rollbackFor = {Exception.class, Error.class})
+    public CronJobInfoDTO updateCronJobInfo(CronJobInfoDTO cronJobInfo) {
+        checkCronJobPlanOrScript(cronJobInfo);
+        processCronJobVariableValueMask(cronJobInfo);
+        if (cronJobInfo.getEnable()) {
+            try {
+                List<ServiceTaskVariable> taskVariables = null;
+                if (CollectionUtils.isNotEmpty(cronJobInfo.getVariableValue())) {
+                    taskVariables =
+                        cronJobInfo.getVariableValue().parallelStream()
+                            .map(CronJobVariableDTO::toServiceTaskVariable).collect(Collectors.toList());
                 }
-            } else {
+                executeTaskService.authExecuteTask(cronJobInfo.getAppId(), cronJobInfo.getTaskPlanId(),
+                    cronJobInfo.getId(), cronJobInfo.getName(), taskVariables, cronJobInfo.getLastModifyUser());
                 if (cronJobDAO.updateCronJobById(cronJobInfo)) {
-                    deleteJob(cronJobInfo.getAppId(), cronJobInfo.getId());
+                    addJob(cronJobInfo.getAppId(), cronJobInfo.getId());
                 } else {
                     throw new InternalException(ErrorCode.UPDATE_CRON_JOB_FAILED);
                 }
+            } catch (TaskExecuteAuthFailedException e) {
+                log.error("Error while pre auth cron execute!", e);
+                throw e;
             }
-            return cronJobInfo.getId();
+        } else {
+            if (cronJobDAO.updateCronJobById(cronJobInfo)) {
+                deleteJob(cronJobInfo.getAppId(), cronJobInfo.getId());
+            } else {
+                throw new InternalException(ErrorCode.UPDATE_CRON_JOB_FAILED);
+            }
         }
+
+        return getCronJobInfoById(cronJobInfo.getId());
     }
 
     /**

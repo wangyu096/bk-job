@@ -29,16 +29,12 @@ import com.tencent.bk.job.common.constant.FeatureToggleModeEnum;
 import com.tencent.bk.job.common.exception.FailedPreconditionException;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.exception.NotFoundException;
-import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
-import com.tencent.bk.job.common.model.dto.ResourceScope;
-import com.tencent.bk.job.common.service.AppScopeMappingService;
-import com.tencent.bk.job.common.util.ApplicationContextRegister;
 import com.tencent.bk.job.common.util.ArrayUtil;
 import com.tencent.bk.job.common.util.Utils;
 import com.tencent.bk.job.common.util.date.DateUtils;
@@ -68,27 +64,24 @@ import java.util.stream.Collectors;
 @RestController
 public class WebAppAccountResourceImpl implements WebAppAccountResource {
     private final AccountService accountService;
-    private final MessageI18nService i18nService;
     private final AccountAuthService accountAuthService;
     private final JobManageConfig jobManageConfig;
 
     @Autowired
     public WebAppAccountResourceImpl(AccountService accountService,
-                                     MessageI18nService i18nService,
                                      AccountAuthService accountAuthService,
                                      JobManageConfig jobManageConfig) {
         this.accountService = accountService;
-        this.i18nService = i18nService;
         this.accountAuthService = accountAuthService;
         this.jobManageConfig = jobManageConfig;
     }
 
     @Override
-    public Response<Long> saveAccount(String username,
-                                      AppResourceScope appResourceScope,
-                                      String scopeType,
-                                      String scopeId,
-                                      AccountCreateUpdateReq accountCreateUpdateReq) {
+    public Response<AccountVO> saveAccount(String username,
+                                           AppResourceScope appResourceScope,
+                                           String scopeType,
+                                           String scopeId,
+                                           AccountCreateUpdateReq accountCreateUpdateReq) {
         AuthResult authResult = checkCreateAccountPermission(username, appResourceScope);
         if (!authResult.isPass()) {
             throw new PermissionDeniedException(authResult);
@@ -97,22 +90,23 @@ public class WebAppAccountResourceImpl implements WebAppAccountResource {
 
         AccountDTO newAccount = accountService.buildCreateAccountDTO(username, appResourceScope.getAppId(),
             accountCreateUpdateReq);
-        long accountId = accountService.saveAccount(newAccount);
+        AccountDTO savedAccount = accountService.saveAccount(newAccount);
         accountAuthService.registerAccount(
             username,
-            accountId,
+            savedAccount.getId(),
             newAccount.getAlias()
         );
-        return Response.buildSuccessResp(accountId);
+        return Response.buildSuccessResp(savedAccount.toAccountVO());
     }
 
     @Override
-    public Response updateAccount(String username,
-                                  AppResourceScope appResourceScope,
-                                  String scopeType,
-                                  String scopeId,
-                                  AccountCreateUpdateReq accountCreateUpdateReq) {
-        Long accountId = accountCreateUpdateReq.getId();
+    public Response<AccountVO> updateAccount(String username,
+                                             AppResourceScope appResourceScope,
+                                             String scopeType,
+                                             String scopeId,
+                                             Long accountId,
+                                             AccountCreateUpdateReq accountCreateUpdateReq) {
+        accountCreateUpdateReq.setId(accountId);
         AccountDTO account = accountService.getAccountById(accountId);
         if (account == null) {
             log.info("Account is not exist, accountId={}", accountId);
@@ -217,8 +211,7 @@ public class WebAppAccountResourceImpl implements WebAppAccountResource {
         List<AccountVO> accountVOS = new ArrayList<>();
         if (pageData.getData() != null) {
             for (AccountDTO accountDTO : pageData.getData()) {
-                AccountVO accountVO = convertToAccountVO(accountDTO);
-                accountVOS.add(accountVO);
+                accountVOS.add(accountDTO.toAccountVO());
             }
         }
         // 添加权限数据
@@ -229,39 +222,6 @@ public class WebAppAccountResourceImpl implements WebAppAccountResource {
         result.setData(accountVOS);
         result.setCanCreate(checkCreateAccountPermission(username, appResourceScope).isPass());
         return Response.buildSuccessResp(result);
-    }
-
-    private AccountVO convertToAccountVO(AccountDTO accountDTO) {
-        AccountVO accountVO = new AccountVO();
-        accountVO.setId(accountDTO.getId());
-
-        AppScopeMappingService appScopeMappingService =
-            ApplicationContextRegister.getBean(AppScopeMappingService.class);
-        ResourceScope resourceScope = appScopeMappingService.getScopeByAppId(accountDTO.getAppId());
-        accountVO.setScopeType(resourceScope.getType().getValue());
-        accountVO.setScopeId(resourceScope.getId());
-        accountVO.setAccount(accountDTO.getAccount());
-        accountVO.setAlias(accountDTO.getAlias());
-        accountVO.setCategory(accountDTO.getCategory().getValue());
-        accountVO.setCategoryName(i18nService.getI18n(accountDTO.getCategory().getI18nKey()));
-        accountVO.setType(accountDTO.getType().getType());
-        accountVO.setTypeName(accountDTO.getType().getName());
-        accountVO.setOwnerUsers(Utils.getNotBlankSplitList(accountDTO.getGrantees(), ","));
-        accountVO.setRemark(accountDTO.getRemark());
-        accountVO.setOs(accountDTO.getOs());
-        accountVO.setPassword("******");
-        accountVO.setDbPort(accountDTO.getDbPort());
-        accountVO.setDbPassword("******");
-        accountVO.setDbSystemAccountId(accountDTO.getDbSystemAccountId());
-        accountVO.setLastModifyUser(accountDTO.getLastModifyUser());
-        accountVO.setCreator(accountDTO.getCreator());
-        if (accountDTO.getCreateTime() != null) {
-            accountVO.setCreateTime(accountDTO.getCreateTime());
-        }
-        if (accountDTO.getLastModifyTime() != null) {
-            accountVO.setLastModifyTime(accountDTO.getLastModifyTime());
-        }
-        return accountVO;
     }
 
     @Override
@@ -305,7 +265,7 @@ public class WebAppAccountResourceImpl implements WebAppAccountResource {
 
         checkManageAccountPermission(username, appResourceScope, accountId);
 
-        return Response.buildSuccessResp(convertToAccountVO(account));
+        return Response.buildSuccessResp(account.toAccountVO());
     }
 
     @Override
@@ -323,9 +283,7 @@ public class WebAppAccountResourceImpl implements WebAppAccountResource {
         if (accountDTOS != null && !accountDTOS.isEmpty()) {
             List<Long> accountIdList = new ArrayList<>();
             for (AccountDTO accountDTO : accountDTOS) {
-                AccountVO accountVO = convertToAccountVO(accountDTO);
-                accountVO.setPassword("******");
-                accountVO.setDbPassword("******");
+                AccountVO accountVO = accountDTO.toAccountVO();
                 accountVO.setCanManage(true);
                 accountVO.setCanUse(true);
                 accountIdList.add(accountDTO.getId());

@@ -26,7 +26,7 @@ package com.tencent.bk.job.manage.service.template.impl;
 
 import com.tencent.bk.audit.annotations.ActionAuditRecord;
 import com.tencent.bk.audit.annotations.AuditInstanceRecord;
-import com.tencent.bk.audit.model.SdkActionAuditContext;
+import com.tencent.bk.audit.model.ActionAuditContext;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobResourceTypeEnum;
 import com.tencent.bk.job.common.exception.AbortedException;
@@ -331,14 +331,14 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
     )
     public TaskTemplateInfoDTO updateTaskTemplate(TaskTemplateInfoDTO taskTemplateInfo) {
         // 审计记录 - 原始数据
-        SdkActionAuditContext.current().setOriginInstanceList(Collections.singletonList(
+        ActionAuditContext.current().setOriginInstanceList(Collections.singletonList(
             TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(
                 getTaskTemplateById(taskTemplateInfo.getAppId(), taskTemplateInfo.getId()))));
 
         TaskTemplateInfoDTO template = saveOrUpdateTaskTemplate(taskTemplateInfo);
 
         // 审计记录 - 更新后数据
-        SdkActionAuditContext.current().setInstanceList(Collections.singletonList(
+        ActionAuditContext.current().setInstanceList(Collections.singletonList(
             TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(template)));
 
         return template;
@@ -586,12 +586,29 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.EDIT_JOB_TEMPLATE,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.TEMPLATE
+        ),
+        content = "Modify template [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public Boolean saveTaskTemplateBasicInfo(TaskTemplateInfoDTO taskTemplateInfo) {
+        // 审计记录 - 原始数据
+        ActionAuditContext.current().setOriginInstanceList(Collections.singletonList(
+            TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(
+                getTaskTemplateById(taskTemplateInfo.getAppId(), taskTemplateInfo.getId()))));
+
         createNewTagForTemplateIfNotExist(taskTemplateInfo);
         updateTemplateTags(taskTemplateInfo);
         if (!taskTemplateDAO.updateTaskTemplateById(taskTemplateInfo, false)) {
             throw new InternalException(ErrorCode.UPDATE_TEMPLATE_FAILED);
         }
+
+        // 审计记录 - 更新后数据
+        ActionAuditContext.current().setInstanceList(Collections.singletonList(
+            TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(
+                getTaskTemplateById(taskTemplateInfo.getAppId(), taskTemplateInfo.getId()))));
         return true;
     }
 

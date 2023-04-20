@@ -32,9 +32,9 @@ import com.tencent.bk.job.common.iam.util.IamUtil;
 import com.tencent.bk.job.common.model.dto.ApplicationDTO;
 import com.tencent.bk.job.common.service.AppScopeMappingService;
 import com.tencent.bk.job.manage.model.dto.AccountDTO;
+import com.tencent.bk.job.manage.model.dto.CredentialDTO;
 import com.tencent.bk.job.manage.model.dto.ScriptDTO;
 import com.tencent.bk.job.manage.model.dto.TagDTO;
-import com.tencent.bk.job.manage.model.inner.resp.ServiceCredentialDTO;
 import com.tencent.bk.job.manage.service.AccountService;
 import com.tencent.bk.job.manage.service.ApplicationService;
 import com.tencent.bk.job.manage.service.CredentialService;
@@ -142,12 +142,12 @@ public class ResourceNameQueryServiceImpl implements ResourceNameQueryService {
                 }
                 break;
             case TICKET:
-                ServiceCredentialDTO serviceCredentialDTO = credentialService.getServiceCredentialById(resourceId);
-                if (serviceCredentialDTO == null) {
+                CredentialDTO credentialDTO = credentialService.getCredentialById(resourceId);
+                if (credentialDTO == null) {
                     log.warn("Cannot find ticket by ticketId {}", resourceId);
                     return null;
                 }
-                return serviceCredentialDTO.getName();
+                return credentialDTO.getName();
             default:
                 return null;
         }

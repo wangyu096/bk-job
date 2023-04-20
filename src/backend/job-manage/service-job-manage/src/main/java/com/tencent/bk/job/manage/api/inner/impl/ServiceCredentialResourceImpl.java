@@ -29,6 +29,7 @@ import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
 import com.tencent.bk.job.manage.api.inner.ServiceCredentialResource;
 import com.tencent.bk.job.manage.auth.TicketAuthService;
+import com.tencent.bk.job.manage.model.dto.CredentialDTO;
 import com.tencent.bk.job.manage.model.inner.resp.ServiceBasicCredentialDTO;
 import com.tencent.bk.job.manage.model.inner.resp.ServiceCredentialDTO;
 import com.tencent.bk.job.manage.model.web.request.CredentialCreateUpdateReq;
@@ -54,8 +55,8 @@ public class ServiceCredentialResourceImpl implements ServiceCredentialResource 
 
     @Override
     public InternalResponse<ServiceCredentialDTO> getCredentialById(Long appId, String id) {
-        ServiceCredentialDTO serviceCredentialDTO = credentialService.getServiceCredentialById(appId, id);
-        return InternalResponse.buildSuccessResp(serviceCredentialDTO);
+        CredentialDTO credentialDTO = credentialService.getCredentialById(appId, id);
+        return InternalResponse.buildSuccessResp(credentialDTO.toServiceCredentialDTO());
     }
 
     @Override
@@ -90,8 +91,8 @@ public class ServiceCredentialResourceImpl implements ServiceCredentialResource 
         if (!authResult.isPass()) {
             return InternalResponse.buildAuthFailResp(AuthResult.toAuthResultDTO(authResult));
         }
-        String credentialId = credentialService.saveCredential(username, appId, createUpdateReq);
-        return InternalResponse.buildSuccessResp(new ServiceBasicCredentialDTO(credentialId));
+        CredentialDTO credentialDTO = credentialService.createCredential(username, appId, createUpdateReq);
+        return InternalResponse.buildSuccessResp(new ServiceBasicCredentialDTO(credentialDTO.getId()));
     }
 
     public AuthResult checkCreateTicketPermission(String username, Long appId) {
