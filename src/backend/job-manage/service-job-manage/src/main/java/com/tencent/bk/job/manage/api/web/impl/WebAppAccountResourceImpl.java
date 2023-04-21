@@ -24,11 +24,13 @@
 
 package com.tencent.bk.job.manage.api.web.impl;
 
+import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.FeatureToggleModeEnum;
 import com.tencent.bk.job.common.exception.FailedPreconditionException;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
@@ -77,6 +79,7 @@ public class WebAppAccountResourceImpl implements WebAppAccountResource {
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.CREATE_ACCOUNT)
     public Response<AccountVO> saveAccount(String username,
                                            AppResourceScope appResourceScope,
                                            String scopeType,
@@ -100,6 +103,7 @@ public class WebAppAccountResourceImpl implements WebAppAccountResource {
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.MANAGE_ACCOUNT)
     public Response<AccountVO> updateAccount(String username,
                                              AppResourceScope appResourceScope,
                                              String scopeType,
@@ -225,6 +229,7 @@ public class WebAppAccountResourceImpl implements WebAppAccountResource {
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.MANAGE_ACCOUNT)
     public Response deleteAccount(String username,
                                   AppResourceScope appResourceScope,
                                   String scopeType,

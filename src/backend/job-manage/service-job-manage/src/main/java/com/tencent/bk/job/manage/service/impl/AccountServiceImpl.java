@@ -24,6 +24,9 @@
 
 package com.tencent.bk.job.manage.service.impl;
 
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
+import com.tencent.bk.audit.annotations.AuditInstanceRecord;
+import com.tencent.bk.audit.model.ActionAuditContext;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.encrypt.Encryptor;
 import com.tencent.bk.job.common.exception.AlreadyExistsException;
@@ -31,6 +34,8 @@ import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.exception.NotFoundException;
 import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.iam.constant.ActionId;
+import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.util.Utils;
@@ -60,11 +65,15 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_ID;
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_NAME;
 
 @Slf4j
 @Service
@@ -86,6 +95,15 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.CREATE_ACCOUNT,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.ACCOUNT,
+            instanceIds = "#$.?id",
+            instanceNames = "#account.?account"
+        ),
+        content = "Create account [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public AccountDTO saveAccount(AccountDTO account) throws ServiceException {
         log.info("Save account, account={}", account);
         AccountDTO existAccount = accountDAO.getAccount(account.getAppId(), account.getCategory(), account.getAlias());
@@ -147,6 +165,15 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.MANAGE_ACCOUNT,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.ACCOUNT,
+            instanceIds = "#account.?id",
+            instanceNames = "#account.?account"
+        ),
+        content = "Modify account [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public AccountDTO updateAccount(AccountDTO account) throws ServiceException {
         AccountDTO existAccount = accountDAO.getAccount(
             account.getAppId(),
@@ -162,6 +189,12 @@ public class AccountServiceImpl implements AccountService {
             );
             throw new AlreadyExistsException(ErrorCode.ACCOUNT_ALIAS_EXIST);
         }
+
+        // 审计 - 原始数据
+        ActionAuditContext.current().setOriginInstanceList(Collections.singletonList(
+            getAccountById(account.getId()).toEsbAccountV3DTO()
+        ));
+
         if (StringUtils.isNotEmpty(account.getPassword())) {
             account.setPassword(encryptor.encrypt(account.getPassword()));
         }
@@ -171,7 +204,14 @@ public class AccountServiceImpl implements AccountService {
         log.info("Update account, account={}", account);
         accountDAO.updateAccount(account);
 
-        return getAccountById(account.getId());
+        AccountDTO updatedAccount = getAccountById(account.getId());
+
+        // 审计 - 当前数据
+        ActionAuditContext.current().setInstanceList(Collections.singletonList(
+            updatedAccount.toEsbAccountV3DTO()
+        ));
+
+        return updatedAccount;
     }
 
     private String encryptPassword(String text) throws ServiceException {
@@ -184,9 +224,25 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.MANAGE_ACCOUNT,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.ACCOUNT,
+            instanceIds = "#accountId"
+        ),
+        content = "Delete account [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public void deleteAccount(Long accountId) throws ServiceException {
+        AccountDTO account = getAccountById(accountId);
+        if (account == null) {
+            throw new NotFoundException(ErrorCode.ACCOUNT_NOT_EXIST);
+        }
+
+
         log.info("Delete account, accountId={}", accountId);
         accountDAO.deleteAccount(accountId);
+
+        ActionAuditContext.current().setInstanceNameList(Collections.singletonList(account.getAccount()));
     }
 
     @Override
