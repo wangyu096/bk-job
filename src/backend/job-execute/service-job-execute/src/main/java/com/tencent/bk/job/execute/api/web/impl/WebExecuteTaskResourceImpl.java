@@ -25,6 +25,7 @@
 package com.tencent.bk.job.execute.api.web.impl;
 
 import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.audit.model.AuditContext;
 import com.tencent.bk.job.common.annotation.CompatibleImplementation;
 import com.tencent.bk.job.common.constant.ErrorCode;
@@ -118,7 +119,7 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
                                                AppResourceScope appResourceScope,
                                                String scopeType,
                                                String scopeId,
-                                               WebTaskExecuteRequest request) {
+                                               @AuditRequestBody WebTaskExecuteRequest request) {
         log.info("Execute task, request={}", request);
 
         if (!checkExecuteTaskRequest(request)) {
@@ -235,7 +236,7 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
                                                      AppResourceScope appResourceScope,
                                                      String scopeType,
                                                      String scopeId,
-                                                     WebFastExecuteScriptRequest request) {
+                                                     @AuditRequestBody WebFastExecuteScriptRequest request) {
         log.debug("Fast execute script, scope={}, operator={}, request={}", appResourceScope, username, request);
 
         if (!checkFastExecuteScriptRequest(request)) {

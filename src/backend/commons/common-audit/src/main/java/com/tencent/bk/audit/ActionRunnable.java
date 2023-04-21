@@ -24,11 +24,7 @@
 
 package com.tencent.bk.audit;
 
-public class EmptyAuditDataQuery<T, R> implements AuditDataQuery<T, R> {
-    public static final EmptyAuditDataQuery INSTANCE = new EmptyAuditDataQuery<>();
-
-    @Override
-    public R apply(T id) {
-        return null;
-    }
+@FunctionalInterface
+public interface ActionRunnable {
+    void run();
 }

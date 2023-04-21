@@ -28,6 +28,7 @@ import com.tencent.bk.audit.DefaultAuditEventBuilder;
 import com.tencent.bk.audit.model.ActionAuditContext;
 import com.tencent.bk.audit.model.AuditEvent;
 import com.tencent.bk.audit.utils.AuditInstanceUtils;
+import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
 
 import java.util.Collections;
 import java.util.List;
@@ -47,6 +48,7 @@ public class ExecuteJobAuditEventBuilder extends DefaultAuditEventBuilder {
         AuditEvent auditEvent = buildBasicAuditEvent();
 
         // 事件实例
+        auditEvent.setResourceTypeId(ResourceTypeId.HOST);
         auditEvent.setInstanceId(AuditInstanceUtils.extractToString(actionAuditContext.getInstanceIdList(),
             instance -> instance));
         auditEvent.setInstanceName(AuditInstanceUtils.extractToString(actionAuditContext.getInstanceNameList(),

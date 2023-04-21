@@ -24,16 +24,19 @@
 
 package com.tencent.bk.audit.model;
 
-import com.tencent.bk.audit.Executable;
+import com.tencent.bk.audit.ActionCallable;
+import com.tencent.bk.audit.ActionRunnable;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 /**
  * 操作审计上下文实现
  */
 public interface ActionAuditContext {
+    /**
+     * 非法的操作审计上下文，用于当前操作审计上下文不存在时返回这个实例（避免返回null导致系统异常)
+     */
     ActionAuditContext INVALID = new InvalidActionAuditContext();
 
     static ActionAuditContextBuilder builder(String actionId) {
@@ -47,13 +50,82 @@ public interface ActionAuditContext {
         return AuditContext.current().currentActionAuditContext();
     }
 
+    /**
+     * 设置自身为当前操作审计上下文
+     *
+     * @return scope
+     */
     ActionAuditScope makeCurrent();
 
-    void addAttribute(String name, Object value);
-
-    boolean hasResource();
-
+    /**
+     * 结束操作审计上下文
+     */
     void end();
+
+    default <T> ActionCallable<T> wrapActionCallable(ActionCallable<T> callable) {
+        return () -> {
+            ActionAuditScope scope = null;
+            ActionAuditContext current = null;
+            try {
+                scope = makeCurrent();
+                current = current();
+            } catch (Throwable ignore) {
+                // 保证业务代码正常执行，忽略所有审计错误
+            }
+            try {
+                return callable.call();
+            } finally {
+                safelyEndActionAuditContext(scope, current);
+            }
+        };
+    }
+
+    default void safelyEndActionAuditContext(ActionAuditScope scope,
+                                             ActionAuditContext current) {
+        try {
+            if (current != null) {
+                current.end();
+            }
+            if (scope != null) {
+                scope.close();
+            }
+        } catch (Throwable ignore) {
+            // 保证业务代码正常执行，忽略所有审计错误
+        }
+    }
+
+    default ActionRunnable wrapActionRunnable(ActionRunnable actionRunnable) {
+        return () -> {
+            ActionAuditScope scope = null;
+            ActionAuditContext current = null;
+            try {
+                scope = makeCurrent();
+                current = current();
+            } catch (Throwable ignore) {
+                // 保证业务代码正常执行，忽略所有审计错误
+            }
+            try {
+                actionRunnable.run();
+            } finally {
+                safelyEndActionAuditContext(scope, current);
+            }
+        };
+    }
+
+    /**
+     * 获取审计事件
+     *
+     * @return 生成的审计事件
+     */
+    List<AuditEvent> getEvents();
+
+    /**
+     * 新增属性
+     *
+     * @param name  属性名称
+     * @param value 属性值
+     */
+    void addAttribute(String name, Object value);
 
     String getActionId();
 
@@ -75,8 +147,6 @@ public interface ActionAuditContext {
 
     Map<String, Object> getAttributes();
 
-    List<AuditEvent> getEvents();
-
     void setInstanceIdList(List<String> instanceIdList);
 
     void setInstanceNameList(List<String> instanceNameList);
@@ -84,54 +154,4 @@ public interface ActionAuditContext {
     void setOriginInstanceList(List<Object> originInstanceList);
 
     void setInstanceList(List<Object> instanceList);
-
-    default <T> Supplier<T> wrapSupplier(Supplier<T> supplier) {
-        return () -> {
-            ActionAuditScope scope = null;
-            ActionAuditContext current = null;
-            try {
-                scope = makeCurrent();
-                current = current();
-            } catch (Throwable ignore) {
-                // 保证业务代码正常执行，忽略所有审计错误
-            }
-            try {
-                return supplier.get();
-            } finally {
-                safelyEndActionAuditContext(scope, current);
-            }
-        };
-    }
-
-    default void safelyEndActionAuditContext(ActionAuditScope scope,
-                                             ActionAuditContext current) {
-        try {
-            if (current != null) {
-                current.end();
-            }
-            if (scope != null) {
-                scope.close();
-            }
-        } catch (Throwable ignore) {
-            // 保证业务代码正常执行，忽略所有审计错误
-        }
-    }
-
-    default Executable wrapExecutable(Executable executable) {
-        return () -> {
-            ActionAuditScope scope = null;
-            ActionAuditContext current = null;
-            try {
-                scope = makeCurrent();
-                current = current();
-            } catch (Throwable ignore) {
-                // 保证业务代码正常执行，忽略所有审计错误
-            }
-            try {
-                executable.execute();
-            } finally {
-                safelyEndActionAuditContext(scope, current);
-            }
-        };
-    }
 }

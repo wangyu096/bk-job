@@ -31,6 +31,7 @@ import com.tencent.bk.audit.utils.EventIdGenerator;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.util.StringUtil;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,7 +51,7 @@ public class DefaultAuditEventBuilder implements AuditEventBuilder {
         Map<String, Object> eventAttributes = new HashMap<>(actionAuditContext.getAttributes());
 
         List<String> instanceIdList = actionAuditContext.getInstanceIdList();
-        if (actionAuditContext.hasResource()) {
+        if (StringUtils.isNotBlank(actionAuditContext.getResourceType())) {
             if (CollectionUtils.isNotEmpty(instanceIdList)) {
                 List<String> instanceNameList = actionAuditContext.getInstanceNameList();
                 List<Object> originInstanceList = actionAuditContext.getOriginInstanceList();

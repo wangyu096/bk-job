@@ -27,7 +27,6 @@ package com.tencent.bk.audit.model;
 import com.tencent.bk.audit.AuditEventBuilder;
 import com.tencent.bk.audit.DefaultAuditEventBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -91,32 +90,32 @@ public class SdkActionAuditContext implements ActionAuditContext {
     /**
      * 其它通过 ActionAuditRecord.AuditAttribute 设置的属性
      */
-    private final Map<String, Object> attributes = new HashMap<>();
+    private final Map<String, Object> attributes;
 
     /**
      * 当前操作产生的审计事件列表
      */
     private final List<AuditEvent> events = new ArrayList<>();
 
-
-    private SdkActionAuditContext(String actionId,
-                                  String resourceType,
-                                  String content,
-                                  Class<? extends AuditEventBuilder> eventBuilderClass,
-                                  Long startTime) {
+    SdkActionAuditContext(String actionId,
+                          String resourceType,
+                          List<String> instanceIdList,
+                          List<String> instanceNameList,
+                          List<Object> originInstanceList,
+                          List<Object> instanceList,
+                          String content,
+                          Class<? extends AuditEventBuilder> eventBuilderClass,
+                          Map<String, Object> attributes) {
         this.actionId = actionId;
+        this.startTime = System.currentTimeMillis();
         this.resourceType = resourceType;
+        this.instanceIdList = instanceIdList;
+        this.instanceNameList = instanceNameList;
+        this.originInstanceList = originInstanceList;
+        this.instanceList = instanceList;
         this.content = content;
         this.eventBuilderClass = eventBuilderClass == null ? DefaultAuditEventBuilder.class : eventBuilderClass;
-        this.startTime = startTime;
-    }
-
-    static SdkActionAuditContext start(String actionId,
-                                       String resourceType,
-                                       String content,
-                                       Class<? extends AuditEventBuilder> eventBuilderClass) {
-        return new SdkActionAuditContext(actionId, resourceType, content, eventBuilderClass,
-            System.currentTimeMillis());
+        this.attributes = (attributes == null ? new HashMap<>() : attributes);
     }
 
     @Override
@@ -129,11 +128,6 @@ public class SdkActionAuditContext implements ActionAuditContext {
     @Override
     public void addAttribute(String name, Object value) {
         attributes.put(name, value);
-    }
-
-    @Override
-    public boolean hasResource() {
-        return StringUtils.isNotBlank(resourceType);
     }
 
     @Override

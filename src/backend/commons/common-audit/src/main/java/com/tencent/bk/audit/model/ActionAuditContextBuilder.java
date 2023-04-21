@@ -26,14 +26,52 @@ package com.tencent.bk.audit.model;
 
 import com.tencent.bk.audit.AuditEventBuilder;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class ActionAuditContextBuilder {
+    /**
+     * 操作 ID
+     */
     private final String actionId;
 
+    /**
+     * 资源类型
+     */
     private String resourceType;
 
+    /**
+     * 审计事件描述
+     */
     private String content;
 
     public Class<? extends AuditEventBuilder> eventBuilder;
+
+    /**
+     * 操作实例ID列表
+     */
+    private List<String> instanceIdList;
+
+    /**
+     * 操作实例名称列表，需要与instanceIdList中的ID一一对应
+     */
+    private List<String> instanceNameList;
+
+    /**
+     * 原始实例列表
+     */
+    private List<Object> originInstanceList;
+
+    /**
+     * 当前实例列表
+     */
+    private List<Object> instanceList;
+
+    /**
+     * 其它通过 ActionAuditRecord.AuditAttribute 设置的属性
+     */
+    private Map<String, Object> attributes = new HashMap<>();
 
     public static ActionAuditContextBuilder builder(String actionId) {
         return new ActionAuditContextBuilder(actionId);
@@ -59,7 +97,33 @@ public class ActionAuditContextBuilder {
         return this;
     }
 
-    public SdkActionAuditContext start() {
-        return SdkActionAuditContext.start(actionId, resourceType, content, eventBuilder);
+    public ActionAuditContextBuilder setInstanceIdList(List<String> instanceIdList) {
+        this.instanceIdList = instanceIdList;
+        return this;
+    }
+
+    public ActionAuditContextBuilder setInstanceNameList(List<String> instanceNameList) {
+        this.instanceNameList = instanceNameList;
+        return this;
+    }
+
+    public ActionAuditContextBuilder setOriginInstanceList(List<Object> originInstanceList) {
+        this.originInstanceList = originInstanceList;
+        return this;
+    }
+
+    public ActionAuditContextBuilder setInstanceList(List<Object> instanceList) {
+        this.instanceList = instanceList;
+        return this;
+    }
+
+    public ActionAuditContextBuilder setAttributes(Map<String, Object> attributes) {
+        this.attributes = attributes;
+        return this;
+    }
+
+    public ActionAuditContext build() {
+        return new SdkActionAuditContext(actionId, resourceType, instanceIdList, instanceNameList,
+            originInstanceList, instanceList, content, eventBuilder, attributes);
     }
 }

@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * 审计SDK 入口
+ * 审计入口服务
  */
 @Slf4j
 public class Audit {
@@ -79,11 +79,7 @@ public class Audit {
      */
     public void stopAudit() {
         try {
-            AuditContext auditContext = auditContextHolder.current();
-            if (auditContext == null) {
-                log.error("Current audit context is empty!");
-                return;
-            }
+            AuditContext auditContext = currentAuditContext();
             auditContext.end();
             eventExporter.export(auditContext.getEvents());
         } catch (Throwable e) {

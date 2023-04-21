@@ -38,10 +38,6 @@ public class InvalidActionAuditContext implements ActionAuditContext {
 
     }
 
-    @Override
-    public boolean hasResource() {
-        return false;
-    }
 
     @Override
     public void end() {

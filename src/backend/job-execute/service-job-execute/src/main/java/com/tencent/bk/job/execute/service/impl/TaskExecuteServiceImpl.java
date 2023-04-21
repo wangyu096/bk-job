@@ -209,45 +209,37 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
     @Override
     public TaskInstanceDTO executeFastTask(FastTaskDTO fastTask) {
         StepInstanceDTO stepInstance = fastTask.getStepInstance();
+
+        ActionAuditContext actionAuditContext = null;
         if (stepInstance.isFileStep()) {
-            return ActionAuditContext.builder(ActionId.QUICK_TRANSFER_FILE)
+            actionAuditContext = ActionAuditContext.builder(ActionId.QUICK_TRANSFER_FILE)
                 .setEventBuilder(ExecuteJobAuditEventBuilder.class)
                 .setContent("Run a quick transfer file task")
-                .start()
-                .wrapSupplier(
-                    () -> executeFastTaskInternal(fastTask))
-                .get();
+                .build();
         } else if (stepInstance.isScriptStep()) {
             ScriptSourceEnum scriptSource = ScriptSourceEnum.getScriptSourceEnum(stepInstance.getScriptSource());
             if (scriptSource == ScriptSourceEnum.CUSTOM) {
-                return ActionAuditContext.builder(ActionId.QUICK_EXECUTE_SCRIPT)
+                actionAuditContext = ActionAuditContext.builder(ActionId.QUICK_EXECUTE_SCRIPT)
                     .setEventBuilder(ExecuteJobAuditEventBuilder.class)
                     .setContent("Run a quick script task")
-                    .start()
-                    .wrapSupplier(
-                        () -> executeFastTaskInternal(fastTask))
-                    .get();
+                    .build();
             } else if (scriptSource == ScriptSourceEnum.QUOTED_APP) {
-                return ActionAuditContext.builder(ActionId.EXECUTE_SCRIPT)
+                actionAuditContext = ActionAuditContext.builder(ActionId.EXECUTE_SCRIPT)
                     .setEventBuilder(ExecuteJobAuditEventBuilder.class)
                     .setContent("Launch a script [{{" + JobAuditAttributeNames.SCRIPT_NAME
                         + "}}]({{" + JobAuditAttributeNames.SCRIPT_VERSION_ID + "}})")
-                    .start()
-                    .wrapSupplier(
-                        () -> executeFastTaskInternal(fastTask))
-                    .get();
+                    .build();
             } else if (scriptSource == ScriptSourceEnum.QUOTED_PUBLIC) {
-                return ActionAuditContext.builder(ActionId.EXECUTE_PUBLIC_SCRIPT)
+                actionAuditContext = ActionAuditContext.builder(ActionId.EXECUTE_PUBLIC_SCRIPT)
                     .setEventBuilder(ExecuteJobAuditEventBuilder.class)
                     .setContent("Launch a public script [{{" + JobAuditAttributeNames.SCRIPT_NAME
                         + "}}]({{" + JobAuditAttributeNames.SCRIPT_VERSION_ID + "}})")
-                    .start()
-                    .wrapSupplier(
-                        () -> executeFastTaskInternal(fastTask))
-                    .get();
+                    .build();
             }
         }
-        return null;
+
+        return actionAuditContext != null ?
+            actionAuditContext.wrapActionCallable(() -> executeFastTaskInternal(fastTask)).call() : null;
     }
 
     private TaskInstanceDTO executeFastTaskInternal(FastTaskDTO fastTask) {

@@ -29,13 +29,10 @@ import com.tencent.bk.audit.annotations.AuditAttribute;
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.audit.model.ActionAuditContext;
-import com.tencent.bk.audit.model.ActionAuditContextBuilder;
 import com.tencent.bk.audit.model.ActionAuditScope;
-import com.tencent.bk.audit.model.AuditContextBuilder;
+import com.tencent.bk.audit.model.AuditContext;
 import com.tencent.bk.audit.model.AuditHttpRequest;
 import com.tencent.bk.audit.model.ErrorInfo;
-import com.tencent.bk.audit.model.SdkActionAuditContext;
-import com.tencent.bk.audit.model.SdkAuditContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -52,6 +49,7 @@ import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
+import org.springframework.util.StopWatch;
 
 import javax.servlet.http.HttpServletRequest;
 import java.lang.annotation.Annotation;
@@ -70,12 +68,12 @@ public class AuditAspect {
     private final AuditRequestProvider auditRequestProvider;
     private final AuditExceptionResolver auditExceptionResolver;
     /**
-     * 参数名发现
+     * 参数名发现(线程安全)
      */
     private final DefaultParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
 
     /**
-     * SpEL表达式解析器
+     * SpEL表达式解析器(线程安全)
      */
     private final SpelExpressionParser spelExpressionParser = new SpelExpressionParser();
 
@@ -120,7 +118,7 @@ public class AuditAspect {
     }
 
     private void startAudit(JoinPoint jp, Method method, AuditEntry record) {
-        SdkAuditContext auditContext = AuditContextBuilder.builder(record.actionId())
+        AuditContext auditContext = AuditContext.builder(record.actionId())
             .setSubActionIds(record.subActionIds().length == 0 ? null : Arrays.asList(record.subActionIds()))
             .setUsername(auditRequestProvider.getUsername())
             .setAccessType(auditRequestProvider.getAccessType())
@@ -131,7 +129,7 @@ public class AuditAspect {
             .setRequestId(auditRequestProvider.getRequestId())
             .setAccessUserAgent(auditRequestProvider.getUserAgent())
             .setHttpRequest(parseRequest(jp, method, auditRequestProvider.getRequest()))
-            .start();
+            .build();
         audit.startAudit(auditContext);
     }
 
@@ -206,8 +204,8 @@ public class AuditAspect {
 
     @Around("actionAuditRecord()")
     public Object actionAuditRecord(ProceedingJoinPoint pjp) throws Throwable {
-        Object result = null;
-        long start = System.currentTimeMillis();
+        StopWatch watch = new StopWatch("ActionAudit");
+        watch.start("ActionAuditStart");
         Method method = null;
         ActionAuditRecord record = null;
         ActionAuditScope scope = null;
@@ -215,31 +213,40 @@ public class AuditAspect {
         if (isAuditRecording) {
             method = ((MethodSignature) pjp.getSignature()).getMethod();
             record = method.getAnnotation(ActionAuditRecord.class);
-            SdkActionAuditContext startActionAuditContext =
-                ActionAuditContextBuilder.builder(record.actionId())
+            ActionAuditContext startActionAuditContext =
+                ActionAuditContext.builder(record.actionId())
                     .setResourceType(record.instance().resourceType())
                     .setEventBuilder(record.builder())
                     .setContent(record.content())
-                    .start();
+                    .build();
             scope = startActionAuditContext.makeCurrent();
         }
+        watch.stop();
+
+        Object result = null;
         try {
+            watch.start("Action");
             result = pjp.proceed();
+            watch.stop();
             return result;
         } finally {
             if (isAuditRecording) {
+                watch.start("ActionAuditStop");
                 try {
                     ActionAuditContext currentActionAuditContext = ActionAuditContext.current();
                     parseActionAuditRecordSpEL(pjp, record, method, result, currentActionAuditContext);
-//                    currentActionAuditContext.end();
-                    if (log.isInfoEnabled()) {
-                        log.info("Audit action {}, cost: {}", record.actionId(), System.currentTimeMillis() - start);
-                    }
+                    currentActionAuditContext.end();
                 } catch (Throwable e) {
                     // 忽略审计错误，避免影响业务代码执行
                     log.error("Audit action caught exception", e);
                 } finally {
                     scope.close();
+                    if (watch.isRunning()) {
+                        watch.stop();
+                    }
+                    if (log.isInfoEnabled()) {
+                        log.info("Audit action {}, cost: {}", record.actionId(), watch.prettyPrint());
+                    }
                 }
             }
         }

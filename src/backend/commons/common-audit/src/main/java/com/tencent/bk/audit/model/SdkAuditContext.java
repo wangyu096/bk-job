@@ -75,40 +75,23 @@ public class SdkAuditContext implements AuditContext {
 
     private final List<String> subActionIds;
 
-    static SdkAuditContext start(String actionId,
-                                 String requestId,
-                                 String username,
-                                 UserIdentifyTypeEnum userIdentifyType,
-                                 String userIdentifyTenantId,
-                                 String bkAppCode,
-                                 AccessTypeEnum accessType,
-                                 String accessSourceIp,
-                                 String accessUserAgent,
-                                 AuditHttpRequest httpRequest,
-                                 List<String> subActionIds) {
-        return new SdkAuditContext(actionId, requestId, username, userIdentifyType, userIdentifyTenantId,
-            System.currentTimeMillis(), bkAppCode, accessType, accessSourceIp, accessUserAgent, httpRequest,
-            subActionIds);
-    }
-
-    private SdkAuditContext(String actionId,
-                            String requestId,
-                            String username,
-                            UserIdentifyTypeEnum userIdentifyType,
-                            String userIdentifyTenantId,
-                            Long startTime,
-                            String bkAppCode,
-                            AccessTypeEnum accessType,
-                            String accessSourceIp,
-                            String accessUserAgent,
-                            AuditHttpRequest httpRequest,
-                            List<String> subActionIds) {
+    SdkAuditContext(String actionId,
+                    String requestId,
+                    String username,
+                    UserIdentifyTypeEnum userIdentifyType,
+                    String userIdentifyTenantId,
+                    String bkAppCode,
+                    AccessTypeEnum accessType,
+                    String accessSourceIp,
+                    String accessUserAgent,
+                    AuditHttpRequest httpRequest,
+                    List<String> subActionIds) {
         this.actionId = actionId;
         this.requestId = requestId;
         this.username = username;
         this.userIdentifyType = userIdentifyType;
         this.userIdentifyTenantId = userIdentifyTenantId;
-        this.startTime = startTime;
+        this.startTime = System.currentTimeMillis();
         this.bkAppCode = bkAppCode;
         this.accessType = accessType;
         this.accessSourceIp = accessSourceIp;

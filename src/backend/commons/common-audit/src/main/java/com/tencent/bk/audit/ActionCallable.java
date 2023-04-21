@@ -25,6 +25,6 @@
 package com.tencent.bk.audit;
 
 @FunctionalInterface
-public interface Executable {
-    void execute();
+public interface ActionCallable<V> {
+    V call();
 }

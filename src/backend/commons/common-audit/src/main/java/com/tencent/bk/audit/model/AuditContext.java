@@ -28,13 +28,34 @@ import com.tencent.bk.audit.GlobalAuditRegistry;
 
 import java.util.List;
 
+/**
+ * 审计上下文
+ */
 public interface AuditContext {
+    /**
+     * 非法的审计上下文，用于当前审计上下文不存在时返回这个实例（避免返回null导致系统异常)
+     */
     AuditContext INVALID = new InvalidAuditContext();
 
+    static AuditContextBuilder builder(String actionId) {
+        return AuditContextBuilder.builder(actionId);
+    }
+
+
+    /**
+     * 返回当前审计上下文
+     *
+     * @return 当前审计上下文
+     */
     static AuditContext current() {
         return GlobalAuditRegistry.get().currentAuditContext();
     }
 
+    /**
+     * 更新操作ID
+     *
+     * @param actionId 操作ID
+     */
     void updateActionId(String actionId);
 
     void setCurrentActionAuditContext(ActionAuditContext actionAuditContext);
