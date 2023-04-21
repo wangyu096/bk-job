@@ -63,7 +63,7 @@ public class SdkAuditContext implements AuditContext {
     /**
      * 操作ID
      */
-    private final String actionId;
+    private String actionId;
 
     private final AuditHttpRequest httpRequest;
 
@@ -194,5 +194,10 @@ public class SdkAuditContext implements AuditContext {
     @Override
     public List<AuditEvent> getEvents() {
         return Collections.unmodifiableList(events);
+    }
+
+    @Override
+    public void updateActionId(String actionId) {
+        this.actionId = actionId;
     }
 }

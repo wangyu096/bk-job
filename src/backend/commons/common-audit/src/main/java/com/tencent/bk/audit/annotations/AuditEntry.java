@@ -40,7 +40,7 @@ public @interface AuditEntry {
     /**
      * 操作ID
      */
-    String actionId();
+    String actionId() default "";
 
     /**
      * 审计子操作ID

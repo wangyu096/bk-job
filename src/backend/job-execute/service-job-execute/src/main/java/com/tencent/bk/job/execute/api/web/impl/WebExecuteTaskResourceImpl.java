@@ -25,6 +25,7 @@
 package com.tencent.bk.job.execute.api.web.impl;
 
 import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.model.AuditContext;
 import com.tencent.bk.job.common.annotation.CompatibleImplementation;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
@@ -229,6 +230,7 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
             ExecuteMetricsConstants.TAG_KEY_START_MODE, ExecuteMetricsConstants.TAG_VALUE_START_MODE_WEB,
             ExecuteMetricsConstants.TAG_KEY_TASK_TYPE, ExecuteMetricsConstants.TAG_VALUE_TASK_TYPE_FAST_SCRIPT
         })
+    @AuditEntry
     public Response<StepExecuteVO> fastExecuteScript(String username,
                                                      AppResourceScope appResourceScope,
                                                      String scopeType,
@@ -241,58 +243,9 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
             throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
         }
 
-        Response<StepExecuteVO> result = null;
-        ScriptSourceEnum scriptSource = ScriptSourceEnum.getScriptSourceEnum(request.getScriptSource());
-        switch (scriptSource) {
-            case CUSTOM:
-                result = executeScriptContent(username, appResourceScope, scopeType, scopeId, request);
-                break;
-            case QUOTED_APP:
-                result = executeAppScript(username, appResourceScope, scopeType, scopeId, request);
-                break;
-            case QUOTED_PUBLIC:
-                result = executePublicScript(username, appResourceScope, scopeType, scopeId, request);
-                break;
-        }
+        // 审计记录 - 操作ID
+        AuditContext.current().updateActionId(determineActionId(request));
 
-        return result;
-    }
-
-    @Override
-    @AuditEntry(actionId = ActionId.EXECUTE_SCRIPT)
-    public Response<StepExecuteVO> executeAppScript(String username,
-                                                    AppResourceScope appResourceScope,
-                                                    String scopeType,
-                                                    String scopeId,
-                                                    WebFastExecuteScriptRequest request) {
-        return fastExecuteScriptInternal(username, appResourceScope, scopeType, scopeId, request);
-    }
-
-    @Override
-    @AuditEntry(actionId = ActionId.EXECUTE_PUBLIC_SCRIPT)
-    public Response<StepExecuteVO> executePublicScript(String username,
-                                                       AppResourceScope appResourceScope,
-                                                       String scopeType,
-                                                       String scopeId,
-                                                       WebFastExecuteScriptRequest request) {
-        return fastExecuteScriptInternal(username, appResourceScope, scopeType, scopeId, request);
-    }
-
-    @Override
-    @AuditEntry(actionId = ActionId.QUICK_EXECUTE_SCRIPT)
-    public Response<StepExecuteVO> executeScriptContent(String username,
-                                                        AppResourceScope appResourceScope,
-                                                        String scopeType,
-                                                        String scopeId,
-                                                        WebFastExecuteScriptRequest request) {
-        return fastExecuteScriptInternal(username, appResourceScope, scopeType, scopeId, request);
-    }
-
-    private Response<StepExecuteVO> fastExecuteScriptInternal(String username,
-                                                              AppResourceScope appResourceScope,
-                                                              String scopeType,
-                                                              String scopeId,
-                                                              WebFastExecuteScriptRequest request) {
         TaskInstanceDTO taskInstance = buildFastScriptTaskInstance(username, appResourceScope.getAppId(), request);
         StepInstanceDTO stepInstance = buildFastScriptStepInstance(username, appResourceScope.getAppId(), request);
         String decodeScriptContent = new String(Base64.decodeBase64(request.getContent()), StandardCharsets.UTF_8);
@@ -304,6 +257,20 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
 
         return createAndStartFastTask(request.isRedoTask(), taskInstance, stepInstance, rollingConfig);
     }
+
+    private String determineActionId(WebFastExecuteScriptRequest request) {
+        ScriptSourceEnum scriptSource = ScriptSourceEnum.getScriptSourceEnum(request.getScriptSource());
+        switch (scriptSource) {
+            case CUSTOM:
+                return ActionId.QUICK_EXECUTE_SCRIPT;
+            case QUOTED_APP:
+                return ActionId.EXECUTE_SCRIPT;
+            case QUOTED_PUBLIC:
+                return ActionId.EXECUTE_PUBLIC_SCRIPT;
+        }
+        return null;
+    }
+
 
     private boolean checkFastExecuteScriptRequest(WebFastExecuteScriptRequest request) {
         try {

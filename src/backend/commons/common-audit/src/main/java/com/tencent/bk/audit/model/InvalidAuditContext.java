@@ -56,4 +56,9 @@ public class InvalidAuditContext implements AuditContext {
     public List<AuditEvent> getEvents() {
         return null;
     }
+
+    @Override
+    public void updateActionId(String actionId) {
+
+    }
 }

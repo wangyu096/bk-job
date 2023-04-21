@@ -118,24 +118,6 @@ public interface WebExecuteTaskResource {
             WebFastExecuteScriptRequest request
     );
 
-    Response<StepExecuteVO> executeAppScript(String username,
-                                             AppResourceScope appResourceScope,
-                                             String scopeType,
-                                             String scopeId,
-                                             WebFastExecuteScriptRequest request);
-
-    Response<StepExecuteVO> executePublicScript(String username,
-                                                AppResourceScope appResourceScope,
-                                                String scopeType,
-                                                String scopeId,
-                                                WebFastExecuteScriptRequest request);
-
-    Response<StepExecuteVO> executeScriptContent(String username,
-                                                 AppResourceScope appResourceScope,
-                                                 String scopeType,
-                                                 String scopeId,
-                                                 WebFastExecuteScriptRequest request);
-
     @ApiOperation(value = "快速分发文件", produces = "application/json")
     @PostMapping(value = {"/fast-push-file"})
     Response<StepExecuteVO> fastPushFile(

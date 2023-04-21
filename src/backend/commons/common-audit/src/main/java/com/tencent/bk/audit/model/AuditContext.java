@@ -35,6 +35,8 @@ public interface AuditContext {
         return GlobalAuditRegistry.get().currentAuditContext();
     }
 
+    void updateActionId(String actionId);
+
     void setCurrentActionAuditContext(ActionAuditContext actionAuditContext);
 
     ActionAuditContext currentActionAuditContext();

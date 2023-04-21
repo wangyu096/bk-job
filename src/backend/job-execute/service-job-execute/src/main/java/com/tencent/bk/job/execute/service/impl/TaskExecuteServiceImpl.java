@@ -210,56 +210,44 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
     public TaskInstanceDTO executeFastTask(FastTaskDTO fastTask) {
         StepInstanceDTO stepInstance = fastTask.getStepInstance();
         if (stepInstance.isFileStep()) {
-            return fastTransferFile(fastTask);
+            return ActionAuditContext.builder(ActionId.QUICK_TRANSFER_FILE)
+                .setEventBuilder(ExecuteJobAuditEventBuilder.class)
+                .setContent("Run a quick transfer file task")
+                .start()
+                .wrapSupplier(
+                    () -> executeFastTaskInternal(fastTask))
+                .get();
         } else if (stepInstance.isScriptStep()) {
             ScriptSourceEnum scriptSource = ScriptSourceEnum.getScriptSourceEnum(stepInstance.getScriptSource());
             if (scriptSource == ScriptSourceEnum.CUSTOM) {
-                return fastExecuteScript(fastTask);
+                return ActionAuditContext.builder(ActionId.QUICK_EXECUTE_SCRIPT)
+                    .setEventBuilder(ExecuteJobAuditEventBuilder.class)
+                    .setContent("Run a quick script task")
+                    .start()
+                    .wrapSupplier(
+                        () -> executeFastTaskInternal(fastTask))
+                    .get();
             } else if (scriptSource == ScriptSourceEnum.QUOTED_APP) {
-                return executeScript(fastTask);
+                return ActionAuditContext.builder(ActionId.EXECUTE_SCRIPT)
+                    .setEventBuilder(ExecuteJobAuditEventBuilder.class)
+                    .setContent("Launch a script [{{" + JobAuditAttributeNames.SCRIPT_NAME
+                        + "}}]({{" + JobAuditAttributeNames.SCRIPT_VERSION_ID + "}})")
+                    .start()
+                    .wrapSupplier(
+                        () -> executeFastTaskInternal(fastTask))
+                    .get();
             } else if (scriptSource == ScriptSourceEnum.QUOTED_PUBLIC) {
-                return executePublicScript(fastTask);
+                return ActionAuditContext.builder(ActionId.EXECUTE_PUBLIC_SCRIPT)
+                    .setEventBuilder(ExecuteJobAuditEventBuilder.class)
+                    .setContent("Launch a public script [{{" + JobAuditAttributeNames.SCRIPT_NAME
+                        + "}}]({{" + JobAuditAttributeNames.SCRIPT_VERSION_ID + "}})")
+                    .start()
+                    .wrapSupplier(
+                        () -> executeFastTaskInternal(fastTask))
+                    .get();
             }
         }
         return null;
-    }
-
-    @ActionAuditRecord(
-        actionId = ActionId.QUICK_EXECUTE_SCRIPT,
-        content = "Run a quick execute script task",
-        builder = ExecuteJobAuditEventBuilder.class
-    )
-    public TaskInstanceDTO fastExecuteScript(FastTaskDTO fastTask) {
-        return executeFastTaskInternal(fastTask);
-    }
-
-    @ActionAuditRecord(
-        actionId = ActionId.EXECUTE_SCRIPT,
-        content = "Launch a script [{{" + JobAuditAttributeNames.SCRIPT_NAME
-            + "}}]({{" + JobAuditAttributeNames.SCRIPT_VERSION_ID + "}})",
-        builder = ExecuteJobAuditEventBuilder.class
-    )
-    public TaskInstanceDTO executeScript(FastTaskDTO fastTask) {
-        return executeFastTaskInternal(fastTask);
-    }
-
-    @ActionAuditRecord(
-        actionId = ActionId.EXECUTE_PUBLIC_SCRIPT,
-        content = "Launch a script [{{" + JobAuditAttributeNames.SCRIPT_NAME
-            + "}}]({{" + JobAuditAttributeNames.SCRIPT_VERSION_ID + "}})",
-        builder = ExecuteJobAuditEventBuilder.class
-    )
-    public TaskInstanceDTO executePublicScript(FastTaskDTO fastTask) {
-        return executeFastTaskInternal(fastTask);
-    }
-
-    @ActionAuditRecord(
-        actionId = ActionId.QUICK_TRANSFER_FILE,
-        content = "Run a quick transfer file task",
-        builder = ExecuteJobAuditEventBuilder.class
-    )
-    public TaskInstanceDTO fastTransferFile(FastTaskDTO fastTask) {
-        return executeFastTaskInternal(fastTask);
     }
 
     private TaskInstanceDTO executeFastTaskInternal(FastTaskDTO fastTask) {
@@ -307,7 +295,7 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
 
             // 保存作业、步骤实例
             watch.start("saveInstance");
-            Long taskInstanceId = taskInstanceService.addTaskInstance(taskInstance);
+            long taskInstanceId = taskInstanceService.addTaskInstance(taskInstance);
             taskInstance.setId(taskInstanceId);
             stepInstance.setTaskInstanceId(taskInstanceId);
             stepInstance.setStepNum(1);
@@ -382,8 +370,8 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
                         stepInstance.getScriptName());
                 }
             }
-        } catch (Throwable ignore) {
-            log.error("Execute audit caught exception", ignore);
+        } catch (Throwable e) {
+            log.error("Execute audit caught exception", e);
         }
     }
 

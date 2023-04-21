@@ -24,14 +24,21 @@
 
 package com.tencent.bk.audit.model;
 
+import com.tencent.bk.audit.Executable;
+
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * 操作审计上下文实现
  */
 public interface ActionAuditContext {
     ActionAuditContext INVALID = new InvalidActionAuditContext();
+
+    static ActionAuditContextBuilder builder(String actionId) {
+        return ActionAuditContextBuilder.builder(actionId);
+    }
 
     /**
      * 返回当前操作审计上下文
@@ -77,4 +84,54 @@ public interface ActionAuditContext {
     void setOriginInstanceList(List<Object> originInstanceList);
 
     void setInstanceList(List<Object> instanceList);
+
+    default <T> Supplier<T> wrapSupplier(Supplier<T> supplier) {
+        return () -> {
+            ActionAuditScope scope = null;
+            ActionAuditContext current = null;
+            try {
+                scope = makeCurrent();
+                current = current();
+            } catch (Throwable ignore) {
+                // 保证业务代码正常执行，忽略所有审计错误
+            }
+            try {
+                return supplier.get();
+            } finally {
+                safelyEndActionAuditContext(scope, current);
+            }
+        };
+    }
+
+    default void safelyEndActionAuditContext(ActionAuditScope scope,
+                                             ActionAuditContext current) {
+        try {
+            if (current != null) {
+                current.end();
+            }
+            if (scope != null) {
+                scope.close();
+            }
+        } catch (Throwable ignore) {
+            // 保证业务代码正常执行，忽略所有审计错误
+        }
+    }
+
+    default Executable wrapExecutable(Executable executable) {
+        return () -> {
+            ActionAuditScope scope = null;
+            ActionAuditContext current = null;
+            try {
+                scope = makeCurrent();
+                current = current();
+            } catch (Throwable ignore) {
+                // 保证业务代码正常执行，忽略所有审计错误
+            }
+            try {
+                executable.execute();
+            } finally {
+                safelyEndActionAuditContext(scope, current);
+            }
+        };
+    }
 }

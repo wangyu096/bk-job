@@ -22,11 +22,9 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.audit.model;
+package com.tencent.bk.audit;
 
-public class NoopActionAuditScope implements ActionAuditScope {
-    @Override
-    public void close() {
-        // do nothing
-    }
+@FunctionalInterface
+public interface Executable {
+    void execute();
 }

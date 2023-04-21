@@ -48,7 +48,6 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -66,7 +65,6 @@ import java.util.stream.Collectors;
 
 @Aspect
 @Slf4j
-@EnableAspectJAutoProxy(exposeProxy = true)
 public class AuditAspect {
     private final Audit audit;
     private final AuditRequestProvider auditRequestProvider;
@@ -233,7 +231,7 @@ public class AuditAspect {
                 try {
                     ActionAuditContext currentActionAuditContext = ActionAuditContext.current();
                     parseActionAuditRecordSpEL(pjp, record, method, result, currentActionAuditContext);
-                    currentActionAuditContext.end();
+//                    currentActionAuditContext.end();
                     if (log.isInfoEnabled()) {
                         log.info("Audit action {}, cost: {}", record.actionId(), System.currentTimeMillis() - start);
                     }
