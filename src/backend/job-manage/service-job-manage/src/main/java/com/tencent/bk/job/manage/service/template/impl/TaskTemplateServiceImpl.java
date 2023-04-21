@@ -325,7 +325,9 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
     @ActionAuditRecord(
         actionId = ActionId.EDIT_JOB_TEMPLATE,
         instance = @AuditInstanceRecord(
-            resourceType = ResourceTypeId.TEMPLATE
+            resourceType = ResourceTypeId.TEMPLATE,
+            instanceIds = "#taskTemplateInfo.?id",
+            instanceNames = "#taskTemplateInfo.?name"
         ),
         content = "Modify template [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
@@ -589,7 +591,9 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
     @ActionAuditRecord(
         actionId = ActionId.EDIT_JOB_TEMPLATE,
         instance = @AuditInstanceRecord(
-            resourceType = ResourceTypeId.TEMPLATE
+            resourceType = ResourceTypeId.TEMPLATE,
+            instanceIds = "#taskTemplateInfo.?id",
+            instanceNames = "#taskTemplateInfo.?name"
         ),
         content = "Modify template [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )

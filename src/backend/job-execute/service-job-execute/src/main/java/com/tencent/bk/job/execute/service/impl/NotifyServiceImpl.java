@@ -395,7 +395,7 @@ public class NotifyServiceImpl implements NotifyService {
         notifyDTO.setChannels(stepInstanceDetail.getNotifyChannels());
         notifyDTO.setTriggerUser(stepInstance.getOperator());
         taskNotifyDTO.setNotifyDTO(notifyDTO);
-        taskNotifyDTO.setResourceId(String.valueOf(taskInstance.getTaskId()));
+        taskNotifyDTO.setResourceId(String.valueOf(taskInstance.getPlanId()));
         taskNotifyDTO.setResourceType(ResourceTypeEnum.JOB.getType());
         taskNotifyDTO.setOperator(stepInstance.getOperator());
         taskExecuteMQEventDispatcher.dispatchNotifyMsg(taskNotifyDTO);
@@ -404,7 +404,7 @@ public class NotifyServiceImpl implements NotifyService {
 
     private void setResourceInfo(TaskInstanceDTO taskInstance, StepInstanceBaseDTO stepInstance,
                                  TaskNotifyDTO taskNotifyDTO) {
-        Long taskPlanId = taskInstance.getTaskId();
+        Long taskPlanId = taskInstance.getPlanId();
         taskNotifyDTO.setResourceId(String.valueOf(taskPlanId));
         if (taskPlanId == -1L) {
             if (stepInstance.getExecuteType().equals(StepExecuteTypeEnum.EXECUTE_SCRIPT.getValue())) {
@@ -427,7 +427,7 @@ public class NotifyServiceImpl implements NotifyService {
         taskNotifyDTO.setOperator(operator);
         taskNotifyDTO.setTaskInstanceId(taskInstance.getId());
         taskNotifyDTO.setStartupMode(taskInstance.getStartupMode());
-        taskNotifyDTO.setTaskId(taskInstance.getTaskId());
+        taskNotifyDTO.setTaskId(taskInstance.getPlanId());
         taskNotifyDTO.setTaskInstanceName(taskInstance.getName());
         return taskNotifyDTO;
     }

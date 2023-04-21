@@ -22,16 +22,12 @@
  * IN THE SOFTWARE.
  */
 
-dependencies {
-    api project(':commons:common')
-    api project(':commons:common-i18n')
-    api project(':commons:common-iam')
-    api project(':job-execute:api-job-execute')
-    api(project(":commons:common-api"))
-    implementation "org.springframework:spring-web"
-    implementation "javax.ws.rs:javax.ws.rs-api"
-    implementation("org.apache.commons:commons-collections4")
-    implementation 'com.fasterxml.jackson.core:jackson-core'
-    implementation 'com.fasterxml.jackson.core:jackson-databind'
-    implementation 'com.fasterxml.jackson.core:jackson-annotations'
+package com.tencent.bk.job.common.audit.config;
+
+public interface JobAuditAttributeNames {
+    String SCRIPT_ID = "@SCRIPT_ID";
+    String SCRIPT_VERSION_ID = "@SCRIPT_VERSION_ID";
+    String SCRIPT_NAME = "@SCRIPT_NAME";
+    String PLAN_ID = "@PLAN_ID";
+    String PLAN_NAME = "@PLAN_NAME";
 }

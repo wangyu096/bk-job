@@ -24,7 +24,6 @@
 
 package com.tencent.bk.job.execute.api.web.impl;
 
-import com.tencent.bk.audit.GlobalAuditRegistry;
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.job.common.annotation.CompatibleImplementation;
 import com.tencent.bk.job.common.constant.ErrorCode;
@@ -48,6 +47,7 @@ import com.tencent.bk.job.execute.common.constants.RunStatusEnum;
 import com.tencent.bk.job.execute.common.constants.StepExecuteTypeEnum;
 import com.tencent.bk.job.execute.common.constants.TaskStartupModeEnum;
 import com.tencent.bk.job.execute.common.constants.TaskTypeEnum;
+import com.tencent.bk.job.execute.constants.ScriptSourceEnum;
 import com.tencent.bk.job.execute.constants.StepOperationEnum;
 import com.tencent.bk.job.execute.engine.model.TaskVariableDTO;
 import com.tencent.bk.job.execute.metrics.ExecuteMetricsConstants;
@@ -229,7 +229,6 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
             ExecuteMetricsConstants.TAG_KEY_START_MODE, ExecuteMetricsConstants.TAG_VALUE_START_MODE_WEB,
             ExecuteMetricsConstants.TAG_KEY_TASK_TYPE, ExecuteMetricsConstants.TAG_VALUE_TASK_TYPE_FAST_SCRIPT
         })
-    @AuditEntry(actionId = ActionId.QUICK_EXECUTE_SCRIPT)
     public Response<StepExecuteVO> fastExecuteScript(String username,
                                                      AppResourceScope appResourceScope,
                                                      String scopeType,
@@ -242,11 +241,58 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
             throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
         }
 
-        if (request.getScriptSource()) {
-            GlobalAuditRegistry.get().startAudit();
-
+        Response<StepExecuteVO> result = null;
+        ScriptSourceEnum scriptSource = ScriptSourceEnum.getScriptSourceEnum(request.getScriptSource());
+        switch (scriptSource) {
+            case CUSTOM:
+                result = executeScriptContent(username, appResourceScope, scopeType, scopeId, request);
+                break;
+            case QUOTED_APP:
+                result = executeAppScript(username, appResourceScope, scopeType, scopeId, request);
+                break;
+            case QUOTED_PUBLIC:
+                result = executePublicScript(username, appResourceScope, scopeType, scopeId, request);
+                break;
         }
 
+        return result;
+    }
+
+    @Override
+    @AuditEntry(actionId = ActionId.EXECUTE_SCRIPT)
+    public Response<StepExecuteVO> executeAppScript(String username,
+                                                    AppResourceScope appResourceScope,
+                                                    String scopeType,
+                                                    String scopeId,
+                                                    WebFastExecuteScriptRequest request) {
+        return fastExecuteScriptInternal(username, appResourceScope, scopeType, scopeId, request);
+    }
+
+    @Override
+    @AuditEntry(actionId = ActionId.EXECUTE_PUBLIC_SCRIPT)
+    public Response<StepExecuteVO> executePublicScript(String username,
+                                                       AppResourceScope appResourceScope,
+                                                       String scopeType,
+                                                       String scopeId,
+                                                       WebFastExecuteScriptRequest request) {
+        return fastExecuteScriptInternal(username, appResourceScope, scopeType, scopeId, request);
+    }
+
+    @Override
+    @AuditEntry(actionId = ActionId.QUICK_EXECUTE_SCRIPT)
+    public Response<StepExecuteVO> executeScriptContent(String username,
+                                                        AppResourceScope appResourceScope,
+                                                        String scopeType,
+                                                        String scopeId,
+                                                        WebFastExecuteScriptRequest request) {
+        return fastExecuteScriptInternal(username, appResourceScope, scopeType, scopeId, request);
+    }
+
+    private Response<StepExecuteVO> fastExecuteScriptInternal(String username,
+                                                              AppResourceScope appResourceScope,
+                                                              String scopeType,
+                                                              String scopeId,
+                                                              WebFastExecuteScriptRequest request) {
         TaskInstanceDTO taskInstance = buildFastScriptTaskInstance(username, appResourceScope.getAppId(), request);
         StepInstanceDTO stepInstance = buildFastScriptStepInstance(username, appResourceScope.getAppId(), request);
         String decodeScriptContent = new String(Base64.decodeBase64(request.getContent()), StandardCharsets.UTF_8);
@@ -302,7 +348,7 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
                                                         WebFastExecuteScriptRequest request) {
         TaskInstanceDTO taskInstance = new TaskInstanceDTO();
         taskInstance.setName(request.getName());
-        taskInstance.setTaskId(-1L);
+        taskInstance.setPlanId(-1L);
         taskInstance.setCronTaskId(-1L);
         taskInstance.setTaskTemplateId(-1L);
         taskInstance.setAppId(appId);
@@ -382,14 +428,14 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
                                                            StepRollingConfigDTO rollingConfig) {
         FastTaskDTO fastTask = FastTaskDTO.builder().taskInstance(taskInstance).stepInstance(stepInstance)
             .rollingConfig(rollingConfig).build();
-        long taskInstanceId;
+        TaskInstanceDTO executeTaskInstance;
         if (!isRedoTask) {
-            taskInstanceId = taskExecuteService.executeFastTask(fastTask);
+            executeTaskInstance = taskExecuteService.executeFastTask(fastTask);
         } else {
-            taskInstanceId = taskExecuteService.redoFastTask(fastTask);
+            executeTaskInstance = taskExecuteService.redoFastTask(fastTask);
         }
         StepExecuteVO stepExecuteVO = new StepExecuteVO();
-        stepExecuteVO.setTaskInstanceId(taskInstanceId);
+        stepExecuteVO.setTaskInstanceId(executeTaskInstance.getId());
         stepExecuteVO.setStepInstanceId(stepInstance.getId());
         stepExecuteVO.setStepName(stepInstance.getName());
         return Response.buildSuccessResp(stepExecuteVO);
@@ -463,7 +509,7 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
         TaskInstanceDTO taskInstance = new TaskInstanceDTO();
         taskInstance.setType(TaskTypeEnum.FILE.getValue());
         taskInstance.setName(request.getName());
-        taskInstance.setTaskId(-1L);
+        taskInstance.setPlanId(-1L);
         taskInstance.setCronTaskId(-1L);
         taskInstance.setTaskTemplateId(-1L);
         taskInstance.setAppId(appId);
@@ -536,7 +582,8 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
         if (CollectionUtils.isNotEmpty(hostNode.getNodeList())) {
             List<DynamicServerTopoNodeDTO> topoNodes = new ArrayList<>();
             hostNode.getNodeList().forEach(
-                topoNode -> topoNodes.add(new DynamicServerTopoNodeDTO(topoNode.getInstanceId(), topoNode.getObjectId())));
+                topoNode -> topoNodes.add(new DynamicServerTopoNodeDTO(topoNode.getInstanceId(),
+                    topoNode.getObjectId())));
             serversDTO.setTopoNodes(topoNodes);
         }
         return serversDTO;

@@ -28,7 +28,11 @@ import com.tencent.bk.audit.annotations.ActionAuditRecord;
 import com.tencent.bk.audit.annotations.AuditInstanceRecord;
 import com.tencent.bk.audit.model.ActionAuditContext;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.*;
+import com.tencent.bk.job.common.exception.AlreadyExistsException;
+import com.tencent.bk.job.common.exception.FailedPreconditionException;
+import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.exception.ServiceException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
@@ -41,7 +45,11 @@ import com.tencent.bk.job.crontab.model.CronJobVO;
 import com.tencent.bk.job.manage.common.consts.task.TaskPlanTypeEnum;
 import com.tencent.bk.job.manage.dao.plan.TaskPlanDAO;
 import com.tencent.bk.job.manage.model.dto.TaskPlanQueryDTO;
-import com.tencent.bk.job.manage.model.dto.task.*;
+import com.tencent.bk.job.manage.model.dto.task.TaskPlanBasicInfoDTO;
+import com.tencent.bk.job.manage.model.dto.task.TaskPlanInfoDTO;
+import com.tencent.bk.job.manage.model.dto.task.TaskStepDTO;
+import com.tencent.bk.job.manage.model.dto.task.TaskTemplateInfoDTO;
+import com.tencent.bk.job.manage.model.dto.task.TaskVariableDTO;
 import com.tencent.bk.job.manage.service.AbstractTaskStepService;
 import com.tencent.bk.job.manage.service.AbstractTaskVariableService;
 import com.tencent.bk.job.manage.service.CronJobService;
@@ -57,7 +65,14 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -282,7 +297,9 @@ public class TaskPlanServiceImpl implements TaskPlanService {
     @ActionAuditRecord(
         actionId = ActionId.EDIT_JOB_PLAN,
         instance = @AuditInstanceRecord(
-            resourceType = ResourceTypeId.PLAN
+            resourceType = ResourceTypeId.PLAN,
+            instanceIds = "#taskPlanInfo.?id",
+            instanceNames = "#taskPlanInfo.?name"
         ),
         content = "Modify plan [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )

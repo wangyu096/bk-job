@@ -105,7 +105,7 @@ public class EsbFastExecuteScriptV3ResourceImpl extends JobExecuteCommonV3Proces
         if (request.getRollingConfig() != null) {
             rollingConfig = StepRollingConfigDTO.fromEsbRollingConfig(request.getRollingConfig());
         }
-        long taskInstanceId = taskExecuteService.executeFastTask(
+        TaskInstanceDTO executeTaskInstance = taskExecuteService.executeFastTask(
             FastTaskDTO.builder()
                 .taskInstance(taskInstance)
                 .stepInstance(stepInstance)
@@ -114,7 +114,7 @@ public class EsbFastExecuteScriptV3ResourceImpl extends JobExecuteCommonV3Proces
         );
 
         EsbJobExecuteV3DTO jobExecuteInfo = new EsbJobExecuteV3DTO();
-        jobExecuteInfo.setTaskInstanceId(taskInstanceId);
+        jobExecuteInfo.setTaskInstanceId(executeTaskInstance.getId());
         jobExecuteInfo.setTaskName(stepInstance.getName());
         jobExecuteInfo.setStepInstanceId(stepInstance.getId());
         return EsbResp.buildSuccessResp(jobExecuteInfo);
@@ -168,7 +168,7 @@ public class EsbFastExecuteScriptV3ResourceImpl extends JobExecuteCommonV3Proces
         } else {
             taskInstance.setName(generateDefaultFastTaskName());
         }
-        taskInstance.setTaskId(-1L);
+        taskInstance.setPlanId(-1L);
         taskInstance.setCronTaskId(-1L);
         taskInstance.setTaskTemplateId(-1L);
         taskInstance.setDebugTask(false);

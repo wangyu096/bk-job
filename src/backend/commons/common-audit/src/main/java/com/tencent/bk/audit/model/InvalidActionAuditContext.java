@@ -79,12 +79,12 @@ public class InvalidActionAuditContext implements ActionAuditContext {
     }
 
     @Override
-    public List<AuditInstance> getOriginInstanceList() {
+    public List<Object> getOriginInstanceList() {
         return null;
     }
 
     @Override
-    public List<AuditInstance> getInstanceList() {
+    public List<Object> getInstanceList() {
         return null;
     }
 
@@ -114,12 +114,12 @@ public class InvalidActionAuditContext implements ActionAuditContext {
     }
 
     @Override
-    public void setOriginInstanceList(List<AuditInstance> originInstanceList) {
+    public void setOriginInstanceList(List<Object> originInstanceList) {
 
     }
 
     @Override
-    public void setInstanceList(List<AuditInstance> instanceList) {
+    public void setInstanceList(List<Object> instanceList) {
 
     }
 }

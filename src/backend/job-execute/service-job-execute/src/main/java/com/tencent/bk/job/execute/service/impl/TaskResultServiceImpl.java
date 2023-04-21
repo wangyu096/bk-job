@@ -201,7 +201,7 @@ public class TaskResultServiceImpl implements TaskResultService {
             taskInstance.getEndTime(), taskInstance.getTotalTime()));
         taskExecution.setStartTime(taskInstance.getStartTime());
         taskExecution.setEndTime(taskInstance.getEndTime());
-        taskExecution.setTaskId(taskInstance.getTaskId());
+        taskExecution.setTaskId(taskInstance.getPlanId());
         taskExecution.setTaskTemplateId(taskInstance.getTaskTemplateId());
         taskExecution.setDebugTask(taskInstance.isDebugTask());
         taskExecution.setCurrentStepInstanceId(taskInstance.getCurrentStepInstanceId());
@@ -928,7 +928,7 @@ public class TaskResultServiceImpl implements TaskResultService {
         return taskInstances.stream().map(taskInstance -> {
             CronTaskExecuteResult cronTaskExecuteResult = new CronTaskExecuteResult();
             cronTaskExecuteResult.setCronTaskId(taskInstance.getCronTaskId());
-            cronTaskExecuteResult.setPlanId(taskInstance.getTaskId());
+            cronTaskExecuteResult.setPlanId(taskInstance.getPlanId());
             cronTaskExecuteResult.setStatus(taskInstance.getStatus().getValue());
             cronTaskExecuteResult.setExecuteTime(taskInstance.getCreateTime());
             return cronTaskExecuteResult;

@@ -22,16 +22,39 @@
  * IN THE SOFTWARE.
  */
 
-dependencies {
-    api project(':commons:common')
-    api project(':commons:common-i18n')
-    api project(':commons:common-iam')
-    api project(':job-execute:api-job-execute')
-    api(project(":commons:common-api"))
-    implementation "org.springframework:spring-web"
-    implementation "javax.ws.rs:javax.ws.rs-api"
-    implementation("org.apache.commons:commons-collections4")
-    implementation 'com.fasterxml.jackson.core:jackson-core'
-    implementation 'com.fasterxml.jackson.core:jackson-databind'
-    implementation 'com.fasterxml.jackson.core:jackson-annotations'
+package com.tencent.bk.job.execute.audit;
+
+import com.tencent.bk.audit.DefaultAuditEventBuilder;
+import com.tencent.bk.audit.model.ActionAuditContext;
+import com.tencent.bk.audit.model.AuditEvent;
+import com.tencent.bk.audit.utils.AuditInstanceUtils;
+
+import java.util.Collections;
+import java.util.List;
+
+/**
+ * 作业执行事件生成
+ */
+public class ExecuteJobAuditEventBuilder extends DefaultAuditEventBuilder {
+    private final ActionAuditContext actionAuditContext;
+
+    public ExecuteJobAuditEventBuilder() {
+        this.actionAuditContext = ActionAuditContext.current();
+    }
+
+    @Override
+    public List<AuditEvent> build() {
+        AuditEvent auditEvent = buildBasicAuditEvent();
+
+        // 事件实例
+        auditEvent.setInstanceId(AuditInstanceUtils.extractToString(actionAuditContext.getInstanceIdList(),
+            instance -> instance));
+        auditEvent.setInstanceName(AuditInstanceUtils.extractToString(actionAuditContext.getInstanceNameList(),
+            instance -> instance));
+
+        // 事件描述
+        auditEvent.setContent(resolveAttributes(actionAuditContext.getContent(), actionAuditContext.getAttributes()));
+
+        return Collections.singletonList(auditEvent);
+    }
 }

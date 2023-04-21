@@ -27,8 +27,6 @@ package com.tencent.bk.audit;
 import com.tencent.bk.audit.constants.AuditAttributeNames;
 import com.tencent.bk.audit.model.ActionAuditContext;
 import com.tencent.bk.audit.model.AuditEvent;
-import com.tencent.bk.audit.model.AuditInstance;
-import com.tencent.bk.audit.model.BasicAuditInstance;
 import com.tencent.bk.audit.utils.EventIdGenerator;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.util.StringUtil;
@@ -51,36 +49,24 @@ public class DefaultAuditEventBuilder implements AuditEventBuilder {
         List<AuditEvent> events = new ArrayList<>();
         Map<String, Object> eventAttributes = new HashMap<>(actionAuditContext.getAttributes());
 
+        List<String> instanceIdList = actionAuditContext.getInstanceIdList();
         if (actionAuditContext.hasResource()) {
-            List<String> instanceIdList = actionAuditContext.getInstanceIdList();
-            List<String> instanceNameList = actionAuditContext.getInstanceNameList();
-            List<AuditInstance> originInstanceList = actionAuditContext.getOriginInstanceList();
-            List<AuditInstance> instanceList = actionAuditContext.getInstanceList();
-            // 优先使用instanceList, 包含资源实例的ID/Name数据
-            if (CollectionUtils.isNotEmpty(instanceList)) {
-                for (int index = 0; index < instanceList.size(); index++) {
-                    AuditInstance originInstance = safeGetElement(originInstanceList, index);
-                    AuditInstance instance = safeGetElement(instanceList, index);
-                    if (instance != null) {
-                        BasicAuditInstance basicAuditInstance = instance.toBasicAuditInstance();
-                        eventAttributes.put(AuditAttributeNames.INSTANCE_ID, basicAuditInstance.getId());
-                        eventAttributes.put(AuditAttributeNames.INSTANCE_NAME, basicAuditInstance.getName());
-                        AuditEvent auditEvent = buildAuditEvent(basicAuditInstance.getId(), basicAuditInstance.getName(),
-                            originInstance, instance, eventAttributes);
-                        events.add(auditEvent);
-                    }
-                }
-            } else if (CollectionUtils.isNotEmpty(instanceIdList)) {
+            if (CollectionUtils.isNotEmpty(instanceIdList)) {
+                List<String> instanceNameList = actionAuditContext.getInstanceNameList();
+                List<Object> originInstanceList = actionAuditContext.getOriginInstanceList();
+                List<Object> instanceList = actionAuditContext.getInstanceList();
+
                 for (int index = 0; index < instanceIdList.size(); index++) {
                     String instanceId = safeGetElement(instanceIdList, index);
                     String instanceName = safeGetElement(instanceNameList, index);
+                    Object originInstance = safeGetElement(originInstanceList, index);
+                    Object instance = safeGetElement(instanceList, index);
                     eventAttributes.put(AuditAttributeNames.INSTANCE_ID, instanceId);
                     eventAttributes.put(AuditAttributeNames.INSTANCE_NAME, instanceName);
-                    AuditEvent auditEvent = buildAuditEvent(instanceId, instanceName, null, null,
+                    AuditEvent auditEvent = buildAuditEvent(instanceId, instanceName, originInstance, instance,
                         eventAttributes);
                     events.add(auditEvent);
                 }
-
             }
         } else {
             AuditEvent auditEvent = buildAuditEvent(null, null, null, null,
@@ -91,23 +77,16 @@ public class DefaultAuditEventBuilder implements AuditEventBuilder {
         return events;
     }
 
-    private <T> T safeGetElement(List<T> list, int index) {
+    protected <T> T safeGetElement(List<T> list, int index) {
         return list != null && list.size() > index ? list.get(index) : null;
     }
 
-    private AuditEvent buildAuditEvent(String instanceId,
-                                       String instanceName,
-                                       AuditInstance originInstance,
-                                       AuditInstance instance,
-                                       Map<String, Object> eventAttributes) {
-        AuditEvent auditEvent = new AuditEvent();
-        auditEvent.setId(EventIdGenerator.generateId());
-        auditEvent.setActionId(actionAuditContext.getActionId());
-        auditEvent.setResourceTypeId(actionAuditContext.getResourceType());
-        auditEvent.setStartTime(actionAuditContext.getStartTime());
-        auditEvent.setEndTime(actionAuditContext.getEndTime());
-        auditEvent.setResultCode(ErrorCode.RESULT_OK);
-        auditEvent.setResultContent("Success");
+    protected AuditEvent buildAuditEvent(String instanceId,
+                                         String instanceName,
+                                         Object originInstance,
+                                         Object instance,
+                                         Map<String, Object> eventAttributes) {
+        AuditEvent auditEvent = buildBasicAuditEvent();
 
         // 审计记录 - 原始数据
         auditEvent.setInstanceOriginData(originInstance);
@@ -116,12 +95,31 @@ public class DefaultAuditEventBuilder implements AuditEventBuilder {
 
         auditEvent.setInstanceId(instanceId);
         auditEvent.setInstanceName(instanceName);
-        auditEvent.setContent(resolveContent(actionAuditContext.getContent(),
+        auditEvent.setContent(resolveAttributes(actionAuditContext.getContent(),
             eventAttributes));
         return auditEvent;
     }
 
-    private String resolveContent(String contentTemplate, Map<String, Object> eventAttributes) {
+    protected AuditEvent buildBasicAuditEvent() {
+        AuditEvent auditEvent = new AuditEvent();
+        auditEvent.setId(EventIdGenerator.generateId());
+        auditEvent.setActionId(actionAuditContext.getActionId());
+        auditEvent.setResourceTypeId(actionAuditContext.getResourceType());
+        auditEvent.setStartTime(actionAuditContext.getStartTime());
+        auditEvent.setEndTime(actionAuditContext.getEndTime());
+        auditEvent.setResultCode(ErrorCode.RESULT_OK);
+        auditEvent.setResultContent("Success");
+        return auditEvent;
+    }
+
+    /**
+     * 根据事件属性解析内容
+     *
+     * @param contentTemplate 内容模板
+     * @param eventAttributes 事件属性
+     * @return 解析之后的值
+     */
+    protected String resolveAttributes(String contentTemplate, Map<String, Object> eventAttributes) {
         Map<String, String> vars = new HashMap<>();
         eventAttributes.forEach((k, v) -> vars.put(k, v == null ? "" : v.toString()));
         String pattern = "(\\{\\{(.*?)\\}\\})";

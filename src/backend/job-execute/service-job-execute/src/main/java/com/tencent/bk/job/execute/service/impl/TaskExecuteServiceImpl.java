@@ -24,6 +24,10 @@
 
 package com.tencent.bk.job.execute.service.impl;
 
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
+import com.tencent.bk.audit.model.ActionAuditContext;
+import com.tencent.bk.audit.utils.AuditInstanceUtils;
+import com.tencent.bk.job.common.audit.config.JobAuditAttributeNames;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
 import com.tencent.bk.job.common.exception.AbortedException;
@@ -35,6 +39,7 @@ import com.tencent.bk.job.common.exception.ServiceException;
 import com.tencent.bk.job.common.gse.constants.AgentStatusEnum;
 import com.tencent.bk.job.common.gse.service.AgentStateClient;
 import com.tencent.bk.job.common.gse.v2.model.resp.AgentState;
+import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.InternalResponse;
@@ -47,6 +52,7 @@ import com.tencent.bk.job.common.util.feature.FeatureExecutionContextBuilder;
 import com.tencent.bk.job.common.util.feature.FeatureIdConstants;
 import com.tencent.bk.job.common.util.feature.FeatureToggle;
 import com.tencent.bk.job.common.util.json.JsonUtils;
+import com.tencent.bk.job.execute.audit.ExecuteJobAuditEventBuilder;
 import com.tencent.bk.job.execute.auth.ExecuteAuthService;
 import com.tencent.bk.job.execute.client.ServiceUserResourceClient;
 import com.tencent.bk.job.execute.common.constants.RunStatusEnum;
@@ -201,7 +207,62 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
     }
 
     @Override
-    public Long executeFastTask(FastTaskDTO fastTask) {
+    public TaskInstanceDTO executeFastTask(FastTaskDTO fastTask) {
+        StepInstanceDTO stepInstance = fastTask.getStepInstance();
+        if (stepInstance.isFileStep()) {
+            return fastTransferFile(fastTask);
+        } else if (stepInstance.isScriptStep()) {
+            ScriptSourceEnum scriptSource = ScriptSourceEnum.getScriptSourceEnum(stepInstance.getScriptSource());
+            if (scriptSource == ScriptSourceEnum.CUSTOM) {
+                return fastExecuteScript(fastTask);
+            } else if (scriptSource == ScriptSourceEnum.QUOTED_APP) {
+                return executeScript(fastTask);
+            } else if (scriptSource == ScriptSourceEnum.QUOTED_PUBLIC) {
+                return executePublicScript(fastTask);
+            }
+        }
+        return null;
+    }
+
+    @ActionAuditRecord(
+        actionId = ActionId.QUICK_EXECUTE_SCRIPT,
+        content = "Run a quick execute script task",
+        builder = ExecuteJobAuditEventBuilder.class
+    )
+    public TaskInstanceDTO fastExecuteScript(FastTaskDTO fastTask) {
+        return executeFastTaskInternal(fastTask);
+    }
+
+    @ActionAuditRecord(
+        actionId = ActionId.EXECUTE_SCRIPT,
+        content = "Launch a script [{{" + JobAuditAttributeNames.SCRIPT_NAME
+            + "}}]({{" + JobAuditAttributeNames.SCRIPT_VERSION_ID + "}})",
+        builder = ExecuteJobAuditEventBuilder.class
+    )
+    public TaskInstanceDTO executeScript(FastTaskDTO fastTask) {
+        return executeFastTaskInternal(fastTask);
+    }
+
+    @ActionAuditRecord(
+        actionId = ActionId.EXECUTE_PUBLIC_SCRIPT,
+        content = "Launch a script [{{" + JobAuditAttributeNames.SCRIPT_NAME
+            + "}}]({{" + JobAuditAttributeNames.SCRIPT_VERSION_ID + "}})",
+        builder = ExecuteJobAuditEventBuilder.class
+    )
+    public TaskInstanceDTO executePublicScript(FastTaskDTO fastTask) {
+        return executeFastTaskInternal(fastTask);
+    }
+
+    @ActionAuditRecord(
+        actionId = ActionId.QUICK_TRANSFER_FILE,
+        content = "Run a quick transfer file task",
+        builder = ExecuteJobAuditEventBuilder.class
+    )
+    public TaskInstanceDTO fastTransferFile(FastTaskDTO fastTask) {
+        return executeFastTaskInternal(fastTask);
+    }
+
+    private TaskInstanceDTO executeFastTaskInternal(FastTaskDTO fastTask) {
         log.info("Begin to execute fast task: {}", fastTask);
         TaskInstanceDTO taskInstance = fastTask.getTaskInstance();
         StepInstanceDTO stepInstance = fastTask.getStepInstance();
@@ -253,11 +314,14 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
             stepInstance.setStepOrder(1);
             long stepInstanceId = taskInstanceService.addStepInstance(stepInstance);
             stepInstance.setId(stepInstanceId);
+            taskInstance.setStepInstances(Collections.singletonList(stepInstance));
             watch.stop();
+
+            Set<HostDTO> allHosts = extractHosts(Collections.singletonList(stepInstance), null);
 
             // 保存作业实例与主机的关系，优化根据主机检索作业执行历史的效率
             watch.start("saveTaskInstanceHosts");
-            saveTaskInstanceHosts(taskInstanceId, Collections.singletonList(stepInstance));
+            saveTaskInstanceHosts(taskInstanceId, allHosts);
             watch.stop();
 
             // 保存滚动配置
@@ -280,7 +344,10 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
             startTask(taskInstanceId);
             watch.stop();
 
-            return taskInstanceId;
+            // 审计
+            addExecuteAuditInstance(taskInstance, allHosts);
+
+            return taskInstance;
         } finally {
             if (watch.isRunning()) {
                 watch.stop();
@@ -291,13 +358,46 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
         }
     }
 
+    private void addExecuteAuditInstance(TaskInstanceDTO taskInstance, Collection<HostDTO> hosts) {
+        try {
+            ActionAuditContext.current().setInstanceIdList(
+                AuditInstanceUtils.mapList(hosts, host -> String.valueOf(host.getHostId()))
+            );
+            ActionAuditContext.current().setInstanceNameList(
+                AuditInstanceUtils.mapList(hosts, HostDTO::getPrimaryIp)
+            );
+            if (taskInstance.isPlanInstance()) {
+                ActionAuditContext.current().addAttribute(JobAuditAttributeNames.PLAN_ID, taskInstance.getPlanId());
+                ActionAuditContext.current().addAttribute(JobAuditAttributeNames.PLAN_NAME,
+                    taskInstance.getPlan().getName());
+            } else {
+                // 快速执行任务，只有单个步骤
+                StepInstanceDTO stepInstance = taskInstance.getStepInstances().get(0);
+                if (stepInstance.getScriptVersionId() != null) {
+                    ActionAuditContext.current().addAttribute(JobAuditAttributeNames.SCRIPT_VERSION_ID,
+                        stepInstance.getScriptVersionId());
+                }
+                if (StringUtils.isNotBlank(stepInstance.getScriptName())) {
+                    ActionAuditContext.current().addAttribute(JobAuditAttributeNames.SCRIPT_NAME,
+                        stepInstance.getScriptName());
+                }
+            }
+        } catch (Throwable ignore) {
+            log.error("Execute audit caught exception", ignore);
+        }
+    }
+
     private void saveTaskInstanceHosts(long taskInstanceId,
                                        List<StepInstanceDTO> stepInstanceList) {
         Set<HostDTO> stepHosts = extractHosts(stepInstanceList, null);
-        if (CollectionUtils.isEmpty(stepHosts)) {
+        saveTaskInstanceHosts(taskInstanceId, stepHosts);
+    }
+
+    private void saveTaskInstanceHosts(long taskInstanceId, Collection<HostDTO> hosts) {
+        if (CollectionUtils.isEmpty(hosts)) {
             return;
         }
-        taskInstanceService.saveTaskInstanceHosts(taskInstanceId, stepHosts);
+        taskInstanceService.saveTaskInstanceHosts(taskInstanceId, hosts);
     }
 
     private void checkTaskEvict(TaskInstanceDTO taskInstance) {
@@ -1148,7 +1248,7 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
     }
 
     @Override
-    public Long redoFastTask(FastTaskDTO fastTask) {
+    public TaskInstanceDTO redoFastTask(FastTaskDTO fastTask) {
         TaskInstanceDTO taskInstance = fastTask.getTaskInstance();
         StepInstanceDTO stepInstance = fastTask.getStepInstance();
         long taskInstanceId = taskInstance.getId();
@@ -1172,16 +1272,25 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.LAUNCH_JOB_PLAN,
+        content = "Launch a plan [{{" + JobAuditAttributeNames.PLAN_NAME
+            + "}}]({{" + JobAuditAttributeNames.PLAN_ID + "}})",
+        builder = ExecuteJobAuditEventBuilder.class
+    )
     public TaskInstanceDTO executeJobPlan(TaskExecuteParam executeParam) {
         StopWatch watch = new StopWatch("createTaskInstanceForTask");
 
         try {
             TaskInfo taskInfo = buildTaskInfoFromExecuteParam(executeParam, watch);
 
-            TaskInstanceDTO taskInstance = taskInfo.getTaskInstance();
-            List<StepInstanceDTO> stepInstanceList = taskInfo.getStepInstances();
-            Map<String, TaskVariableDTO> finalVariableValueMap = taskInfo.getVariables();
             ServiceTaskPlanDTO jobPlan = taskInfo.getJobPlan();
+            TaskInstanceDTO taskInstance = taskInfo.getTaskInstance();
+            taskInstance.setPlan(jobPlan);
+            List<StepInstanceDTO> stepInstanceList = taskInfo.getStepInstances();
+            taskInstance.setStepInstances(stepInstanceList);
+            Map<String, TaskVariableDTO> finalVariableValueMap = taskInfo.getVariables();
+
 
             // 调整超时时间
             stepInstanceList.forEach(this::adjustStepTimeout);
@@ -1219,9 +1328,11 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
             saveTaskInstance(taskInstance, stepInstanceList, finalVariableValueMap);
             watch.stop();
 
+            Set<HostDTO> allHosts = extractHosts(taskInstance.getStepInstances(), null);
+
             // 保存作业实例与主机的关系，优化根据主机检索作业执行历史的效率
             watch.start("saveTaskInstanceHosts");
-            saveTaskInstanceHosts(taskInstance.getId(), taskInstance.getStepInstances());
+            saveTaskInstanceHosts(taskInstance.getId(), allHosts);
             watch.stop();
 
             watch.start("saveOperationLog");
@@ -1233,6 +1344,9 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
             watch.start("startJob");
             startTask(taskInstance.getId());
             watch.stop();
+
+            // 审计
+            addExecuteAuditInstance(taskInstance, allHosts);
 
             return taskInstance;
         } finally {
@@ -1412,10 +1526,10 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
                              Map<Long, HostDTO> whiteHosts) {
         Integer taskType = taskInstance.getType();
         if (taskType.equals(TaskTypeEnum.NORMAL.getValue())
-            && taskInstance.getTaskId() != null
-            && taskInstance.getTaskId() > 0) {
+            && taskInstance.getPlanId() != null
+            && taskInstance.getPlanId() > 0) {
             // 作业鉴权
-            ServiceTaskPlanDTO serviceTaskPlanDTO = taskPlanService.getPlanById(appId, taskInstance.getTaskId());
+            ServiceTaskPlanDTO serviceTaskPlanDTO = taskPlanService.getPlanById(appId, taskInstance.getPlanId());
             authExecuteJobPlan(username, appId, serviceTaskPlanDTO, taskInstance.getStepInstances(), whiteHosts);
         } else if (taskType.equals(TaskTypeEnum.SCRIPT.getValue())) {
             // 快速执行脚本鉴权
@@ -1490,7 +1604,7 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
         String taskName = StringUtils.isBlank(executeParam.getTaskName()) ? taskPlan.getName() :
             executeParam.getTaskName();
         taskInstance.setName(taskName);
-        taskInstance.setTaskId(taskPlan.getId());
+        taskInstance.setPlanId(taskPlan.getId());
         taskInstance.setTaskTemplateId(taskPlan.getTaskTemplateId());
         taskInstance.setCurrentStepInstanceId(-1L);
         taskInstance.setDebugTask(taskPlan.getDebugTask());
@@ -1594,7 +1708,7 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
         taskInstance.setCreateTime(DateUtils.currentTimeMillis());
         taskInstance.setOperator(operator);
         taskInstance.setName(originTaskInstance.getName());
-        taskInstance.setTaskId(originTaskInstance.getTaskId());
+        taskInstance.setPlanId(originTaskInstance.getPlanId());
         taskInstance.setTaskTemplateId(originTaskInstance.getTaskTemplateId());
         taskInstance.setCurrentStepInstanceId(-1L);
         taskInstance.setDebugTask(false);
@@ -2152,7 +2266,7 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
             }
 
             Set<String> confirmCmdbRoleUsers = getCmdbRoleUsers(taskInstance.getAppId(), operator,
-                String.valueOf(taskInstance.getTaskId()), stepInstance.getConfirmRoles());
+                String.valueOf(taskInstance.getPlanId()), stepInstance.getConfirmRoles());
             if (CollectionUtils.isEmpty(confirmCmdbRoleUsers) || !confirmCmdbRoleUsers.contains(operator)) {
                 log.warn("Confirm user is invalid, allowed confirmUsers: {}, confirmCmdbRoleUsers : {}, taskTrigger: " +
                         "{}, operator: {}",

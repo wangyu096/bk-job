@@ -24,12 +24,22 @@
 
 package com.tencent.bk.audit.utils;
 
+import org.apache.commons.collections4.CollectionUtils;
+
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class AuditInstanceUtils {
-    public static <T> String extract(List<T> instanceList, Function<T, String> f) {
-        return instanceList.stream().map(f).collect(Collectors.joining(","));
+    public static <T> String extractToString(Collection<T> instances, Function<T, String> f) {
+        if (CollectionUtils.isEmpty(instances)) {
+            return null;
+        }
+        return instances.stream().map(f).collect(Collectors.joining(","));
+    }
+
+    public static <T, R> List<R> mapList(Collection<T> instances, Function<T, R> f) {
+        return instances.stream().map(f).collect(Collectors.toList());
     }
 }

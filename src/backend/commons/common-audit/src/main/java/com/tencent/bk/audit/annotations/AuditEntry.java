@@ -40,10 +40,15 @@ public @interface AuditEntry {
     /**
      * 操作ID
      */
-    String actionId();
+    String actionId() default "";
 
     /**
-     * 是否记录审计子事件
+     * 操作ID - SpEL 表示式
+     */
+    String actionIdExpr() default "";
+
+    /**
+     * 审计子操作ID
      */
     String[] subActionIds() default {};
 }

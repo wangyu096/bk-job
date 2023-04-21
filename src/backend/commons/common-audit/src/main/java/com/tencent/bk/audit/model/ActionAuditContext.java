@@ -60,9 +60,9 @@ public interface ActionAuditContext {
 
     List<String> getInstanceNameList();
 
-    List<AuditInstance> getOriginInstanceList();
+    List<Object> getOriginInstanceList();
 
-    List<AuditInstance> getInstanceList();
+    List<Object> getInstanceList();
 
     String getContent();
 
@@ -74,7 +74,7 @@ public interface ActionAuditContext {
 
     void setInstanceNameList(List<String> instanceNameList);
 
-    void setOriginInstanceList(List<AuditInstance> originInstanceList);
+    void setOriginInstanceList(List<Object> originInstanceList);
 
-    void setInstanceList(List<AuditInstance> instanceList);
+    void setInstanceList(List<Object> instanceList);
 }

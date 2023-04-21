@@ -113,12 +113,12 @@ public class EsbFastExecuteSQLResourceImpl extends JobExecuteCommonProcessor imp
             scriptService);
         TaskInstanceDTO taskInstance = buildFastSQLTaskInstance(request);
         StepInstanceDTO stepInstance = buildFastSQLStepInstance(request, script);
-        long taskInstanceId = taskExecuteService.executeFastTask(
+        TaskInstanceDTO executeTaskInstance = taskExecuteService.executeFastTask(
             FastTaskDTO.builder().taskInstance(taskInstance).stepInstance(stepInstance).build()
         );
 
         EsbJobExecuteDTO jobExecuteInfo = new EsbJobExecuteDTO();
-        jobExecuteInfo.setTaskInstanceId(taskInstanceId);
+        jobExecuteInfo.setTaskInstanceId(executeTaskInstance.getId());
         jobExecuteInfo.setTaskName(stepInstance.getName());
         return EsbResp.buildSuccessResp(jobExecuteInfo);
     }
@@ -166,7 +166,7 @@ public class EsbFastExecuteSQLResourceImpl extends JobExecuteCommonProcessor imp
         taskInstance.setCronTaskId(-1L);
         taskInstance.setAppId(request.getAppId());
         taskInstance.setOperator(request.getUserName());
-        taskInstance.setTaskId(-1L);
+        taskInstance.setPlanId(-1L);
         taskInstance.setTaskTemplateId(-1L);
         taskInstance.setDebugTask(false);
         taskInstance.setStatus(RunStatusEnum.BLANK);

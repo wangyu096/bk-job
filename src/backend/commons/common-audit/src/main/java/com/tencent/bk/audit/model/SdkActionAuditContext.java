@@ -74,12 +74,12 @@ public class SdkActionAuditContext implements ActionAuditContext {
     /**
      * 原始实例列表
      */
-    private List<AuditInstance> originInstanceList;
+    private List<Object> originInstanceList;
 
     /**
      * 当前实例列表
      */
-    private List<AuditInstance> instanceList;
+    private List<Object> instanceList;
 
     /**
      * 审计事件描述
@@ -183,12 +183,12 @@ public class SdkActionAuditContext implements ActionAuditContext {
     }
 
     @Override
-    public List<AuditInstance> getOriginInstanceList() {
+    public List<Object> getOriginInstanceList() {
         return originInstanceList == null ? null : Collections.unmodifiableList(originInstanceList);
     }
 
     @Override
-    public List<AuditInstance> getInstanceList() {
+    public List<Object> getInstanceList() {
         return instanceList == null ? null : Collections.unmodifiableList(instanceList);
     }
 
@@ -218,12 +218,12 @@ public class SdkActionAuditContext implements ActionAuditContext {
     }
 
     @Override
-    public void setOriginInstanceList(List<AuditInstance> originInstanceList) {
+    public void setOriginInstanceList(List<Object> originInstanceList) {
         this.originInstanceList = originInstanceList;
     }
 
     @Override
-    public void setInstanceList(List<AuditInstance> instanceList) {
+    public void setInstanceList(List<Object> instanceList) {
         this.instanceList = instanceList;
     }
 }

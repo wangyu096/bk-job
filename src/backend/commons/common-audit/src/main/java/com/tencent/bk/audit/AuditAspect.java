@@ -33,7 +33,6 @@ import com.tencent.bk.audit.model.ActionAuditContextBuilder;
 import com.tencent.bk.audit.model.ActionAuditScope;
 import com.tencent.bk.audit.model.AuditContextBuilder;
 import com.tencent.bk.audit.model.AuditHttpRequest;
-import com.tencent.bk.audit.model.AuditInstance;
 import com.tencent.bk.audit.model.ErrorInfo;
 import com.tencent.bk.audit.model.SdkActionAuditContext;
 import com.tencent.bk.audit.model.SdkAuditContext;
@@ -312,16 +311,16 @@ public class AuditAspect {
         }
     }
 
-    private List<AuditInstance> evaluateAuditInstanceList(Object object) {
+    private List<Object> evaluateAuditInstanceList(Object object) {
         if (object == null) {
             return null;
         }
-        List<AuditInstance> list = new ArrayList<>();
+        List<Object> list = new ArrayList<>();
         if (object instanceof Collection) {
             Collection<?> collection = (Collection<?>) object;
-            list.addAll(collection.stream().map(element -> (AuditInstance) element).collect(Collectors.toList()));
+            list.addAll(collection);
         } else {
-            list.add((AuditInstance) object);
+            list.add(object);
         }
         return list;
     }

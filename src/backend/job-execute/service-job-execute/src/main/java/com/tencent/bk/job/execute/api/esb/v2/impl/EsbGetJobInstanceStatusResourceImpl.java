@@ -166,7 +166,7 @@ public class EsbGetJobInstanceStatusResourceImpl
         jobInstance.setEndTime(taskInstance.getEndTime());
         jobInstance.setStartWay(taskInstance.getStartupMode());
         jobInstance.setStatus(taskInstance.getStatus().getValue());
-        jobInstance.setTaskId(taskInstance.getTaskId());
+        jobInstance.setTaskId(taskInstance.getPlanId());
         jobInstance.setTotalTime(taskInstance.getTotalTime());
         jobInstanceStatus.setJobInstance(jobInstance);
 
