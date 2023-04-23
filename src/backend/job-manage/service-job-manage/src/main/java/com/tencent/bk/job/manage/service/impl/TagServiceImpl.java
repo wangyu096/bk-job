@@ -24,11 +24,16 @@
 
 package com.tencent.bk.job.manage.service.impl;
 
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
+import com.tencent.bk.audit.annotations.AuditInstanceRecord;
+import com.tencent.bk.audit.model.ActionAuditContext;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobConstants;
 import com.tencent.bk.job.common.exception.AlreadyExistsException;
 import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.iam.constant.ActionId;
+import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.util.check.MaxLengthChecker;
@@ -58,6 +63,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_ID;
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_NAME;
 
 @Slf4j
 @Service
@@ -106,6 +114,15 @@ public class TagServiceImpl implements TagService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.CREATE_TAG,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.TAG,
+            instanceIds = "#$",
+            instanceNames = "#tag?.name"
+        ),
+        content = "Create tag [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public Long insertNewTag(String username, TagDTO tag) {
         tag.setCreator(username);
         tag.setLastModifyUser(username);
@@ -119,6 +136,15 @@ public class TagServiceImpl implements TagService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.MANAGE_TAG,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.TAG,
+            instanceIds = "#tag?.id",
+            instanceNames = "#$?.name"
+        ),
+        content = "Modify tag [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public boolean updateTagById(String username, TagDTO tag) {
         if (tag.getId() == null || tag.getId() <= 0) {
             throw new InternalException(ErrorCode.ILLEGAL_PARAM);
@@ -128,11 +154,19 @@ public class TagServiceImpl implements TagService {
         tag.setLastModifyUser(username);
         checkRequiredParam(tag);
 
+        // 审计 - 原始数据
+        ActionAuditContext.current().setOriginInstance(getTagInfoById(tag.getId()));
+
         boolean isTagNameValid = checkTagName(tag.getAppId(), tag.getId(), tag.getName());
         if (!isTagNameValid) {
             throw new AlreadyExistsException(ErrorCode.TAG_ALREADY_EXIST);
         }
-        return tagDAO.updateTagById(tag);
+
+        boolean result = tagDAO.updateTagById(tag);
+
+        // 审计 - 当前数据
+        ActionAuditContext.current().setInstance(getTagInfoById(tag.getId()));
+        return result;
     }
 
     private void checkRequiredParam(TagDTO tag) {

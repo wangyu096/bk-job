@@ -24,8 +24,13 @@
 
 package com.tencent.bk.job.manage.service.impl;
 
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
+import com.tencent.bk.audit.annotations.AuditInstanceRecord;
+import com.tencent.bk.audit.model.ActionAuditContext;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.iam.constant.ActionId;
+import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.manage.dao.CredentialDAO;
@@ -39,6 +44,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.List;
+
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_ID;
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_NAME;
 
 @Service
 public class CredentialServiceImpl implements CredentialService {
@@ -61,6 +69,15 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.CREATE_TICKET,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.TICKET,
+            instanceIds = "#$?.id",
+            instanceNames = "#$?.name"
+        ),
+        content = "Create credential [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public CredentialDTO createCredential(String username, Long appId, CredentialCreateUpdateReq createUpdateReq) {
         CredentialDTO credentialDTO = buildCredentialDTO(username, appId, createUpdateReq);
         credentialDTO.setCreator(username);
@@ -71,6 +88,15 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.MANAGE_TICKET,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.TICKET,
+            instanceIds = "#createUpdateReq?.id",
+            instanceNames = "#$?.name"
+        ),
+        content = "Modify credential [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public CredentialDTO updateCredential(String username, Long appId, CredentialCreateUpdateReq createUpdateReq) {
         String id = createUpdateReq.getId();
         CredentialDTO credentialDTO = buildCredentialDTO(username, appId, createUpdateReq);
@@ -78,6 +104,10 @@ public class CredentialServiceImpl implements CredentialService {
         if (oldCredentialDTO == null) {
             throw new NotFoundException(ErrorCode.CREDENTIAL_NOT_EXIST);
         }
+
+        // 审计 - 原始数据
+        ActionAuditContext.current().setOriginInstance(oldCredentialDTO.toEsbCredentialSimpleInfoV3DTO());
+
         String value1 = createUpdateReq.getValue1();
         if ("******".equals(value1)) {
             credentialDTO.setFirstValue(oldCredentialDTO.getFirstValue());
@@ -92,11 +122,31 @@ public class CredentialServiceImpl implements CredentialService {
         }
         credentialDAO.updateCredentialById(dslContext, credentialDTO);
 
-        return getCredentialById(id);
+        CredentialDTO updateCredential = getCredentialById(id);
+        // 审计 - 当前数据
+        ActionAuditContext.current().setInstance(updateCredential.toEsbCredentialSimpleInfoV3DTO());
+
+        return updateCredential;
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.MANAGE_TICKET,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.TICKET,
+            instanceIds = "#id"
+        ),
+        content = "Delete account [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public Integer deleteCredentialById(String username, Long appId, String id) {
+        CredentialDTO credential = getCredentialById(id);
+        if (credential == null) {
+            throw new NotFoundException(ErrorCode.CREDENTIAL_NOT_EXIST);
+        }
+
+        // 审计 - 实例名称
+        ActionAuditContext.current().setInstanceName(credential.getName());
+
         return credentialDAO.deleteCredentialById(dslContext, id);
     }
 

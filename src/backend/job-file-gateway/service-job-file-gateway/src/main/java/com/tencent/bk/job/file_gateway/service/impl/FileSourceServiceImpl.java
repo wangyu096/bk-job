@@ -25,8 +25,14 @@
 package com.tencent.bk.job.file_gateway.service.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
+import com.tencent.bk.audit.annotations.AuditInstanceRecord;
+import com.tencent.bk.audit.model.ActionAuditContext;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.AlreadyExistsException;
+import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.iam.constant.ActionId;
+import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
 import com.tencent.bk.job.common.util.json.JsonUtils;
 import com.tencent.bk.job.file_gateway.dao.filesource.FileSourceDAO;
 import com.tencent.bk.job.file_gateway.dao.filesource.FileSourceTypeDAO;
@@ -50,13 +56,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_ID;
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_NAME;
+
 @Service
 public class FileSourceServiceImpl implements FileSourceService {
 
-    private DSLContext dslContext;
-    private FileSourceTypeDAO fileSourceTypeDAO;
-    private FileSourceDAO fileSourceDAO;
-    private FileWorkerDAO fileWorkerDAO;
+    private final DSLContext dslContext;
+    private final FileSourceTypeDAO fileSourceTypeDAO;
+    private final FileSourceDAO fileSourceDAO;
+    private final FileWorkerDAO fileWorkerDAO;
 
     @Autowired
     public FileSourceServiceImpl(DSLContext dslContext, FileSourceTypeDAO fileSourceTypeDAO,
@@ -117,19 +126,51 @@ public class FileSourceServiceImpl implements FileSourceService {
     }
 
     @Override
-    public FileSourceDTO saveFileSource(Long appId, FileSourceDTO fileSourceDTO) {
-        if (fileSourceDAO.checkFileSourceExists(dslContext, fileSourceDTO.getAppId(), fileSourceDTO.getAlias())) {
+    @ActionAuditRecord(
+        actionId = ActionId.CREATE_FILE_SOURCE,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.FILE_SOURCE,
+            instanceIds = "#$?.id",
+            instanceNames = "#fileSource?.alias"
+        ),
+        content = "Create file source [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
+    public FileSourceDTO saveFileSource(Long appId, FileSourceDTO fileSource) {
+        if (fileSourceDAO.checkFileSourceExists(dslContext, fileSource.getAppId(), fileSource.getAlias())) {
             throw new AlreadyExistsException(ErrorCode.FILE_SOURCE_ALIAS_ALREADY_EXISTS,
-                new String[]{fileSourceDTO.getAlias()});
+                new String[]{fileSource.getAlias()});
         }
-        Integer id = fileSourceDAO.insertFileSource(dslContext, fileSourceDTO);
+        Integer id = fileSourceDAO.insertFileSource(dslContext, fileSource);
         return getFileSourceById(id);
     }
 
     @Override
-    public FileSourceDTO updateFileSourceById(Long appId, FileSourceDTO fileSourceDTO) {
-        fileSourceDAO.updateFileSource(dslContext, fileSourceDTO);
-        return getFileSourceById(fileSourceDTO.getId());
+    @ActionAuditRecord(
+        actionId = ActionId.MANAGE_FILE_SOURCE,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.FILE_SOURCE,
+            instanceIds = "#fileSource?.id",
+            instanceNames = "#fileSource?.alias"
+        ),
+        content = "Modify file source [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
+    public FileSourceDTO updateFileSourceById(Long appId, FileSourceDTO fileSource) {
+        FileSourceDTO originFileSource = getFileSourceById(fileSource.getId());
+        if (originFileSource == null) {
+            throw new NotFoundException(ErrorCode.FILE_SOURCE_NOT_EXIST);
+        }
+
+        // 审计 - 原始数据
+        ActionAuditContext.current().setOriginInstance(FileSourceDTO.toEsbFileSourceV3DTO(fileSource));
+
+        fileSourceDAO.updateFileSource(dslContext, fileSource);
+
+        FileSourceDTO updateFileSource = getFileSourceById(fileSource.getId());
+
+        // 审计 - 当前数据
+        ActionAuditContext.current().setInstance(FileSourceDTO.toEsbFileSourceV3DTO(updateFileSource));
+
+        return updateFileSource;
     }
 
     @Override
@@ -153,26 +194,79 @@ public class FileSourceServiceImpl implements FileSourceService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.MANAGE_FILE_SOURCE,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.FILE_SOURCE,
+            instanceIds = "#id"
+        ),
+        content = "{{@OPERATION}} file source [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public Boolean enableFileSourceById(String username, Long appId, Integer id, Boolean enableFlag) {
+        FileSourceDTO fileSource = getFileSourceById(id);
+        if (fileSource == null) {
+            throw new NotFoundException(ErrorCode.FILE_SOURCE_NOT_EXIST);
+        }
+
+        // 审计
+        ActionAuditContext.current().setInstanceName(fileSource.getAlias());
+        ActionAuditContext.current().addAttribute("@OPERATION", enableFlag ? "Switch on" : "Switch off");
+        
         return fileSourceDAO.enableFileSourceById(dslContext, username, appId, id, enableFlag) == 1;
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_FILE_SOURCE,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.FILE_SOURCE,
+            instanceIds = "#id",
+            instanceNames = "#$?.alias"
+        ),
+        content = "View file source [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public FileSourceDTO getFileSourceById(Long appId, Integer id) {
         return fileSourceDAO.getFileSourceById(dslContext, id);
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_FILE_SOURCE,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.FILE_SOURCE,
+            instanceIds = "#id",
+            instanceNames = "#$?.alias"
+        ),
+        content = "View file source [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public FileSourceDTO getFileSourceById(Integer id) {
         return fileSourceDAO.getFileSourceById(dslContext, id);
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_FILE_SOURCE,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.FILE_SOURCE,
+            instanceIds = "#$?.!id",
+            instanceNames = "#$?.!alias"
+        ),
+        content = "View file source [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public List<FileSourceBasicInfoDTO> listFileSourceByIds(Collection<Integer> ids) {
         return fileSourceDAO.listFileSourceByIds(dslContext, ids);
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_FILE_SOURCE,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.FILE_SOURCE,
+            instanceIds = "#$?.id",
+            instanceNames = "#$?.alias"
+        ),
+        content = "View file source [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public FileSourceDTO getFileSourceByCode(String code) {
         return fileSourceDAO.getFileSourceByCode(dslContext, code);
     }

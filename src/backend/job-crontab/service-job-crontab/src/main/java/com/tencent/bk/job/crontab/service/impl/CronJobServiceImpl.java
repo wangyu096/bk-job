@@ -24,6 +24,9 @@
 
 package com.tencent.bk.job.crontab.service.impl;
 
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
+import com.tencent.bk.audit.annotations.AuditInstanceRecord;
+import com.tencent.bk.audit.model.ActionAuditContext;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
 import com.tencent.bk.job.common.exception.AlreadyExistsException;
@@ -32,6 +35,8 @@ import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.exception.NotFoundException;
 import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.iam.constant.ActionId;
+import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.model.dto.HostDTO;
@@ -87,6 +92,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_ID;
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_NAME;
 
 /**
  * @since 2/1/2020 12:18
@@ -184,6 +192,15 @@ public class CronJobServiceImpl implements CronJobService {
 
     @Override
     @Transactional(rollbackFor = {Exception.class, Error.class})
+    @ActionAuditRecord(
+        actionId = ActionId.CREATE_CRON,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.CRON,
+            instanceIds = "#$?.id",
+            instanceNames = "#cronJobInfo?.name"
+        ),
+        content = "Create cron [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public CronJobInfoDTO createCronJobInfo(CronJobInfoDTO cronJobInfo) {
         checkCronJobPlanOrScript(cronJobInfo);
         saveSnapShotForHostVaiableValue(cronJobInfo);
@@ -199,9 +216,27 @@ public class CronJobServiceImpl implements CronJobService {
 
     @Override
     @Transactional(rollbackFor = {Exception.class, Error.class})
+    @ActionAuditRecord(
+        actionId = ActionId.MANAGE_CRON,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.CRON,
+            instanceIds = "#createUpdateReq?.id",
+            instanceNames = "#createUpdateReq?.name"
+        ),
+        content = "Modify cron [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public CronJobInfoDTO updateCronJobInfo(CronJobInfoDTO cronJobInfo) {
+        CronJobInfoDTO originCron = getCronJobInfoById(cronJobInfo.getId());
+        if (originCron == null) {
+            throw new NotFoundException(ErrorCode.CRON_JOB_NOT_EXIST);
+        }
+
         checkCronJobPlanOrScript(cronJobInfo);
         processCronJobVariableValueMask(cronJobInfo);
+
+        // 审计 - 原始数据
+        ActionAuditContext.current().setOriginInstance(CronJobInfoDTO.toEsbCronInfoV3(originCron));
+
         if (cronJobInfo.getEnable()) {
             try {
                 List<ServiceTaskVariable> taskVariables = null;
@@ -229,7 +264,12 @@ public class CronJobServiceImpl implements CronJobService {
             }
         }
 
-        return getCronJobInfoById(cronJobInfo.getId());
+        CronJobInfoDTO updateCron = getCronJobInfoById(cronJobInfo.getId());
+
+        // 审计 - 原始数据
+        ActionAuditContext.current().setInstance(CronJobInfoDTO.toEsbCronInfoV3(updateCron));
+
+        return updateCron;
     }
 
     /**
@@ -311,7 +351,22 @@ public class CronJobServiceImpl implements CronJobService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.MANAGE_CRON,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.CRON,
+            instanceIds = "#cronJobId"
+        ),
+        content = "Modify cron [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public Boolean deleteCronJobInfo(Long appId, Long cronJobId) {
+        CronJobInfoDTO cron = getCronJobInfoById(cronJobId);
+        if (cron == null) {
+            throw new NotFoundException(ErrorCode.CRON_JOB_NOT_EXIST);
+        }
+
+        ActionAuditContext.current().setInstanceName(cron.getName());
+
         if (cronJobDAO.deleteCronJobById(appId, cronJobId)) {
             deleteJob(appId, cronJobId);
             return true;
@@ -321,7 +376,24 @@ public class CronJobServiceImpl implements CronJobService {
 
     @Override
     @Transactional(rollbackFor = {Exception.class, Error.class})
+    @ActionAuditRecord(
+        actionId = ActionId.MANAGE_CRON,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.CRON,
+            instanceIds = "#cronJobId"
+        ),
+        content = "{{@OPERATION}} cron [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public Boolean changeCronJobEnableStatus(String username, Long appId, Long cronJobId, Boolean enable) {
+        CronJobInfoDTO originCronJobInfo = cronJobDAO.getCronJobById(appId, cronJobId);
+        if (originCronJobInfo == null) {
+            throw new NotFoundException(ErrorCode.CRON_JOB_NOT_EXIST);
+        }
+
+        // 审计
+        ActionAuditContext.current().setInstanceName(originCronJobInfo.getName());
+        ActionAuditContext.current().addAttribute("@OPERATION", enable ? "Switch on" : "Switch off");
+
         CronJobInfoDTO cronJobInfo = new CronJobInfoDTO();
         cronJobInfo.setAppId(appId);
         cronJobInfo.setId(cronJobId);
@@ -330,7 +402,6 @@ public class CronJobServiceImpl implements CronJobService {
         cronJobInfo.setLastModifyTime(DateUtils.currentTimeSeconds());
         if (enable) {
             try {
-                CronJobInfoDTO originCronJobInfo = cronJobDAO.getCronJobById(appId, cronJobId);
                 List<ServiceTaskVariable> taskVariables = null;
                 if (CollectionUtils.isNotEmpty(originCronJobInfo.getVariableValue())) {
                     taskVariables =

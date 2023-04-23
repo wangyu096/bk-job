@@ -25,8 +25,10 @@
 package com.tencent.bk.job.crontab.api.web.impl;
 
 import com.google.common.base.CaseFormat;
+import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
@@ -339,6 +341,7 @@ public class WebCronJobResourceImpl implements WebCronJobResource {
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.CREATE_CRON)
     public Response<CronJobVO> createCronJob(String username,
                                              AppResourceScope appResourceScope,
                                              String scopeType,
@@ -368,6 +371,7 @@ public class WebCronJobResourceImpl implements WebCronJobResource {
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.MANAGE_CRON)
     public Response<CronJobVO> updateCronJob(String username,
                                              AppResourceScope appResourceScope,
                                              String scopeType,
@@ -410,6 +414,7 @@ public class WebCronJobResourceImpl implements WebCronJobResource {
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.MANAGE_CRON)
     public Response<Boolean> deleteCronJob(String username,
                                            AppResourceScope appResourceScope,
                                            String scopeType,
@@ -427,6 +432,7 @@ public class WebCronJobResourceImpl implements WebCronJobResource {
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.MANAGE_CRON)
     public Response<Boolean> changeCronJobEnableStatus(String username,
                                                        AppResourceScope appResourceScope,
                                                        String scopeType,

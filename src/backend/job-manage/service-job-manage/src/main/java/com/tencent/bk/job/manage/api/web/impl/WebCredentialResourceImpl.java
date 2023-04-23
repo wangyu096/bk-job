@@ -24,6 +24,8 @@
 
 package com.tencent.bk.job.manage.api.web.impl;
 
+import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
@@ -94,6 +96,7 @@ public class WebCredentialResourceImpl implements WebCredentialResource {
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.CREATE_TICKET)
     public Response<CredentialVO> createCredential(String username,
                                                    AppResourceScope appResourceScope,
                                                    String scopeType,
@@ -110,6 +113,7 @@ public class WebCredentialResourceImpl implements WebCredentialResource {
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.MANAGE_TICKET)
     public Response<CredentialVO> updateCredential(String username,
                                                    AppResourceScope appResourceScope,
                                                    String scopeType,
@@ -128,6 +132,7 @@ public class WebCredentialResourceImpl implements WebCredentialResource {
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.MANAGE_TICKET)
     public Response<Integer> deleteCredentialById(String username,
                                                   AppResourceScope appResourceScope,
                                                   String scopeType,

@@ -65,7 +65,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -99,8 +98,8 @@ public class AccountServiceImpl implements AccountService {
         actionId = ActionId.CREATE_ACCOUNT,
         instance = @AuditInstanceRecord(
             resourceType = ResourceTypeId.ACCOUNT,
-            instanceIds = "#$.?id",
-            instanceNames = "#account.?account"
+            instanceIds = "#$?.id",
+            instanceNames = "#account?.account"
         ),
         content = "Create account [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
@@ -169,8 +168,8 @@ public class AccountServiceImpl implements AccountService {
         actionId = ActionId.MANAGE_ACCOUNT,
         instance = @AuditInstanceRecord(
             resourceType = ResourceTypeId.ACCOUNT,
-            instanceIds = "#account.?id",
-            instanceNames = "#account.?account"
+            instanceIds = "#account?.id",
+            instanceNames = "#account?.account"
         ),
         content = "Modify account [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
@@ -191,9 +190,7 @@ public class AccountServiceImpl implements AccountService {
         }
 
         // 审计 - 原始数据
-        ActionAuditContext.current().setOriginInstanceList(Collections.singletonList(
-            getAccountById(account.getId()).toEsbAccountV3DTO()
-        ));
+        ActionAuditContext.current().setOriginInstance(getAccountById(account.getId()).toEsbAccountV3DTO());
 
         if (StringUtils.isNotEmpty(account.getPassword())) {
             account.setPassword(encryptor.encrypt(account.getPassword()));
@@ -207,9 +204,7 @@ public class AccountServiceImpl implements AccountService {
         AccountDTO updatedAccount = getAccountById(account.getId());
 
         // 审计 - 当前数据
-        ActionAuditContext.current().setInstanceList(Collections.singletonList(
-            updatedAccount.toEsbAccountV3DTO()
-        ));
+        ActionAuditContext.current().setInstance(updatedAccount.toEsbAccountV3DTO());
 
         return updatedAccount;
     }
@@ -242,7 +237,7 @@ public class AccountServiceImpl implements AccountService {
         log.info("Delete account, accountId={}", accountId);
         accountDAO.deleteAccount(accountId);
 
-        ActionAuditContext.current().setInstanceNameList(Collections.singletonList(account.getAccount()));
+        ActionAuditContext.current().setInstanceName(account.getAccount());
     }
 
     @Override

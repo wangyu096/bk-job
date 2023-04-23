@@ -220,4 +220,28 @@ public class SdkActionAuditContext implements ActionAuditContext {
     public void setInstanceList(List<Object> instanceList) {
         this.instanceList = instanceList;
     }
+
+    @Override
+    public void setInstanceId(String instanceId) {
+        this.instanceIdList = new ArrayList<>(1);
+        this.instanceIdList.add(instanceId);
+    }
+
+    @Override
+    public void setInstanceName(String instanceName) {
+        this.instanceNameList = new ArrayList<>(1);
+        this.instanceNameList.add(instanceName);
+    }
+
+    @Override
+    public void setOriginInstance(Object originInstance) {
+        this.originInstanceList = new ArrayList<>(1);
+        this.originInstanceList.add(originInstance);
+    }
+
+    @Override
+    public void setInstance(Object instance) {
+        this.instanceList = new ArrayList<>(1);
+        this.instanceList.add(instance);
+    }
 }

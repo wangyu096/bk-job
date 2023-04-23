@@ -25,7 +25,9 @@
 package com.tencent.bk.job.manage.service.impl.notify;
 
 import com.google.common.collect.Sets;
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
 import com.tencent.bk.job.common.cc.model.AppRoleDTO;
+import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.model.dto.UserRoleInfoDTO;
 import com.tencent.bk.job.common.model.vo.NotifyChannelVO;
 import com.tencent.bk.job.common.redis.util.LockUtils;
@@ -161,6 +163,10 @@ public class NotifyServiceImpl implements NotifyService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.NOTIFICATION_SETTING,
+        content = "Modify bisiness notification settings"
+    )
     public Long saveAppDefaultNotifyPolicies(
         String username,
         Long appId,

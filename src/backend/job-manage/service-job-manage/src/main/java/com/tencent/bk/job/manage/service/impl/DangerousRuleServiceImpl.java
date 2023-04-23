@@ -24,6 +24,8 @@
 
 package com.tencent.bk.job.manage.service.impl;
 
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
+import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.manage.common.consts.EnableStatusEnum;
 import com.tencent.bk.job.manage.dao.globalsetting.DangerousRuleDAO;
 import com.tencent.bk.job.manage.manager.cache.DangerousRuleCache;
@@ -60,17 +62,29 @@ public class DangerousRuleServiceImpl implements DangerousRuleService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.HIGH_RISK_DETECT_RULE,
+        content = "View high-risk detect rule settings"
+    )
     public List<DangerousRuleVO> listDangerousRules(String username) {
         return dangerousRuleDAO.listDangerousRules(dslContext).stream().map(DangerousRuleDTO::toVO)
             .collect(Collectors.toList());
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.HIGH_RISK_DETECT_RULE,
+        content = "View high-risk detect rule settings"
+    )
     public DangerousRuleDTO getDangerousRuleById(Long id) {
         return dangerousRuleDAO.getDangerousRuleById(dslContext, id);
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.HIGH_RISK_DETECT_RULE,
+        content = "Create a new high-risk detect rule"
+    )
     public DangerousRuleDTO createDangerousRule(String username, AddOrUpdateDangerousRuleReq req) {
         int scriptType = DangerousRuleDTO.encodeScriptType(req.getScriptTypeList());
         int maxPriority = dangerousRuleDAO.getMaxPriority(dslContext);
@@ -86,6 +100,10 @@ public class DangerousRuleServiceImpl implements DangerousRuleService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.HIGH_RISK_DETECT_RULE,
+        content = "Update a new high-risk detect rule"
+    )
     public DangerousRuleDTO updateDangerousRule(String username, AddOrUpdateDangerousRuleReq req) {
         int scriptType = DangerousRuleDTO.encodeScriptType(req.getScriptTypeList());
         DangerousRuleDTO existDangerousRuleDTO = dangerousRuleDAO.getDangerousRuleById(dslContext, req.getId());
@@ -103,6 +121,10 @@ public class DangerousRuleServiceImpl implements DangerousRuleService {
 
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.HIGH_RISK_DETECT_RULE,
+        content = "Modify a new high-risk detect rule"
+    )
     public Integer moveDangerousRule(String username, MoveDangerousRuleReq req) {
         int dir = req.getDir();
         DangerousRuleDTO currentRuleDTO = dangerousRuleDAO.getDangerousRuleById(dslContext, req.getId());
@@ -164,6 +186,10 @@ public class DangerousRuleServiceImpl implements DangerousRuleService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.HIGH_RISK_DETECT_RULE,
+        content = "Delete a new high-risk detect rule"
+    )
     public Integer deleteDangerousRuleById(String username, Long id) {
         DangerousRuleDTO existDangerousRuleDTO = dangerousRuleDAO.getDangerousRuleById(dslContext, id);
         if (existDangerousRuleDTO == null) {

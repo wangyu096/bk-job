@@ -24,10 +24,12 @@
 
 package com.tencent.bk.job.file_gateway.api.web;
 
+import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.FailedPreconditionException;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.PageData;
@@ -123,6 +125,7 @@ public class WebFileSourceResourceImpl implements WebFileSourceResource {
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.CREATE_FILE_SOURCE)
     public Response<FileSourceVO> saveFileSource(String username,
                                                  AppResourceScope appResourceScope,
                                                  String scopeType,
@@ -151,6 +154,7 @@ public class WebFileSourceResourceImpl implements WebFileSourceResource {
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.MANAGE_FILE_SOURCE)
     public Response<FileSourceVO> updateFileSource(String username,
                                                    AppResourceScope appResourceScope,
                                                    String scopeType,
@@ -170,6 +174,7 @@ public class WebFileSourceResourceImpl implements WebFileSourceResource {
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.MANAGE_FILE_SOURCE)
     public Response<Integer> deleteFileSource(String username,
                                               AppResourceScope appResourceScope,
                                               String scopeType,
@@ -185,6 +190,7 @@ public class WebFileSourceResourceImpl implements WebFileSourceResource {
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.MANAGE_FILE_SOURCE)
     public Response<Boolean> enableFileSource(String username,
                                               AppResourceScope appResourceScope,
                                               String scopeType,
@@ -202,6 +208,7 @@ public class WebFileSourceResourceImpl implements WebFileSourceResource {
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.VIEW_FILE_SOURCE)
     public Response<FileSourceVO> getFileSourceDetail(String username,
                                                       AppResourceScope appResourceScope,
                                                       String scopeType,

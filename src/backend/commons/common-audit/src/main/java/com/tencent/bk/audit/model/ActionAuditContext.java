@@ -154,4 +154,12 @@ public interface ActionAuditContext {
     void setOriginInstanceList(List<Object> originInstanceList);
 
     void setInstanceList(List<Object> instanceList);
+
+    void setInstanceId(String instanceId);
+
+    void setInstanceName(String instanceName);
+
+    void setOriginInstance(Object originInstance);
+
+    void setInstance(Object instance);
 }

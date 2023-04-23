@@ -118,4 +118,24 @@ public class InvalidActionAuditContext implements ActionAuditContext {
     public void setInstanceList(List<Object> instanceList) {
 
     }
+
+    @Override
+    public void setInstanceId(String instanceId) {
+
+    }
+
+    @Override
+    public void setInstanceName(String instanceName) {
+
+    }
+
+    @Override
+    public void setOriginInstance(Object originInstance) {
+
+    }
+
+    @Override
+    public void setInstance(Object instance) {
+
+    }
 }

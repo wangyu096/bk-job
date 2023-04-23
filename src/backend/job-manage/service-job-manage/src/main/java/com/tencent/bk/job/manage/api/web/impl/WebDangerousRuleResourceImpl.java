@@ -24,6 +24,8 @@
 
 package com.tencent.bk.job.manage.api.web.impl;
 
+import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.manage.api.web.WebDangerousRuleResource;
 import com.tencent.bk.job.manage.model.dto.globalsetting.DangerousRuleDTO;
@@ -48,18 +50,21 @@ public class WebDangerousRuleResourceImpl implements WebDangerousRuleResource {
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.HIGH_RISK_DETECT_RULE)
     public Response<List<DangerousRuleVO>> listDangerousRules(String username) {
         return Response.buildSuccessResp(dangerousRuleService.listDangerousRules(username));
     }
 
 
     @Override
+    @AuditEntry(actionId = ActionId.HIGH_RISK_DETECT_RULE)
     public Response<DangerousRuleVO> createDangerousRule(String username, AddOrUpdateDangerousRuleReq req) {
         DangerousRuleDTO dangerousRule = dangerousRuleService.createDangerousRule(username, req);
         return Response.buildSuccessResp(dangerousRule.toVO());
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.HIGH_RISK_DETECT_RULE)
     public Response<DangerousRuleVO> updateDangerousRule(String username,
                                                          Long id,
                                                          AddOrUpdateDangerousRuleReq req) {
@@ -69,11 +74,13 @@ public class WebDangerousRuleResourceImpl implements WebDangerousRuleResource {
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.HIGH_RISK_DETECT_RULE)
     public Response<Integer> moveDangerousRule(String username, MoveDangerousRuleReq req) {
         return Response.buildSuccessResp(dangerousRuleService.moveDangerousRule(username, req));
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.HIGH_RISK_DETECT_RULE)
     public Response<Integer> deleteDangerousRuleById(String username, Long id) {
         return Response.buildSuccessResp(dangerousRuleService.deleteDangerousRuleById(username, id));
     }

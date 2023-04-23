@@ -24,6 +24,7 @@
 
 package com.tencent.bk.job.execute.api.web.impl;
 
+import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.job.common.constant.DuplicateHandlerEnum;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.NotExistPathHandlerEnum;
@@ -31,6 +32,7 @@ import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.exception.NotFoundException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
+import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.iam.service.BusinessAuthService;
@@ -67,7 +69,6 @@ import com.tencent.bk.job.execute.model.web.vo.RollingConfigVO;
 import com.tencent.bk.job.execute.model.web.vo.TaskInstanceDetailVO;
 import com.tencent.bk.job.execute.model.web.vo.TaskInstanceVO;
 import com.tencent.bk.job.execute.model.web.vo.TaskOperationLogVO;
-import com.tencent.bk.job.execute.service.HostService;
 import com.tencent.bk.job.execute.service.RollingConfigService;
 import com.tencent.bk.job.execute.service.TaskInstanceService;
 import com.tencent.bk.job.execute.service.TaskInstanceVariableService;
@@ -98,7 +99,6 @@ public class WebTaskInstanceResourceImpl implements WebTaskInstanceResource {
     @Autowired
     public WebTaskInstanceResourceImpl(TaskInstanceService taskInstanceService,
                                        TaskInstanceVariableService taskInstanceVariableService,
-                                       HostService hostService,
                                        TaskOperationLogService taskOperationLogService,
                                        MessageI18nService i18nService,
                                        ExecuteAuthService executeAuthService,
@@ -379,7 +379,8 @@ public class WebTaskInstanceResourceImpl implements WebTaskInstanceResource {
         TaskInstanceDTO taskInstance = taskInstanceService.getTaskInstance(taskInstanceId);
 
         checkTaskInstanceExist(taskInstanceId, taskInstance, appResourceScope.getAppId());
-        authViewTaskInstance(username, appResourceScope, taskInstance);;
+        authViewTaskInstance(username, appResourceScope, taskInstance);
+        ;
 
         List<OperationLogDTO> operationLogs = taskOperationLogService.listOperationLog(taskInstanceId);
         if (operationLogs == null || operationLogs.isEmpty()) {
@@ -440,6 +441,7 @@ public class WebTaskInstanceResourceImpl implements WebTaskInstanceResource {
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.VIEW_HISTORY)
     public Response<TaskInstanceDetailVO> getTaskInstanceDetail(String username,
                                                                 AppResourceScope appResourceScope,
                                                                 String scopeType,

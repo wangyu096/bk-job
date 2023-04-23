@@ -24,18 +24,13 @@
 
 package com.tencent.bk.job.manage.api.inner.impl;
 
-import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.InternalResponse;
-import com.tencent.bk.job.common.model.dto.AppResourceScope;
 import com.tencent.bk.job.manage.api.inner.ServiceCredentialResource;
 import com.tencent.bk.job.manage.auth.TicketAuthService;
 import com.tencent.bk.job.manage.model.dto.CredentialDTO;
-import com.tencent.bk.job.manage.model.inner.resp.ServiceBasicCredentialDTO;
 import com.tencent.bk.job.manage.model.inner.resp.ServiceCredentialDTO;
-import com.tencent.bk.job.manage.model.web.request.CredentialCreateUpdateReq;
 import com.tencent.bk.job.manage.service.CredentialService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -44,12 +39,10 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class ServiceCredentialResourceImpl implements ServiceCredentialResource {
 
-    private final TicketAuthService ticketAuthService;
     private final CredentialService credentialService;
 
     @Autowired
     public ServiceCredentialResourceImpl(TicketAuthService ticketAuthService, CredentialService credentialService) {
-        this.ticketAuthService = ticketAuthService;
         this.credentialService = credentialService;
     }
 
@@ -57,51 +50,5 @@ public class ServiceCredentialResourceImpl implements ServiceCredentialResource 
     public InternalResponse<ServiceCredentialDTO> getCredentialById(Long appId, String id) {
         CredentialDTO credentialDTO = credentialService.getCredentialById(appId, id);
         return InternalResponse.buildSuccessResp(credentialDTO.toServiceCredentialDTO());
-    }
-
-    @Override
-    public InternalResponse<ServiceBasicCredentialDTO> createCredential(
-        String username,
-        Long appId,
-        CredentialCreateUpdateReq createUpdateReq
-    ) {
-        return saveCredential(username, appId, createUpdateReq);
-    }
-
-    @Override
-    public InternalResponse<ServiceBasicCredentialDTO> updateCredential(
-        String username,
-        Long appId,
-        CredentialCreateUpdateReq createUpdateReq
-    ) {
-        return saveCredential(username, appId, createUpdateReq);
-    }
-
-    private InternalResponse<ServiceBasicCredentialDTO> saveCredential(
-        String username,
-        Long appId,
-        CredentialCreateUpdateReq createUpdateReq
-    ) {
-        AuthResult authResult;
-        if (StringUtils.isBlank(createUpdateReq.getId())) {
-            authResult = checkCreateTicketPermission(username, appId);
-        } else {
-            authResult = checkManageTicketPermission(username, appId, createUpdateReq.getId());
-        }
-        if (!authResult.isPass()) {
-            return InternalResponse.buildAuthFailResp(AuthResult.toAuthResultDTO(authResult));
-        }
-        CredentialDTO credentialDTO = credentialService.createCredential(username, appId, createUpdateReq);
-        return InternalResponse.buildSuccessResp(new ServiceBasicCredentialDTO(credentialDTO.getId()));
-    }
-
-    public AuthResult checkCreateTicketPermission(String username, Long appId) {
-        // 需要拥有在业务下创建凭证的权限
-        return ticketAuthService.authCreateTicket(username, new AppResourceScope(appId));
-    }
-
-    public AuthResult checkManageTicketPermission(String username, Long appId, String credentialId) {
-        // 需要拥有在业务下管理某个具体凭证的权限
-        return ticketAuthService.authManageTicket(username, new AppResourceScope(appId), credentialId, null);
     }
 }

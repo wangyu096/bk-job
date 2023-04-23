@@ -298,8 +298,8 @@ public class TaskPlanServiceImpl implements TaskPlanService {
         actionId = ActionId.EDIT_JOB_PLAN,
         instance = @AuditInstanceRecord(
             resourceType = ResourceTypeId.PLAN,
-            instanceIds = "#taskPlanInfo.?id",
-            instanceNames = "#taskPlanInfo.?name"
+            instanceIds = "#taskPlanInfo?.id",
+            instanceNames = "#taskPlanInfo?.name"
         ),
         content = "Modify plan [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
@@ -307,8 +307,7 @@ public class TaskPlanServiceImpl implements TaskPlanService {
         Long planId = taskPlanInfo.getId();
 
         // 审计记录 - 原始数据
-        ActionAuditContext.current().setOriginInstanceList(Collections.singletonList(
-            TaskPlanInfoDTO.toEsbPlanInfoV3(getTaskPlanById(planId))));
+        ActionAuditContext.current().setOriginInstance(TaskPlanInfoDTO.toEsbPlanInfoV3(getTaskPlanById(planId)));
 
         taskPlanInfo.setLastModifyUser(taskPlanInfo.getLastModifyUser());
         taskPlanInfo.setLastModifyTime(taskPlanInfo.getLastModifyTime());
@@ -339,8 +338,7 @@ public class TaskPlanServiceImpl implements TaskPlanService {
         TaskPlanInfoDTO updatedPlan = getTaskPlanById(planId);
 
         // 审计记录 - 当前数据
-        ActionAuditContext.current().setInstanceList(Collections.singletonList(
-            TaskPlanInfoDTO.toEsbPlanInfoV3(updatedPlan)));
+        ActionAuditContext.current().setInstance(TaskPlanInfoDTO.toEsbPlanInfoV3(updatedPlan));
 
         return updatedPlan;
     }
@@ -555,7 +553,7 @@ public class TaskPlanServiceImpl implements TaskPlanService {
         syncPlan(taskPlan);
 
         // 审计 - 实例名称
-        ActionAuditContext.current().setInstanceNameList(Collections.singletonList(taskPlan.getName()));
+        ActionAuditContext.current().setInstanceName(taskPlan.getName());
 
         return true;
     }

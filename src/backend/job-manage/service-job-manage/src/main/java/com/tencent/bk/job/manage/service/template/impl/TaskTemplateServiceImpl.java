@@ -326,22 +326,20 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
         actionId = ActionId.EDIT_JOB_TEMPLATE,
         instance = @AuditInstanceRecord(
             resourceType = ResourceTypeId.TEMPLATE,
-            instanceIds = "#taskTemplateInfo.?id",
-            instanceNames = "#taskTemplateInfo.?name"
+            instanceIds = "#taskTemplateInfo?.id",
+            instanceNames = "#taskTemplateInfo?.name"
         ),
         content = "Modify template [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
     public TaskTemplateInfoDTO updateTaskTemplate(TaskTemplateInfoDTO taskTemplateInfo) {
         // 审计记录 - 原始数据
-        ActionAuditContext.current().setOriginInstanceList(Collections.singletonList(
-            TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(
-                getTaskTemplateById(taskTemplateInfo.getAppId(), taskTemplateInfo.getId()))));
+        ActionAuditContext.current().setOriginInstance(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(
+            getTaskTemplateById(taskTemplateInfo.getAppId(), taskTemplateInfo.getId())));
 
         TaskTemplateInfoDTO template = saveOrUpdateTaskTemplate(taskTemplateInfo);
 
         // 审计记录 - 更新后数据
-        ActionAuditContext.current().setInstanceList(Collections.singletonList(
-            TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(template)));
+        ActionAuditContext.current().setInstance(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(template));
 
         return template;
     }
@@ -592,16 +590,15 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
         actionId = ActionId.EDIT_JOB_TEMPLATE,
         instance = @AuditInstanceRecord(
             resourceType = ResourceTypeId.TEMPLATE,
-            instanceIds = "#taskTemplateInfo.?id",
-            instanceNames = "#taskTemplateInfo.?name"
+            instanceIds = "#taskTemplateInfo?.id",
+            instanceNames = "#taskTemplateInfo?.name"
         ),
         content = "Modify template [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
     public Boolean saveTaskTemplateBasicInfo(TaskTemplateInfoDTO taskTemplateInfo) {
         // 审计记录 - 原始数据
-        ActionAuditContext.current().setOriginInstanceList(Collections.singletonList(
-            TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(
-                getTaskTemplateById(taskTemplateInfo.getAppId(), taskTemplateInfo.getId()))));
+        ActionAuditContext.current().setOriginInstance(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(
+                getTaskTemplateById(taskTemplateInfo.getAppId(), taskTemplateInfo.getId())));
 
         createNewTagForTemplateIfNotExist(taskTemplateInfo);
         updateTemplateTags(taskTemplateInfo);
@@ -610,9 +607,8 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
         }
 
         // 审计记录 - 更新后数据
-        ActionAuditContext.current().setInstanceList(Collections.singletonList(
-            TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(
-                getTaskTemplateById(taskTemplateInfo.getAppId(), taskTemplateInfo.getId()))));
+        ActionAuditContext.current().setInstance(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(
+                getTaskTemplateById(taskTemplateInfo.getAppId(), taskTemplateInfo.getId())));
         return true;
     }
 

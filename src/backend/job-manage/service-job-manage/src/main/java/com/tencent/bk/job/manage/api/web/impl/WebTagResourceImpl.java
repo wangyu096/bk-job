@@ -24,8 +24,10 @@
 
 package com.tencent.bk.job.manage.api.web.impl;
 
+import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobResourceTypeEnum;
+import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
@@ -33,7 +35,6 @@ import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
-import com.tencent.bk.job.common.service.AppScopeMappingService;
 import com.tencent.bk.job.manage.api.web.WebTagResource;
 import com.tencent.bk.job.manage.auth.NoResourceScopeAuthService;
 import com.tencent.bk.job.manage.auth.ScriptAuthService;
@@ -72,8 +73,7 @@ public class WebTagResourceImpl implements WebTagResource {
                               TagAuthService tagAuthService,
                               ScriptAuthService scriptAuthService,
                               TemplateAuthService templateAuthService,
-                              NoResourceScopeAuthService noResourceScopeAuthService,
-                              AppScopeMappingService appScopeMappingService) {
+                              NoResourceScopeAuthService noResourceScopeAuthService) {
         this.tagService = tagService;
         this.tagAuthService = tagAuthService;
         this.scriptAuthService = scriptAuthService;
@@ -179,6 +179,7 @@ public class WebTagResourceImpl implements WebTagResource {
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.MANAGE_TAG)
     public Response<Boolean> updateTagInfo(String username,
                                            AppResourceScope appResourceScope,
                                            String scopeType,
@@ -198,6 +199,7 @@ public class WebTagResourceImpl implements WebTagResource {
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.CREATE_TAG)
     public Response<TagVO> saveTagInfo(String username,
                                        AppResourceScope appResourceScope,
                                        String scopeType,

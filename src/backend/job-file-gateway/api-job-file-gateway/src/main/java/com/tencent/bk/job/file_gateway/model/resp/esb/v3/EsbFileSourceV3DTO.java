@@ -22,21 +22,79 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.manage.model.esb.v3.response;
+package com.tencent.bk.job.file_gateway.model.resp.esb.v3;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.tencent.bk.job.common.esb.model.EsbAppScopeDTO;
+import com.tencent.bk.job.common.util.json.LongTimestampSerializer;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
-public class EsbCredentialSimpleInfoV3DTO {
+public class EsbFileSourceV3DTO extends EsbAppScopeDTO {
+    /**
+     * id
+     */
+    private Integer id;
+    /**
+     * 文件源标识
+     */
+    private String code;
+    /**
+     * 文件源别名
+     */
+    private String alias;
+    /**
+     * 状态
+     */
+    private Integer status;
+    /**
+     * 类型
+     */
+    @JsonProperty("file_source_type")
+    private Integer fileSourceType;
 
-    private String id;
+    /**
+     * 是否为公共文件源
+     */
+    @JsonProperty("is_public")
+    private boolean publicFlag;
 
-    private String name;
+    /**
+     * 凭据Id
+     */
+    @JsonProperty("credential_id")
+    private String credentialId;
 
-    public EsbCredentialSimpleInfoV3DTO(String id, String name) {
-        this.id = id;
-        this.name = name;
-    }
+    /**
+     * 是否启用
+     */
+    private Boolean enable;
+
+    /**
+     * 创建人
+     */
+    private String creator;
+    /**
+     * 创建时间
+     */
+    @JsonProperty("create_time")
+    private Long createTime;
+    /**
+     * 更新人
+     */
+    @JsonProperty("last_modify_user")
+    private String lastModifyUser;
+
+    /**
+     * 更新时间
+     */
+    @JsonSerialize(using = LongTimestampSerializer.class)
+    @JsonProperty("last_modify_time")
+    private Long lastModifyTime;
+
 }
