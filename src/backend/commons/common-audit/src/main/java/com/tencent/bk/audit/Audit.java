@@ -26,8 +26,12 @@ package com.tencent.bk.audit;
 
 import com.tencent.bk.audit.exporter.EventExporter;
 import com.tencent.bk.audit.model.AuditContext;
+import com.tencent.bk.audit.model.AuditEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.List;
 
 /**
  * 审计入口服务
@@ -81,7 +85,10 @@ public class Audit {
         try {
             AuditContext auditContext = currentAuditContext();
             auditContext.end();
-            eventExporter.export(auditContext.getEvents());
+            List<AuditEvent> auditEvents = auditContext.getEvents();
+            if (CollectionUtils.isNotEmpty(auditEvents)) {
+                eventExporter.export(auditEvents);
+            }
         } catch (Throwable e) {
             // 忽略审计错误，避免影响业务代码执行
             log.error("Audit stop caught exception", e);

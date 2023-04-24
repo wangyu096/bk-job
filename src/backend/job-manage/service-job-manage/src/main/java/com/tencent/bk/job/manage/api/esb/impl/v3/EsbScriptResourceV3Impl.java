@@ -147,6 +147,16 @@ public class EsbScriptResourceV3Impl implements EsbScriptV3Resource {
         request.fillAppResourceScope(appScopeMappingService);
         checkEsbGetScriptListV3Req(request);
 
+        ScriptQuery scriptQuery = buildListPageScriptQuery(request);
+
+        PageData<ScriptDTO> pageScripts = scriptService.listPageScript(scriptQuery);
+        setOnlineScriptVersionInfo(pageScripts.getData());
+
+        EsbPageDataV3<EsbScriptV3DTO> result = EsbPageDataV3.from(pageScripts, ScriptDTO::toEsbScriptV3DTO);
+        return EsbResp.buildSuccessResp(result);
+    }
+
+    private ScriptQuery buildListPageScriptQuery(EsbGetScriptListV3Req request) {
         long appId = request.getAppId();
         ScriptQuery scriptQuery = new ScriptQuery();
         scriptQuery.setAppId(appId);
@@ -161,12 +171,9 @@ public class EsbScriptResourceV3Impl implements EsbScriptV3Resource {
         BaseSearchCondition baseSearchCondition = new BaseSearchCondition();
         baseSearchCondition.setStart(request.getStart());
         baseSearchCondition.setLength(request.getLength());
+        scriptQuery.setBaseSearchCondition(baseSearchCondition);
 
-        PageData<ScriptDTO> pageScripts = scriptService.listPageScript(scriptQuery, baseSearchCondition);
-        setOnlineScriptVersionInfo(pageScripts.getData());
-
-        EsbPageDataV3<EsbScriptV3DTO> result = EsbPageDataV3.from(pageScripts, ScriptDTO::toEsbScriptV3DTO);
-        return EsbResp.buildSuccessResp(result);
+        return scriptQuery;
     }
 
     private void checkEsbGetScriptListV3Req(EsbGetScriptListV3Req request) {
@@ -205,16 +212,9 @@ public class EsbScriptResourceV3Impl implements EsbScriptV3Resource {
         request.fillAppResourceScope(appScopeMappingService);
         checkEsbGetScriptVersionListV3Req(request);
 
-        long appId = request.getAppId();
-        ScriptQuery scriptQuery = new ScriptQuery();
-        scriptQuery.setAppId(appId);
-        scriptQuery.setPublicScript(false);
-        scriptQuery.setId(request.getScriptId());
+        ScriptQuery scriptQuery = buildListScriptVersionQuery(request);
 
-        BaseSearchCondition baseSearchCondition = BaseSearchCondition.pageCondition(request.getStart(),
-            request.getLength());
-
-        PageData<ScriptDTO> pageScriptVersions = scriptService.listPageScriptVersion(scriptQuery, baseSearchCondition);
+        PageData<ScriptDTO> pageScriptVersions = scriptService.listPageScriptVersion(scriptQuery);
 
         batchAuthViewScript(request.getUserName(), request.getAppResourceScope(), pageScriptVersions.getData());
 
@@ -226,6 +226,20 @@ public class EsbScriptResourceV3Impl implements EsbScriptV3Resource {
             }
         }
         return EsbResp.buildSuccessResp(result);
+    }
+
+    private ScriptQuery buildListScriptVersionQuery(EsbGetScriptVersionListV3Req request) {
+        long appId = request.getAppId();
+        ScriptQuery scriptQuery = new ScriptQuery();
+        scriptQuery.setAppId(appId);
+        scriptQuery.setPublicScript(false);
+        scriptQuery.setId(request.getScriptId());
+
+        BaseSearchCondition baseSearchCondition = BaseSearchCondition.pageCondition(request.getStart(),
+            request.getLength());
+        scriptQuery.setBaseSearchCondition(baseSearchCondition);
+
+        return scriptQuery;
     }
 
     private void checkEsbGetScriptVersionListV3Req(EsbGetScriptVersionListV3Req request) {
@@ -263,13 +277,14 @@ public class EsbScriptResourceV3Impl implements EsbScriptV3Resource {
         Long id = request.getId();
         ScriptDTO scriptVersion;
         if (id != null && id > 0) {
-            scriptVersion = scriptService.getScriptVersion(null, appId, id);
+            scriptVersion = scriptService.getScriptVersion(appId, id);
         } else {
-            scriptVersion = scriptService.getByScriptIdAndVersion(null, appId, scriptId, version);
+            scriptVersion = scriptService.getByScriptIdAndVersion(appId, scriptId, version);
         }
 
         if (scriptVersion != null) {
-            AuthResult authResult = scriptAuthService.authViewScript(request.getUserName(), request.getAppResourceScope(),
+            AuthResult authResult = scriptAuthService.authViewScript(request.getUserName(),
+                request.getAppResourceScope(),
                 scriptVersion.getId(), null);
             if (!authResult.isPass()) {
                 throw new PermissionDeniedException(authResult);

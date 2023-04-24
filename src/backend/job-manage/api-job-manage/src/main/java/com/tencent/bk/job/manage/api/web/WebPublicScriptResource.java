@@ -159,7 +159,7 @@ public interface WebPublicScriptResource {
 
     @ApiOperation(value = "根据条件查询业务下的脚本名称列表", produces = "application/json")
     @GetMapping("/scriptNames")
-    Response listAppScriptNames(
+    Response<List<String>> listPublicScriptNames(
         @ApiParam("用户名，网关自动传入")
         @RequestHeader("username") String username,
         @ApiParam("脚本名称")
@@ -175,7 +175,7 @@ public interface WebPublicScriptResource {
 
     @ApiOperation(value = "更新脚本元数据，比如脚本描述、名称、标签", produces = "application/json")
     @PutMapping("/script/{scriptId}/info")
-    Response updateScriptInfo(
+    Response<ScriptVO> updateScriptInfo(
         @ApiParam("用户名，网关自动传入")
         @RequestHeader("username") String username,
         @ApiParam(value = "脚本ID", required = true, example = "uuid")
@@ -185,13 +185,44 @@ public interface WebPublicScriptResource {
         @RequestBody ScriptInfoUpdateReq scriptInfoUpdateReq);
 
 
-    @ApiOperation(value = "更新脚本", produces = "application/json")
+    @ApiOperation(value = "创建脚本", produces = "application/json")
     @PostMapping("/script")
     Response<ScriptVO> saveScript(
         @ApiParam("用户名，网关自动传入")
-        @RequestHeader("username") String username,
-        @ApiParam(value = "新增/更新的脚本对象", name = "scriptCreateUpdateReq", required = true)
-        @RequestBody ScriptCreateUpdateReq scriptCreateUpdateReq);
+        @RequestHeader("username")
+            String username,
+        @ApiParam(value = "新增/更新的脚本对象", name = "request", required = true)
+        @RequestBody
+            ScriptCreateUpdateReq request
+    );
+
+    @ApiOperation(value = "新增脚本版本", produces = "application/json")
+    @PostMapping("/script/{scriptId}/scriptVersion")
+    Response<ScriptVO> saveScriptVersion(
+        @ApiParam("用户名，网关自动传入")
+        @RequestHeader("username")
+            String username,
+        @PathVariable(value = "scriptId")
+            String scriptId,
+        @ApiParam(value = "新增脚本版本请求", name = "request", required = true)
+        @RequestBody
+            ScriptCreateUpdateReq request
+    );
+
+    @ApiOperation(value = "更新脚本版本", produces = "application/json")
+    @PutMapping("/script/{scriptId}/scriptVersion/{scriptVersionId}")
+    Response<ScriptVO> updateScriptVersion(
+        @ApiParam("用户名，网关自动传入")
+        @RequestHeader("username")
+            String username,
+        @PathVariable(value = "scriptId")
+            String scriptId,
+        @PathVariable(value = "scriptVersionId")
+            Long scriptVersionId,
+        @ApiParam(value = "更新脚本版本请求", name = "request", required = true)
+        @RequestBody
+            ScriptCreateUpdateReq request
+    );
 
     @ApiOperation(value = "上线脚本", produces = "application/json")
     @PutMapping("/script/{scriptId}/scriptVersion/{scriptVersionId}/publish")

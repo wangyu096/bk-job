@@ -45,7 +45,7 @@ public @interface ActionAuditRecord {
     /**
      * 操作ID
      */
-    String actionId();
+    String actionId() default "";
 
     /**
      * 事件描述

@@ -6,7 +6,7 @@ import com.tencent.bk.job.manage.model.dto.ScriptBasicDTO;
 import com.tencent.bk.job.manage.model.dto.ScriptDTO;
 import com.tencent.bk.job.manage.model.query.ScriptQuery;
 import com.tencent.bk.job.manage.service.ApplicationService;
-import com.tencent.bk.job.manage.service.ScriptService;
+import com.tencent.bk.job.manage.service.PublicScriptService;
 import com.tencent.bk.sdk.iam.dto.callback.request.CallbackRequestDTO;
 import com.tencent.bk.sdk.iam.dto.callback.request.IamSearchCondition;
 import com.tencent.bk.sdk.iam.dto.callback.response.CallbackBaseResponseDTO;
@@ -20,20 +20,20 @@ import java.util.List;
 
 @Slf4j
 @Service
-public class ScriptCallbackHelper extends AbstractScriptCallbackHelper {
-    private final ScriptService scriptService;
+public class PublicScriptCallbackHelper extends AbstractScriptCallbackHelper {
+    private final PublicScriptService publicScriptService;
 
     @Autowired
-    public ScriptCallbackHelper(ScriptService scriptService,
-                                ApplicationService applicationService) {
+    public PublicScriptCallbackHelper(PublicScriptService publicScriptService,
+                                      ApplicationService applicationService) {
         super(applicationService);
-        this.scriptService = scriptService;
+        this.publicScriptService = publicScriptService;
     }
 
     @Override
     protected ListInstanceResponseDTO listInstanceResp(CallbackRequestDTO callbackRequest) {
         ScriptQuery scriptQuery = buildBasicScriptQuery(callbackRequest);
-        PageData<ScriptDTO> scriptDTOPageData = scriptService.listPageScript(scriptQuery);
+        PageData<ScriptDTO> scriptDTOPageData = publicScriptService.listPageScript(scriptQuery);
 
         return IamRespUtil.getListInstanceRespFromPageData(scriptDTOPageData, this::convert);
     }
@@ -44,7 +44,7 @@ public class ScriptCallbackHelper extends AbstractScriptCallbackHelper {
 
         ScriptQuery scriptQuery = buildBasicScriptQuery(callbackRequest);
         scriptQuery.setName(callbackRequest.getFilter().getKeyword());
-        PageData<ScriptDTO> accountDTOPageData = scriptService.listPageScript(scriptQuery);
+        PageData<ScriptDTO> accountDTOPageData = publicScriptService.listPageScript(scriptQuery);
 
         return IamRespUtil.getSearchInstanceRespFromPageData(accountDTOPageData, this::convert);
     }
@@ -53,13 +53,13 @@ public class ScriptCallbackHelper extends AbstractScriptCallbackHelper {
     protected CallbackBaseResponseDTO fetchInstanceResp(CallbackRequestDTO callbackRequest) {
         IamSearchCondition searchCondition = IamSearchCondition.fromReq(callbackRequest);
         List<String> scriptIdList = searchCondition.getIdList();
-        List<ScriptBasicDTO> scriptBasicDTOList = scriptService.listScriptBasicInfoByScriptIds(scriptIdList);
+        List<ScriptBasicDTO> scriptBasicDTOList = publicScriptService.listScriptBasicInfoByScriptIds(scriptIdList);
         return buildFetchInstanceResp(scriptIdList, scriptBasicDTOList);
     }
 
     @Override
     boolean isPublicScript() {
-        return false;
+        return true;
     }
 
     public CallbackBaseResponseDTO doCallback(CallbackRequestDTO callbackRequest) {

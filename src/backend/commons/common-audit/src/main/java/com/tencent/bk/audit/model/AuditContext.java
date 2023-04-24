@@ -41,7 +41,6 @@ public interface AuditContext {
         return AuditContextBuilder.builder(actionId);
     }
 
-
     /**
      * 返回当前审计上下文
      *

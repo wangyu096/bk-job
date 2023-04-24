@@ -34,7 +34,6 @@ import com.tencent.bk.job.common.esb.util.EsbDTOAppScopeMappingHelper;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
-import com.tencent.bk.job.common.iam.service.BusinessAuthService;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.model.dto.ApplicationHostDTO;
@@ -43,6 +42,7 @@ import com.tencent.bk.job.common.util.date.DateUtils;
 import com.tencent.bk.job.manage.api.esb.EsbGetJobDetailResource;
 import com.tencent.bk.job.manage.auth.PlanAuthService;
 import com.tencent.bk.job.manage.common.consts.task.TaskFileTypeEnum;
+import com.tencent.bk.job.manage.common.consts.task.TaskScriptSourceEnum;
 import com.tencent.bk.job.manage.common.consts.task.TaskStepTypeEnum;
 import com.tencent.bk.job.manage.model.dto.AccountDTO;
 import com.tencent.bk.job.manage.model.dto.ScriptDTO;
@@ -61,6 +61,7 @@ import com.tencent.bk.job.manage.model.esb.EsbTaskVariableDTO;
 import com.tencent.bk.job.manage.model.esb.request.EsbGetJobDetailRequest;
 import com.tencent.bk.job.manage.model.inner.ServiceAccountDTO;
 import com.tencent.bk.job.manage.service.AccountService;
+import com.tencent.bk.job.manage.service.PublicScriptService;
 import com.tencent.bk.job.manage.service.ScriptService;
 import com.tencent.bk.job.manage.service.plan.TaskPlanService;
 import lombok.extern.slf4j.Slf4j;
@@ -79,21 +80,21 @@ import java.util.Map;
 public class EsbGetJobDetailResourceImpl implements EsbGetJobDetailResource {
     private final TaskPlanService taskPlanService;
     private final ScriptService scriptService;
+    private final PublicScriptService publicScriptService;
     private final AccountService accountService;
-    private final BusinessAuthService businessAuthService;
     private final PlanAuthService planAuthService;
     private final AppScopeMappingService appScopeMappingService;
 
     public EsbGetJobDetailResourceImpl(TaskPlanService taskPlanService,
                                        ScriptService scriptService,
+                                       PublicScriptService publicScriptService,
                                        AccountService accountService,
-                                       BusinessAuthService businessAuthService,
                                        PlanAuthService planAuthService,
                                        AppScopeMappingService appScopeMappingService) {
         this.taskPlanService = taskPlanService;
         this.scriptService = scriptService;
+        this.publicScriptService = publicScriptService;
         this.accountService = accountService;
-        this.businessAuthService = businessAuthService;
         this.planAuthService = planAuthService;
         this.appScopeMappingService = appScopeMappingService;
     }
@@ -202,7 +203,7 @@ public class EsbGetJobDetailResourceImpl implements EsbGetJobDetailResource {
         esbStep.setType(scriptStep.getScriptSource().getType());
 
         if (scriptStep.getScriptVersionId() != null && scriptStep.getScriptVersionId() > 0) {
-            ScriptDTO script = scriptService.getScriptVersion(scriptStep.getScriptVersionId());
+            ScriptDTO script = getScriptVersion(scriptStep.getScriptSource(), scriptStep.getScriptVersionId());
             if (script == null) {
                 log.warn("Plan related script is not exist, planId={}, scriptVersionId={}", scriptStep.getPlanId(),
                     scriptStep.getScriptVersionId());
@@ -227,6 +228,20 @@ public class EsbGetJobDetailResourceImpl implements EsbGetJobDetailResource {
             esbStep.setAccountId(account.getId());
         }
         fillStepTargetServerInfo(esbStep, scriptStep.getExecuteTarget());
+    }
+
+    private ScriptDTO getScriptVersion(TaskScriptSourceEnum scriptSource, long scriptVersionId) {
+        ScriptDTO scriptVersion = null;
+        switch (scriptSource) {
+            case CITING:
+                scriptVersion = scriptService.getScriptVersion(scriptVersionId);
+                break;
+            case PUBLIC:
+                scriptVersion = publicScriptService.getScriptVersion(scriptVersionId);
+                break;
+        }
+        return scriptVersion;
+
     }
 
     private void fillStepTargetServerInfo(EsbStepDTO esbStep, TaskTargetDTO targetServer) {

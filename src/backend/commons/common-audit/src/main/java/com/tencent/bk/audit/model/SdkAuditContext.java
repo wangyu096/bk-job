@@ -28,6 +28,7 @@ import com.tencent.bk.audit.constants.AccessTypeEnum;
 import com.tencent.bk.audit.constants.AuditEventKey;
 import com.tencent.bk.audit.constants.UserIdentifyTypeEnum;
 import com.tencent.bk.audit.utils.EventIdGenerator;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -119,8 +120,10 @@ public class SdkAuditContext implements AuditContext {
                     auditEvent -> auditEvents.put(auditEvent.toAuditKey(), auditEvent)
                 )
             );
-        auditEvents.values().forEach(this::addContextAttributes);
-        this.events.addAll(auditEvents.values());
+        if (!auditEvents.isEmpty()) {
+            auditEvents.values().forEach(this::addContextAttributes);
+            this.events.addAll(auditEvents.values());
+        }
     }
 
     private void addContextAttributes(AuditEvent auditEvent) {
@@ -145,7 +148,8 @@ public class SdkAuditContext implements AuditContext {
     }
 
     private boolean isActionRecordable(String actionId) {
-        return this.actionId.equals(actionId) || this.subActionIds.contains(actionId);
+        return StringUtils.isNotEmpty(this.actionId) &&
+            (this.actionId.equals(actionId) || this.subActionIds.contains(actionId));
     }
 
     @Override

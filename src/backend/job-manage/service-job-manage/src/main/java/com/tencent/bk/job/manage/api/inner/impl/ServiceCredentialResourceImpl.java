@@ -26,7 +26,6 @@ package com.tencent.bk.job.manage.api.inner.impl;
 
 import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.manage.api.inner.ServiceCredentialResource;
-import com.tencent.bk.job.manage.auth.TicketAuthService;
 import com.tencent.bk.job.manage.model.dto.CredentialDTO;
 import com.tencent.bk.job.manage.model.inner.resp.ServiceCredentialDTO;
 import com.tencent.bk.job.manage.service.CredentialService;
@@ -42,7 +41,7 @@ public class ServiceCredentialResourceImpl implements ServiceCredentialResource 
     private final CredentialService credentialService;
 
     @Autowired
-    public ServiceCredentialResourceImpl(TicketAuthService ticketAuthService, CredentialService credentialService) {
+    public ServiceCredentialResourceImpl(CredentialService credentialService) {
         this.credentialService = credentialService;
     }
 

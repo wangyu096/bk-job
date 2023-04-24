@@ -42,7 +42,7 @@ import com.tencent.bk.job.manage.model.esb.v3.request.EsbGetPublicScriptVersionL
 import com.tencent.bk.job.manage.model.esb.v3.response.EsbScriptV3DTO;
 import com.tencent.bk.job.manage.model.esb.v3.response.EsbScriptVersionDetailV3DTO;
 import com.tencent.bk.job.manage.model.query.ScriptQuery;
-import com.tencent.bk.job.manage.service.ScriptService;
+import com.tencent.bk.job.manage.service.PublicScriptService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -59,11 +59,11 @@ import static com.tencent.bk.job.common.constant.JobConstants.PUBLIC_APP_ID;
 @Slf4j
 public class EsbPublicScriptResourceV3Impl implements EsbPublicScriptV3Resource {
 
-    private final ScriptService scriptService;
+    private final PublicScriptService publicScriptService;
 
     @Autowired
-    public EsbPublicScriptResourceV3Impl(ScriptService scriptService) {
-        this.scriptService = scriptService;
+    public EsbPublicScriptResourceV3Impl(PublicScriptService publicScriptService) {
+        this.publicScriptService = publicScriptService;
     }
 
     @Override
@@ -122,6 +122,7 @@ public class EsbPublicScriptResourceV3Impl implements EsbPublicScriptV3Resource 
         checkEsbGetPublicScriptListV3Req(request);
 
         ScriptQuery scriptQuery = new ScriptQuery();
+        scriptQuery.setAppId(PUBLIC_APP_ID);
         scriptQuery.setPublicScript(true);
         scriptQuery.setName(request.getName());
         // 如果script_type=0,表示查询所有类型,不需要传查询条件
@@ -133,8 +134,9 @@ public class EsbPublicScriptResourceV3Impl implements EsbPublicScriptV3Resource 
         BaseSearchCondition baseSearchCondition = new BaseSearchCondition();
         baseSearchCondition.setStart(request.getStart());
         baseSearchCondition.setLength(request.getLength());
+        scriptQuery.setBaseSearchCondition(baseSearchCondition);
 
-        PageData<ScriptDTO> pageScripts = scriptService.listPageScript(scriptQuery, baseSearchCondition);
+        PageData<ScriptDTO> pageScripts = publicScriptService.listPageScript(scriptQuery);
         setOnlineScriptVersionInfo(pageScripts.getData());
 
         EsbPageDataV3<EsbScriptV3DTO> result = EsbPageDataV3.from(pageScripts, ScriptDTO::toEsbScriptV3DTO);
@@ -148,13 +150,15 @@ public class EsbPublicScriptResourceV3Impl implements EsbPublicScriptV3Resource 
         checkEsbGetPublicScriptVersionListV3Req(request);
 
         ScriptQuery scriptQuery = new ScriptQuery();
+        scriptQuery.setAppId(PUBLIC_APP_ID);
         scriptQuery.setPublicScript(true);
         scriptQuery.setId(request.getScriptId());
 
         BaseSearchCondition baseSearchCondition = BaseSearchCondition.pageCondition(request.getStart(),
             request.getLength());
+        scriptQuery.setBaseSearchCondition(baseSearchCondition);
 
-        PageData<ScriptDTO> pageScriptVersions = scriptService.listPageScriptVersion(scriptQuery, baseSearchCondition);
+        PageData<ScriptDTO> pageScriptVersions = publicScriptService.listPageScriptVersion(scriptQuery);
 
         EsbPageDataV3<EsbScriptVersionDetailV3DTO> result = EsbPageDataV3.from(pageScriptVersions,
             ScriptDTO::toEsbScriptVersionDetailV3DTO);
@@ -177,9 +181,9 @@ public class EsbPublicScriptResourceV3Impl implements EsbPublicScriptV3Resource 
         Long id = request.getId();
         ScriptDTO scriptVersion;
         if (id != null && id > 0) {
-            scriptVersion = scriptService.getScriptVersion(null, PUBLIC_APP_ID, id);
+            scriptVersion = publicScriptService.getScriptVersion(id);
         } else {
-            scriptVersion = scriptService.getByScriptIdAndVersion(null, PUBLIC_APP_ID, scriptId, version);
+            scriptVersion = publicScriptService.getByScriptIdAndVersion(scriptId, version);
         }
 
         EsbScriptVersionDetailV3DTO result = null;
@@ -207,7 +211,8 @@ public class EsbPublicScriptResourceV3Impl implements EsbPublicScriptV3Resource 
             for (ScriptDTO script : scripts) {
                 scriptIdList.add(script.getId());
             }
-            Map<String, ScriptDTO> onlineScriptMap = scriptService.batchGetOnlineScriptVersionByScriptIds(scriptIdList);
+            Map<String, ScriptDTO> onlineScriptMap =
+                publicScriptService.batchGetOnlineScriptVersionByScriptIds(scriptIdList);
 
             for (ScriptDTO script : scripts) {
                 ScriptDTO onlineScriptVersion = onlineScriptMap.get(script.getId());

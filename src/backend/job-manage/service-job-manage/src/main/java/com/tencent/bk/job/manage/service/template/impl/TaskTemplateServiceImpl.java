@@ -64,7 +64,7 @@ import com.tencent.bk.job.manage.model.web.vo.TagCountVO;
 import com.tencent.bk.job.manage.service.AbstractTaskStepService;
 import com.tencent.bk.job.manage.service.AbstractTaskVariableService;
 import com.tencent.bk.job.manage.service.CronJobService;
-import com.tencent.bk.job.manage.service.ScriptService;
+import com.tencent.bk.job.manage.service.ScriptManager;
 import com.tencent.bk.job.manage.service.TagService;
 import com.tencent.bk.job.manage.service.TaskFavoriteService;
 import com.tencent.bk.job.manage.service.plan.TaskPlanService;
@@ -106,7 +106,7 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
     private final TaskFavoriteService taskFavoriteService;
     private final CronJobService cronJobService;
     private TaskPlanService taskPlanService;
-    private ScriptService scriptService;
+    private ScriptManager scriptManager;
 
     @Autowired
     @Lazy
@@ -116,8 +116,8 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
 
     @Autowired
     @Lazy
-    public void setScriptService(ScriptService scriptService) {
-        this.scriptService = scriptService;
+    public void setScriptManager(ScriptManager scriptManager) {
+        this.scriptManager = scriptManager;
     }
 
 
@@ -953,7 +953,7 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
             if (MapUtils.isNotEmpty(scriptVersionMap)) {
                 Map<String, ScriptDTO> scriptInfoMap;
                 try {
-                    scriptInfoMap = scriptService
+                    scriptInfoMap = scriptManager
                         .batchGetOnlineScriptVersionByScriptIds(new ArrayList<>(scriptVersionMap.keySet()));
                 } catch (ServiceException e) {
                     log.error("Error while getting online script version!", e);

@@ -38,6 +38,7 @@ import com.tencent.bk.job.manage.model.dto.TagDTO;
 import com.tencent.bk.job.manage.service.AccountService;
 import com.tencent.bk.job.manage.service.ApplicationService;
 import com.tencent.bk.job.manage.service.CredentialService;
+import com.tencent.bk.job.manage.service.PublicScriptService;
 import com.tencent.bk.job.manage.service.ScriptService;
 import com.tencent.bk.job.manage.service.TagService;
 import com.tencent.bk.job.manage.service.plan.TaskPlanService;
@@ -53,6 +54,7 @@ public class ResourceNameQueryServiceImpl implements ResourceNameQueryService {
 
     private final ApplicationService applicationService;
     private final ScriptService scriptService;
+    private final PublicScriptService publicScriptService;
     private final TaskTemplateService templateService;
     private final TaskPlanService planService;
     private final AccountService accountService;
@@ -63,6 +65,7 @@ public class ResourceNameQueryServiceImpl implements ResourceNameQueryService {
     @Autowired
     public ResourceNameQueryServiceImpl(ApplicationService applicationService,
                                         ScriptService scriptService,
+                                        PublicScriptService publicScriptService,
                                         TaskTemplateService templateService,
                                         TaskPlanService planService,
                                         AccountService accountService,
@@ -73,6 +76,7 @@ public class ResourceNameQueryServiceImpl implements ResourceNameQueryService {
                                         AppScopeMappingService appScopeMappingService) {
         this.applicationService = applicationService;
         this.scriptService = scriptService;
+        this.publicScriptService = publicScriptService;
         this.templateService = templateService;
         this.planService = planService;
         this.accountService = accountService;
@@ -105,6 +109,11 @@ public class ResourceNameQueryServiceImpl implements ResourceNameQueryService {
                 }
                 break;
             case PUBLIC_SCRIPT:
+                ScriptDTO publicScript = publicScriptService.getScriptByScriptId(resourceId);
+                if (publicScript != null) {
+                    return publicScript.getName();
+                }
+                break;
             case SCRIPT:
                 ScriptDTO script = scriptService.getScriptByScriptId(resourceId);
                 if (script != null) {
