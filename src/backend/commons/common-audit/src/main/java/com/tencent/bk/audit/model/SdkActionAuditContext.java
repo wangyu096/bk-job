@@ -126,8 +126,9 @@ public class SdkActionAuditContext implements ActionAuditContext {
     }
 
     @Override
-    public void addAttribute(String name, Object value) {
+    public ActionAuditContext addAttribute(String name, Object value) {
         attributes.put(name, value);
+        return this;
     }
 
     @Override
@@ -202,46 +203,54 @@ public class SdkActionAuditContext implements ActionAuditContext {
     }
 
     @Override
-    public void setInstanceIdList(List<String> instanceIdList) {
+    public ActionAuditContext setInstanceIdList(List<String> instanceIdList) {
         this.instanceIdList = instanceIdList;
+        return this;
     }
 
     @Override
-    public void setInstanceNameList(List<String> instanceNameList) {
+    public ActionAuditContext setInstanceNameList(List<String> instanceNameList) {
         this.instanceNameList = instanceNameList;
+        return this;
     }
 
     @Override
-    public void setOriginInstanceList(List<Object> originInstanceList) {
+    public ActionAuditContext setOriginInstanceList(List<Object> originInstanceList) {
         this.originInstanceList = originInstanceList;
+        return this;
     }
 
     @Override
-    public void setInstanceList(List<Object> instanceList) {
+    public ActionAuditContext setInstanceList(List<Object> instanceList) {
         this.instanceList = instanceList;
+        return this;
     }
 
     @Override
-    public void setInstanceId(String instanceId) {
+    public ActionAuditContext setInstanceId(String instanceId) {
         this.instanceIdList = new ArrayList<>(1);
         this.instanceIdList.add(instanceId);
+        return this;
     }
 
     @Override
-    public void setInstanceName(String instanceName) {
+    public ActionAuditContext setInstanceName(String instanceName) {
         this.instanceNameList = new ArrayList<>(1);
         this.instanceNameList.add(instanceName);
+        return this;
     }
 
     @Override
-    public void setOriginInstance(Object originInstance) {
+    public ActionAuditContext setOriginInstance(Object originInstance) {
         this.originInstanceList = new ArrayList<>(1);
         this.originInstanceList.add(originInstance);
+        return this;
     }
 
     @Override
-    public void setInstance(Object instance) {
+    public ActionAuditContext setInstance(Object instance) {
         this.instanceList = new ArrayList<>(1);
         this.instanceList.add(instance);
+        return this;
     }
 }

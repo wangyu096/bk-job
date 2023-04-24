@@ -24,6 +24,14 @@
 
 package com.tencent.bk.job.manage.service.impl;
 
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
+import com.tencent.bk.audit.annotations.AuditAttribute;
+import com.tencent.bk.audit.annotations.AuditInstanceRecord;
+import com.tencent.bk.audit.model.ActionAuditContext;
+import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.iam.constant.ActionId;
+import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.manage.model.dto.ScriptBasicDTO;
 import com.tencent.bk.job.manage.model.dto.ScriptDTO;
@@ -42,6 +50,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_ID;
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_NAME;
 import static com.tencent.bk.job.common.constant.JobConstants.PUBLIC_APP_ID;
 
 /**
@@ -78,12 +88,36 @@ public class PublicScriptServiceImpl implements PublicScriptService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.CREATE_PUBLIC_SCRIPT,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PUBLIC_SCRIPT,
+            instanceIds = "#script?.id",
+            instanceNames = "#$?.name"
+        ),
+        content = "Create public script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public ScriptDTO saveScript(ScriptDTO script) {
         return scriptManager.saveScript(script);
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.CREATE_PUBLIC_SCRIPT,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PUBLIC_SCRIPT,
+            instanceIds = "#scriptId"
+        ),
+        content = "Delete public script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public void deleteScript(String scriptId) {
+        ScriptDTO script = getScript(scriptId);
+        if (script == null) {
+            throw new NotFoundException(ErrorCode.SCRIPT_NOT_EXIST);
+        }
+
+        ActionAuditContext.current().setInstanceName(script.getName());
+
         scriptManager.deleteScript(PUBLIC_APP_ID, scriptId);
     }
 
@@ -98,27 +132,103 @@ public class PublicScriptServiceImpl implements PublicScriptService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.MANAGE_PUBLIC_SCRIPT_INSTANCE,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PUBLIC_SCRIPT,
+            instanceIds = "#scriptVersion?.id",
+            instanceNames = "#$?.name"
+        ),
+        attributes = @AuditAttribute(
+            name = "@VERSION", value = "#scriptVersion?.version"
+        ),
+        content =
+            "Create a new version ({{@VERSION}}) for public script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public ScriptDTO saveScriptVersion(ScriptDTO scriptVersion) {
         return scriptManager.saveScriptVersion(scriptVersion);
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.MANAGE_PUBLIC_SCRIPT_INSTANCE,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PUBLIC_SCRIPT,
+            instanceIds = "#scriptVersion?.id"
+        ),
+        content =
+            "Modify script version ({{@VERSION}}) for public script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID +
+                "}})"
+    )
     public ScriptDTO updateScriptVersion(ScriptDTO scriptVersion) {
-        return scriptManager.updateScriptVersion(scriptVersion);
+        ScriptDTO originScript = getScriptByScriptId(scriptVersion.getId());
+        if (originScript == null) {
+            throw new NotFoundException(ErrorCode.SCRIPT_NOT_EXIST);
+        }
+        ScriptDTO updateScript = scriptManager.updateScriptVersion(scriptVersion);
+
+        // 审计
+        ActionAuditContext.current()
+            .setInstanceId(originScript.getId())
+            .setInstanceName(originScript.getName())
+            .setOriginInstance(originScript.toEsbScriptV3DTO())
+            .setInstance(updateScript.toEsbScriptV3DTO())
+            .addAttribute("@VERSION", originScript.getVersion());
+
+        return updateScript;
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.MANAGE_PUBLIC_SCRIPT_INSTANCE,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PUBLIC_SCRIPT
+        ),
+        content =
+            "Delete script version({{@VERSION}}) for public script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public void deleteScriptVersion(Long scriptVersionId) {
+        addScriptVersionAuditInfo(scriptVersionId);
         scriptManager.deleteScriptVersion(PUBLIC_APP_ID, scriptVersionId);
     }
 
+    private void addScriptVersionAuditInfo(Long scriptVersionId) {
+        ScriptDTO script = getScriptVersion(scriptVersionId);
+        if (script == null) {
+            throw new NotFoundException(ErrorCode.SCRIPT_NOT_EXIST);
+        }
+        ActionAuditContext.current().setInstanceId(script.getId());
+        ActionAuditContext.current().setInstanceName(script.getName());
+        ActionAuditContext.current().addAttribute("@VERSION", script.getVersion());
+    }
+
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.MANAGE_PUBLIC_SCRIPT_INSTANCE,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PUBLIC_SCRIPT
+        ),
+        content =
+            "Publish script version({{@VERSION}}) for public script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID +
+                "}})"
+    )
     public void publishScript(String scriptId, Long scriptVersionId) {
+        addScriptVersionAuditInfo(scriptVersionId);
         scriptManager.publishScript(PUBLIC_APP_ID, scriptId, scriptVersionId);
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.MANAGE_PUBLIC_SCRIPT_INSTANCE,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PUBLIC_SCRIPT
+        ),
+        content =
+            "Disable script version({{@VERSION}}) for public script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID +
+                "}})"
+    )
     public void disableScript(String scriptId, Long scriptVersionId) {
+        addScriptVersionAuditInfo(scriptVersionId);
         scriptManager.disableScript(PUBLIC_APP_ID, scriptId, scriptVersionId);
     }
 
@@ -128,20 +238,83 @@ public class PublicScriptServiceImpl implements PublicScriptService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.MANAGE_PUBLIC_SCRIPT_INSTANCE,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PUBLIC_SCRIPT,
+            instanceIds = "#scriptId",
+            instanceNames = "#$?.name"
+        ),
+        content = "Modify public script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public ScriptDTO updateScriptDesc(String operator, String scriptId, String desc) {
-        return scriptManager.updateScriptDesc(operator, PUBLIC_APP_ID, scriptId, desc);
+        ScriptDTO originScript = getScript(scriptId);
+        if (originScript == null) {
+            throw new NotFoundException(ErrorCode.SCRIPT_NOT_EXIST);
+        }
+
+        // 审计
+        ActionAuditContext.current().setOriginInstance(originScript.toEsbScriptV3DTO());
+
+        ScriptDTO updateScript = scriptManager.updateScriptDesc(operator, PUBLIC_APP_ID, scriptId, desc);
+
+        ActionAuditContext.current().setInstance(updateScript.toEsbScriptV3DTO());
+
+        return updateScript;
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.MANAGE_PUBLIC_SCRIPT_INSTANCE,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PUBLIC_SCRIPT,
+            instanceIds = "#scriptId",
+            instanceNames = "#$?.name"
+        ),
+        content = "Modify script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public ScriptDTO updateScriptName(String operator, String scriptId, String newName) {
-        return scriptManager.updateScriptName(operator, PUBLIC_APP_ID, scriptId, newName);
+        ScriptDTO originScript = getScript(scriptId);
+        if (originScript == null) {
+            throw new NotFoundException(ErrorCode.SCRIPT_NOT_EXIST);
+        }
+
+        // 审计
+        ActionAuditContext.current().setOriginInstance(originScript.toEsbScriptV3DTO());
+
+        ScriptDTO updateScript = scriptManager.updateScriptName(operator, PUBLIC_APP_ID, scriptId, newName);
+
+        ActionAuditContext.current().setInstance(updateScript.toEsbScriptV3DTO());
+
+        return updateScript;
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.MANAGE_PUBLIC_SCRIPT_INSTANCE,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PUBLIC_SCRIPT,
+            instanceIds = "#scriptId",
+            instanceNames = "#$?.name"
+        ),
+        content = "Modify script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public ScriptDTO updateScriptTags(String operator,
                                       String scriptId,
                                       List<TagDTO> tags) {
-        return scriptManager.updateScriptTags(operator, PUBLIC_APP_ID, scriptId, tags);
+        ScriptDTO originScript = getScript(scriptId);
+        if (originScript == null) {
+            throw new NotFoundException(ErrorCode.SCRIPT_NOT_EXIST);
+        }
+
+        // 审计
+        ActionAuditContext.current().setOriginInstance(originScript.toEsbScriptV3DTO());
+
+        ScriptDTO updateScript = scriptManager.updateScriptTags(operator, PUBLIC_APP_ID, scriptId, tags);
+
+        ActionAuditContext.current().setInstance(updateScript.toEsbScriptV3DTO());
+
+        return updateScript;
     }
 
     @Override

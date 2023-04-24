@@ -125,7 +125,7 @@ public interface ActionAuditContext {
      * @param name  属性名称
      * @param value 属性值
      */
-    void addAttribute(String name, Object value);
+    ActionAuditContext addAttribute(String name, Object value);
 
     String getActionId();
 
@@ -147,19 +147,19 @@ public interface ActionAuditContext {
 
     Map<String, Object> getAttributes();
 
-    void setInstanceIdList(List<String> instanceIdList);
+    ActionAuditContext setInstanceIdList(List<String> instanceIdList);
 
-    void setInstanceNameList(List<String> instanceNameList);
+    ActionAuditContext setInstanceNameList(List<String> instanceNameList);
 
-    void setOriginInstanceList(List<Object> originInstanceList);
+    ActionAuditContext setOriginInstanceList(List<Object> originInstanceList);
 
-    void setInstanceList(List<Object> instanceList);
+    ActionAuditContext setInstanceList(List<Object> instanceList);
 
-    void setInstanceId(String instanceId);
+    ActionAuditContext setInstanceId(String instanceId);
 
-    void setInstanceName(String instanceName);
+    ActionAuditContext setInstanceName(String instanceName);
 
-    void setOriginInstance(Object originInstance);
+    ActionAuditContext setOriginInstance(Object originInstance);
 
-    void setInstance(Object instance);
+    ActionAuditContext setInstance(Object instance);
 }

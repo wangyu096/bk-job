@@ -47,6 +47,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -162,12 +163,17 @@ public class ScriptServiceImpl implements ScriptService {
         actionId = ActionId.VIEW_SCRIPT,
         instance = @AuditInstanceRecord(
             resourceType = ResourceTypeId.SCRIPT,
-            instanceIds = "#scriptId",
-            instanceNames = "#$[0]?.name"
+            instanceIds = "#scriptId"
         ),
         content = "View script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
     public List<ScriptDTO> listScriptVersion(long appId, String scriptId) {
+        ScriptDTO script = getScript(appId, scriptId);
+        if (script == null) {
+            return Collections.emptyList();
+        }
+        ActionAuditContext.current().setInstanceName(script.getName());
+
         return scriptManager.listScriptVersion(appId, scriptId);
     }
 
@@ -234,9 +240,10 @@ public class ScriptServiceImpl implements ScriptService {
         if (script == null) {
             throw new NotFoundException(ErrorCode.SCRIPT_NOT_EXIST);
         }
-        ActionAuditContext.current().setInstanceId(script.getId());
-        ActionAuditContext.current().setInstanceName(script.getName());
-        ActionAuditContext.current().addAttribute("{{@VERSION}}", script.getVersion());
+        ActionAuditContext.current()
+            .setInstanceId(script.getId())
+            .setInstanceName(script.getName())
+            .addAttribute("@VERSION", script.getVersion());
     }
 
     @Override

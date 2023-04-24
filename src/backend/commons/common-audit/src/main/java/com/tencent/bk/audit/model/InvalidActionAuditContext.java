@@ -34,8 +34,8 @@ public class InvalidActionAuditContext implements ActionAuditContext {
     }
 
     @Override
-    public void addAttribute(String name, Object value) {
-
+    public ActionAuditContext addAttribute(String name, Object value) {
+        return this;
     }
 
 
@@ -100,42 +100,42 @@ public class InvalidActionAuditContext implements ActionAuditContext {
     }
 
     @Override
-    public void setInstanceIdList(List<String> instanceIdList) {
-
+    public ActionAuditContext setInstanceIdList(List<String> instanceIdList) {
+        return this;
     }
 
     @Override
-    public void setInstanceNameList(List<String> instanceNameList) {
-
+    public ActionAuditContext setInstanceNameList(List<String> instanceNameList) {
+        return this;
     }
 
     @Override
-    public void setOriginInstanceList(List<Object> originInstanceList) {
-
+    public ActionAuditContext setOriginInstanceList(List<Object> originInstanceList) {
+        return this;
     }
 
     @Override
-    public void setInstanceList(List<Object> instanceList) {
-
+    public ActionAuditContext setInstanceList(List<Object> instanceList) {
+        return this;
     }
 
     @Override
-    public void setInstanceId(String instanceId) {
-
+    public ActionAuditContext setInstanceId(String instanceId) {
+        return this;
     }
 
     @Override
-    public void setInstanceName(String instanceName) {
-
+    public ActionAuditContext setInstanceName(String instanceName) {
+        return this;
     }
 
     @Override
-    public void setOriginInstance(Object originInstance) {
-
+    public ActionAuditContext setOriginInstance(Object originInstance) {
+        return this;
     }
 
     @Override
-    public void setInstance(Object instance) {
-
+    public ActionAuditContext setInstance(Object instance) {
+        return this;
     }
 }
