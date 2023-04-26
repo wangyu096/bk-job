@@ -1,9 +1,12 @@
 package com.tencent.bk.job.file_gateway.api.esb;
 
+import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.common.exception.FailedPreconditionException;
 import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
@@ -41,7 +44,9 @@ public class EsbFileSourceV3ResourceImpl implements EsbFileSourceV3Resource {
     }
 
     @Override
-    public EsbResp<EsbFileSourceSimpleInfoV3DTO> createFileSource(EsbCreateOrUpdateFileSourceV3Req req) {
+    @AuditEntry(actionId = ActionId.CREATE_FILE_SOURCE)
+    public EsbResp<EsbFileSourceSimpleInfoV3DTO> createFileSource(
+        @AuditRequestBody EsbCreateOrUpdateFileSourceV3Req req) {
         req.fillAppResourceScope(appScopeMappingService);
         Long appId = req.getAppId();
         String username = req.getUserName();
@@ -59,7 +64,9 @@ public class EsbFileSourceV3ResourceImpl implements EsbFileSourceV3Resource {
     }
 
     @Override
-    public EsbResp<EsbFileSourceSimpleInfoV3DTO> updateFileSource(EsbCreateOrUpdateFileSourceV3Req req) {
+    @AuditEntry(actionId = ActionId.MANAGE_FILE_SOURCE)
+    public EsbResp<EsbFileSourceSimpleInfoV3DTO> updateFileSource(
+        @AuditRequestBody EsbCreateOrUpdateFileSourceV3Req req) {
         req.fillAppResourceScope(appScopeMappingService);
         Integer id = checkUpdateParamAndGetId(req);
         Long appId = req.getAppId();

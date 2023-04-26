@@ -26,7 +26,6 @@ package com.tencent.bk.job.execute.api.web.impl;
 
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
-import com.tencent.bk.audit.model.AuditContext;
 import com.tencent.bk.job.common.annotation.CompatibleImplementation;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
@@ -49,7 +48,6 @@ import com.tencent.bk.job.execute.common.constants.RunStatusEnum;
 import com.tencent.bk.job.execute.common.constants.StepExecuteTypeEnum;
 import com.tencent.bk.job.execute.common.constants.TaskStartupModeEnum;
 import com.tencent.bk.job.execute.common.constants.TaskTypeEnum;
-import com.tencent.bk.job.execute.constants.ScriptSourceEnum;
 import com.tencent.bk.job.execute.constants.StepOperationEnum;
 import com.tencent.bk.job.execute.engine.model.TaskVariableDTO;
 import com.tencent.bk.job.execute.metrics.ExecuteMetricsConstants;
@@ -244,9 +242,6 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
             throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
         }
 
-        // 审计记录 - 操作ID
-        AuditContext.current().updateActionId(determineActionId(request));
-
         TaskInstanceDTO taskInstance = buildFastScriptTaskInstance(username, appResourceScope.getAppId(), request);
         StepInstanceDTO stepInstance = buildFastScriptStepInstance(username, appResourceScope.getAppId(), request);
         String decodeScriptContent = new String(Base64.decodeBase64(request.getContent()), StandardCharsets.UTF_8);
@@ -258,20 +253,6 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
 
         return createAndStartFastTask(request.isRedoTask(), taskInstance, stepInstance, rollingConfig);
     }
-
-    private String determineActionId(WebFastExecuteScriptRequest request) {
-        ScriptSourceEnum scriptSource = ScriptSourceEnum.getScriptSourceEnum(request.getScriptSource());
-        switch (scriptSource) {
-            case CUSTOM:
-                return ActionId.QUICK_EXECUTE_SCRIPT;
-            case QUOTED_APP:
-                return ActionId.EXECUTE_SCRIPT;
-            case QUOTED_PUBLIC:
-                return ActionId.EXECUTE_PUBLIC_SCRIPT;
-        }
-        return null;
-    }
-
 
     private boolean checkFastExecuteScriptRequest(WebFastExecuteScriptRequest request) {
         try {

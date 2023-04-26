@@ -213,10 +213,10 @@ public class WebTagResourceImpl implements WebTagResource {
         tag.setAppId(appResourceScope.getAppId());
         tag.setName(tagCreateUpdateReq.getName());
         tag.setDescription(tagCreateUpdateReq.getDescription());
-        Long tagId = tagService.insertNewTag(username, tag);
-        tagAuthService.registerTag(tagId, tagCreateUpdateReq.getName(), username);
+        TagDTO newTag = tagService.insertNewTag(username, tag);
+        tagAuthService.registerTag(newTag.getId(), tagCreateUpdateReq.getName(), username);
 
-        TagDTO savedTag = tagService.getTagInfoById(appResourceScope.getAppId(), tagId);
+        TagDTO savedTag = tagService.getTagInfoById(appResourceScope.getAppId(), newTag.getId());
         return Response.buildSuccessResp(TagDTO.toVO(savedTag));
     }
 

@@ -47,7 +47,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -82,7 +81,7 @@ public class ScriptServiceImpl implements ScriptService {
         actionId = ActionId.VIEW_SCRIPT,
         instance = @AuditInstanceRecord(
             resourceType = ResourceTypeId.SCRIPT,
-            instanceIds = "#$?.id",
+            instanceIds = "#scriptId",
             instanceNames = "#$?.name"
         ),
         content = "View script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
@@ -170,7 +169,7 @@ public class ScriptServiceImpl implements ScriptService {
     public List<ScriptDTO> listScriptVersion(long appId, String scriptId) {
         ScriptDTO script = getScript(appId, scriptId);
         if (script == null) {
-            return Collections.emptyList();
+            throw new NotFoundException(ErrorCode.SCRIPT_NOT_EXIST);
         }
         ActionAuditContext.current().setInstanceName(script.getName());
 
@@ -198,25 +197,25 @@ public class ScriptServiceImpl implements ScriptService {
     @ActionAuditRecord(
         actionId = ActionId.MANAGE_SCRIPT,
         instance = @AuditInstanceRecord(
-            resourceType = ResourceTypeId.SCRIPT,
-            instanceIds = "#scriptVersion?.id",
-            instanceNames = "#$?.name"
+            resourceType = ResourceTypeId.SCRIPT
         ),
         content = "Modify script version ({{@VERSION}}) for script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
     public ScriptDTO updateScriptVersion(ScriptDTO scriptVersion) {
-        // 审计
         ScriptDTO originScript = getScriptByScriptId(scriptVersion.getId());
         if (originScript == null) {
             throw new NotFoundException(ErrorCode.SCRIPT_NOT_EXIST);
         }
-        ActionAuditContext.current().setInstanceName(originScript.getName());
-        ActionAuditContext.current().setOriginInstance(originScript.toEsbScriptV3DTO());
-        ActionAuditContext.current().addAttribute("@VERSION", originScript.getVersion());
 
         ScriptDTO updateScript = scriptManager.updateScriptVersion(scriptVersion);
 
-        ActionAuditContext.current().setInstance(updateScript.toEsbScriptV3DTO());
+        // 审计
+        ActionAuditContext.current()
+            .setInstanceId(scriptVersion.getId())
+            .setInstanceName(originScript.getName())
+            .setOriginInstance(originScript.toEsbScriptV3DTO())
+            .addAttribute("@VERSION", originScript.getVersion())
+            .setInstance(updateScript.toEsbScriptV3DTO());
 
         return updateScript;
     }
@@ -283,9 +282,7 @@ public class ScriptServiceImpl implements ScriptService {
     @ActionAuditRecord(
         actionId = ActionId.MANAGE_SCRIPT,
         instance = @AuditInstanceRecord(
-            resourceType = ResourceTypeId.SCRIPT,
-            instanceIds = "#scriptId",
-            instanceNames = "#$?.name"
+            resourceType = ResourceTypeId.SCRIPT
         ),
         content = "Modify script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
@@ -295,12 +292,14 @@ public class ScriptServiceImpl implements ScriptService {
             throw new NotFoundException(ErrorCode.SCRIPT_NOT_EXIST);
         }
 
-        // 审计
-        ActionAuditContext.current().setOriginInstance(originScript.toEsbScriptV3DTO());
-
         ScriptDTO updateScript = scriptManager.updateScriptDesc(operator, appId, scriptId, desc);
 
-        ActionAuditContext.current().setInstance(updateScript.toEsbScriptV3DTO());
+        // 审计
+        ActionAuditContext.current()
+            .setInstanceId(scriptId)
+            .setInstanceName(originScript.getName())
+            .setOriginInstance(originScript.toEsbScriptV3DTO())
+            .setInstance(updateScript.toEsbScriptV3DTO());
 
         return updateScript;
     }
@@ -309,9 +308,7 @@ public class ScriptServiceImpl implements ScriptService {
     @ActionAuditRecord(
         actionId = ActionId.MANAGE_SCRIPT,
         instance = @AuditInstanceRecord(
-            resourceType = ResourceTypeId.SCRIPT,
-            instanceIds = "#scriptId",
-            instanceNames = "#$?.name"
+            resourceType = ResourceTypeId.SCRIPT
         ),
         content = "Modify script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
@@ -321,12 +318,14 @@ public class ScriptServiceImpl implements ScriptService {
             throw new NotFoundException(ErrorCode.SCRIPT_NOT_EXIST);
         }
 
-        // 审计
-        ActionAuditContext.current().setOriginInstance(originScript.toEsbScriptV3DTO());
-
         ScriptDTO updateScript = scriptManager.updateScriptName(operator, appId, scriptId, newName);
 
-        ActionAuditContext.current().setInstance(updateScript.toEsbScriptV3DTO());
+        // 审计
+        ActionAuditContext.current()
+            .setInstanceId(scriptId)
+            .setInstanceName(originScript.getName())
+            .setOriginInstance(originScript.toEsbScriptV3DTO())
+            .setInstance(updateScript.toEsbScriptV3DTO());
 
         return updateScript;
     }
@@ -335,9 +334,7 @@ public class ScriptServiceImpl implements ScriptService {
     @ActionAuditRecord(
         actionId = ActionId.MANAGE_SCRIPT,
         instance = @AuditInstanceRecord(
-            resourceType = ResourceTypeId.SCRIPT,
-            instanceIds = "#scriptId",
-            instanceNames = "#$?.name"
+            resourceType = ResourceTypeId.SCRIPT
         ),
         content = "Modify script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
@@ -350,12 +347,14 @@ public class ScriptServiceImpl implements ScriptService {
             throw new NotFoundException(ErrorCode.SCRIPT_NOT_EXIST);
         }
 
-        // 审计
-        ActionAuditContext.current().setOriginInstance(originScript.toEsbScriptV3DTO());
-
         ScriptDTO updateScript = scriptManager.updateScriptTags(operator, appId, scriptId, tags);
 
-        ActionAuditContext.current().setInstance(updateScript.toEsbScriptV3DTO());
+        // 审计
+        ActionAuditContext.current()
+            .setInstanceId(scriptId)
+            .setInstanceName(originScript.getName())
+            .setOriginInstance(originScript.toEsbScriptV3DTO())
+            .setInstance(updateScript.toEsbScriptV3DTO());
 
         return updateScript;
     }

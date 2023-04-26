@@ -27,6 +27,7 @@ package com.tencent.bk.job.execute.api.web.impl;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.job.common.constant.Bool;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.Order;
@@ -34,9 +35,9 @@ import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
 import com.tencent.bk.job.common.exception.NotFoundException;
 import com.tencent.bk.job.common.gse.constants.FileDistModeEnum;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
+import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
-import com.tencent.bk.job.common.iam.service.WebAuthService;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.common.model.PageData;
@@ -134,7 +135,6 @@ public class WebTaskExecutionResultResourceImpl implements WebTaskExecutionResul
     private final TaskInstanceVariableService taskInstanceVariableService;
     private final ServiceNotificationResourceClient notifyResource;
     private final ExecuteAuthService executeAuthService;
-    private final WebAuthService webAuthService;
 
 
     private final LoadingCache<String, Map<String, String>> roleCache = CacheBuilder.newBuilder()
@@ -186,8 +186,7 @@ public class WebTaskExecutionResultResourceImpl implements WebTaskExecutionResul
                                               TaskInstanceService taskInstanceService,
                                               TaskInstanceVariableService taskInstanceVariableService,
                                               ServiceNotificationResourceClient notifyResource,
-                                              ExecuteAuthService executeAuthService,
-                                              WebAuthService webAuthService) {
+                                              ExecuteAuthService executeAuthService) {
         this.taskResultService = taskResultService;
         this.i18nService = i18nService;
         this.logService = logService;
@@ -196,7 +195,6 @@ public class WebTaskExecutionResultResourceImpl implements WebTaskExecutionResul
         this.taskInstanceVariableService = taskInstanceVariableService;
         this.notifyResource = notifyResource;
         this.executeAuthService = executeAuthService;
-        this.webAuthService = webAuthService;
     }
 
     @Override
@@ -365,6 +363,7 @@ public class WebTaskExecutionResultResourceImpl implements WebTaskExecutionResul
 
 
     @Override
+    @AuditEntry(actionId = ActionId.VIEW_HISTORY)
     public Response<TaskExecuteResultVO> getTaskExecutionResult(String username,
                                                                 AppResourceScope appResourceScope,
                                                                 String scopeType,

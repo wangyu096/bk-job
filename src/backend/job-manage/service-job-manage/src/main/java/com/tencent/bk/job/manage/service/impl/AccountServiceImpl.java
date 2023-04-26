@@ -167,13 +167,39 @@ public class AccountServiceImpl implements AccountService {
     @ActionAuditRecord(
         actionId = ActionId.MANAGE_ACCOUNT,
         instance = @AuditInstanceRecord(
-            resourceType = ResourceTypeId.ACCOUNT,
-            instanceIds = "#account?.id",
-            instanceNames = "#account?.account"
+            resourceType = ResourceTypeId.ACCOUNT
         ),
         content = "Modify account [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
     public AccountDTO updateAccount(AccountDTO account) throws ServiceException {
+        AccountDTO originAccount = getAccountById(account.getId());
+        if (originAccount == null) {
+            throw new NotFoundException(ErrorCode.ACCOUNT_NOT_EXIST);
+        }
+        checkAccountAliasExist(account);
+
+        if (StringUtils.isNotEmpty(account.getPassword())) {
+            account.setPassword(encryptor.encrypt(account.getPassword()));
+        }
+        if (account.getCategory() == AccountCategoryEnum.DB && StringUtils.isNotEmpty(account.getDbPassword())) {
+            account.setDbPassword(encryptPassword(account.getDbPassword()));
+        }
+        log.info("Update account, account={}", account);
+        accountDAO.updateAccount(account);
+
+        AccountDTO updatedAccount = getAccountById(account.getId());
+
+        // 审计
+        ActionAuditContext.current()
+            .setInstanceId(String.valueOf(account.getId()))
+            .setInstanceName(originAccount.getAccount())
+            .setOriginInstance(originAccount.toEsbAccountV3DTO())
+            .setInstance(updatedAccount.toEsbAccountV3DTO());
+
+        return updatedAccount;
+    }
+
+    private void checkAccountAliasExist(AccountDTO account) {
         AccountDTO existAccount = accountDAO.getAccount(
             account.getAppId(),
             account.getCategory(),
@@ -188,25 +214,6 @@ public class AccountServiceImpl implements AccountService {
             );
             throw new AlreadyExistsException(ErrorCode.ACCOUNT_ALIAS_EXIST);
         }
-
-        // 审计 - 原始数据
-        ActionAuditContext.current().setOriginInstance(getAccountById(account.getId()).toEsbAccountV3DTO());
-
-        if (StringUtils.isNotEmpty(account.getPassword())) {
-            account.setPassword(encryptor.encrypt(account.getPassword()));
-        }
-        if (account.getCategory() == AccountCategoryEnum.DB && StringUtils.isNotEmpty(account.getDbPassword())) {
-            account.setDbPassword(encryptPassword(account.getDbPassword()));
-        }
-        log.info("Update account, account={}", account);
-        accountDAO.updateAccount(account);
-
-        AccountDTO updatedAccount = getAccountById(account.getId());
-
-        // 审计 - 当前数据
-        ActionAuditContext.current().setInstance(updatedAccount.toEsbAccountV3DTO());
-
-        return updatedAccount;
     }
 
     private String encryptPassword(String text) throws ServiceException {

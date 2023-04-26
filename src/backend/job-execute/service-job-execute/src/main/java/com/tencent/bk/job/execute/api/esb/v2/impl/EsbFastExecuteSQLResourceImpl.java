@@ -24,6 +24,8 @@
 
 package com.tencent.bk.job.execute.api.esb.v2.impl;
 
+import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobConstants;
 import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
@@ -56,7 +58,6 @@ import com.tencent.bk.job.execute.service.ScriptService;
 import com.tencent.bk.job.execute.service.TaskExecuteService;
 import com.tencent.bk.job.manage.common.consts.account.AccountCategoryEnum;
 import com.tencent.bk.job.manage.common.consts.script.ScriptTypeEnum;
-import com.tencent.bk.job.manage.model.inner.ServiceScriptDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,7 +99,8 @@ public class EsbFastExecuteSQLResourceImpl extends JobExecuteCommonProcessor imp
             ExecuteMetricsConstants.TAG_KEY_START_MODE, ExecuteMetricsConstants.TAG_VALUE_START_MODE_API,
             ExecuteMetricsConstants.TAG_KEY_TASK_TYPE, ExecuteMetricsConstants.TAG_VALUE_TASK_TYPE_FAST_SQL
         })
-    public EsbResp<EsbJobExecuteDTO> fastExecuteSQL(EsbFastExecuteSQLRequest request) {
+    @AuditEntry
+    public EsbResp<EsbJobExecuteDTO> fastExecuteSQL(@AuditRequestBody EsbFastExecuteSQLRequest request) {
         request.fillAppResourceScope(appScopeMappingService);
 
         ValidateResult validateResult = checkFastExecuteSQLRequest(request);
@@ -109,10 +111,8 @@ public class EsbFastExecuteSQLResourceImpl extends JobExecuteCommonProcessor imp
 
         request.trimIps();
 
-        ServiceScriptDTO script = getAndCheckScript(request.getAppId(), request.getUserName(), request.getScriptId(),
-            scriptService);
         TaskInstanceDTO taskInstance = buildFastSQLTaskInstance(request);
-        StepInstanceDTO stepInstance = buildFastSQLStepInstance(request, script);
+        StepInstanceDTO stepInstance = buildFastSQLStepInstance(request);
         TaskInstanceDTO executeTaskInstance = taskExecuteService.executeFastTask(
             FastTaskDTO.builder().taskInstance(taskInstance).stepInstance(stepInstance).build()
         );
@@ -129,9 +129,9 @@ public class EsbFastExecuteSQLResourceImpl extends JobExecuteCommonProcessor imp
     }
 
     private ValidateResult checkFastExecuteSQLRequest(EsbFastExecuteSQLRequest request) {
-        if (request.getScriptId() != null) {
-            if (request.getScriptId() < 1) {
-                log.warn("Fast execute SQL, scriptId:{} is invalid", request.getScriptId());
+        if (request.getScriptVersionId() != null) {
+            if (request.getScriptVersionId() < 1) {
+                log.warn("Fast execute SQL, scriptId:{} is invalid", request.getScriptVersionId());
                 return ValidateResult.fail(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, "script_id");
             }
         } else {
@@ -180,7 +180,7 @@ public class EsbFastExecuteSQLResourceImpl extends JobExecuteCommonProcessor imp
     }
 
 
-    private StepInstanceDTO buildFastSQLStepInstance(EsbFastExecuteSQLRequest request, ServiceScriptDTO script)
+    private StepInstanceDTO buildFastSQLStepInstance(EsbFastExecuteSQLRequest request)
         throws ServiceException {
         StepInstanceDTO stepInstance = new StepInstanceDTO();
         stepInstance.setAppId(request.getAppId());
@@ -191,8 +191,8 @@ public class EsbFastExecuteSQLResourceImpl extends JobExecuteCommonProcessor imp
         }
         stepInstance.setStepId(-1L);
         stepInstance.setScriptType(ScriptTypeEnum.SQL.getValue());
-        if (script != null) {
-            stepInstance.setScriptContent(script.getContent());
+        if (request.getScriptVersionId() != null && request.getScriptVersionId() > 0) {
+            stepInstance.setScriptVersionId(request.getScriptVersionId());
         } else {
             // 对传入参数进行base64解码
             stepInstance.setScriptContent(Base64Util.decodeContentToStr(request.getContent()));

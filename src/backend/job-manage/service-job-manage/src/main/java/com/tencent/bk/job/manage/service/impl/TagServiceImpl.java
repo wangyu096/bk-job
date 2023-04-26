@@ -118,12 +118,12 @@ public class TagServiceImpl implements TagService {
         actionId = ActionId.CREATE_TAG,
         instance = @AuditInstanceRecord(
             resourceType = ResourceTypeId.TAG,
-            instanceIds = "#$",
+            instanceIds = "#$?.id",
             instanceNames = "#tag?.name"
         ),
         content = "Create tag [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
-    public Long insertNewTag(String username, TagDTO tag) {
+    public TagDTO insertNewTag(String username, TagDTO tag) {
         tag.setCreator(username);
         tag.setLastModifyUser(username);
         checkRequiredParam(tag);
@@ -132,7 +132,9 @@ public class TagServiceImpl implements TagService {
         if (isTagExist) {
             throw new AlreadyExistsException(ErrorCode.TAG_ALREADY_EXIST);
         }
-        return tagDAO.insertTag(tag);
+        tag.setId(tagDAO.insertTag(tag));
+
+        return tag;
     }
 
     @Override
@@ -149,13 +151,10 @@ public class TagServiceImpl implements TagService {
         if (tag.getId() == null || tag.getId() <= 0) {
             throw new InternalException(ErrorCode.ILLEGAL_PARAM);
         }
-        tag.setAppId(tag.getAppId());
-        tag.setId(tag.getId());
         tag.setLastModifyUser(username);
         checkRequiredParam(tag);
 
-        // 审计 - 原始数据
-        ActionAuditContext.current().setOriginInstance(getTagInfoById(tag.getId()));
+        TagDTO originTag = getTagInfoById(tag.getId());
 
         boolean isTagNameValid = checkTagName(tag.getAppId(), tag.getId(), tag.getName());
         if (!isTagNameValid) {
@@ -165,7 +164,11 @@ public class TagServiceImpl implements TagService {
         boolean result = tagDAO.updateTagById(tag);
 
         // 审计 - 当前数据
-        ActionAuditContext.current().setInstance(getTagInfoById(tag.getId()));
+        ActionAuditContext.current()
+            .setInstanceId(String.valueOf(tag.getId()))
+            .setInstanceName(originTag.getName())
+            .setOriginInstance(TagDTO.toEsbTagV3DTO(originTag))
+            .setInstance(TagDTO.toEsbTagV3DTO(tag));
         return result;
     }
 
@@ -191,6 +194,15 @@ public class TagServiceImpl implements TagService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.CREATE_TAG,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.TAG,
+            instanceIds = "#$?.[id]",
+            instanceNames = "#$?.[name]"
+        ),
+        content = "Create tag [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public List<TagDTO> createNewTagIfNotExist(List<TagDTO> tags, Long appId, String username) {
         List<Long> tagIdList = new ArrayList<>();
         Iterator<TagDTO> tagIterator = tags.iterator();

@@ -25,12 +25,15 @@
 package com.tencent.bk.job.execute.api.esb.v2.impl;
 
 import com.google.common.collect.Lists;
+import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
 import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.common.esb.util.EsbDTOAppScopeMappingHelper;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.service.AppScopeMappingService;
@@ -79,7 +82,9 @@ public class EsbGetJobInstanceStatusResourceImpl
 
     @Override
     @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_get_job_instance_status"})
-    public EsbResp<EsbJobInstanceStatusDTO> getJobInstanceStatusUsingPost(EsbGetJobInstanceStatusRequest request) {
+    @AuditEntry(actionId = ActionId.VIEW_HISTORY)
+    public EsbResp<EsbJobInstanceStatusDTO> getJobInstanceStatusUsingPost(
+        @AuditRequestBody EsbGetJobInstanceStatusRequest request) {
         request.fillAppResourceScope(appScopeMappingService);
 
         ValidateResult checkResult = checkRequest(request);

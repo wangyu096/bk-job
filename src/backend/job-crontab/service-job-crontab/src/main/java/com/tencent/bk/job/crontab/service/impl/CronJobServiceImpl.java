@@ -220,8 +220,7 @@ public class CronJobServiceImpl implements CronJobService {
         actionId = ActionId.MANAGE_CRON,
         instance = @AuditInstanceRecord(
             resourceType = ResourceTypeId.CRON,
-            instanceIds = "#createUpdateReq?.id",
-            instanceNames = "#createUpdateReq?.name"
+            instanceIds = "#cronJobInfo?.id"
         ),
         content = "Modify cron [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
@@ -233,9 +232,6 @@ public class CronJobServiceImpl implements CronJobService {
 
         checkCronJobPlanOrScript(cronJobInfo);
         processCronJobVariableValueMask(cronJobInfo);
-
-        // 审计 - 原始数据
-        ActionAuditContext.current().setOriginInstance(CronJobInfoDTO.toEsbCronInfoV3(originCron));
 
         if (cronJobInfo.getEnable()) {
             try {
@@ -266,8 +262,11 @@ public class CronJobServiceImpl implements CronJobService {
 
         CronJobInfoDTO updateCron = getCronJobInfoById(cronJobInfo.getId());
 
-        // 审计 - 原始数据
-        ActionAuditContext.current().setInstance(CronJobInfoDTO.toEsbCronInfoV3(updateCron));
+        // 审计
+        ActionAuditContext.current()
+            .setInstanceName(originCron.getName())
+            .setOriginInstance(CronJobInfoDTO.toEsbCronInfoV3(originCron))
+            .setInstance(CronJobInfoDTO.toEsbCronInfoV3(updateCron));
 
         return updateCron;
     }
@@ -357,7 +356,7 @@ public class CronJobServiceImpl implements CronJobService {
             resourceType = ResourceTypeId.CRON,
             instanceIds = "#cronJobId"
         ),
-        content = "Modify cron [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+        content = "Delete cron job [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
     public Boolean deleteCronJobInfo(Long appId, Long cronJobId) {
         CronJobInfoDTO cron = getCronJobInfoById(cronJobId);
@@ -382,7 +381,7 @@ public class CronJobServiceImpl implements CronJobService {
             resourceType = ResourceTypeId.CRON,
             instanceIds = "#cronJobId"
         ),
-        content = "{{@OPERATION}} cron [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+        content = "{{@OPERATION}} cron job [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
     public Boolean changeCronJobEnableStatus(String username, Long appId, Long cronJobId, Boolean enable) {
         CronJobInfoDTO originCronJobInfo = cronJobDAO.getCronJobById(appId, cronJobId);
@@ -391,8 +390,9 @@ public class CronJobServiceImpl implements CronJobService {
         }
 
         // 审计
-        ActionAuditContext.current().setInstanceName(originCronJobInfo.getName());
-        ActionAuditContext.current().addAttribute("@OPERATION", enable ? "Switch on" : "Switch off");
+        ActionAuditContext.current()
+            .setInstanceName(originCronJobInfo.getName())
+            .addAttribute("@OPERATION", enable ? "Switch on" : "Switch off");
 
         CronJobInfoDTO cronJobInfo = new CronJobInfoDTO();
         cronJobInfo.setAppId(appId);

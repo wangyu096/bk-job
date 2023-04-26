@@ -306,8 +306,10 @@ public class TaskPlanServiceImpl implements TaskPlanService {
     public TaskPlanInfoDTO updateTaskPlan(TaskPlanInfoDTO taskPlanInfo) {
         Long planId = taskPlanInfo.getId();
 
-        // 审计记录 - 原始数据
-        ActionAuditContext.current().setOriginInstance(TaskPlanInfoDTO.toEsbPlanInfoV3(getTaskPlanById(planId)));
+        TaskPlanInfoDTO originPlan = getTaskPlanById(planId);
+        if (originPlan == null) {
+            throw new NotFoundException(ErrorCode.TASK_PLAN_NOT_EXIST);
+        }
 
         taskPlanInfo.setLastModifyUser(taskPlanInfo.getLastModifyUser());
         taskPlanInfo.setLastModifyTime(taskPlanInfo.getLastModifyTime());
@@ -337,8 +339,10 @@ public class TaskPlanServiceImpl implements TaskPlanService {
 
         TaskPlanInfoDTO updatedPlan = getTaskPlanById(planId);
 
-        // 审计记录 - 当前数据
-        ActionAuditContext.current().setInstance(TaskPlanInfoDTO.toEsbPlanInfoV3(updatedPlan));
+        // 审计记录
+        ActionAuditContext.current()
+            .setOriginInstance(TaskPlanInfoDTO.toEsbPlanInfoV3(originPlan))
+            .setInstance(TaskPlanInfoDTO.toEsbPlanInfoV3(updatedPlan));
 
         return updatedPlan;
     }
@@ -782,10 +786,11 @@ public class TaskPlanServiceImpl implements TaskPlanService {
         // 审计
         List<TaskPlanInfoDTO> deletePlans = listTaskPlansBasicInfo(appId, templateId);
         if (CollectionUtils.isNotEmpty(deletePlans)) {
-            ActionAuditContext.current().setInstanceIdList(
-                deletePlans.stream().map(plan -> plan.getId().toString()).collect(Collectors.toList()));
-            ActionAuditContext.current().setInstanceNameList(
-                deletePlans.stream().map(TaskPlanInfoDTO::getName).collect(Collectors.toList()));
+            ActionAuditContext.current()
+                .setInstanceIdList(
+                    deletePlans.stream().map(plan -> plan.getId().toString()).collect(Collectors.toList()))
+                .setInstanceNameList(
+                    deletePlans.stream().map(TaskPlanInfoDTO::getName).collect(Collectors.toList()));
         }
 
         return taskPlanDAO.deleteTaskPlanByTemplate(appId, templateId);

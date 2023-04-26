@@ -95,7 +95,7 @@ public interface WebPublicScriptResource {
         @ApiParam(value = "脚本ID", required = true, example = "1")
         @PathVariable("scriptId") String scriptId);
 
-    @ApiOperation(value = "获取脚本列表", produces = "application/json")
+    @ApiOperation(value = "获取公共脚本列表", produces = "application/json")
     @GetMapping("/script/list")
     Response<PageData<ScriptVO>> listPageScript(
         @ApiParam("用户名，网关自动传入")
@@ -294,9 +294,9 @@ public interface WebPublicScriptResource {
     Response<ScriptCiteCountVO> getPublicScriptCiteCount(
         @ApiParam("用户名，网关自动传入")
         @RequestHeader("username") String username,
-        @ApiParam(value = "脚本ID", required = false, example = "1")
+        @ApiParam(value = "脚本ID", example = "1")
         @RequestParam(value = "scriptId") String scriptId,
-        @ApiParam(value = "脚本版本ID", required = false, example = "1")
+        @ApiParam(value = "脚本版本ID", example = "1")
         @RequestParam(value = "scriptVersionId", required = false) Long scriptVersionId
     );
 
@@ -305,9 +305,9 @@ public interface WebPublicScriptResource {
     Response<ScriptCiteInfoVO> getPublicScriptCiteInfo(
         @ApiParam("用户名，网关自动传入")
         @RequestHeader("username") String username,
-        @ApiParam(value = "脚本ID", required = false, example = "1")
+        @ApiParam(value = "脚本ID", example = "1")
         @RequestParam("scriptId") String scriptId,
-        @ApiParam(value = "脚本版本ID", required = false, example = "1")
+        @ApiParam(value = "脚本版本ID", example = "1")
         @RequestParam(value = "scriptVersionId", required = false) Long scriptVersionId
     );
 

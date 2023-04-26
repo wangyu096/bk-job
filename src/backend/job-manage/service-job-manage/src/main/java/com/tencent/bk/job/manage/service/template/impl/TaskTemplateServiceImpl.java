@@ -332,14 +332,13 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
         content = "Modify template [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
     public TaskTemplateInfoDTO updateTaskTemplate(TaskTemplateInfoDTO taskTemplateInfo) {
-        // 审计记录 - 原始数据
-        ActionAuditContext.current().setOriginInstance(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(
-            getTaskTemplateById(taskTemplateInfo.getAppId(), taskTemplateInfo.getId())));
-
         TaskTemplateInfoDTO template = saveOrUpdateTaskTemplate(taskTemplateInfo);
 
-        // 审计记录 - 更新后数据
-        ActionAuditContext.current().setInstance(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(template));
+        // 审计
+        ActionAuditContext.current()
+            .setOriginInstance(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(
+                getTaskTemplateById(taskTemplateInfo.getAppId(), taskTemplateInfo.getId())))
+            .setInstance(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(template));
 
         return template;
     }
@@ -596,9 +595,10 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
         content = "Modify template [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
     public Boolean saveTaskTemplateBasicInfo(TaskTemplateInfoDTO taskTemplateInfo) {
-        // 审计记录 - 原始数据
-        ActionAuditContext.current().setOriginInstance(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(
-                getTaskTemplateById(taskTemplateInfo.getAppId(), taskTemplateInfo.getId())));
+        TaskTemplateInfoDTO originTemplate = getTaskTemplateById(taskTemplateInfo.getAppId(), taskTemplateInfo.getId());
+        if (originTemplate == null) {
+            throw new NotFoundException(ErrorCode.TEMPLATE_NOT_EXIST);
+        }
 
         createNewTagForTemplateIfNotExist(taskTemplateInfo);
         updateTemplateTags(taskTemplateInfo);
@@ -606,8 +606,10 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
             throw new InternalException(ErrorCode.UPDATE_TEMPLATE_FAILED);
         }
 
-        // 审计记录 - 更新后数据
-        ActionAuditContext.current().setInstance(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(
+        // 审计
+        ActionAuditContext.current()
+            .setOriginInstance(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(originTemplate))
+            .setInstance(TaskTemplateInfoDTO.toEsbTemplateInfoV3DTO(
                 getTaskTemplateById(taskTemplateInfo.getAppId(), taskTemplateInfo.getId())));
         return true;
     }

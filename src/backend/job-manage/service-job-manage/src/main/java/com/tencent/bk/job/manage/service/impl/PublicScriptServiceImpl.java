@@ -153,8 +153,7 @@ public class PublicScriptServiceImpl implements PublicScriptService {
     @ActionAuditRecord(
         actionId = ActionId.MANAGE_PUBLIC_SCRIPT_INSTANCE,
         instance = @AuditInstanceRecord(
-            resourceType = ResourceTypeId.PUBLIC_SCRIPT,
-            instanceIds = "#scriptVersion?.id"
+            resourceType = ResourceTypeId.PUBLIC_SCRIPT
         ),
         content =
             "Modify script version ({{@VERSION}}) for public script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID +
@@ -197,9 +196,10 @@ public class PublicScriptServiceImpl implements PublicScriptService {
         if (script == null) {
             throw new NotFoundException(ErrorCode.SCRIPT_NOT_EXIST);
         }
-        ActionAuditContext.current().setInstanceId(script.getId());
-        ActionAuditContext.current().setInstanceName(script.getName());
-        ActionAuditContext.current().addAttribute("@VERSION", script.getVersion());
+        ActionAuditContext.current()
+            .setInstanceId(script.getId())
+            .setInstanceName(script.getName())
+            .addAttribute("@VERSION", script.getVersion());
     }
 
     @Override
@@ -241,9 +241,7 @@ public class PublicScriptServiceImpl implements PublicScriptService {
     @ActionAuditRecord(
         actionId = ActionId.MANAGE_PUBLIC_SCRIPT_INSTANCE,
         instance = @AuditInstanceRecord(
-            resourceType = ResourceTypeId.PUBLIC_SCRIPT,
-            instanceIds = "#scriptId",
-            instanceNames = "#$?.name"
+            resourceType = ResourceTypeId.PUBLIC_SCRIPT
         ),
         content = "Modify public script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
@@ -253,12 +251,14 @@ public class PublicScriptServiceImpl implements PublicScriptService {
             throw new NotFoundException(ErrorCode.SCRIPT_NOT_EXIST);
         }
 
-        // 审计
-        ActionAuditContext.current().setOriginInstance(originScript.toEsbScriptV3DTO());
-
         ScriptDTO updateScript = scriptManager.updateScriptDesc(operator, PUBLIC_APP_ID, scriptId, desc);
 
-        ActionAuditContext.current().setInstance(updateScript.toEsbScriptV3DTO());
+        // 审计
+        ActionAuditContext.current()
+            .setInstanceId(scriptId)
+            .setInstanceName(originScript.getName())
+            .setOriginInstance(originScript.toEsbScriptV3DTO())
+            .setInstance(updateScript.toEsbScriptV3DTO());
 
         return updateScript;
     }
@@ -267,11 +267,9 @@ public class PublicScriptServiceImpl implements PublicScriptService {
     @ActionAuditRecord(
         actionId = ActionId.MANAGE_PUBLIC_SCRIPT_INSTANCE,
         instance = @AuditInstanceRecord(
-            resourceType = ResourceTypeId.PUBLIC_SCRIPT,
-            instanceIds = "#scriptId",
-            instanceNames = "#$?.name"
+            resourceType = ResourceTypeId.PUBLIC_SCRIPT
         ),
-        content = "Modify script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+        content = "Modify public script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
     public ScriptDTO updateScriptName(String operator, String scriptId, String newName) {
         ScriptDTO originScript = getScript(scriptId);
@@ -279,12 +277,14 @@ public class PublicScriptServiceImpl implements PublicScriptService {
             throw new NotFoundException(ErrorCode.SCRIPT_NOT_EXIST);
         }
 
-        // 审计
-        ActionAuditContext.current().setOriginInstance(originScript.toEsbScriptV3DTO());
-
         ScriptDTO updateScript = scriptManager.updateScriptName(operator, PUBLIC_APP_ID, scriptId, newName);
 
-        ActionAuditContext.current().setInstance(updateScript.toEsbScriptV3DTO());
+        // 审计
+        ActionAuditContext.current()
+            .setInstanceId(scriptId)
+            .setInstanceName(originScript.getName())
+            .setOriginInstance(originScript.toEsbScriptV3DTO())
+            .setInstance(updateScript.toEsbScriptV3DTO());
 
         return updateScript;
     }
@@ -293,11 +293,9 @@ public class PublicScriptServiceImpl implements PublicScriptService {
     @ActionAuditRecord(
         actionId = ActionId.MANAGE_PUBLIC_SCRIPT_INSTANCE,
         instance = @AuditInstanceRecord(
-            resourceType = ResourceTypeId.PUBLIC_SCRIPT,
-            instanceIds = "#scriptId",
-            instanceNames = "#$?.name"
+            resourceType = ResourceTypeId.PUBLIC_SCRIPT
         ),
-        content = "Modify script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+        content = "Modify public script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
     public ScriptDTO updateScriptTags(String operator,
                                       String scriptId,
@@ -307,12 +305,14 @@ public class PublicScriptServiceImpl implements PublicScriptService {
             throw new NotFoundException(ErrorCode.SCRIPT_NOT_EXIST);
         }
 
-        // 审计
-        ActionAuditContext.current().setOriginInstance(originScript.toEsbScriptV3DTO());
-
         ScriptDTO updateScript = scriptManager.updateScriptTags(operator, PUBLIC_APP_ID, scriptId, tags);
 
-        ActionAuditContext.current().setInstance(updateScript.toEsbScriptV3DTO());
+        // 审计
+        ActionAuditContext.current()
+            .setInstanceId(scriptId)
+            .setInstanceName(originScript.getName())
+            .setOriginInstance(originScript.toEsbScriptV3DTO())
+            .setInstance(updateScript.toEsbScriptV3DTO());
 
         return updateScript;
     }

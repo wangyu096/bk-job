@@ -26,6 +26,7 @@ package com.tencent.bk.job.execute.service.impl;
 
 import com.tencent.bk.audit.annotations.ActionAuditRecord;
 import com.tencent.bk.audit.model.ActionAuditContext;
+import com.tencent.bk.audit.model.AuditContext;
 import com.tencent.bk.audit.utils.AuditInstanceUtils;
 import com.tencent.bk.job.common.audit.config.JobAuditAttributeNames;
 import com.tencent.bk.job.common.constant.ErrorCode;
@@ -236,10 +237,13 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
                         + "}}]({{" + JobAuditAttributeNames.SCRIPT_VERSION_ID + "}})")
                     .build();
             }
+        } else {
+            actionAuditContext = ActionAuditContext.INVALID;
         }
 
-        return actionAuditContext != null ?
-            actionAuditContext.wrapActionCallable(() -> executeFastTaskInternal(fastTask)).call() : null;
+        AuditContext.current().updateActionId(actionAuditContext.getActionId());
+
+        return actionAuditContext.wrapActionCallable(() -> executeFastTaskInternal(fastTask)).call();
     }
 
     private TaskInstanceDTO executeFastTaskInternal(FastTaskDTO fastTask) {
@@ -340,16 +344,17 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
 
     private void addExecuteAuditInstance(TaskInstanceDTO taskInstance, Collection<HostDTO> hosts) {
         try {
-            ActionAuditContext.current().setInstanceIdList(
-                AuditInstanceUtils.mapList(hosts, host -> String.valueOf(host.getHostId()))
-            );
-            ActionAuditContext.current().setInstanceNameList(
-                AuditInstanceUtils.mapList(hosts, HostDTO::getPrimaryIp)
-            );
+            ActionAuditContext.current()
+                .setInstanceIdList(
+                    AuditInstanceUtils.mapList(hosts, host -> String.valueOf(host.getHostId()))
+                )
+                .setInstanceNameList(
+                    AuditInstanceUtils.mapList(hosts, HostDTO::getPrimaryIp)
+                );
             if (taskInstance.isPlanInstance()) {
-                ActionAuditContext.current().addAttribute(JobAuditAttributeNames.PLAN_ID, taskInstance.getPlanId());
-                ActionAuditContext.current().addAttribute(JobAuditAttributeNames.PLAN_NAME,
-                    taskInstance.getPlan().getName());
+                ActionAuditContext.current()
+                    .addAttribute(JobAuditAttributeNames.PLAN_ID, taskInstance.getPlanId())
+                    .addAttribute(JobAuditAttributeNames.PLAN_NAME, taskInstance.getPlan().getName());
             } else {
                 // 快速执行任务，只有单个步骤
                 StepInstanceDTO stepInstance = taskInstance.getStepInstances().get(0);

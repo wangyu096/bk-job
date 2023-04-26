@@ -84,9 +84,9 @@ public interface TagService {
      *
      * @param username 操作人
      * @param tag      Tag
-     * @return Tag ID
+     * @return Tag
      */
-    Long insertNewTag(String username, TagDTO tag);
+    TagDTO insertNewTag(String username, TagDTO tag);
 
     /**
      * 更新 Tag 信息

@@ -149,8 +149,7 @@ public class FileSourceServiceImpl implements FileSourceService {
         actionId = ActionId.MANAGE_FILE_SOURCE,
         instance = @AuditInstanceRecord(
             resourceType = ResourceTypeId.FILE_SOURCE,
-            instanceIds = "#fileSource?.id",
-            instanceNames = "#fileSource?.alias"
+            instanceIds = "#fileSource?.id"
         ),
         content = "Modify file source [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
@@ -160,15 +159,15 @@ public class FileSourceServiceImpl implements FileSourceService {
             throw new NotFoundException(ErrorCode.FILE_SOURCE_NOT_EXIST);
         }
 
-        // 审计 - 原始数据
-        ActionAuditContext.current().setOriginInstance(FileSourceDTO.toEsbFileSourceV3DTO(fileSource));
-
         fileSourceDAO.updateFileSource(dslContext, fileSource);
 
         FileSourceDTO updateFileSource = getFileSourceById(fileSource.getId());
 
-        // 审计 - 当前数据
-        ActionAuditContext.current().setInstance(FileSourceDTO.toEsbFileSourceV3DTO(updateFileSource));
+        // 审计
+        ActionAuditContext.current()
+            .setInstanceName(originFileSource.getAlias())
+            .setOriginInstance(FileSourceDTO.toEsbFileSourceV3DTO(fileSource))
+            .setInstance(FileSourceDTO.toEsbFileSourceV3DTO(updateFileSource));
 
         return updateFileSource;
     }
@@ -209,9 +208,10 @@ public class FileSourceServiceImpl implements FileSourceService {
         }
 
         // 审计
-        ActionAuditContext.current().setInstanceName(fileSource.getAlias());
-        ActionAuditContext.current().addAttribute("@OPERATION", enableFlag ? "Switch on" : "Switch off");
-        
+        ActionAuditContext.current()
+            .setInstanceName(fileSource.getAlias())
+            .addAttribute("@OPERATION", enableFlag ? "Switch on" : "Switch off");
+
         return fileSourceDAO.enableFileSourceById(dslContext, username, appId, id, enableFlag) == 1;
     }
 

@@ -91,40 +91,40 @@ public class CredentialServiceImpl implements CredentialService {
     @ActionAuditRecord(
         actionId = ActionId.MANAGE_TICKET,
         instance = @AuditInstanceRecord(
-            resourceType = ResourceTypeId.TICKET,
-            instanceIds = "#createUpdateReq?.id",
-            instanceNames = "#$?.name"
+            resourceType = ResourceTypeId.TICKET
         ),
         content = "Modify credential [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
     public CredentialDTO updateCredential(String username, Long appId, CredentialCreateUpdateReq createUpdateReq) {
         String id = createUpdateReq.getId();
         CredentialDTO credentialDTO = buildCredentialDTO(username, appId, createUpdateReq);
-        CredentialDTO oldCredentialDTO = credentialDAO.getCredentialById(dslContext, id);
-        if (oldCredentialDTO == null) {
+        CredentialDTO originCredentialDTO = credentialDAO.getCredentialById(dslContext, id);
+        if (originCredentialDTO == null) {
             throw new NotFoundException(ErrorCode.CREDENTIAL_NOT_EXIST);
         }
 
-        // 审计 - 原始数据
-        ActionAuditContext.current().setOriginInstance(oldCredentialDTO.toEsbCredentialSimpleInfoV3DTO());
-
         String value1 = createUpdateReq.getValue1();
         if ("******".equals(value1)) {
-            credentialDTO.setFirstValue(oldCredentialDTO.getFirstValue());
+            credentialDTO.setFirstValue(originCredentialDTO.getFirstValue());
         } else {
             credentialDTO.setFirstValue(value1);
         }
         String value2 = createUpdateReq.getValue2();
         if ("******".equals(value2)) {
-            credentialDTO.setSecondValue(oldCredentialDTO.getSecondValue());
+            credentialDTO.setSecondValue(originCredentialDTO.getSecondValue());
         } else {
             credentialDTO.setSecondValue(value2);
         }
         credentialDAO.updateCredentialById(dslContext, credentialDTO);
 
         CredentialDTO updateCredential = getCredentialById(id);
-        // 审计 - 当前数据
-        ActionAuditContext.current().setInstance(updateCredential.toEsbCredentialSimpleInfoV3DTO());
+
+        // 审计
+        ActionAuditContext.current()
+            .setInstanceId(id)
+            .setInstanceName(originCredentialDTO.getName())
+            .setOriginInstance(originCredentialDTO.toEsbCredentialSimpleInfoV3DTO())
+            .setInstance(updateCredential.toEsbCredentialSimpleInfoV3DTO());
 
         return updateCredential;
     }
@@ -136,7 +136,7 @@ public class CredentialServiceImpl implements CredentialService {
             resourceType = ResourceTypeId.TICKET,
             instanceIds = "#id"
         ),
-        content = "Delete account [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+        content = "Delete credential [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
     public Integer deleteCredentialById(String username, Long appId, String id) {
         CredentialDTO credential = getCredentialById(id);
@@ -144,7 +144,7 @@ public class CredentialServiceImpl implements CredentialService {
             throw new NotFoundException(ErrorCode.CREDENTIAL_NOT_EXIST);
         }
 
-        // 审计 - 实例名称
+        // 审计
         ActionAuditContext.current().setInstanceName(credential.getName());
 
         return credentialDAO.deleteCredentialById(dslContext, id);

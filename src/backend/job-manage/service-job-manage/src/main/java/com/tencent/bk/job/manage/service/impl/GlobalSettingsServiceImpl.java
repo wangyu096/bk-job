@@ -25,11 +25,13 @@
 package com.tencent.bk.job.manage.service.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobConstants;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.i18n.locale.LocaleUtils;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
+import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.util.JobContextUtil;
 import com.tencent.bk.job.common.util.StringUtil;
 import com.tencent.bk.job.common.util.TimeUtil;
@@ -134,20 +136,19 @@ public class GlobalSettingsServiceImpl implements GlobalSettingsService {
     private String configedMaxFileSize;
 
     @Autowired
-    public GlobalSettingsServiceImpl(
-        DSLContext dslContext
-        , NotifyEsbChannelDAO notifyEsbChannelDAO
-        , AvailableEsbChannelDAO availableEsbChannelDAO
-        , NotifyService notifyService
-        , NotifySendService notifySendService,
-        NotifyUserService notifyUserService,
-        GlobalSettingDAO globalSettingDAO
-        , NotifyTemplateDAO notifyTemplateDAO,
-        MessageI18nService i18nService,
-        JobManageConfig jobManageConfig,
-        LocalFileConfigForManage localFileConfigForManage,
-        NotifyTemplateConverter notifyTemplateConverter,
-        BuildProperties buildProperties) {
+    public GlobalSettingsServiceImpl(DSLContext dslContext,
+                                     NotifyEsbChannelDAO notifyEsbChannelDAO,
+                                     AvailableEsbChannelDAO availableEsbChannelDAO,
+                                     NotifyService notifyService,
+                                     NotifySendService notifySendService,
+                                     NotifyUserService notifyUserService,
+                                     GlobalSettingDAO globalSettingDAO,
+                                     NotifyTemplateDAO notifyTemplateDAO,
+                                     MessageI18nService i18nService,
+                                     JobManageConfig jobManageConfig,
+                                     LocalFileConfigForManage localFileConfigForManage,
+                                     NotifyTemplateConverter notifyTemplateConverter,
+                                     BuildProperties buildProperties) {
         this.dslContext = dslContext;
         this.notifyEsbChannelDAO = notifyEsbChannelDAO;
         this.availableEsbChannelDAO = availableEsbChannelDAO;
@@ -198,6 +199,10 @@ public class GlobalSettingsServiceImpl implements GlobalSettingsService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.GLOBAL_SETTINGS,
+        content = "View the global settings"
+    )
     public List<NotifyChannelWithIconVO> listNotifyChannel(String username) {
         List<NotifyEsbChannelDTO> allNotifyChannelList =
             notifyEsbChannelDAO.listNotifyEsbChannel(dslContext).stream()
@@ -227,22 +232,38 @@ public class GlobalSettingsServiceImpl implements GlobalSettingsService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.GLOBAL_SETTINGS,
+        content = "View the global settings"
+    )
     public List<UserVO> listUsers(String username, String prefixStr, Long offset, Long limit) {
         //这里就是要选择人来添加黑名单，故不排除已在黑名单内的人
         return notifyUserService.listUsers(prefixStr, offset, limit, false);
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.GLOBAL_SETTINGS,
+        content = "View the global settings"
+    )
     public List<NotifyBlackUserInfoVO> listNotifyBlackUsers(String username, Integer start, Integer pageSize) {
         return notifyUserService.listNotifyBlackUsers(start, pageSize);
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.GLOBAL_SETTINGS,
+        content = "Modify the global settings"
+    )
     public List<String> saveNotifyBlackUsers(String username, NotifyBlackUsersReq req) {
         return notifyUserService.saveNotifyBlackUsers(username, req);
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.GLOBAL_SETTINGS,
+        content = "View the global settings"
+    )
     public Long getHistoryExpireTime(String username) {
         GlobalSettingDTO globalSettingDTO = globalSettingDAO.getGlobalSetting(dslContext,
             GlobalSettingKeys.KEY_HISTORY_EXPIRE_DAYS);
@@ -256,6 +277,10 @@ public class GlobalSettingsServiceImpl implements GlobalSettingsService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.GLOBAL_SETTINGS,
+        content = "Modify the global settings"
+    )
     public Integer setHistoryExpireTime(String username, HistoryExpireReq req) {
         Long days = req.getDays();
         if (days == null || days <= 0) {
@@ -269,6 +294,10 @@ public class GlobalSettingsServiceImpl implements GlobalSettingsService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.GLOBAL_SETTINGS,
+        content = "View the global settings"
+    )
     public AccountNameRule getCurrentAccountNameRule(OSTypeEnum osType) {
         String normalLang = LocaleUtils.getNormalLang(JobContextUtil.getUserLang());
         GlobalSettingDTO currentNameRulesDTO;
@@ -317,6 +346,10 @@ public class GlobalSettingsServiceImpl implements GlobalSettingsService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.GLOBAL_SETTINGS,
+        content = "View the global settings"
+    )
     public AccountNameRulesWithDefaultVO getAccountNameRules() {
         String normalLang = LocaleUtils.getNormalLang(JobContextUtil.getUserLang());
         List<AccountNameRule> defaultNameRules;
@@ -350,6 +383,10 @@ public class GlobalSettingsServiceImpl implements GlobalSettingsService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.GLOBAL_SETTINGS,
+        content = "Modify the global settings"
+    )
     public Boolean setAccountNameRules(String username, AccountNameRulesReq req) {
         String normalLang = LocaleUtils.getNormalLang(JobContextUtil.getUserLang());
         String currentNameRulesKey = GlobalSettingKeys.KEY_CURRENT_NAME_RULES;
@@ -390,6 +427,10 @@ public class GlobalSettingsServiceImpl implements GlobalSettingsService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.GLOBAL_SETTINGS,
+        content = "Modify the global settings"
+    )
     public Boolean saveFileUploadSettings(String username, FileUploadSettingReq req) {
         Float uploadMaxSize = req.getAmount();
         StorageUnitEnum unit = req.getUnit();
@@ -427,6 +468,10 @@ public class GlobalSettingsServiceImpl implements GlobalSettingsService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.GLOBAL_SETTINGS,
+        content = "View the global settings"
+    )
     public FileUploadSettingVO getFileUploadSettings() {
         GlobalSettingDTO fileUploadSettingDTO = globalSettingDAO.getGlobalSetting(dslContext,
             GlobalSettingKeys.KEY_FILE_UPLOAD_SETTING);
@@ -574,6 +619,10 @@ public class GlobalSettingsServiceImpl implements GlobalSettingsService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.GLOBAL_SETTINGS,
+        content = "Modify the global settings"
+    )
     public Integer saveChannelTemplate(String username, ChannelTemplateReq req) {
         if (StringUtils.isBlank(req.getChannelCode()) || StringUtils.isBlank(req.getMessageTypeCode())) {
             throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
@@ -620,6 +669,10 @@ public class GlobalSettingsServiceImpl implements GlobalSettingsService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.GLOBAL_SETTINGS,
+        content = "View the global settings"
+    )
     public ChannelTemplateDetailWithDefaultVO getChannelTemplateDetail(String username, String channelCode,
                                                                        String messageTypeCode) {
         NotifyTemplateDTO currentNotifyTemplateDTO = notifyTemplateDAO.getNotifyTemplate(

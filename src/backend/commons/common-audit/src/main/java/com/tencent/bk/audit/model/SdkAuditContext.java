@@ -112,6 +112,10 @@ public class SdkAuditContext implements AuditContext {
     }
 
     private void buildAuditEvents() {
+        if (StringUtils.isEmpty(actionId)) {
+            return;
+        }
+
         Map<AuditEventKey, AuditEvent> auditEvents = new HashMap<>();
         actionAuditContexts.stream()
             .filter(actionAuditContext -> isActionRecordable(actionAuditContext.getActionId()))
@@ -172,7 +176,7 @@ public class SdkAuditContext implements AuditContext {
         auditEvent.setId(EventIdGenerator.generateId());
         addContextAttributes(auditEvent);
         auditEvent.setStartTime(startTime);
-        auditEvent.setEndTime(this.endTime);
+        auditEvent.setEndTime(endTime);
         auditEvent.setResultCode(resultCode);
         auditEvent.setResultContent(resultContent);
         this.events.add(auditEvent);
@@ -185,6 +189,8 @@ public class SdkAuditContext implements AuditContext {
 
     @Override
     public void updateActionId(String actionId) {
-        this.actionId = actionId;
+        if (StringUtils.isEmpty(this.actionId)) {
+            this.actionId = actionId;
+        }
     }
 }
