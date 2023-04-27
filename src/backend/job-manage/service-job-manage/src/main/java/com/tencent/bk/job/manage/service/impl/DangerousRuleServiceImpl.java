@@ -62,20 +62,12 @@ public class DangerousRuleServiceImpl implements DangerousRuleService {
     }
 
     @Override
-    @ActionAuditRecord(
-        actionId = ActionId.HIGH_RISK_DETECT_RULE,
-        content = "View high-risk detect rule settings"
-    )
     public List<DangerousRuleVO> listDangerousRules(String username) {
         return dangerousRuleDAO.listDangerousRules(dslContext).stream().map(DangerousRuleDTO::toVO)
             .collect(Collectors.toList());
     }
 
     @Override
-    @ActionAuditRecord(
-        actionId = ActionId.HIGH_RISK_DETECT_RULE,
-        content = "View high-risk detect rule settings"
-    )
     public DangerousRuleDTO getDangerousRuleById(Long id) {
         return dangerousRuleDAO.getDangerousRuleById(dslContext, id);
     }

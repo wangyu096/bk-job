@@ -24,10 +24,7 @@
 
 package com.tencent.bk.job.execute.service.impl;
 
-import com.tencent.bk.audit.annotations.ActionAuditRecord;
-import com.tencent.bk.audit.annotations.AuditAttribute;
 import com.tencent.bk.job.common.constant.NotExistPathHandlerEnum;
-import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.model.dto.HostDTO;
 import com.tencent.bk.job.common.util.json.JsonUtils;
 import com.tencent.bk.job.execute.common.constants.RunStatusEnum;
@@ -58,8 +55,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_ID;
-import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_NAME;
 import static com.tencent.bk.job.execute.common.constants.StepExecuteTypeEnum.EXECUTE_SCRIPT;
 import static com.tencent.bk.job.execute.common.constants.StepExecuteTypeEnum.EXECUTE_SQL;
 import static com.tencent.bk.job.execute.common.constants.StepExecuteTypeEnum.MANUAL_CONFIRM;
@@ -113,18 +108,6 @@ public class TaskInstanceServiceImpl implements TaskInstanceService {
     }
 
     @Override
-    @ActionAuditRecord(
-        actionId = ActionId.VIEW_HISTORY,
-        attributes = {
-            @AuditAttribute(
-                name = INSTANCE_ID, value = "#$?.id"
-            ),
-            @AuditAttribute(
-                name = INSTANCE_NAME, value = "#$?.name"
-            ),
-        },
-        content = "View job task [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
-    )
     public TaskInstanceDTO getTaskInstanceDetail(long taskInstanceId) {
         TaskInstanceDTO taskInstance = getTaskInstance(taskInstanceId);
         if (taskInstance == null) {

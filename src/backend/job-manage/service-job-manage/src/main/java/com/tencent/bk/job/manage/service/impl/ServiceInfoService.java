@@ -24,10 +24,8 @@
 
 package com.tencent.bk.job.manage.service.impl;
 
-import com.tencent.bk.audit.annotations.ActionAuditRecord;
 import com.tencent.bk.job.common.discovery.ServiceInfoProvider;
 import com.tencent.bk.job.common.discovery.model.ServiceInstanceInfoDTO;
-import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.util.CompareUtil;
 import com.tencent.bk.job.manage.model.web.vo.serviceinfo.ServiceInfoVO;
 import com.tencent.bk.job.manage.model.web.vo.serviceinfo.ServiceInstanceInfoVO;
@@ -63,10 +61,6 @@ public class ServiceInfoService {
         return serviceInstanceInfoVO;
     }
 
-    @ActionAuditRecord(
-        actionId = ActionId.SERVICE_STATE_ACCESS,
-        content = "View the platform service states"
-    )
     public List<ServiceInfoVO> listServiceInfo() {
         List<ServiceInstanceInfoDTO> serviceInstanceInfoDTOList = serviceInfoProvider.listServiceInfo();
         // groupBy serviceName

@@ -311,7 +311,6 @@ public class WebPublicScriptResourceImpl extends BaseWebScriptResource implement
     public Response<ScriptVO> saveScriptVersion(String username,
                                                 String scriptId,
                                                 ScriptCreateUpdateReq request) {
-        request.setId(scriptId);
         // 鉴权
         auth(() -> noResourceScopeAuthService.authCreatePublicScript(username));
 

@@ -25,6 +25,7 @@
 package com.tencent.bk.job.manage.service.impl;
 
 import com.google.common.collect.Lists;
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
 import com.tencent.bk.job.common.RequestIdLogger;
 import com.tencent.bk.job.common.cc.model.CcCloudAreaInfoDTO;
 import com.tencent.bk.job.common.cc.sdk.CmdbClientFactory;
@@ -34,6 +35,7 @@ import com.tencent.bk.job.common.constant.JobConstants;
 import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
+import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.model.dto.ApplicationDTO;
@@ -452,6 +454,10 @@ public class WhiteIPServiceImpl implements WhiteIPService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.MANAGE_WHITELIST,
+        content = "Create a white list row"
+    )
     public WhiteIPRecordDTO createWhiteIP(String username, WhiteIPRecordCreateUpdateReq createUpdateReq) {
         LOG.infoWithRequestId("Input(" + username + "," + createUpdateReq.toString() + ")");
         // 1.参数校验、预处理
@@ -488,6 +494,10 @@ public class WhiteIPServiceImpl implements WhiteIPService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.MANAGE_WHITELIST,
+        content = "Modify a white list row"
+    )
     public WhiteIPRecordDTO updateWhiteIP(String username, WhiteIPRecordCreateUpdateReq createUpdateReq) {
         LOG.infoWithRequestId("Input(" + username + "," + createUpdateReq.toString() + ")");
         // 1.参数校验、预处理
@@ -556,6 +566,10 @@ public class WhiteIPServiceImpl implements WhiteIPService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.MANAGE_WHITELIST,
+        content = "Delete a white list row"
+    )
     public Long deleteWhiteIPById(String username, Long id) {
         return (long) whiteIPRecordDAO.deleteWhiteIPRecordById(dslContext, id);
     }

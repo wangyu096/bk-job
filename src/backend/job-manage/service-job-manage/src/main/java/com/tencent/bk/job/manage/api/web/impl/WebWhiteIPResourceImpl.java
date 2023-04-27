@@ -24,6 +24,9 @@
 
 package com.tencent.bk.job.manage.api.web.impl;
 
+import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.annotations.AuditRequestBody;
+import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.PageData;
@@ -92,7 +95,9 @@ public class WebWhiteIPResourceImpl implements WebWhiteIPResource {
     }
 
     @Override
-    public Response<WhiteIPRecordVO> createWhiteIP(String username, WhiteIPRecordCreateUpdateReq createUpdateReq) {
+    @AuditEntry(actionId = ActionId.CREATE_WHITELIST)
+    public Response<WhiteIPRecordVO> createWhiteIP(String username,
+                                                   @AuditRequestBody WhiteIPRecordCreateUpdateReq createUpdateReq) {
         AuthResult authResult = noResourceScopeAuthService.authCreateWhiteList(username);
         if (!authResult.isPass()) {
             throw new PermissionDeniedException(authResult);
@@ -113,9 +118,10 @@ public class WebWhiteIPResourceImpl implements WebWhiteIPResource {
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.MANAGE_WHITELIST)
     public Response<WhiteIPRecordVO> updateWhiteIP(String username,
                                                    Long id,
-                                                   WhiteIPRecordCreateUpdateReq createUpdateReq) {
+                                                   @AuditRequestBody WhiteIPRecordCreateUpdateReq createUpdateReq) {
         createUpdateReq.setId(id);
         AuthResult authResult = noResourceScopeAuthService.authManageWhiteList(username);
         if (!authResult.isPass()) {
@@ -148,6 +154,7 @@ public class WebWhiteIPResourceImpl implements WebWhiteIPResource {
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.MANAGE_WHITELIST)
     public Response<Long> deleteWhiteIPById(String username, Long id) {
         AuthResult authResult = noResourceScopeAuthService.authManageWhiteList(username);
         if (!authResult.isPass()) {

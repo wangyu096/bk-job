@@ -24,6 +24,9 @@
 
 package com.tencent.bk.job.manage.api.web.impl;
 
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
+import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.manage.api.web.WebGlobalSettingsResource;
 import com.tencent.bk.job.manage.model.web.request.globalsetting.AccountNameRulesReq;
@@ -61,6 +64,11 @@ public class WebGlobalSettingsResourceImpl implements WebGlobalSettingsResource 
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.GLOBAL_SETTINGS)
+    @ActionAuditRecord(
+        actionId = ActionId.GLOBAL_SETTINGS,
+        content = "View the global settings"
+    )
     public Response<List<NotifyChannelWithIconVO>> listNotifyChannel(String username) {
         return Response.buildSuccessResp(globalSettingsService.listNotifyChannel(username));
     }
@@ -81,6 +89,11 @@ public class WebGlobalSettingsResourceImpl implements WebGlobalSettingsResource 
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.GLOBAL_SETTINGS)
+    @ActionAuditRecord(
+        actionId = ActionId.GLOBAL_SETTINGS,
+        content = "View the global settings"
+    )
     public Response<ChannelTemplateDetailWithDefaultVO> getChannelTemplateDetail(String username,
                                                                                  String channelCode,
                                                                                  String messageTypeCode) {
@@ -89,52 +102,86 @@ public class WebGlobalSettingsResourceImpl implements WebGlobalSettingsResource 
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.GLOBAL_SETTINGS)
+    @ActionAuditRecord(
+        actionId = ActionId.GLOBAL_SETTINGS,
+        content = "View the global settings"
+    )
     public Response<List<ChannelTemplateStatusVO>> listChannelTemplateStatus(String username) {
         return Response.buildSuccessResp(globalSettingsService.listChannelTemplateStatus(username));
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.GLOBAL_SETTINGS)
+    @ActionAuditRecord(
+        actionId = ActionId.GLOBAL_SETTINGS,
+        content = "View the global settings"
+    )
     public Response<List<UserVO>> listUsers(String username, String prefixStr, Long offset, Long limit) {
         return Response.buildSuccessResp(globalSettingsService.listUsers(username, prefixStr, offset, limit));
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.GLOBAL_SETTINGS)
+    @ActionAuditRecord(
+        actionId = ActionId.GLOBAL_SETTINGS,
+        content = "View the global settings"
+    )
     public Response<List<NotifyBlackUserInfoVO>> listNotifyBlackUsers(String username, Integer start,
                                                                       Integer pageSize) {
         return Response.buildSuccessResp(globalSettingsService.listNotifyBlackUsers(username, start, pageSize));
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.GLOBAL_SETTINGS)
     public Response<List<String>> saveNotifyBlackUsers(String username, NotifyBlackUsersReq req) {
         return Response.buildSuccessResp(globalSettingsService.saveNotifyBlackUsers(username, req));
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.GLOBAL_SETTINGS)
+    @ActionAuditRecord(
+        actionId = ActionId.GLOBAL_SETTINGS,
+        content = "View the global settings"
+    )
     public Response<Long> getHistoryExpireTime(String username) {
         return Response.buildSuccessResp(globalSettingsService.getHistoryExpireTime(username));
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.GLOBAL_SETTINGS)
     public Response<Integer> setHistoryExpireTime(String username, HistoryExpireReq req) {
         return Response.buildSuccessResp(globalSettingsService.setHistoryExpireTime(username, req));
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.GLOBAL_SETTINGS)
+    @ActionAuditRecord(
+        actionId = ActionId.GLOBAL_SETTINGS,
+        content = "View the global settings"
+    )
     public Response<AccountNameRulesWithDefaultVO> getAccountNameRules(String username) {
         return Response.buildSuccessResp(globalSettingsService.getAccountNameRules());
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.GLOBAL_SETTINGS)
     public Response<Boolean> setAccountNameRules(String username, AccountNameRulesReq req) {
         return Response.buildSuccessResp(globalSettingsService.setAccountNameRules(username, req));
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.GLOBAL_SETTINGS)
     public Response<Boolean> saveFileUploadSettings(String username, FileUploadSettingReq req) {
         return Response.buildSuccessResp(globalSettingsService.saveFileUploadSettings(username, req));
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.GLOBAL_SETTINGS)
+    @ActionAuditRecord(
+        actionId = ActionId.GLOBAL_SETTINGS,
+        content = "View the global settings"
+    )
     public Response<FileUploadSettingVO> getFileUploadSettings(String username) {
         return Response.buildSuccessResp(globalSettingsService.getFileUploadSettings());
     }

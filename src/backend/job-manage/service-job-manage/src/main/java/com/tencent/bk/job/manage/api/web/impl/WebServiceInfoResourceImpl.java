@@ -24,6 +24,7 @@
 
 package com.tencent.bk.job.manage.api.web.impl;
 
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.model.Response;
@@ -49,6 +50,10 @@ public class WebServiceInfoResourceImpl implements WebServiceInfoResource {
 
     @Override
     @AuditEntry(actionId = ActionId.SERVICE_STATE_ACCESS)
+    @ActionAuditRecord(
+        actionId = ActionId.SERVICE_STATE_ACCESS,
+        content = "View the platform service states"
+    )
     public Response<List<ServiceInfoVO>> listServiceInfo(String username) {
         return Response.buildSuccessResp(serviceInfoService.listServiceInfo());
     }

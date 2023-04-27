@@ -24,13 +24,16 @@
 
 package com.tencent.bk.job.file_gateway.api.web;
 
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
 import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.annotations.AuditInstanceRecord;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.FailedPreconditionException;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.exception.ServiceException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
+import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.PageData;
@@ -55,6 +58,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_ID;
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_NAME;
 
 
 @RestController
@@ -160,7 +166,7 @@ public class WebFileSourceResourceImpl implements WebFileSourceResource {
                                                    AppResourceScope appResourceScope,
                                                    String scopeType,
                                                    String scopeId,
-                                                   FileSourceCreateUpdateReq fileSourceCreateUpdateReq) {
+                                                   @AuditRequestBody FileSourceCreateUpdateReq fileSourceCreateUpdateReq) {
         Long appId = appResourceScope.getAppId();
         log.info("Input=({},{},{})", username, appId, fileSourceCreateUpdateReq);
         FileSourceDTO fileSourceDTO = buildFileSourceDTO(username, appId, fileSourceCreateUpdateReq);
@@ -210,6 +216,15 @@ public class WebFileSourceResourceImpl implements WebFileSourceResource {
 
     @Override
     @AuditEntry(actionId = ActionId.VIEW_FILE_SOURCE)
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_FILE_SOURCE,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.FILE_SOURCE,
+            instanceIds = "#id",
+            instanceNames = "#$?.data?.alias"
+        ),
+        content = "View file source [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public Response<FileSourceVO> getFileSourceDetail(String username,
                                                       AppResourceScope appResourceScope,
                                                       String scopeType,

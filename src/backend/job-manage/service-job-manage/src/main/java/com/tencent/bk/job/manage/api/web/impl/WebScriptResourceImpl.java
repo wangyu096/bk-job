@@ -425,7 +425,7 @@ public class WebScriptResourceImpl extends BaseWebScriptResource implements WebS
                                                 String scopeType,
                                                 String scopeId,
                                                 String scriptId,
-                                                ScriptCreateUpdateReq request) {
+                                                @AuditRequestBody ScriptCreateUpdateReq request) {
         // 鉴权
         auth(() -> scriptAuthService.authManageScript(username, appResourceScope, scriptId, null));
 
@@ -446,7 +446,7 @@ public class WebScriptResourceImpl extends BaseWebScriptResource implements WebS
                                                   String scopeId,
                                                   String scriptId,
                                                   Long scriptVersionId,
-                                                  ScriptCreateUpdateReq request) {
+                                                  @AuditRequestBody ScriptCreateUpdateReq request) {
         // 鉴权
         auth(() -> scriptAuthService.authManageScript(username, appResourceScope, scriptId, null));
 

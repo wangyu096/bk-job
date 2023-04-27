@@ -188,7 +188,21 @@ public class FileSourceServiceImpl implements FileSourceService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.MANAGE_FILE_SOURCE,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.FILE_SOURCE,
+            instanceIds = "#id"
+        ),
+        content = "Delete file source [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public Integer deleteFileSourceById(Long appId, Integer id) {
+        FileSourceDTO fileSource = getFileSourceById(id);
+        if (fileSource == null) {
+            throw new NotFoundException(ErrorCode.FILE_SOURCE_NOT_EXIST);
+        }
+        ActionAuditContext.current().setInstanceName(fileSource.getAlias());
+
         return fileSourceDAO.deleteFileSourceById(dslContext, id);
     }
 
@@ -216,57 +230,21 @@ public class FileSourceServiceImpl implements FileSourceService {
     }
 
     @Override
-    @ActionAuditRecord(
-        actionId = ActionId.VIEW_FILE_SOURCE,
-        instance = @AuditInstanceRecord(
-            resourceType = ResourceTypeId.FILE_SOURCE,
-            instanceIds = "#id",
-            instanceNames = "#$?.alias"
-        ),
-        content = "View file source [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
-    )
     public FileSourceDTO getFileSourceById(Long appId, Integer id) {
         return fileSourceDAO.getFileSourceById(dslContext, id);
     }
 
     @Override
-    @ActionAuditRecord(
-        actionId = ActionId.VIEW_FILE_SOURCE,
-        instance = @AuditInstanceRecord(
-            resourceType = ResourceTypeId.FILE_SOURCE,
-            instanceIds = "#id",
-            instanceNames = "#$?.alias"
-        ),
-        content = "View file source [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
-    )
     public FileSourceDTO getFileSourceById(Integer id) {
         return fileSourceDAO.getFileSourceById(dslContext, id);
     }
 
     @Override
-    @ActionAuditRecord(
-        actionId = ActionId.VIEW_FILE_SOURCE,
-        instance = @AuditInstanceRecord(
-            resourceType = ResourceTypeId.FILE_SOURCE,
-            instanceIds = "#$?.!id",
-            instanceNames = "#$?.!alias"
-        ),
-        content = "View file source [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
-    )
     public List<FileSourceBasicInfoDTO> listFileSourceByIds(Collection<Integer> ids) {
         return fileSourceDAO.listFileSourceByIds(dslContext, ids);
     }
 
     @Override
-    @ActionAuditRecord(
-        actionId = ActionId.VIEW_FILE_SOURCE,
-        instance = @AuditInstanceRecord(
-            resourceType = ResourceTypeId.FILE_SOURCE,
-            instanceIds = "#$?.id",
-            instanceNames = "#$?.alias"
-        ),
-        content = "View file source [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
-    )
     public FileSourceDTO getFileSourceByCode(String code) {
         return fileSourceDAO.getFileSourceByCode(dslContext, code);
     }

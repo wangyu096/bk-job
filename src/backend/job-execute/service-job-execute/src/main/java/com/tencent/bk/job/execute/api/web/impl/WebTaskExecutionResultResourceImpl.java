@@ -27,7 +27,9 @@ package com.tencent.bk.job.execute.api.web.impl;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
 import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.model.ActionAuditContext;
 import com.tencent.bk.job.common.constant.Bool;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.Order;
@@ -122,6 +124,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_ID;
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_NAME;
 import static com.tencent.bk.job.execute.constants.Consts.MAX_SEARCH_TASK_HISTORY_RANGE_MILLS;
 
 @RestController
@@ -364,15 +368,53 @@ public class WebTaskExecutionResultResourceImpl implements WebTaskExecutionResul
 
     @Override
     @AuditEntry(actionId = ActionId.VIEW_HISTORY)
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_HISTORY,
+        content = "View job task [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public Response<TaskExecuteResultVO> getTaskExecutionResult(String username,
                                                                 AppResourceScope appResourceScope,
                                                                 String scopeType,
                                                                 String scopeId,
                                                                 Long taskInstanceId) {
+        auditAndAuth(username, appResourceScope.getAppId(), taskInstanceId);
         TaskExecuteResultDTO taskExecuteResult = taskResultService.getTaskExecutionResult(username,
             appResourceScope.getAppId(), taskInstanceId);
         TaskExecuteResultVO taskExecuteResultVO = convertToTaskExecuteResultVO(taskExecuteResult);
         return Response.buildSuccessResp(taskExecuteResultVO);
+    }
+
+    private void auditAndAuth(String username, Long appId, long taskInstanceId) {
+        TaskInstanceDTO taskInstance = taskInstanceService.getTaskInstance(taskInstanceId);
+        if (taskInstance == null) {
+            throw new NotFoundException(ErrorCode.TASK_INSTANCE_NOT_EXIST);
+        }
+
+        // 审计
+        ActionAuditContext.current()
+            .setInstanceId(String.valueOf(taskInstanceId))
+            .setInstanceName(taskInstance.getName());
+
+        // 鉴权
+        AuthResult authResult = executeAuthService.authViewTaskInstance(
+            username, new AppResourceScope(appId), taskInstance);
+        if (!authResult.isPass()) {
+            throw new PermissionDeniedException(authResult);
+        }
+    }
+
+    private void authViewStepInstance(String username, Long appId, StepInstanceBaseDTO stepInstance) {
+        String operator = stepInstance.getOperator();
+        if (username.equals(operator)) {
+            return;
+        }
+
+        AuthResult authResult = executeAuthService.authViewTaskInstance(
+            username, new AppResourceScope(appId),
+            stepInstance.getTaskInstanceId());
+        if (!authResult.isPass()) {
+            throw new PermissionDeniedException(authResult);
+        }
     }
 
     private TaskExecuteResultVO convertToTaskExecuteResultVO(TaskExecuteResultDTO taskExecuteResultDTO) {
@@ -472,6 +514,10 @@ public class WebTaskExecutionResultResourceImpl implements WebTaskExecutionResul
 
     @Override
     @AuditEntry(actionId = ActionId.VIEW_HISTORY)
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_HISTORY,
+        content = "View job task [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public Response<StepExecutionDetailVO> getStepExecutionResult(String username,
                                                                   AppResourceScope appResourceScope,
                                                                   String scopeType,
@@ -486,6 +532,7 @@ public class WebTaskExecutionResultResourceImpl implements WebTaskExecutionResul
                                                                   String searchIp,
                                                                   String orderField,
                                                                   Integer order) {
+        auditAndAuth(username, appResourceScope.getAppId(), stepInstanceId);
         StepExecutionResultQuery query = StepExecutionResultQuery.builder()
             .stepInstanceId(stepInstanceId)
             .executeCount(executeCount)
@@ -507,6 +554,10 @@ public class WebTaskExecutionResultResourceImpl implements WebTaskExecutionResul
 
     @Override
     @AuditEntry(actionId = ActionId.VIEW_HISTORY)
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_HISTORY,
+        content = "View job task [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public Response<StepExecutionDetailVO> getFastTaskStepExecutionResult(String username,
                                                                           AppResourceScope appResourceScope,
                                                                           String scopeType,
@@ -518,6 +569,7 @@ public class WebTaskExecutionResultResourceImpl implements WebTaskExecutionResul
                                                                           Integer maxIpsPerResultGroup,
                                                                           String orderField,
                                                                           Integer order) {
+        auditAndAuth(username, appResourceScope.getAppId(), taskInstanceId);
         StepExecutionResultQuery query = StepExecutionResultQuery.builder()
             .batch(batch)
             .status(resultType)
@@ -608,6 +660,10 @@ public class WebTaskExecutionResultResourceImpl implements WebTaskExecutionResul
 
     @Override
     @AuditEntry(actionId = ActionId.VIEW_HISTORY)
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_HISTORY,
+        content = "View job task [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public Response<IpScriptLogContentVO> getScriptLogContentByHost(String username,
                                                                     AppResourceScope appResourceScope,
                                                                     String scopeType,
@@ -645,7 +701,10 @@ public class WebTaskExecutionResultResourceImpl implements WebTaskExecutionResul
 
 
     @Override
-    @AuditEntry(actionId = ActionId.VIEW_HISTORY)
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_HISTORY,
+        content = "View job task [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public Response<List<ExecuteVariableVO>> getStepVariableByIp(String username,
                                                                  AppResourceScope appResourceScope,
                                                                  String scopeType,
@@ -657,6 +716,10 @@ public class WebTaskExecutionResultResourceImpl implements WebTaskExecutionResul
 
     @Override
     @AuditEntry(actionId = ActionId.VIEW_HISTORY)
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_HISTORY,
+        content = "View job task [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public Response<List<ExecuteVariableVO>> getStepVariableByHost(String username,
                                                                    AppResourceScope appResourceScope,
                                                                    String scopeType,
@@ -821,6 +884,10 @@ public class WebTaskExecutionResultResourceImpl implements WebTaskExecutionResul
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
     @AuditEntry(actionId = ActionId.VIEW_HISTORY)
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_HISTORY,
+        content = "View job task [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public Response<IpFileLogContentVO> getFileLogContentByHost(String username,
                                                                 AppResourceScope appResourceScope,
                                                                 String scopeType,
@@ -922,6 +989,10 @@ public class WebTaskExecutionResultResourceImpl implements WebTaskExecutionResul
 
     @Override
     @AuditEntry(actionId = ActionId.VIEW_HISTORY)
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_HISTORY,
+        content = "View job task [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public Response<List<FileDistributionDetailVO>> getFileLogContentByFileTaskIds(String username,
                                                                                    AppResourceScope appResourceScope,
                                                                                    String scopeType,
@@ -954,6 +1025,10 @@ public class WebTaskExecutionResultResourceImpl implements WebTaskExecutionResul
 
     @Override
     @AuditEntry(actionId = ActionId.VIEW_HISTORY)
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_HISTORY,
+        content = "View job task [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public Response<List<HostDTO>> getHostsByResultType(String username,
                                                         AppResourceScope appResourceScope,
                                                         String scopeType,

@@ -24,6 +24,8 @@
 
 package com.tencent.bk.job.manage.api.web.impl;
 
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
+import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.job.analysis.consts.AnalysisConsts;
 import com.tencent.bk.job.common.constant.ResourceScopeTypeEnum;
 import com.tencent.bk.job.common.iam.constant.ActionId;
@@ -84,11 +86,21 @@ public class WebGlobalSettingsQueryResourceImpl implements WebGlobalSettingsQuer
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.GLOBAL_SETTINGS)
+    @ActionAuditRecord(
+        actionId = ActionId.GLOBAL_SETTINGS,
+        content = "View the global settings"
+    )
     public Response<List<NotifyChannelWithIconVO>> listNotifyChannel(String username) {
         return Response.buildSuccessResp(globalSettingsService.listNotifyChannel(username));
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.GLOBAL_SETTINGS)
+    @ActionAuditRecord(
+        actionId = ActionId.GLOBAL_SETTINGS,
+        content = "View the global settings"
+    )
     public Response<AccountNameRulesWithDefaultVO> getAccountNameRules(String username) {
         return Response.buildSuccessResp(globalSettingsService.getAccountNameRules());
     }

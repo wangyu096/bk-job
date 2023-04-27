@@ -199,10 +199,6 @@ public class GlobalSettingsServiceImpl implements GlobalSettingsService {
     }
 
     @Override
-    @ActionAuditRecord(
-        actionId = ActionId.GLOBAL_SETTINGS,
-        content = "View the global settings"
-    )
     public List<NotifyChannelWithIconVO> listNotifyChannel(String username) {
         List<NotifyEsbChannelDTO> allNotifyChannelList =
             notifyEsbChannelDAO.listNotifyEsbChannel(dslContext).stream()
@@ -232,20 +228,12 @@ public class GlobalSettingsServiceImpl implements GlobalSettingsService {
     }
 
     @Override
-    @ActionAuditRecord(
-        actionId = ActionId.GLOBAL_SETTINGS,
-        content = "View the global settings"
-    )
     public List<UserVO> listUsers(String username, String prefixStr, Long offset, Long limit) {
         //这里就是要选择人来添加黑名单，故不排除已在黑名单内的人
         return notifyUserService.listUsers(prefixStr, offset, limit, false);
     }
 
     @Override
-    @ActionAuditRecord(
-        actionId = ActionId.GLOBAL_SETTINGS,
-        content = "View the global settings"
-    )
     public List<NotifyBlackUserInfoVO> listNotifyBlackUsers(String username, Integer start, Integer pageSize) {
         return notifyUserService.listNotifyBlackUsers(start, pageSize);
     }
@@ -260,10 +248,6 @@ public class GlobalSettingsServiceImpl implements GlobalSettingsService {
     }
 
     @Override
-    @ActionAuditRecord(
-        actionId = ActionId.GLOBAL_SETTINGS,
-        content = "View the global settings"
-    )
     public Long getHistoryExpireTime(String username) {
         GlobalSettingDTO globalSettingDTO = globalSettingDAO.getGlobalSetting(dslContext,
             GlobalSettingKeys.KEY_HISTORY_EXPIRE_DAYS);
@@ -294,10 +278,6 @@ public class GlobalSettingsServiceImpl implements GlobalSettingsService {
     }
 
     @Override
-    @ActionAuditRecord(
-        actionId = ActionId.GLOBAL_SETTINGS,
-        content = "View the global settings"
-    )
     public AccountNameRule getCurrentAccountNameRule(OSTypeEnum osType) {
         String normalLang = LocaleUtils.getNormalLang(JobContextUtil.getUserLang());
         GlobalSettingDTO currentNameRulesDTO;
@@ -346,10 +326,6 @@ public class GlobalSettingsServiceImpl implements GlobalSettingsService {
     }
 
     @Override
-    @ActionAuditRecord(
-        actionId = ActionId.GLOBAL_SETTINGS,
-        content = "View the global settings"
-    )
     public AccountNameRulesWithDefaultVO getAccountNameRules() {
         String normalLang = LocaleUtils.getNormalLang(JobContextUtil.getUserLang());
         List<AccountNameRule> defaultNameRules;
@@ -468,10 +444,6 @@ public class GlobalSettingsServiceImpl implements GlobalSettingsService {
     }
 
     @Override
-    @ActionAuditRecord(
-        actionId = ActionId.GLOBAL_SETTINGS,
-        content = "View the global settings"
-    )
     public FileUploadSettingVO getFileUploadSettings() {
         GlobalSettingDTO fileUploadSettingDTO = globalSettingDAO.getGlobalSetting(dslContext,
             GlobalSettingKeys.KEY_FILE_UPLOAD_SETTING);
@@ -669,10 +641,6 @@ public class GlobalSettingsServiceImpl implements GlobalSettingsService {
     }
 
     @Override
-    @ActionAuditRecord(
-        actionId = ActionId.GLOBAL_SETTINGS,
-        content = "View the global settings"
-    )
     public ChannelTemplateDetailWithDefaultVO getChannelTemplateDetail(String username, String channelCode,
                                                                        String messageTypeCode) {
         NotifyTemplateDTO currentNotifyTemplateDTO = notifyTemplateDAO.getNotifyTemplate(

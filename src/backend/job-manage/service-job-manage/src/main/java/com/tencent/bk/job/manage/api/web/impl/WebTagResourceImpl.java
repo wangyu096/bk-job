@@ -25,6 +25,7 @@
 package com.tencent.bk.job.manage.api.web.impl;
 
 import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobResourceTypeEnum;
 import com.tencent.bk.job.common.iam.constant.ActionId;
@@ -204,7 +205,7 @@ public class WebTagResourceImpl implements WebTagResource {
                                        AppResourceScope appResourceScope,
                                        String scopeType,
                                        String scopeId,
-                                       TagCreateUpdateReq tagCreateUpdateReq) {
+                                       @AuditRequestBody TagCreateUpdateReq tagCreateUpdateReq) {
         AuthResult authResult = checkCreateTagPermission(username, appResourceScope);
         if (!authResult.isPass()) {
             throw new PermissionDeniedException(authResult);

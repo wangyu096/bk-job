@@ -27,6 +27,7 @@ package com.tencent.bk.job.manage.api.web.impl;
 import com.tencent.bk.audit.annotations.ActionAuditRecord;
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditInstanceRecord;
+import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.exception.InvalidParamException;
@@ -455,7 +456,7 @@ public class WebTaskPlanResourceImpl implements WebTaskPlanResource {
                                            String scopeId,
                                            Long templateId,
                                            Long planId,
-                                           TaskPlanCreateUpdateReq taskPlanCreateUpdateReq) {
+                                           @AuditRequestBody TaskPlanCreateUpdateReq taskPlanCreateUpdateReq) {
         taskPlanCreateUpdateReq.setTemplateId(templateId);
         taskPlanCreateUpdateReq.setId(planId);
 
@@ -470,8 +471,7 @@ public class WebTaskPlanResourceImpl implements WebTaskPlanResource {
         checkPlanName(taskPlanCreateUpdateReq);
 
         TaskPlanInfoDTO savedPlan = planService.updateTaskPlan(TaskPlanInfoDTO.fromReq(username,
-            appResourceScope.getAppId(),
-            taskPlanCreateUpdateReq));
+            appResourceScope.getAppId(), taskPlanCreateUpdateReq));
         return Response.buildSuccessResp(TaskPlanInfoDTO.toVO(savedPlan));
     }
 
@@ -496,7 +496,7 @@ public class WebTaskPlanResourceImpl implements WebTaskPlanResource {
                                            String scopeType,
                                            String scopeId,
                                            Long templateId,
-                                           TaskPlanCreateUpdateReq taskPlanCreateUpdateReq) {
+                                           @AuditRequestBody TaskPlanCreateUpdateReq taskPlanCreateUpdateReq) {
         taskPlanCreateUpdateReq.setTemplateId(templateId);
         AuthResult authResult = planAuthService.authCreateJobPlan(username, appResourceScope, templateId, null);
         if (!authResult.isPass()) {

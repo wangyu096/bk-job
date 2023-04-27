@@ -24,9 +24,12 @@
 
 package com.tencent.bk.job.manage.api.esb.impl.v3;
 
+import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
@@ -62,7 +65,11 @@ public class EsbCredentialResourceV3Impl implements EsbCredentialV3Resource {
     }
 
     @Override
-    public EsbResp<EsbCredentialSimpleInfoV3DTO> createCredential(EsbCreateOrUpdateCredentialV3Req req) {
+    @AuditEntry(
+        actionId = ActionId.CREATE_TICKET
+    )
+    public EsbResp<EsbCredentialSimpleInfoV3DTO> createCredential(
+        @AuditRequestBody EsbCreateOrUpdateCredentialV3Req req) {
         req.fillAppResourceScope(appScopeMappingService);
         checkCreateParam(req);
         authCreate(req.getUserName(), req.getAppId());
@@ -95,7 +102,11 @@ public class EsbCredentialResourceV3Impl implements EsbCredentialV3Resource {
     }
 
     @Override
-    public EsbResp<EsbCredentialSimpleInfoV3DTO> updateCredential(EsbCreateOrUpdateCredentialV3Req req) {
+    @AuditEntry(
+        actionId = ActionId.MANAGE_TICKET
+    )
+    public EsbResp<EsbCredentialSimpleInfoV3DTO> updateCredential(
+        @AuditRequestBody EsbCreateOrUpdateCredentialV3Req req) {
         req.fillAppResourceScope(appScopeMappingService);
         checkUpdateParam(req);
         authUpdate(req.getUserName(), req.getAppId(), req.getId(), req.getName());

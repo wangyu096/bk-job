@@ -24,6 +24,7 @@
 
 package com.tencent.bk.job.manage.api.web.impl;
 
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.model.Response;
@@ -51,6 +52,10 @@ public class WebDangerousRuleResourceImpl implements WebDangerousRuleResource {
 
     @Override
     @AuditEntry(actionId = ActionId.HIGH_RISK_DETECT_RULE)
+    @ActionAuditRecord(
+        actionId = ActionId.HIGH_RISK_DETECT_RULE,
+        content = "View high-risk detect rule settings"
+    )
     public Response<List<DangerousRuleVO>> listDangerousRules(String username) {
         return Response.buildSuccessResp(dangerousRuleService.listDangerousRules(username));
     }

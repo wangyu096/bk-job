@@ -25,6 +25,7 @@
 package com.tencent.bk.job.manage.api.web.impl;
 
 import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
@@ -101,7 +102,7 @@ public class WebCredentialResourceImpl implements WebCredentialResource {
                                                    AppResourceScope appResourceScope,
                                                    String scopeType,
                                                    String scopeId,
-                                                   CredentialCreateUpdateReq createUpdateReq) {
+                                                   @AuditRequestBody CredentialCreateUpdateReq createUpdateReq) {
         AuthResult authResult = checkCreateTicketPermission(username, appResourceScope);
         if (!authResult.isPass()) {
             throw new PermissionDeniedException(authResult);
@@ -119,7 +120,7 @@ public class WebCredentialResourceImpl implements WebCredentialResource {
                                                    String scopeType,
                                                    String scopeId,
                                                    String credentialId,
-                                                   CredentialCreateUpdateReq createUpdateReq) {
+                                                   @AuditRequestBody CredentialCreateUpdateReq createUpdateReq) {
         createUpdateReq.setId(credentialId);
         AuthResult authResult = checkManageTicketPermission(username, appResourceScope, credentialId);
         if (!authResult.isPass()) {

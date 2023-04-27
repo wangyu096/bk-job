@@ -24,12 +24,18 @@
 
 package com.tencent.bk.job.manage.api.esb.impl;
 
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
+import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.annotations.AuditInstanceRecord;
+import com.tencent.bk.audit.model.ActionAuditContext;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
 import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.common.esb.util.EsbDTOAppScopeMappingHelper;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.iam.constant.ActionId;
+import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
@@ -48,6 +54,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_ID;
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_NAME;
+
 @RestController
 @Slf4j
 public class EsbGetScriptDetailResourceImpl implements EsbGetScriptDetailResource {
@@ -65,6 +74,14 @@ public class EsbGetScriptDetailResourceImpl implements EsbGetScriptDetailResourc
 
     @Override
     @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_get_script_detail"})
+    @AuditEntry(actionId = ActionId.VIEW_SCRIPT)
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_SCRIPT,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.SCRIPT
+        ),
+        content = "View script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public EsbResp<EsbScriptDTO> getScriptDetail(EsbGetScriptDetailRequest request) {
         request.fillAppResourceScope(appScopeMappingService);
         ValidateResult checkResult = checkRequest(request);
@@ -82,6 +99,10 @@ public class EsbGetScriptDetailResourceImpl implements EsbGetScriptDetailResourc
             throw new NotFoundException(ErrorCode.SCRIPT_VERSION_NOT_EXIST);
         }
         String scriptId = scriptVersion.getId();
+
+        // 审计
+        ActionAuditContext.current().setInstanceId(scriptId).setInstanceName(scriptVersion.getName());
+
         // 非公共脚本鉴权
         if (!scriptVersion.isPublicScript()) {
             AuthResult authResult =
