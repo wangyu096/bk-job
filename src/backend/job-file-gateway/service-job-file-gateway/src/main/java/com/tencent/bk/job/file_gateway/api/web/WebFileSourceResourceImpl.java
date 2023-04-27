@@ -25,6 +25,7 @@
 package com.tencent.bk.job.file_gateway.api.web;
 
 import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.FailedPreconditionException;
 import com.tencent.bk.job.common.exception.InvalidParamException;
@@ -130,7 +131,7 @@ public class WebFileSourceResourceImpl implements WebFileSourceResource {
                                                  AppResourceScope appResourceScope,
                                                  String scopeType,
                                                  String scopeId,
-                                                 FileSourceCreateUpdateReq fileSourceCreateUpdateReq) {
+                                                 @AuditRequestBody FileSourceCreateUpdateReq fileSourceCreateUpdateReq) {
         try {
             Long appId = appResourceScope.getAppId();
             AuthResult authResult = checkCreateFileSourcePermission(username, appResourceScope);

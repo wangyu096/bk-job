@@ -138,4 +138,12 @@ public class InvalidActionAuditContext implements ActionAuditContext {
     public ActionAuditContext setInstance(Object instance) {
         return this;
     }
+
+    @Override
+    public ActionAuditContext addInstanceInfo(String instanceId,
+                                              String instanceName,
+                                              Object originInstance,
+                                              Object instance) {
+        return this;
+    }
 }

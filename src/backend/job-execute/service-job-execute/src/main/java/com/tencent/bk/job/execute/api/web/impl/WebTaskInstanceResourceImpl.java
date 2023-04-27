@@ -114,6 +114,7 @@ public class WebTaskInstanceResourceImpl implements WebTaskInstanceResource {
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.VIEW_HISTORY)
     public Response<ExecuteStepVO> getStepInstanceDetail(String username,
                                                          AppResourceScope appResourceScope,
                                                          String scopeType,
@@ -370,6 +371,7 @@ public class WebTaskInstanceResourceImpl implements WebTaskInstanceResource {
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.VIEW_HISTORY)
     public Response<List<TaskOperationLogVO>> getTaskInstanceOperationLog(String username,
                                                                           AppResourceScope appResourceScope,
                                                                           String scopeType,

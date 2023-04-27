@@ -26,6 +26,7 @@ package com.tencent.bk.job.crontab.api.web.impl;
 
 import com.google.common.base.CaseFormat;
 import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
@@ -346,7 +347,7 @@ public class WebCronJobResourceImpl implements WebCronJobResource {
                                              AppResourceScope appResourceScope,
                                              String scopeType,
                                              String scopeId,
-                                             CronJobCreateUpdateReq cronJobCreateUpdateReq) {
+                                             @AuditRequestBody CronJobCreateUpdateReq cronJobCreateUpdateReq) {
 
         Long appId = appResourceScope.getAppId();
         AuthResult authResult = cronAuthService.authCreateCron(username,
@@ -377,7 +378,7 @@ public class WebCronJobResourceImpl implements WebCronJobResource {
                                              String scopeType,
                                              String scopeId,
                                              Long cronJobId,
-                                             CronJobCreateUpdateReq cronJobCreateUpdateReq) {
+                                             @AuditRequestBody CronJobCreateUpdateReq cronJobCreateUpdateReq) {
 
         Long appId = appResourceScope.getAppId();
         cronJobCreateUpdateReq.setId(cronJobId);
@@ -467,11 +468,12 @@ public class WebCronJobResourceImpl implements WebCronJobResource {
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.MANAGE_CRON)
     public Response<Boolean> batchUpdateCronJob(String username,
                                                 AppResourceScope appResourceScope,
                                                 String scopeType,
                                                 String scopeId,
-                                                BatchUpdateCronJobReq batchUpdateCronJobReq) {
+                                                @AuditRequestBody BatchUpdateCronJobReq batchUpdateCronJobReq) {
         Long appId = appResourceScope.getAppId();
 
         List<Long> cronJobInstanceList = new ArrayList<>();

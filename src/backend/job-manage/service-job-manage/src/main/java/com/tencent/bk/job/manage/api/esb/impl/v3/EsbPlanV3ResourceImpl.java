@@ -24,10 +24,15 @@
 
 package com.tencent.bk.job.manage.api.esb.impl.v3;
 
+import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.model.ActionAuditContext;
+import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
 import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.common.esb.model.job.v3.EsbPageDataV3;
 import com.tencent.bk.job.common.esb.util.EsbDTOAppScopeMappingHelper;
+import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.iam.service.BusinessAuthService;
@@ -37,6 +42,7 @@ import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.service.AppScopeMappingService;
 import com.tencent.bk.job.manage.api.esb.v3.EsbPlanV3Resource;
+import com.tencent.bk.job.manage.audit.PlanAudit;
 import com.tencent.bk.job.manage.auth.PlanAuthService;
 import com.tencent.bk.job.manage.manager.variable.StepRefVariableParser;
 import com.tencent.bk.job.manage.model.dto.TaskPlanQueryDTO;
@@ -166,29 +172,29 @@ public class EsbPlanV3ResourceImpl implements EsbPlanV3Resource {
 
     @Override
     @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_get_job_plan_detail"})
+    @AuditEntry(actionId = ActionId.VIEW_JOB_PLAN)
     public EsbResp<EsbPlanInfoV3DTO> getPlanDetailUsingPost(EsbGetPlanDetailV3Request request) {
         request.fillAppResourceScope(appScopeMappingService);
-        ValidateResult validateResult = request.validate();
-        if (validateResult.isPass()) {
-            TaskPlanInfoDTO taskPlanInfo = taskPlanService.getTaskPlanById(request.getAppId(), request.getPlanId());
-            if (taskPlanInfo != null) {
-                AuthResult authResult =
-                    planAuthService.authViewJobPlan(request.getUserName(),
-                        request.getAppResourceScope(),
-                        taskPlanInfo.getTemplateId(), request.getPlanId(), taskPlanInfo.getName());
-                if (!authResult.isPass()) {
-                    throw new PermissionDeniedException(authResult);
-                }
+        request.validate();
 
-                // 解析步骤引用全局变量的信息
-                StepRefVariableParser.parseStepRefVars(taskPlanInfo.getStepList(), taskPlanInfo.getVariableList());
-                return EsbResp.buildSuccessResp(TaskPlanInfoDTO.toEsbPlanInfoV3(taskPlanInfo));
+        return PlanAudit.wrapViewAction(request.getPlanId(), () -> {
+            TaskPlanInfoDTO taskPlanInfo = taskPlanService.getTaskPlanById(request.getAppId(), request.getPlanId());
+            if (taskPlanInfo == null) {
+                throw new NotFoundException(ErrorCode.TASK_PLAN_NOT_EXIST);
             }
-            return EsbResp.buildSuccessResp(null);
-        } else {
-            log.warn("Get plan detail request is illegal!");
-            return EsbResp.buildCommonFailResp(validateResult);
-        }
+            ActionAuditContext.current().setInstanceName(taskPlanInfo.getName());
+            AuthResult authResult =
+                planAuthService.authViewJobPlan(request.getUserName(),
+                    request.getAppResourceScope(),
+                    taskPlanInfo.getTemplateId(), request.getPlanId(), taskPlanInfo.getName());
+            if (!authResult.isPass()) {
+                throw new PermissionDeniedException(authResult);
+            }
+
+            // 解析步骤引用全局变量的信息
+            StepRefVariableParser.parseStepRefVars(taskPlanInfo.getStepList(), taskPlanInfo.getVariableList());
+            return EsbResp.buildSuccessResp(TaskPlanInfoDTO.toEsbPlanInfoV3(taskPlanInfo));
+        });
     }
 
     private ValidateResult checkRequest(EsbGetPlanListV3Request request) {

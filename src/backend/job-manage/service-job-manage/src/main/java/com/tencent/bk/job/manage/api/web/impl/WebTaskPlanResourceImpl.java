@@ -24,12 +24,16 @@
 
 package com.tencent.bk.job.manage.api.web.impl;
 
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
 import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.annotations.AuditInstanceRecord;
+import com.tencent.bk.audit.model.ActionAuditContext;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.exception.NotFoundException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
+import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
@@ -86,6 +90,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_ID;
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_NAME;
 
 /**
  * @since 19/11/2019 16:30
@@ -306,6 +313,15 @@ public class WebTaskPlanResourceImpl implements WebTaskPlanResource {
     @AuditEntry(
         actionId = ActionId.VIEW_JOB_PLAN
     )
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_JOB_PLAN,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PLAN,
+            instanceIds = "#planId",
+            instanceNames = "#$?.data?.name"
+        ),
+        content = "View plan [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public Response<TaskPlanVO> getPlanById(String username,
                                             AppResourceScope appResourceScope,
                                             String scopeType,
@@ -321,6 +337,8 @@ public class WebTaskPlanResourceImpl implements WebTaskPlanResource {
         if (taskPlan == null) {
             throw new NotFoundException(ErrorCode.TASK_PLAN_NOT_EXIST);
         }
+        ActionAuditContext.current().setInstanceName(taskPlan.getName());
+
         AuthResult authResult = planAuthService.authViewJobPlan(username, appResourceScope, templateId,
             planId, taskPlan.getName());
         if (!authResult.isPass()) {
@@ -347,6 +365,8 @@ public class WebTaskPlanResourceImpl implements WebTaskPlanResource {
         fillTaskPlanHostIdIfMissing(taskPlanVO);
 
         return Response.buildSuccessResp(taskPlanVO);
+//        return PlanAudit.wrapViewAction(planId, () -> {
+//        });
     }
 
     /**

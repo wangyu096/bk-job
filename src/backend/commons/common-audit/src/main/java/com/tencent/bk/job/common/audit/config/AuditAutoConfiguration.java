@@ -24,6 +24,7 @@
 
 package com.tencent.bk.job.common.audit.config;
 
+import com.tencent.bk.audit.ActionAuditAspect;
 import com.tencent.bk.audit.Audit;
 import com.tencent.bk.audit.AuditAspect;
 import com.tencent.bk.audit.AuditExceptionResolver;
@@ -64,6 +65,11 @@ public class AuditAutoConfiguration {
                                          AuditRequestProvider auditRequestProvider,
                                          AuditExceptionResolver auditExceptionResolver) {
         return new AuditAspect(audit, auditRequestProvider, auditExceptionResolver);
+    }
+
+    @Bean("actionAuditRecordAspect")
+    public ActionAuditAspect actionAuditRecordAspect(Audit audit) {
+        return new ActionAuditAspect(audit);
     }
 
     @Bean("auditExceptionResolver")

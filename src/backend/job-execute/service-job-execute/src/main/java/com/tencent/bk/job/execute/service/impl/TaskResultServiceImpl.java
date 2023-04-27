@@ -24,11 +24,14 @@
 
 package com.tencent.bk.job.execute.service.impl;
 
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
+import com.tencent.bk.audit.model.ActionAuditContext;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.Order;
 import com.tencent.bk.job.common.exception.FailedPreconditionException;
 import com.tencent.bk.job.common.exception.NotFoundException;
 import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
@@ -92,6 +95,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_ID;
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_NAME;
 import static com.tencent.bk.job.common.constant.Order.DESCENDING;
 
 /**
@@ -160,18 +165,16 @@ public class TaskResultServiceImpl implements TaskResultService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_HISTORY,
+        content = "View job task [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public TaskExecuteResultDTO getTaskExecutionResult(String username, Long appId,
                                                        Long taskInstanceId) throws ServiceException {
-        TaskInstanceDTO taskInstance = taskInstanceDAO.getTaskInstance(taskInstanceId);
-        if (taskInstance == null) {
-            log.warn("Task instance is not exist, taskInstanceId={}", taskInstanceId);
-            throw new NotFoundException(ErrorCode.TASK_INSTANCE_NOT_EXIST);
-        }
-        if (!taskInstance.getAppId().equals(appId)) {
-            log.warn("Task instance is not in application, taskInstanceId={}, appId={}", taskInstanceId, appId);
-            throw new NotFoundException(ErrorCode.TASK_INSTANCE_NOT_EXIST);
-        }
-
+        TaskInstanceDTO taskInstance = getAndCheckTaskInstance(appId, taskInstanceId);
+        // 审计
+        auditViewTaskInstance(taskInstance);
+        // 鉴权
         authViewTaskInstance(username, appId, taskInstance);
 
         TaskExecutionDTO taskExecution = buildTaskExecutionDTO(taskInstance);
@@ -189,6 +192,26 @@ public class TaskResultServiceImpl implements TaskResultService {
         taskExecuteResult.setStepInstanceExecutionResults(stepExecutionList);
 
         return taskExecuteResult;
+    }
+
+    private TaskInstanceDTO getAndCheckTaskInstance(long appId, long taskInstanceId) {
+        TaskInstanceDTO taskInstance = taskInstanceService.getTaskInstance(taskInstanceId);
+        if (taskInstance == null) {
+            log.warn("Task instance is not exist, taskInstanceId={}", taskInstanceId);
+            throw new NotFoundException(ErrorCode.TASK_INSTANCE_NOT_EXIST);
+        }
+        if (!taskInstance.getAppId().equals(appId)) {
+            log.warn("Task instance is not in application, taskInstanceId={}, appId={}", taskInstanceId, appId);
+            throw new NotFoundException(ErrorCode.TASK_INSTANCE_NOT_EXIST);
+        }
+        return taskInstance;
+    }
+
+    private void auditViewTaskInstance(TaskInstanceDTO taskInstance) {
+        // 审计
+        ActionAuditContext.current()
+            .setInstanceId(String.valueOf(taskInstance.getId()))
+            .setInstanceName(taskInstance.getName());
     }
 
     private TaskExecutionDTO buildTaskExecutionDTO(TaskInstanceDTO taskInstance) {
@@ -321,8 +344,16 @@ public class TaskResultServiceImpl implements TaskResultService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_HISTORY,
+        content = "View job task [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public StepExecutionDetailDTO getFastTaskStepExecutionResult(String username, Long appId, Long taskInstanceId,
                                                                  StepExecutionResultQuery query) {
+        TaskInstanceDTO taskInstance = getAndCheckTaskInstance(appId, taskInstanceId);
+        // 审计
+        auditViewTaskInstance(taskInstance);
+
         List<StepInstanceBaseDTO> stepInstanceList =
             stepInstanceDAO.listStepInstanceBaseByTaskInstanceId(taskInstanceId);
         StepInstanceBaseDTO stepInstance = stepInstanceList.get(0);
@@ -469,6 +500,10 @@ public class TaskResultServiceImpl implements TaskResultService {
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_HISTORY,
+        content = "View job task [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public StepExecutionDetailDTO getStepExecutionResult(String username, Long appId,
                                                          StepExecutionResultQuery query) throws ServiceException {
         StopWatch watch = new StopWatch("getStepExecutionResult");

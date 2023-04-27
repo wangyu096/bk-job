@@ -471,6 +471,7 @@ public class WebTaskExecutionResultResourceImpl implements WebTaskExecutionResul
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.VIEW_HISTORY)
     public Response<StepExecutionDetailVO> getStepExecutionResult(String username,
                                                                   AppResourceScope appResourceScope,
                                                                   String scopeType,
@@ -505,6 +506,7 @@ public class WebTaskExecutionResultResourceImpl implements WebTaskExecutionResul
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.VIEW_HISTORY)
     public Response<StepExecutionDetailVO> getFastTaskStepExecutionResult(String username,
                                                                           AppResourceScope appResourceScope,
                                                                           String scopeType,
@@ -605,6 +607,7 @@ public class WebTaskExecutionResultResourceImpl implements WebTaskExecutionResul
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.VIEW_HISTORY)
     public Response<IpScriptLogContentVO> getScriptLogContentByHost(String username,
                                                                     AppResourceScope appResourceScope,
                                                                     String scopeType,
@@ -642,6 +645,7 @@ public class WebTaskExecutionResultResourceImpl implements WebTaskExecutionResul
 
 
     @Override
+    @AuditEntry(actionId = ActionId.VIEW_HISTORY)
     public Response<List<ExecuteVariableVO>> getStepVariableByIp(String username,
                                                                  AppResourceScope appResourceScope,
                                                                  String scopeType,
@@ -652,6 +656,7 @@ public class WebTaskExecutionResultResourceImpl implements WebTaskExecutionResul
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.VIEW_HISTORY)
     public Response<List<ExecuteVariableVO>> getStepVariableByHost(String username,
                                                                    AppResourceScope appResourceScope,
                                                                    String scopeType,
@@ -815,6 +820,7 @@ public class WebTaskExecutionResultResourceImpl implements WebTaskExecutionResul
 
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
+    @AuditEntry(actionId = ActionId.VIEW_HISTORY)
     public Response<IpFileLogContentVO> getFileLogContentByHost(String username,
                                                                 AppResourceScope appResourceScope,
                                                                 String scopeType,
@@ -915,6 +921,7 @@ public class WebTaskExecutionResultResourceImpl implements WebTaskExecutionResul
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.VIEW_HISTORY)
     public Response<List<FileDistributionDetailVO>> getFileLogContentByFileTaskIds(String username,
                                                                                    AppResourceScope appResourceScope,
                                                                                    String scopeType,
@@ -946,6 +953,7 @@ public class WebTaskExecutionResultResourceImpl implements WebTaskExecutionResul
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.VIEW_HISTORY)
     public Response<List<HostDTO>> getHostsByResultType(String username,
                                                         AppResourceScope appResourceScope,
                                                         String scopeType,

@@ -97,7 +97,7 @@ import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_ID;
 import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_NAME;
 
 /**
- * @since 2/1/2020 12:18
+ * 定时任务 Service 实现
  */
 @Slf4j
 @Component
@@ -153,19 +153,6 @@ public class CronJobServiceImpl implements CronJobService {
     }
 
     @Override
-    public List<CronJobInfoDTO> getOrderedCronJobInfoByIds(List<Long> cronJobIdList) {
-        Map<Long, CronJobInfoDTO> map = getCronJobInfoMapByIds(cronJobIdList);
-        List<CronJobInfoDTO> cronJobInfoDTOList = new ArrayList<>();
-        for (Long id : cronJobIdList) {
-            CronJobInfoDTO cronJobInfoDTO = map.get(id);
-            if (cronJobInfoDTO != null) {
-                cronJobInfoDTOList.add(cronJobInfoDTO);
-            }
-        }
-        return cronJobInfoDTOList;
-    }
-
-    @Override
     public Map<Long, CronJobInfoDTO> getCronJobInfoMapByIds(List<Long> cronJobIdList) {
         List<CronJobInfoDTO> cronJobInfoDTOList = cronJobDAO.getCronJobByIds(cronJobIdList);
         Map<Long, CronJobInfoDTO> map = new HashMap<>();
@@ -199,7 +186,7 @@ public class CronJobServiceImpl implements CronJobService {
             instanceIds = "#$?.id",
             instanceNames = "#cronJobInfo?.name"
         ),
-        content = "Create cron [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+        content = "Create cron job [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
     public CronJobInfoDTO createCronJobInfo(CronJobInfoDTO cronJobInfo) {
         checkCronJobPlanOrScript(cronJobInfo);
@@ -222,7 +209,7 @@ public class CronJobServiceImpl implements CronJobService {
             resourceType = ResourceTypeId.CRON,
             instanceIds = "#cronJobInfo?.id"
         ),
-        content = "Modify cron [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+        content = "Modify cron job [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
     public CronJobInfoDTO updateCronJobInfo(CronJobInfoDTO cronJobInfo) {
         CronJobInfoDTO originCron = getCronJobInfoById(cronJobInfo.getId());
@@ -571,6 +558,13 @@ public class CronJobServiceImpl implements CronJobService {
 
     @Override
     @Transactional(rollbackFor = {Exception.class, Error.class})
+    @ActionAuditRecord(
+        actionId = ActionId.MANAGE_CRON,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.CRON
+        ),
+        content = "Modify cron job [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public Boolean batchUpdateCronJob(Long appId, BatchUpdateCronJobReq batchUpdateCronJobReq) {
         if (batchUpdateCronJobReq != null) {
             if (CollectionUtils.isNotEmpty(batchUpdateCronJobReq.getCronJobInfoList())) {
@@ -578,9 +572,9 @@ public class CronJobServiceImpl implements CronJobService {
                     CronJobInfoDTO cronJobInfoFromReq =
                         CronJobInfoDTO.fromReq(JobContextUtil.getUsername(), appId, cronJobInfo);
                     cronJobInfoFromReq.setEnable(cronJobInfo.getEnable());
+                    CronJobInfoDTO originCronJobInfo = getCronJobInfoById(appId, cronJobInfo.getId());
                     if (cronJobInfo.getEnable()) {
                         try {
-                            CronJobInfoDTO originCronJobInfo = cronJobDAO.getCronJobById(appId, cronJobInfo.getId());
                             List<ServiceTaskVariable> taskVariables = null;
                             if (CollectionUtils.isNotEmpty(originCronJobInfo.getVariableValue())) {
                                 taskVariables =
@@ -602,6 +596,13 @@ public class CronJobServiceImpl implements CronJobService {
                             deleteJob(appId, cronJobInfo.getId());
                         }
                     }
+                    CronJobInfoDTO updateCronJobInfo = getCronJobInfoById(appId, cronJobInfo.getId());
+                    ActionAuditContext.current().addInstanceInfo(
+                        String.valueOf(cronJobInfo.getId()),
+                        cronJobInfo.getName(),
+                        originCronJobInfo,
+                        updateCronJobInfo
+                    );
                 });
             }
         }

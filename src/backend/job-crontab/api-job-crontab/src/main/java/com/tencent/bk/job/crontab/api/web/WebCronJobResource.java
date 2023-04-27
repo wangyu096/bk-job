@@ -174,7 +174,8 @@ public interface WebCronJobResource {
         @ApiParam(value = "资源范围ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
-        @ApiParam(value = "定时任务 ID", required = true) @PathVariable(value = "cronJobId")
+        @ApiParam(value = "定时任务 ID", required = true)
+        @PathVariable(value = "cronJobId")
             Long cronJobId
     );
 

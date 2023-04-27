@@ -162,4 +162,6 @@ public interface ActionAuditContext {
     ActionAuditContext setOriginInstance(Object originInstance);
 
     ActionAuditContext setInstance(Object instance);
+
+    ActionAuditContext addInstanceInfo(String instanceId, String instanceName, Object originInstance, Object instance);
 }

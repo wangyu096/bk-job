@@ -42,8 +42,9 @@ import java.util.List;
 public class CronJobCreateUpdateReq {
 
     /**
-     * 定时任务 ID (内部字段)
+     * 定时任务 ID
      */
+    @ApiModelProperty(value = "定时任务 ID")
     private Long id;
 
     /**

@@ -26,6 +26,7 @@ package com.tencent.bk.audit.model;
 
 import com.tencent.bk.audit.AuditEventBuilder;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -117,6 +118,26 @@ public class ActionAuditContextBuilder {
         return this;
     }
 
+    public ActionAuditContextBuilder setInstanceId(String instanceId) {
+        this.instanceIdList = Collections.singletonList(instanceId);
+        return this;
+    }
+
+    public ActionAuditContextBuilder setInstanceName(String instanceName) {
+        this.instanceNameList = Collections.singletonList(instanceName);
+        return this;
+    }
+
+    public ActionAuditContextBuilder setOriginInstanceList(Object originInstance) {
+        this.originInstanceList = Collections.singletonList(originInstance);
+        return this;
+    }
+
+    public ActionAuditContextBuilder setInstance(Object instance) {
+        this.instanceList = Collections.singletonList(instance);
+        return this;
+    }
+
     public ActionAuditContextBuilder setAttributes(Map<String, Object> attributes) {
         this.attributes = attributes;
         return this;
@@ -124,6 +145,6 @@ public class ActionAuditContextBuilder {
 
     public ActionAuditContext build() {
         return new SdkActionAuditContext(actionId, resourceType, instanceIdList, instanceNameList,
-            originInstanceList, instanceList, content, eventBuilder, attributes);
+                originInstanceList, instanceList, content, eventBuilder, attributes);
     }
 }

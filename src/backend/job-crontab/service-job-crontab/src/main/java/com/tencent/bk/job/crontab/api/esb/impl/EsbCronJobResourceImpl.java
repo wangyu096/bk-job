@@ -24,11 +24,15 @@
 
 package com.tencent.bk.job.crontab.api.esb.impl;
 
+import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.annotations.AuditRequestBody;
+import com.tencent.bk.audit.model.AuditContext;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
 import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
@@ -129,7 +133,8 @@ public class EsbCronJobResourceImpl implements EsbCronJobResource {
 
     @Override
     @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_update_cron_status"})
-    public EsbResp<EsbCronInfoResponse> updateCronStatus(EsbUpdateCronStatusRequest request) {
+    @AuditEntry(actionId = ActionId.MANAGE_CRON)
+    public EsbResp<EsbCronInfoResponse> updateCronStatus(@AuditRequestBody EsbUpdateCronStatusRequest request) {
         request.fillAppResourceScope(appScopeMappingService);
         String username = request.getUserName();
         Long appId = request.getAppId();
@@ -176,14 +181,20 @@ public class EsbCronJobResourceImpl implements EsbCronJobResource {
 
     @Override
     @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_save_cron"})
-    public EsbResp<EsbCronInfoResponse> saveCron(EsbSaveCronRequest request) {
+    @AuditEntry
+    public EsbResp<EsbCronInfoResponse> saveCron(@AuditRequestBody EsbSaveCronRequest request) {
         request.fillAppResourceScope(appScopeMappingService);
+
+        boolean isUpdate = request.getId() != null && request.getId() > 0;
+        // 判断审计操作
+        AuditContext.current().updateActionId(isUpdate ? ActionId.MANAGE_CRON : ActionId.CREATE_CRON);
+
         CronJobInfoDTO cronJobInfo = new CronJobInfoDTO();
         EsbCronInfoResponse esbCronInfoResponse = new EsbCronInfoResponse();
         esbCronInfoResponse.setId(0L);
         checkRequest(request);
         AuthResult authResult;
-        boolean isUpdate = request.getId() != null && request.getId() > 0;
+
         if (isUpdate) {
             authResult = cronAuthService.authManageCron(
                 request.getUserName(), request.getAppResourceScope(), request.getId(), null

@@ -209,9 +209,12 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
 
     @Override
     public TaskInstanceDTO executeFastTask(FastTaskDTO fastTask) {
+        // 设置脚本信息
+        checkAndSetScriptInfoForFast(fastTask.getTaskInstance(), fastTask.getStepInstance());
+
         StepInstanceDTO stepInstance = fastTask.getStepInstance();
 
-        ActionAuditContext actionAuditContext = null;
+        ActionAuditContext actionAuditContext;
         if (stepInstance.isFileStep()) {
             actionAuditContext = ActionAuditContext.builder(ActionId.QUICK_TRANSFER_FILE)
                 .setEventBuilder(ExecuteJobAuditEventBuilder.class)
@@ -236,6 +239,8 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
                     .setContent("Launch a public script [{{" + JobAuditAttributeNames.SCRIPT_NAME
                         + "}}]({{" + JobAuditAttributeNames.SCRIPT_VERSION_ID + "}})")
                     .build();
+            } else {
+                actionAuditContext = ActionAuditContext.INVALID;
             }
         } else {
             actionAuditContext = ActionAuditContext.INVALID;
@@ -257,11 +262,6 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
         standardizeStepDynamicGroupId(Collections.singletonList(stepInstance));
         adjustStepTimeout(stepInstance);
         try {
-            // 设置脚本信息
-            watch.start("checkAndSetScriptInfoForFast");
-            checkAndSetScriptInfoForFast(taskInstance, stepInstance);
-            watch.stop();
-
             // 设置账号信息
             watch.start("checkAndSetAccountInfo");
             checkAndSetAccountInfo(stepInstance, taskInstance.getAppId());
