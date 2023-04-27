@@ -24,7 +24,10 @@
 
 package com.tencent.bk.job.manage.api.esb.impl.v3;
 
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
 import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.annotations.AuditInstanceRecord;
+import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.audit.model.ActionAuditContext;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
@@ -33,16 +36,15 @@ import com.tencent.bk.job.common.esb.model.job.v3.EsbPageDataV3;
 import com.tencent.bk.job.common.esb.util.EsbDTOAppScopeMappingHelper;
 import com.tencent.bk.job.common.exception.NotFoundException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
+import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
-import com.tencent.bk.job.common.iam.service.BusinessAuthService;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.service.AppScopeMappingService;
 import com.tencent.bk.job.manage.api.esb.v3.EsbPlanV3Resource;
-import com.tencent.bk.job.manage.audit.PlanAudit;
 import com.tencent.bk.job.manage.auth.PlanAuthService;
 import com.tencent.bk.job.manage.manager.variable.StepRefVariableParser;
 import com.tencent.bk.job.manage.model.dto.TaskPlanQueryDTO;
@@ -56,6 +58,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_ID;
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_NAME;
+
 /**
  * @since 15/10/2020 18:08
  */
@@ -64,17 +69,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class EsbPlanV3ResourceImpl implements EsbPlanV3Resource {
 
     private final TaskPlanService taskPlanService;
-    private final BusinessAuthService businessAuthService;
     private final PlanAuthService planAuthService;
     private final AppScopeMappingService appScopeMappingService;
 
     @Autowired
     public EsbPlanV3ResourceImpl(TaskPlanService taskPlanService,
-                                 BusinessAuthService businessAuthService,
                                  PlanAuthService planAuthService,
                                  AppScopeMappingService appScopeMappingService) {
         this.taskPlanService = taskPlanService;
-        this.businessAuthService = businessAuthService;
         this.planAuthService = planAuthService;
         this.appScopeMappingService = appScopeMappingService;
     }
@@ -115,6 +117,16 @@ public class EsbPlanV3ResourceImpl implements EsbPlanV3Resource {
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.VIEW_JOB_PLAN)
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_JOB_PLAN,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PLAN,
+            instanceIds = "#planId",
+            instanceNames = "#$?.data?.name"
+        ),
+        content = "View plan [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public EsbResp<EsbPlanInfoV3DTO> getPlanDetail(String username, String appCode, Long bizId,
                                                    String scopeType, String scopeId, Long planId) {
         EsbGetPlanDetailV3Request request = new EsbGetPlanDetailV3Request();
@@ -173,28 +185,35 @@ public class EsbPlanV3ResourceImpl implements EsbPlanV3Resource {
     @Override
     @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_get_job_plan_detail"})
     @AuditEntry(actionId = ActionId.VIEW_JOB_PLAN)
-    public EsbResp<EsbPlanInfoV3DTO> getPlanDetailUsingPost(EsbGetPlanDetailV3Request request) {
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_JOB_PLAN,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PLAN,
+            instanceIds = "#request?.planId",
+            instanceNames = "#$?.data?.name"
+        ),
+        content = "View plan [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
+    public EsbResp<EsbPlanInfoV3DTO> getPlanDetailUsingPost(@AuditRequestBody EsbGetPlanDetailV3Request request) {
         request.fillAppResourceScope(appScopeMappingService);
         request.validate();
 
-        return PlanAudit.wrapViewAction(request.getPlanId(), () -> {
-            TaskPlanInfoDTO taskPlanInfo = taskPlanService.getTaskPlanById(request.getAppId(), request.getPlanId());
-            if (taskPlanInfo == null) {
-                throw new NotFoundException(ErrorCode.TASK_PLAN_NOT_EXIST);
-            }
-            ActionAuditContext.current().setInstanceName(taskPlanInfo.getName());
-            AuthResult authResult =
-                planAuthService.authViewJobPlan(request.getUserName(),
-                    request.getAppResourceScope(),
-                    taskPlanInfo.getTemplateId(), request.getPlanId(), taskPlanInfo.getName());
-            if (!authResult.isPass()) {
-                throw new PermissionDeniedException(authResult);
-            }
+        TaskPlanInfoDTO taskPlanInfo = taskPlanService.getTaskPlanById(request.getAppId(), request.getPlanId());
+        if (taskPlanInfo == null) {
+            throw new NotFoundException(ErrorCode.TASK_PLAN_NOT_EXIST);
+        }
+        ActionAuditContext.current().setInstanceName(taskPlanInfo.getName());
+        AuthResult authResult =
+            planAuthService.authViewJobPlan(request.getUserName(),
+                request.getAppResourceScope(),
+                taskPlanInfo.getTemplateId(), request.getPlanId(), taskPlanInfo.getName());
+        if (!authResult.isPass()) {
+            throw new PermissionDeniedException(authResult);
+        }
 
-            // 解析步骤引用全局变量的信息
-            StepRefVariableParser.parseStepRefVars(taskPlanInfo.getStepList(), taskPlanInfo.getVariableList());
-            return EsbResp.buildSuccessResp(TaskPlanInfoDTO.toEsbPlanInfoV3(taskPlanInfo));
-        });
+        // 解析步骤引用全局变量的信息
+        StepRefVariableParser.parseStepRefVars(taskPlanInfo.getStepList(), taskPlanInfo.getVariableList());
+        return EsbResp.buildSuccessResp(TaskPlanInfoDTO.toEsbPlanInfoV3(taskPlanInfo));
     }
 
     private ValidateResult checkRequest(EsbGetPlanListV3Request request) {

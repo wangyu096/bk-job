@@ -175,15 +175,6 @@ public class TaskPlanServiceImpl implements TaskPlanService {
     }
 
     @Override
-//    @ActionAuditRecord(
-//        actionId = ActionId.VIEW_JOB_PLAN,
-//        instance = @AuditInstanceRecord(
-//            resourceType = ResourceTypeId.PLAN,
-//            instanceIds = "#planId",
-//            instanceNames = "#$?.name"
-//        ),
-//        content = "View plan [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
-//    )
     public TaskPlanInfoDTO getTaskPlanById(Long appId, Long templateId, Long planId) {
         checkTemplateExist(appId, templateId);
         TaskPlanInfoDTO taskPlan = taskPlanDAO.getTaskPlanById(appId, templateId, planId, TaskPlanTypeEnum.NORMAL);
@@ -197,15 +188,6 @@ public class TaskPlanServiceImpl implements TaskPlanService {
     }
 
     @Override
-//    @ActionAuditRecord(
-//        actionId = ActionId.VIEW_JOB_PLAN,
-//        instance = @AuditInstanceRecord(
-//            resourceType = ResourceTypeId.PLAN,
-//            instanceIds = "#planId",
-//            instanceNames = "#$?.name"
-//        ),
-//        content = "View plan [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
-//    )
     public TaskPlanInfoDTO getTaskPlanById(Long planId) {
         TaskPlanInfoDTO taskPlan = taskPlanDAO.getTaskPlanById(planId);
         if (taskPlan != null) {
@@ -224,15 +206,6 @@ public class TaskPlanServiceImpl implements TaskPlanService {
     }
 
     @Override
-//    @ActionAuditRecord(
-//        actionId = ActionId.VIEW_JOB_PLAN,
-//        instance = @AuditInstanceRecord(
-//            resourceType = ResourceTypeId.PLAN,
-//            instanceIds = "#planId",
-//            instanceNames = "#$?.name"
-//        ),
-//        content = "View plan [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
-//    )
     public TaskPlanInfoDTO getTaskPlanById(Long appId, Long planId) {
         TaskPlanInfoDTO taskPlan = taskPlanDAO.getTaskPlanById(appId, 0L, planId, null);
         if (taskPlan != null) {

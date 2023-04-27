@@ -27,7 +27,6 @@ package com.tencent.bk.job.manage.api.web.impl;
 import com.tencent.bk.audit.annotations.ActionAuditRecord;
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditInstanceRecord;
-import com.tencent.bk.audit.model.ActionAuditContext;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.exception.InvalidParamException;
@@ -95,7 +94,7 @@ import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_ID;
 import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_NAME;
 
 /**
- * @since 19/11/2019 16:30
+ * 执行方案 Web Resource
  */
 @Slf4j
 @RestController
@@ -337,7 +336,6 @@ public class WebTaskPlanResourceImpl implements WebTaskPlanResource {
         if (taskPlan == null) {
             throw new NotFoundException(ErrorCode.TASK_PLAN_NOT_EXIST);
         }
-        ActionAuditContext.current().setInstanceName(taskPlan.getName());
 
         AuthResult authResult = planAuthService.authViewJobPlan(username, appResourceScope, templateId,
             planId, taskPlan.getName());
@@ -365,8 +363,6 @@ public class WebTaskPlanResourceImpl implements WebTaskPlanResource {
         fillTaskPlanHostIdIfMissing(taskPlanVO);
 
         return Response.buildSuccessResp(taskPlanVO);
-//        return PlanAudit.wrapViewAction(planId, () -> {
-//        });
     }
 
     /**
