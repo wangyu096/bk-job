@@ -40,6 +40,8 @@ public class AccountCreateUpdateReq {
     /**
      * 账号ID, 内部字段
      */
+    @Deprecated
+    @ApiModelProperty(value = "账号ID ID", hidden = true)
     private Long id;
     /**
      * 帐号名称

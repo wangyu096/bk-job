@@ -41,6 +41,8 @@ public class WhiteIPRecordCreateUpdateReq {
     /**
      * 内部字段
      */
+    @Deprecated
+    @ApiModelProperty(value = "白名单记录 ID", hidden = true)
     private Long id;
 
     @ApiModelProperty(value = "是否对所有资源范围生效，默认为false")

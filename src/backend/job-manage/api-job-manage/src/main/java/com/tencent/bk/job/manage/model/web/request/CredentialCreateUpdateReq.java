@@ -40,8 +40,10 @@ import static com.tencent.bk.job.manage.common.consts.CredentialTypeEnum.USERNAM
 public class CredentialCreateUpdateReq {
 
     /**
-     * 内部字段
+     * 内部字段, 凭据ID
      */
+    @Deprecated
+    @ApiModelProperty(value = "凭据 ID", hidden = true)
     private String id;
     /**
      * 名称

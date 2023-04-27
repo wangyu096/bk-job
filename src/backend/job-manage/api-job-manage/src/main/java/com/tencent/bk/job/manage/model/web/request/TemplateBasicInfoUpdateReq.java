@@ -40,6 +40,8 @@ public class TemplateBasicInfoUpdateReq {
     /**
      * 模版 ID
      */
+    @Deprecated
+    @ApiModelProperty(value = "作业模板 ID", hidden = true)
     private Long id;
 
     /**

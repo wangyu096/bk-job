@@ -44,7 +44,8 @@ public class CronJobCreateUpdateReq {
     /**
      * 定时任务 ID
      */
-    @ApiModelProperty(value = "定时任务 ID")
+    @Deprecated
+    @ApiModelProperty(value = "定时任务 ID", hidden = true)
     private Long id;
 
     /**

@@ -40,10 +40,14 @@ public class ScriptCreateUpdateReq {
     /**
      * 脚本版本ID，对应某个版本的脚本的ID
      */
+    @Deprecated
+    @ApiModelProperty(value = "脚本版本ID，对应某个版本的脚本的ID", hidden = true)
     private Long scriptVersionId;
     /**
-     * 脚本ID，一个脚本包含多个版本的脚本
+     * 脚本ID
      */
+    @Deprecated
+    @ApiModelProperty(value = "脚本ID", hidden = true)
     private String id;
     /**
      * 脚本名称
