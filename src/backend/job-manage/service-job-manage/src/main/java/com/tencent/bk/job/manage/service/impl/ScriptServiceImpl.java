@@ -77,15 +77,6 @@ public class ScriptServiceImpl implements ScriptService {
     }
 
     @Override
-    @ActionAuditRecord(
-        actionId = ActionId.VIEW_SCRIPT,
-        instance = @AuditInstanceRecord(
-            resourceType = ResourceTypeId.SCRIPT,
-            instanceIds = "#scriptId",
-            instanceNames = "#$?.name"
-        ),
-        content = "View script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
-    )
     public ScriptDTO getScript(Long appId, String scriptId) {
         return scriptManager.getScript(appId, scriptId);
     }
@@ -130,42 +121,16 @@ public class ScriptServiceImpl implements ScriptService {
     }
 
     @Override
-    @ActionAuditRecord(
-        actionId = ActionId.VIEW_SCRIPT,
-        instance = @AuditInstanceRecord(
-            resourceType = ResourceTypeId.SCRIPT,
-            instanceIds = "#$?.id",
-            instanceNames = "#$?.name"
-        ),
-        content = "View script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
-    )
     public ScriptDTO getScriptVersion(long appId, Long scriptVersionId) {
         return scriptManager.getScriptVersion(appId, scriptVersionId);
     }
 
     @Override
-    @ActionAuditRecord(
-        actionId = ActionId.VIEW_SCRIPT,
-        instance = @AuditInstanceRecord(
-            resourceType = ResourceTypeId.SCRIPT,
-            instanceIds = "#$?.id",
-            instanceNames = "#$?.name"
-        ),
-        content = "View script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
-    )
     public ScriptDTO getScriptVersion(Long scriptVersionId) {
         return scriptManager.getScriptVersion(scriptVersionId);
     }
 
     @Override
-    @ActionAuditRecord(
-        actionId = ActionId.VIEW_SCRIPT,
-        instance = @AuditInstanceRecord(
-            resourceType = ResourceTypeId.SCRIPT,
-            instanceIds = "#scriptId"
-        ),
-        content = "View script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
-    )
     public List<ScriptDTO> listScriptVersion(long appId, String scriptId) {
         ScriptDTO script = getScript(appId, scriptId);
         if (script == null) {
@@ -399,29 +364,11 @@ public class ScriptServiceImpl implements ScriptService {
     }
 
     @Override
-    @ActionAuditRecord(
-        actionId = ActionId.VIEW_SCRIPT,
-        instance = @AuditInstanceRecord(
-            resourceType = ResourceTypeId.SCRIPT,
-            instanceIds = "#scriptId",
-            instanceNames = "#$?.name"
-        ),
-        content = "View script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
-    )
     public ScriptDTO getByScriptIdAndVersion(Long appId, String scriptId, String version) {
         return scriptManager.getByScriptIdAndVersion(appId, scriptId, version);
     }
 
     @Override
-    @ActionAuditRecord(
-        actionId = ActionId.VIEW_SCRIPT,
-        instance = @AuditInstanceRecord(
-            resourceType = ResourceTypeId.SCRIPT,
-            instanceIds = "#scriptId",
-            instanceNames = "#$?.name"
-        ),
-        content = "View script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
-    )
     public ScriptDTO getScriptByScriptId(String scriptId) {
         return scriptManager.getScriptByScriptId(scriptId);
     }

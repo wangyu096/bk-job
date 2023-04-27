@@ -24,6 +24,10 @@
 
 package com.tencent.bk.job.manage.api.esb.impl;
 
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
+import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.annotations.AuditInstanceRecord;
+import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
 import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
@@ -32,6 +36,8 @@ import com.tencent.bk.job.common.esb.model.job.EsbFileSourceDTO;
 import com.tencent.bk.job.common.esb.model.job.EsbIpDTO;
 import com.tencent.bk.job.common.esb.util.EsbDTOAppScopeMappingHelper;
 import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.iam.constant.ActionId;
+import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
@@ -75,6 +81,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_ID;
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_NAME;
+
 @RestController
 @Slf4j
 public class EsbGetJobDetailResourceImpl implements EsbGetJobDetailResource {
@@ -101,7 +110,17 @@ public class EsbGetJobDetailResourceImpl implements EsbGetJobDetailResource {
 
     @Override
     @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_get_job_detail"})
-    public EsbResp<EsbJobDetailDTO> getJobDetail(EsbGetJobDetailRequest request) {
+    @AuditEntry(actionId = ActionId.VIEW_JOB_PLAN)
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_JOB_PLAN,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PLAN,
+            instanceIds = "#request?.planId",
+            instanceNames = "#$?.data?.name"
+        ),
+        content = "View plan [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
+    public EsbResp<EsbJobDetailDTO> getJobDetail(@AuditRequestBody EsbGetJobDetailRequest request) {
         request.fillAppResourceScope(appScopeMappingService);
 
         ValidateResult checkResult = checkRequest(request);

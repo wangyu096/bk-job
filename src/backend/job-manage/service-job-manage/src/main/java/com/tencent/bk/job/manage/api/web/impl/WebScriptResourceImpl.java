@@ -24,7 +24,11 @@
 
 package com.tencent.bk.job.manage.api.web.impl;
 
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
 import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.annotations.AuditInstanceRecord;
+import com.tencent.bk.audit.annotations.AuditRequestBody;
+import com.tencent.bk.audit.model.ActionAuditContext;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobResourceTypeEnum;
 import com.tencent.bk.job.common.exception.FailedPreconditionException;
@@ -33,6 +37,7 @@ import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.exception.NotFoundException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.iam.constant.ActionId;
+import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.model.Response;
@@ -84,6 +89,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_ID;
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_NAME;
+
 /**
  * 业务脚本Resource
  */
@@ -113,6 +121,14 @@ public class WebScriptResourceImpl extends BaseWebScriptResource implements WebS
 
     @Override
     @AuditEntry(actionId = ActionId.VIEW_SCRIPT)
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_SCRIPT,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.SCRIPT,
+            instanceNames = "#$?.data?.name"
+        ),
+        content = "View script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public Response<ScriptVO> getScriptVersionDetail(String username,
                                                      AppResourceScope appResourceScope,
                                                      String scopeType,
@@ -120,6 +136,8 @@ public class WebScriptResourceImpl extends BaseWebScriptResource implements WebS
                                                      Long scriptVersionId) {
         ScriptDTO script = scriptService.getScriptVersion(appResourceScope.getAppId(), scriptVersionId);
         checkExist(script);
+
+        ActionAuditContext.current().setInstanceId(script.getId());
 
         // 鉴权
         auth(() -> scriptAuthService.authViewScript(username, appResourceScope, script.getId(), null));
@@ -130,6 +148,15 @@ public class WebScriptResourceImpl extends BaseWebScriptResource implements WebS
 
     @Override
     @AuditEntry(actionId = ActionId.VIEW_SCRIPT)
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_SCRIPT,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.SCRIPT,
+            instanceIds = "#scriptId",
+            instanceNames = "#$?.data?.name"
+        ),
+        content = "View script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public Response<ScriptVO> getScript(String username,
                                         AppResourceScope appResourceScope,
                                         String scopeType,
@@ -167,6 +194,15 @@ public class WebScriptResourceImpl extends BaseWebScriptResource implements WebS
 
     @Override
     @AuditEntry(actionId = ActionId.VIEW_SCRIPT)
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_SCRIPT,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.SCRIPT,
+            instanceIds = "#scriptId",
+            instanceNames = "#$?.data?.name"
+        ),
+        content = "View script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public Response<ScriptVO> getOnlineScriptVersionByScriptId(String username,
                                                                AppResourceScope appResourceScope,
                                                                String scopeType,
@@ -252,7 +288,7 @@ public class WebScriptResourceImpl extends BaseWebScriptResource implements WebS
                                                String scopeType,
                                                String scopeId,
                                                String scriptId,
-                                               ScriptInfoUpdateReq request) {
+                                               @AuditRequestBody ScriptInfoUpdateReq request) {
         long appId = appResourceScope.getAppId();
         String updateField = request.getUpdateField();
         boolean isUpdateDesc = "scriptDesc".equals(updateField);
@@ -313,7 +349,6 @@ public class WebScriptResourceImpl extends BaseWebScriptResource implements WebS
     }
 
     @Override
-    @AuditEntry(actionId = ActionId.VIEW_SCRIPT)
     public Response<List<ScriptVO>> listScriptVersion(String username,
                                                       AppResourceScope appResourceScope,
                                                       String scopeType,
@@ -359,7 +394,7 @@ public class WebScriptResourceImpl extends BaseWebScriptResource implements WebS
                                          AppResourceScope appResourceScope,
                                          String scopeType,
                                          String scopeId,
-                                         ScriptCreateUpdateReq request) {
+                                         @AuditRequestBody ScriptCreateUpdateReq request) {
         // 鉴权
         auth(() -> scriptAuthService.authCreateScript(username, appResourceScope));
 
@@ -395,6 +430,7 @@ public class WebScriptResourceImpl extends BaseWebScriptResource implements WebS
         auth(() -> scriptAuthService.authManageScript(username, appResourceScope, scriptId, null));
 
         ScriptDTO script = buildCreateOrUpdateScript(request, appResourceScope, username);
+        script.setId(scriptId);
         script.setCreator(username);
         ScriptDTO savedScript = scriptService.saveScriptVersion(script);
 
@@ -415,6 +451,8 @@ public class WebScriptResourceImpl extends BaseWebScriptResource implements WebS
         auth(() -> scriptAuthService.authManageScript(username, appResourceScope, scriptId, null));
 
         ScriptDTO script = buildCreateOrUpdateScript(request, appResourceScope, username);
+        script.setId(scriptId);
+        script.setScriptVersionId(scriptVersionId);
         ScriptDTO savedScriptVersion = scriptService.updateScriptVersion(script);
 
         ScriptVO scriptVO = ScriptConverter.convertToScriptVO(savedScriptVersion);
@@ -493,10 +531,10 @@ public class WebScriptResourceImpl extends BaseWebScriptResource implements WebS
 
     @Override
     public Response<List<String>> listAppScriptNames(String username,
-                                       AppResourceScope appResourceScope,
-                                       String scopeType,
-                                       String scopeId,
-                                       String scriptName) {
+                                                     AppResourceScope appResourceScope,
+                                                     String scopeType,
+                                                     String scopeId,
+                                                     String scriptName) {
         List<String> scriptNames = scriptService.listScriptNames(appResourceScope.getAppId(), scriptName);
         return Response.buildSuccessResp(scriptNames);
     }

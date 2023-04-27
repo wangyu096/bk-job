@@ -75,6 +75,7 @@ public class EsbScriptResourceV3Impl implements EsbScriptV3Resource {
 
 
     @Override
+    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_get_script_list"})
     public EsbResp<EsbPageDataV3<EsbScriptV3DTO>> getScriptList(String username,
                                                                 String appCode,
                                                                 Long bizId,
@@ -98,6 +99,7 @@ public class EsbScriptResourceV3Impl implements EsbScriptV3Resource {
     }
 
     @Override
+    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_get_script_version_list"})
     public EsbResp<EsbPageDataV3<EsbScriptVersionDetailV3DTO>> getScriptVersionList(String username,
                                                                                     String appCode,
                                                                                     Long bizId,
@@ -121,6 +123,7 @@ public class EsbScriptResourceV3Impl implements EsbScriptV3Resource {
     }
 
     @Override
+    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_get_script_version_detail"})
     public EsbResp<EsbScriptVersionDetailV3DTO> getScriptVersionDetail(String username,
                                                                        String appCode,
                                                                        Long bizId,

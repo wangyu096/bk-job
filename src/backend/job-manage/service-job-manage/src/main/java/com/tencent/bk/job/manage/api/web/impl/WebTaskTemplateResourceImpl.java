@@ -25,13 +25,16 @@
 package com.tencent.bk.job.manage.api.web.impl;
 
 import com.google.common.base.CaseFormat;
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
 import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.annotations.AuditInstanceRecord;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobResourceTypeEnum;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.exception.NotFoundException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
+import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
@@ -70,6 +73,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_ID;
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_NAME;
 
 /**
  * 作业模板Resource
@@ -215,6 +221,15 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
     @Override
     @AuditEntry(
         actionId = ActionId.VIEW_JOB_TEMPLATE
+    )
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_JOB_TEMPLATE,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.TEMPLATE,
+            instanceIds = "#templateId",
+            instanceNames = "#$?.data?.name"
+        ),
+        content = "View template [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
     public Response<TaskTemplateVO> getTemplateById(String username,
                                                     AppResourceScope appResourceScope,

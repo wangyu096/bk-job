@@ -29,7 +29,6 @@ import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.common.esb.model.job.v3.EsbPageDataV3;
 import com.tencent.bk.job.common.esb.util.EsbDTOAppScopeMappingHelper;
 import com.tencent.bk.job.common.exception.InvalidParamException;
-import com.tencent.bk.job.common.iam.service.BusinessAuthService;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
@@ -52,15 +51,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class EsbTemplateV3ResourceImpl implements EsbTemplateV3Resource {
     private final TaskTemplateService taskTemplateService;
-    private final BusinessAuthService businessAuthService;
     private final AppScopeMappingService appScopeMappingService;
 
     @Autowired
     public EsbTemplateV3ResourceImpl(TaskTemplateService taskTemplateService,
-                                     BusinessAuthService businessAuthService,
                                      AppScopeMappingService appScopeMappingService) {
         this.taskTemplateService = taskTemplateService;
-        this.businessAuthService = businessAuthService;
         this.appScopeMappingService = appScopeMappingService;
     }
 

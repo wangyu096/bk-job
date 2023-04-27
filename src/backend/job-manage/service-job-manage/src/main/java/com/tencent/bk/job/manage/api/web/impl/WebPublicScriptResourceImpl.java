@@ -317,6 +317,7 @@ public class WebPublicScriptResourceImpl extends BaseWebScriptResource implement
 
 
         ScriptDTO script = buildCreateOrUpdateScript(request, username);
+        script.setId(scriptId);
         script.setCreator(username);
         ScriptDTO savedScript = publicScriptService.saveScriptVersion(script);
 
@@ -334,6 +335,8 @@ public class WebPublicScriptResourceImpl extends BaseWebScriptResource implement
         auth(() -> noResourceScopeAuthService.authCreatePublicScript(username));
 
         ScriptDTO script = buildCreateOrUpdateScript(request, username);
+        script.setId(scriptId);
+        script.setScriptVersionId(scriptVersionId);
         ScriptDTO savedScriptVersion = publicScriptService.updateScriptVersion(script);
 
         ScriptVO scriptVO = ScriptConverter.convertToScriptVO(savedScriptVersion);
