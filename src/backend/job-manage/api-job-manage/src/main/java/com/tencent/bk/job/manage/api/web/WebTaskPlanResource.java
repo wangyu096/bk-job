@@ -183,7 +183,7 @@ public interface WebTaskPlanResource {
 
     @ApiOperation(value = "更新执行方案", produces = "application/json")
     @PutMapping("/scope/{scopeType}/{scopeId}/task/plan/{templateId}/{planId}")
-    Response<Long> updatePlan(
+    Response<TaskPlanVO> updatePlan(
         @ApiParam(value = "用户名，网关自动传入")
         @RequestHeader("username")
             String username,
@@ -209,7 +209,7 @@ public interface WebTaskPlanResource {
 
     @ApiOperation(value = "新增执行方案", produces = "application/json")
     @PostMapping("/scope/{scopeType}/{scopeId}/task/plan/{templateId}")
-    Response<Long> createPlan(
+    Response<TaskPlanVO> createPlan(
         @ApiParam(value = "用户名，网关自动传入")
         @RequestHeader("username")
             String username,

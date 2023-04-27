@@ -453,13 +453,13 @@ public class WebTaskPlanResourceImpl implements WebTaskPlanResource {
     @AuditEntry(
         actionId = ActionId.EDIT_JOB_PLAN
     )
-    public Response<Long> updatePlan(String username,
-                                     AppResourceScope appResourceScope,
-                                     String scopeType,
-                                     String scopeId,
-                                     Long templateId,
-                                     Long planId,
-                                     TaskPlanCreateUpdateReq taskPlanCreateUpdateReq) {
+    public Response<TaskPlanVO> updatePlan(String username,
+                                           AppResourceScope appResourceScope,
+                                           String scopeType,
+                                           String scopeId,
+                                           Long templateId,
+                                           Long planId,
+                                           TaskPlanCreateUpdateReq taskPlanCreateUpdateReq) {
         taskPlanCreateUpdateReq.setTemplateId(templateId);
         taskPlanCreateUpdateReq.setId(planId);
 
@@ -476,7 +476,7 @@ public class WebTaskPlanResourceImpl implements WebTaskPlanResource {
         TaskPlanInfoDTO savedPlan = planService.updateTaskPlan(TaskPlanInfoDTO.fromReq(username,
             appResourceScope.getAppId(),
             taskPlanCreateUpdateReq));
-        return Response.buildSuccessResp(savedPlan.getId());
+        return Response.buildSuccessResp(TaskPlanInfoDTO.toVO(savedPlan));
     }
 
     private void checkPlanName(TaskPlanCreateUpdateReq taskPlanCreateUpdateReq) {
@@ -495,12 +495,12 @@ public class WebTaskPlanResourceImpl implements WebTaskPlanResource {
     @AuditEntry(
         actionId = ActionId.CREATE_JOB_PLAN
     )
-    public Response<Long> createPlan(String username,
-                                     AppResourceScope appResourceScope,
-                                     String scopeType,
-                                     String scopeId,
-                                     Long templateId,
-                                     TaskPlanCreateUpdateReq taskPlanCreateUpdateReq) {
+    public Response<TaskPlanVO> createPlan(String username,
+                                           AppResourceScope appResourceScope,
+                                           String scopeType,
+                                           String scopeId,
+                                           Long templateId,
+                                           TaskPlanCreateUpdateReq taskPlanCreateUpdateReq) {
         taskPlanCreateUpdateReq.setTemplateId(templateId);
         AuthResult authResult = planAuthService.authCreateJobPlan(username, appResourceScope, templateId, null);
         if (!authResult.isPass()) {
@@ -514,7 +514,7 @@ public class WebTaskPlanResourceImpl implements WebTaskPlanResource {
             appResourceScope.getAppId(),
             taskPlanCreateUpdateReq));
         planAuthService.registerPlan(savedPlan.getId(), taskPlanCreateUpdateReq.getName(), username);
-        return Response.buildSuccessResp(savedPlan.getId());
+        return Response.buildSuccessResp(TaskPlanInfoDTO.toVO(savedPlan));
     }
 
     @Override
