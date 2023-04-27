@@ -78,34 +78,48 @@ public class ActionAuditAspect {
     @Around("actionAuditRecord()")
     public Object actionAuditRecord(ProceedingJoinPoint pjp) throws Throwable {
         StopWatch watch = new StopWatch("ActionAudit");
-        watch.start("ActionAuditStart");
         Method method = null;
         ActionAuditRecord record = null;
         ActionAuditScope scope = null;
-        boolean isAuditRecording = audit.isRecording();
-        if (isAuditRecording) {
-            method = ((MethodSignature) pjp.getSignature()).getMethod();
-            record = method.getAnnotation(ActionAuditRecord.class);
-            ActionAuditContext startActionAuditContext =
-                ActionAuditContext.builder(record.actionId())
-                    .setResourceType(record.instance().resourceType())
-                    .setEventBuilder(record.builder())
-                    .setContent(record.content())
-                    .build();
-            scope = startActionAuditContext.makeCurrent();
+        boolean isAuditRecording = false;
+
+        try {
+            watch.start("ActionAuditStart");
+            isAuditRecording = audit.isRecording();
+            if (isAuditRecording) {
+                method = ((MethodSignature) pjp.getSignature()).getMethod();
+                record = method.getAnnotation(ActionAuditRecord.class);
+                if (record != null) {
+                    ActionAuditContext startActionAuditContext =
+                        ActionAuditContext.builder(record.actionId())
+                            .setResourceType(record.instance().resourceType())
+                            .setEventBuilder(record.builder())
+                            .setContent(record.content())
+                            .build();
+                    scope = startActionAuditContext.makeCurrent();
+                }
+            }
+        } catch (Throwable e) {
+            // 忽略审计错误，避免影响业务代码执行
+            log.error("Audit action caught exception", e);
+        } finally {
+            if (watch.isRunning()) {
+                watch.stop();
+            }
         }
-        watch.stop();
 
         Object result = null;
         try {
             watch.start("Action");
             result = pjp.proceed();
-            watch.stop();
             return result;
         } finally {
-            if (isAuditRecording) {
-                watch.start("ActionAuditStop");
+            if (watch.isRunning()) {
+                watch.stop();
+            }
+            if (isAuditRecording && record != null) {
                 try {
+                    watch.start("ActionAuditStop");
                     ActionAuditContext currentActionAuditContext = ActionAuditContext.current();
                     parseActionAuditRecordSpEL(pjp, record, method, result, currentActionAuditContext);
                     currentActionAuditContext.end();
@@ -113,7 +127,9 @@ public class ActionAuditAspect {
                     // 忽略审计错误，避免影响业务代码执行
                     log.error("Audit action caught exception", e);
                 } finally {
-                    scope.close();
+                    if (scope != null) {
+                        scope.close();
+                    }
                     if (watch.isRunning()) {
                         watch.stop();
                     }

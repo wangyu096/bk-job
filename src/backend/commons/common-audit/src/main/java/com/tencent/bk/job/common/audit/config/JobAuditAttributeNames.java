@@ -30,4 +30,6 @@ public interface JobAuditAttributeNames {
     String SCRIPT_NAME = "@SCRIPT_NAME";
     String PLAN_ID = "@PLAN_ID";
     String PLAN_NAME = "@PLAN_NAME";
+    String VERSION = "@VERSION";
+    String OPERATION = "@OPERATION";
 }

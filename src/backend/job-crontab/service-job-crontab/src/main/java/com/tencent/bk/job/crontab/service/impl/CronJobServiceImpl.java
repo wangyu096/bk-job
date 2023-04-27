@@ -95,6 +95,7 @@ import java.util.stream.Collectors;
 
 import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_ID;
 import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_NAME;
+import static com.tencent.bk.job.common.audit.config.JobAuditAttributeNames.OPERATION;
 
 /**
  * 定时任务 Service 实现
@@ -368,7 +369,7 @@ public class CronJobServiceImpl implements CronJobService {
             resourceType = ResourceTypeId.CRON,
             instanceIds = "#cronJobId"
         ),
-        content = "{{@OPERATION}} cron job [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+        content = "{{" + OPERATION + "}} cron job [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
     public Boolean changeCronJobEnableStatus(String username, Long appId, Long cronJobId, Boolean enable) {
         CronJobInfoDTO originCronJobInfo = cronJobDAO.getCronJobById(appId, cronJobId);

@@ -45,7 +45,11 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
-
+/**
+ * 审计事件入口切入点。
+ * <p>
+ * 使用@Order(Ordered.LOWEST_PRECEDENCE - 1) 保证 AuditAspect 比 ActionAuditAspect 先执行
+ */
 @Aspect
 @Slf4j
 @Order(Ordered.LOWEST_PRECEDENCE - 1)

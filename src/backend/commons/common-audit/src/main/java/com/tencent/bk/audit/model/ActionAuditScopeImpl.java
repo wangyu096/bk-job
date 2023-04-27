@@ -24,8 +24,11 @@
 
 package com.tencent.bk.audit.model;
 
+import lombok.extern.slf4j.Slf4j;
+
 import javax.annotation.Nullable;
 
+@Slf4j
 class ActionAuditScopeImpl implements ActionAuditScope {
 
     @Nullable
@@ -40,9 +43,13 @@ class ActionAuditScopeImpl implements ActionAuditScope {
 
     @Override
     public void close() {
-        if (!closed && ActionAuditContext.current() == toAttach) {
-            closed = true;
-            AuditContext.current().setCurrentActionAuditContext(beforeAttach);
+        try {
+            if (!closed && ActionAuditContext.current() == toAttach) {
+                closed = true;
+                AuditContext.current().setCurrentActionAuditContext(beforeAttach);
+            }
+        } catch (Throwable e) {
+            log.error("Close action audit scope caught exception", e);
         }
     }
 }
