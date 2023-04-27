@@ -532,7 +532,7 @@ public class WebTaskExecutionResultResourceImpl implements WebTaskExecutionResul
                                                                   String searchIp,
                                                                   String orderField,
                                                                   Integer order) {
-        auditAndAuth(username, appResourceScope.getAppId(), stepInstanceId);
+//        auditAndAuth(username, appResourceScope.getAppId(), stepInstanceId);
         StepExecutionResultQuery query = StepExecutionResultQuery.builder()
             .stepInstanceId(stepInstanceId)
             .executeCount(executeCount)
