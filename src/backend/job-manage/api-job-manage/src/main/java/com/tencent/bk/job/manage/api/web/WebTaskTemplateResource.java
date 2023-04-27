@@ -137,7 +137,7 @@ public interface WebTaskTemplateResource {
 
     @ApiOperation(value = "新建模版", produces = "application/json")
     @PostMapping
-    Response<Long> createTemplate(
+    Response<TaskTemplateVO> createTemplate(
         @ApiParam(value = "用户名，网关自动传入")
         @RequestHeader("username")
             String username,
@@ -158,7 +158,7 @@ public interface WebTaskTemplateResource {
 
     @ApiOperation(value = "更新模版", produces = "application/json")
     @PutMapping("/{templateId}")
-    Response<Long> updateTemplate(
+    Response<TaskTemplateVO> updateTemplate(
         @ApiParam(value = "用户名，网关自动传入")
         @RequestHeader("username")
             String username,

@@ -250,11 +250,11 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
     @AuditEntry(
         actionId = ActionId.CREATE_JOB_TEMPLATE
     )
-    public Response<Long> createTemplate(String username,
-                                         AppResourceScope appResourceScope,
-                                         String scopeType,
-                                         String scopeId,
-                                         @AuditRequestBody TaskTemplateCreateUpdateReq request) {
+    public Response<TaskTemplateVO> createTemplate(String username,
+                                                   AppResourceScope appResourceScope,
+                                                   String scopeType,
+                                                   String scopeId,
+                                                   @AuditRequestBody TaskTemplateCreateUpdateReq request) {
 
         AuthResult authResult = templateAuthService.authCreateJobTemplate(username, appResourceScope);
         if (!authResult.isPass()) {
@@ -266,7 +266,7 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
         }
 
         TaskTemplateInfoDTO template = createTemplate(username, appResourceScope, request);
-        return Response.buildSuccessResp(template.getId());
+        return Response.buildSuccessResp(TaskTemplateInfoDTO.toVO(template));
     }
 
     @Override
@@ -307,12 +307,12 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
     @AuditEntry(
         actionId = ActionId.EDIT_JOB_TEMPLATE
     )
-    public Response<Long> updateTemplate(String username,
-                                         AppResourceScope appResourceScope,
-                                         String scopeType,
-                                         String scopeId,
-                                         Long templateId,
-                                         @AuditRequestBody TaskTemplateCreateUpdateReq request) {
+    public Response<TaskTemplateVO> updateTemplate(String username,
+                                                   AppResourceScope appResourceScope,
+                                                   String scopeType,
+                                                   String scopeId,
+                                                   Long templateId,
+                                                   @AuditRequestBody TaskTemplateCreateUpdateReq request) {
         request.setId(templateId);
         AuthResult authResult = templateAuthService.authEditJobTemplate(username, appResourceScope, templateId);
         if (!authResult.isPass()) {
@@ -322,17 +322,18 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
         if (!request.validate()) {
             throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
         }
-        updateTemplate(username, appResourceScope, request);
+        TaskTemplateInfoDTO updateTemplate = updateTemplate(username, appResourceScope, request);
 
-        return Response.buildSuccessResp(templateId);
+        return Response.buildSuccessResp(TaskTemplateInfoDTO.toVO(updateTemplate));
     }
 
-    private void updateTemplate(String username,
-                                AppResourceScope appResourceScope,
-                                TaskTemplateCreateUpdateReq request) {
+    private TaskTemplateInfoDTO updateTemplate(String username,
+                                               AppResourceScope appResourceScope,
+                                               TaskTemplateCreateUpdateReq request) {
         TaskTemplateInfoDTO template = templateService
             .updateTaskTemplate(TaskTemplateInfoDTO.fromReq(username, appResourceScope.getAppId(), request));
         templateAuthService.registerTemplate(template.getId(), request.getName(), username);
+        return template;
     }
 
     @Override
