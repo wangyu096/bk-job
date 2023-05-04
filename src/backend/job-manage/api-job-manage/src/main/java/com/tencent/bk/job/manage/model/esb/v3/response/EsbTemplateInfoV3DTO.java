@@ -25,6 +25,7 @@
 package com.tencent.bk.job.manage.model.esb.v3.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.tencent.bk.job.common.esb.model.job.v3.EsbGlobalVarV3DTO;
 import lombok.Getter;
 import lombok.Setter;
@@ -43,11 +44,13 @@ public class EsbTemplateInfoV3DTO extends EsbTemplateBasicInfoV3DTO {
      * 步骤信息
      */
     @JsonProperty("step_list")
+    @JsonPropertyDescription("Job template steps")
     private List<EsbStepV3DTO> stepList;
 
     /**
      * 全局变量信息
      */
     @JsonProperty("global_var_list")
+    @JsonPropertyDescription("Job template global variables")
     private List<EsbGlobalVarV3DTO> globalVarList;
 }

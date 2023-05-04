@@ -25,6 +25,7 @@
 package com.tencent.bk.job.file_gateway.model.resp.esb.v3;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.tencent.bk.job.common.esb.model.EsbAppScopeDTO;
 import com.tencent.bk.job.common.util.json.LongTimestampSerializer;
@@ -39,55 +40,67 @@ public class EsbFileSourceV3DTO extends EsbAppScopeDTO {
     /**
      * id
      */
+    @JsonPropertyDescription("File source id")
     private Integer id;
     /**
      * 文件源标识
      */
+    @JsonPropertyDescription("File source code")
     private String code;
+
     /**
      * 文件源别名
      */
+    @JsonPropertyDescription("File source alias")
     private String alias;
     /**
      * 状态
      */
+    @JsonPropertyDescription("File source status")
     private Integer status;
     /**
      * 类型
      */
     @JsonProperty("file_source_type")
+    @JsonPropertyDescription("File source type")
     private Integer fileSourceType;
 
     /**
      * 是否为公共文件源
      */
     @JsonProperty("is_public")
+    @JsonPropertyDescription("Is public file source")
     private boolean publicFlag;
 
     /**
      * 凭据Id
      */
+    @JsonPropertyDescription("File source credential id")
     @JsonProperty("credential_id")
     private String credentialId;
 
     /**
      * 是否启用
      */
+    @JsonPropertyDescription("Is file source enabled")
     private Boolean enable;
 
     /**
      * 创建人
      */
+    @JsonPropertyDescription("Creator")
     private String creator;
     /**
      * 创建时间
      */
     @JsonProperty("create_time")
+    @JsonPropertyDescription("Create time")
     private Long createTime;
     /**
      * 更新人
      */
     @JsonProperty("last_modify_user")
+    @JsonPropertyDescription("Last modify user")
     private String lastModifyUser;
 
     /**
@@ -95,6 +108,7 @@ public class EsbFileSourceV3DTO extends EsbAppScopeDTO {
      */
     @JsonSerialize(using = LongTimestampSerializer.class)
     @JsonProperty("last_modify_time")
+    @JsonPropertyDescription("Last modify time")
     private Long lastModifyTime;
 
 }

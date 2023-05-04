@@ -24,6 +24,7 @@
 
 package com.tencent.bk.job.manage.model.esb.v3.response;
 
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.tencent.bk.job.common.esb.model.EsbAppScopeDTO;
 import lombok.Data;
 
@@ -35,16 +36,19 @@ public class EsbTagV3DTO extends EsbAppScopeDTO {
     /**
      * 标签 ID
      */
+    @JsonPropertyDescription("Tag id")
     private Long id;
 
     /**
      * 标签名
      */
+    @JsonPropertyDescription("Tag name")
     private String name;
 
     /**
      * 描述
      */
+    @JsonPropertyDescription("Tag description")
     private String description;
 
 }

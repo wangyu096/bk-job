@@ -50,10 +50,9 @@ public class JsonSchemaUtils {
         JSON_SCHEMA_GENERATOR = new JsonSchemaGenerator(mapper);
     }
 
-    public static String generateJsonSchema(Class<?> jsonObject) {
+    public static JsonSchema generateJsonSchema(Class<?> jsonObject) {
         try {
-            JsonSchema schema = JSON_SCHEMA_GENERATOR.generateSchema(jsonObject);
-            return JsonUtils.toJson(schema);
+            return JSON_SCHEMA_GENERATOR.generateSchema(jsonObject);
         } catch (JsonMappingException e) {
             log.error("Generate json schema caught exception", e);
             return null;
