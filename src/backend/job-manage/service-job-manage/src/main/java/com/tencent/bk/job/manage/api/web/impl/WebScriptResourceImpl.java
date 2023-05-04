@@ -182,6 +182,16 @@ public class WebScriptResourceImpl extends BaseWebScriptResource implements WebS
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.VIEW_SCRIPT)
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_SCRIPT,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.SCRIPT,
+            instanceIds = "#scriptId",
+            instanceNames = "#$?.data?.name"
+        ),
+        content = "View script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public Response<BasicScriptVO> getScriptBasicInfo(String username,
                                                       AppResourceScope appResourceScope,
                                                       String scopeType,
@@ -349,12 +359,29 @@ public class WebScriptResourceImpl extends BaseWebScriptResource implements WebS
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.VIEW_SCRIPT)
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_SCRIPT,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.SCRIPT,
+            instanceIds = "#scriptId"
+        ),
+        content = "View script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public Response<List<ScriptVO>> listScriptVersion(String username,
                                                       AppResourceScope appResourceScope,
                                                       String scopeType,
                                                       String scopeId,
                                                       String scriptId) {
         long appId = appResourceScope.getAppId();
+        ScriptDTO script = scriptService.getScriptByScriptId(scriptId);
+        if (script == null) {
+            throw new NotFoundException(ErrorCode.SCRIPT_NOT_EXIST);
+        }
+
+        // 审计
+        ActionAuditContext.current().setInstanceName(script.getName());
+
         // 鉴权
         AuthResult viewAuthResult = scriptAuthService.authViewScript(username, appResourceScope, scriptId, null);
         AuthResult manageAuthResult = scriptAuthService.authManageScript(username, appResourceScope, scriptId, null);

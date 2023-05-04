@@ -167,22 +167,22 @@ public class ScriptServiceImpl implements ScriptService {
         content = "Modify script version ({{@VERSION}}) for script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
     public ScriptDTO updateScriptVersion(ScriptDTO scriptVersion) {
-        ScriptDTO originScript = getScriptByScriptId(scriptVersion.getId());
-        if (originScript == null) {
+        ScriptDTO originScriptVersion = getScriptVersion(scriptVersion.getScriptVersionId());
+        if (originScriptVersion == null) {
             throw new NotFoundException(ErrorCode.SCRIPT_NOT_EXIST);
         }
 
-        ScriptDTO updateScript = scriptManager.updateScriptVersion(scriptVersion);
+        ScriptDTO updateScriptVersion = scriptManager.updateScriptVersion(scriptVersion);
 
         // 审计
         ActionAuditContext.current()
             .setInstanceId(scriptVersion.getId())
-            .setInstanceName(originScript.getName())
-            .setOriginInstance(originScript.toEsbScriptV3DTO())
-            .addAttribute("@VERSION", originScript.getVersion())
-            .setInstance(updateScript.toEsbScriptV3DTO());
+            .setInstanceName(originScriptVersion.getName())
+            .setOriginInstance(originScriptVersion.toEsbScriptV3DTO())
+            .addAttribute("@VERSION", originScriptVersion.toEsbScriptVersionDetailV3DTO())
+            .setInstance(updateScriptVersion.toEsbScriptVersionDetailV3DTO());
 
-        return updateScript;
+        return updateScriptVersion;
     }
 
     @Override
@@ -216,7 +216,8 @@ public class ScriptServiceImpl implements ScriptService {
         instance = @AuditInstanceRecord(
             resourceType = ResourceTypeId.SCRIPT
         ),
-        content = "Publish script version({{@VERSION}}) for script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+        content = "Set script version [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})({{@VERSION}}) state to " +
+            "[online]"
     )
     public void publishScript(Long appId, String operator, String scriptId, Long scriptVersionId) {
         addScriptVersionAuditInfo(appId, scriptVersionId);
@@ -230,7 +231,8 @@ public class ScriptServiceImpl implements ScriptService {
         instance = @AuditInstanceRecord(
             resourceType = ResourceTypeId.SCRIPT
         ),
-        content = "Disable script version({{@VERSION}}) for script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+        content = "Set script version [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})({{@VERSION}}) state to " +
+            "[forbidden]"
     )
     public void disableScript(Long appId, String operator, String scriptId, Long scriptVersionId) {
         addScriptVersionAuditInfo(appId, scriptVersionId);
