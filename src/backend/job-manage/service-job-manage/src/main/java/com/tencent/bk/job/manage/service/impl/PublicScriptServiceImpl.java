@@ -143,7 +143,7 @@ public class PublicScriptServiceImpl implements PublicScriptService {
             name = "@VERSION", value = "#scriptVersion?.version"
         ),
         content =
-            "Create a new version ({{@VERSION}}) for public script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+            "Create a new version [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})({{@VERSION}})"
     )
     public ScriptDTO saveScriptVersion(ScriptDTO scriptVersion) {
         return scriptManager.saveScriptVersion(scriptVersion);
@@ -156,8 +156,7 @@ public class PublicScriptServiceImpl implements PublicScriptService {
             resourceType = ResourceTypeId.PUBLIC_SCRIPT
         ),
         content =
-            "Modify script version ({{@VERSION}}) for public script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID +
-                "}})"
+            "Modify script version [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})({{@VERSION}})"
     )
     public ScriptDTO updateScriptVersion(ScriptDTO scriptVersion) {
         ScriptDTO originScript = getScriptByScriptId(scriptVersion.getId());
@@ -183,8 +182,7 @@ public class PublicScriptServiceImpl implements PublicScriptService {
         instance = @AuditInstanceRecord(
             resourceType = ResourceTypeId.PUBLIC_SCRIPT
         ),
-        content =
-            "Delete script version({{@VERSION}}) for public script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+        content = "Delete script version [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})({{@VERSION}})"
     )
     public void deleteScriptVersion(Long scriptVersionId) {
         addScriptVersionAuditInfo(scriptVersionId);
@@ -208,9 +206,8 @@ public class PublicScriptServiceImpl implements PublicScriptService {
         instance = @AuditInstanceRecord(
             resourceType = ResourceTypeId.PUBLIC_SCRIPT
         ),
-        content =
-            "Publish script version({{@VERSION}}) for public script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID +
-                "}})"
+        content = "Set script version [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})({{@VERSION}}) state to " +
+            "[online]"
     )
     public void publishScript(String scriptId, Long scriptVersionId) {
         addScriptVersionAuditInfo(scriptVersionId);
@@ -223,9 +220,8 @@ public class PublicScriptServiceImpl implements PublicScriptService {
         instance = @AuditInstanceRecord(
             resourceType = ResourceTypeId.PUBLIC_SCRIPT
         ),
-        content =
-            "Disable script version({{@VERSION}}) for public script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID +
-                "}})"
+        content = "Set script version [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})({{@VERSION}}) state to " +
+            "[forbidden]"
     )
     public void disableScript(String scriptId, Long scriptVersionId) {
         addScriptVersionAuditInfo(scriptVersionId);

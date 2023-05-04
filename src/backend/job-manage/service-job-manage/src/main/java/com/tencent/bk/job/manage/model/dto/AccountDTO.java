@@ -149,6 +149,7 @@ public class AccountDTO {
         esbAccount.setCreateTime(createTime);
         esbAccount.setLastModifyUser(lastModifyUser);
         esbAccount.setLastModifyTime(lastModifyTime);
+        esbAccount.setDescription(remark);
         return esbAccount;
     }
 

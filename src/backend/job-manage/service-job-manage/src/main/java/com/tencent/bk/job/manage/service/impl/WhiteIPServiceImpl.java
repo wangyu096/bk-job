@@ -455,7 +455,7 @@ public class WhiteIPServiceImpl implements WhiteIPService {
 
     @Override
     @ActionAuditRecord(
-        actionId = ActionId.MANAGE_WHITELIST,
+        actionId = ActionId.CREATE_WHITELIST,
         content = "Create a white list row"
     )
     public WhiteIPRecordDTO createWhiteIP(String username, WhiteIPRecordCreateUpdateReq createUpdateReq) {

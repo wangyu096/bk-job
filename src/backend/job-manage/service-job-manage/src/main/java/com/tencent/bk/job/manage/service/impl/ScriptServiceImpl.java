@@ -152,7 +152,7 @@ public class ScriptServiceImpl implements ScriptService {
         attributes = @AuditAttribute(
             name = "@VERSION", value = "#scriptVersion?.version"
         ),
-        content = "Create a new version ({{@VERSION}}) for script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+        content = "Create script version [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})({{@VERSION}})"
     )
     public ScriptDTO saveScriptVersion(ScriptDTO scriptVersion) {
         return scriptManager.saveScriptVersion(scriptVersion);
@@ -164,7 +164,7 @@ public class ScriptServiceImpl implements ScriptService {
         instance = @AuditInstanceRecord(
             resourceType = ResourceTypeId.SCRIPT
         ),
-        content = "Modify script version ({{@VERSION}}) for script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+        content = "Modify script version [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})({{@VERSION}})"
     )
     public ScriptDTO updateScriptVersion(ScriptDTO scriptVersion) {
         ScriptDTO originScriptVersion = getScriptVersion(scriptVersion.getScriptVersionId());
@@ -191,7 +191,7 @@ public class ScriptServiceImpl implements ScriptService {
         instance = @AuditInstanceRecord(
             resourceType = ResourceTypeId.SCRIPT
         ),
-        content = "Delete script version({{@VERSION}}) for script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+        content = "Delete script version [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})({{@VERSION}})"
     )
     public void deleteScriptVersion(String operator, Long appId, Long scriptVersionId) {
         addScriptVersionAuditInfo(appId, scriptVersionId);

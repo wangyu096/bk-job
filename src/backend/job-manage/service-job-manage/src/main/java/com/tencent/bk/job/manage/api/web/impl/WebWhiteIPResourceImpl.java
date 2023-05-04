@@ -24,6 +24,7 @@
 
 package com.tencent.bk.job.manage.api.web.impl;
 
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.iam.constant.ActionId;
@@ -66,6 +67,11 @@ public class WebWhiteIPResourceImpl implements WebWhiteIPResource {
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.MANAGE_WHITELIST)
+    @ActionAuditRecord(
+        actionId = ActionId.MANAGE_WHITELIST,
+        content = "View the white list"
+    )
     public Response<PageDataWithManagePermission<WhiteIPRecordVO>> listWhiteIP(
         String username,
         String ipStr,

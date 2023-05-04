@@ -243,7 +243,18 @@ public class TagServiceImpl implements TagService {
 
     @Override
     @Transactional
+    @ActionAuditRecord(
+        actionId = ActionId.MANAGE_TAG,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.TAG,
+            instanceIds = "#tagId"
+        ),
+        content = "Delete tag [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public void deleteTag(Long tagId) {
+        TagDTO tag = getTagInfoById(tagId);
+        ActionAuditContext.current().setInstanceName(tag.getName());
+
         tagDAO.deleteTagById(tagId);
         resourceTagDAO.deleteResourceTags(tagId);
     }

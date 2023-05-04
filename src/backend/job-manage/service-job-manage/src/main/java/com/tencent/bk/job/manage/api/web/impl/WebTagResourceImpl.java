@@ -230,6 +230,7 @@ public class WebTagResourceImpl implements WebTagResource {
     }
 
     @Override
+    @AuditEntry(actionId = ActionId.MANAGE_TAG)
     public Response<Boolean> deleteTag(String username,
                                        AppResourceScope appResourceScope,
                                        String scopeType,

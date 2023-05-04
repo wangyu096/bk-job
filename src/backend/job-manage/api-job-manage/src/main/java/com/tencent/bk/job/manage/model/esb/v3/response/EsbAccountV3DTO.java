@@ -57,4 +57,10 @@ public class EsbAccountV3DTO extends EsbAppScopeDTO {
 
     @JsonProperty("last_modify_time")
     private Long lastModifyTime;
+
+    /**
+     * 账号描述
+     */
+    @JsonProperty("description")
+    private String description;
 }

@@ -25,6 +25,7 @@
 package com.tencent.bk.job.manage.api.web.impl;
 
 import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.FeatureToggleModeEnum;
 import com.tencent.bk.job.common.exception.FailedPreconditionException;
@@ -84,7 +85,7 @@ public class WebAppAccountResourceImpl implements WebAppAccountResource {
                                            AppResourceScope appResourceScope,
                                            String scopeType,
                                            String scopeId,
-                                           AccountCreateUpdateReq accountCreateUpdateReq) {
+                                           @AuditRequestBody AccountCreateUpdateReq accountCreateUpdateReq) {
         AuthResult authResult = checkCreateAccountPermission(username, appResourceScope);
         if (!authResult.isPass()) {
             throw new PermissionDeniedException(authResult);
@@ -109,7 +110,7 @@ public class WebAppAccountResourceImpl implements WebAppAccountResource {
                                              String scopeType,
                                              String scopeId,
                                              Long accountId,
-                                             AccountCreateUpdateReq accountCreateUpdateReq) {
+                                             @AuditRequestBody AccountCreateUpdateReq accountCreateUpdateReq) {
         accountCreateUpdateReq.setId(accountId);
         AccountDTO account = accountService.getAccountById(accountId);
         if (account == null) {
