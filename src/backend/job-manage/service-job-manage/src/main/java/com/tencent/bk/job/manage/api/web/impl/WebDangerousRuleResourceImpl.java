@@ -30,6 +30,7 @@ import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.manage.api.web.WebDangerousRuleResource;
 import com.tencent.bk.job.manage.model.dto.globalsetting.DangerousRuleDTO;
+import com.tencent.bk.job.manage.model.query.DangerousRuleQuery;
 import com.tencent.bk.job.manage.model.web.request.globalsetting.AddOrUpdateDangerousRuleReq;
 import com.tencent.bk.job.manage.model.web.request.globalsetting.MoveDangerousRuleReq;
 import com.tencent.bk.job.manage.model.web.vo.globalsetting.DangerousRuleVO;
@@ -56,8 +57,18 @@ public class WebDangerousRuleResourceImpl implements WebDangerousRuleResource {
         actionId = ActionId.HIGH_RISK_DETECT_RULE,
         content = "View high-risk detect rule settings"
     )
-    public Response<List<DangerousRuleVO>> listDangerousRules(String username) {
-        return Response.buildSuccessResp(dangerousRuleService.listDangerousRules(username));
+    public Response<List<DangerousRuleVO>> listDangerousRules(String username,
+                                                              String expression,
+                                                              String description,
+                                                              List<Byte> scriptTypeList,
+                                                              List<Byte> action) {
+        DangerousRuleQuery query = DangerousRuleQuery.builder()
+            .expression(expression)
+            .description(description)
+            .scriptTypeList(scriptTypeList)
+            .action(action)
+            .build();
+        return Response.buildSuccessResp(dangerousRuleService.listDangerousRules(query));
     }
 
 

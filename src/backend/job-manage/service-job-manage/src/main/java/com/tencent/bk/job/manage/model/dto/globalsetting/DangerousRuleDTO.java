@@ -122,6 +122,10 @@ public class DangerousRuleDTO {
         dangerousRuleVO.setOrder(priority);
         dangerousRuleVO.setAction(action);
         dangerousRuleVO.setStatus(status);
+        dangerousRuleVO.setCreator(creator);
+        dangerousRuleVO.setCreateTime(createTime);
+        dangerousRuleVO.setLastModifier(lastModifier);
+        dangerousRuleVO.setLastModifyTime(lastModifyTime);
         return dangerousRuleVO;
     }
 

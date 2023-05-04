@@ -30,6 +30,7 @@ import com.tencent.bk.job.manage.common.consts.EnableStatusEnum;
 import com.tencent.bk.job.manage.dao.globalsetting.DangerousRuleDAO;
 import com.tencent.bk.job.manage.manager.cache.DangerousRuleCache;
 import com.tencent.bk.job.manage.model.dto.globalsetting.DangerousRuleDTO;
+import com.tencent.bk.job.manage.model.query.DangerousRuleQuery;
 import com.tencent.bk.job.manage.model.web.request.globalsetting.AddOrUpdateDangerousRuleReq;
 import com.tencent.bk.job.manage.model.web.request.globalsetting.MoveDangerousRuleReq;
 import com.tencent.bk.job.manage.model.web.vo.globalsetting.DangerousRuleVO;
@@ -209,5 +210,13 @@ public class DangerousRuleServiceImpl implements DangerousRuleService {
         dangerousRuleCache.deleteDangerousRuleCacheByScriptTypes(
             DangerousRuleDTO.decodeScriptType(existDangerousRuleDTO.getScriptType()));
         return id.intValue();
+    }
+
+    @Override
+    public List<DangerousRuleVO> listDangerousRules(DangerousRuleQuery query) {
+        return dangerousRuleDAO.listDangerousRules(dslContext, query)
+            .stream()
+            .map(DangerousRuleDTO::toVO)
+            .collect(Collectors.toList());
     }
 }
