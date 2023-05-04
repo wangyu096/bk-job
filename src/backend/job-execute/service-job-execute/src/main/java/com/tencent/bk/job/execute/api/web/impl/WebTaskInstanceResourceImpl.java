@@ -24,7 +24,9 @@
 
 package com.tencent.bk.job.execute.api.web.impl;
 
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
 import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.model.ActionAuditContext;
 import com.tencent.bk.job.common.constant.DuplicateHandlerEnum;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.NotExistPathHandlerEnum;
@@ -85,6 +87,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_ID;
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_NAME;
+
 @RestController
 @Slf4j
 public class WebTaskInstanceResourceImpl implements WebTaskInstanceResource {
@@ -115,6 +120,10 @@ public class WebTaskInstanceResourceImpl implements WebTaskInstanceResource {
 
     @Override
     @AuditEntry(actionId = ActionId.VIEW_HISTORY)
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_HISTORY,
+        content = "View job task [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public Response<ExecuteStepVO> getStepInstanceDetail(String username,
                                                          AppResourceScope appResourceScope,
                                                          String scopeType,
@@ -129,6 +138,17 @@ public class WebTaskInstanceResourceImpl implements WebTaskInstanceResource {
             log.warn("StepInstance:{} is not in app:{}", stepInstanceId, appResourceScope.getAppId());
             throw new NotFoundException(ErrorCode.STEP_INSTANCE_NOT_EXIST);
         }
+        long taskInstanceId = stepInstance.getTaskInstanceId();
+        TaskInstanceDTO taskInstance = taskInstanceService.getTaskInstance(taskInstanceId);
+        if (taskInstance == null) {
+            throw new NotFoundException(ErrorCode.TASK_INSTANCE_NOT_EXIST);
+        }
+
+        // 审计
+        ActionAuditContext.current()
+            .setInstanceId(String.valueOf(taskInstanceId))
+            .setInstanceName(taskInstance.getName());
+
         AuthResult authResult = authViewStepInstance(username, appResourceScope, stepInstance);
         if (!authResult.isPass()) {
             throw new PermissionDeniedException(authResult);
@@ -371,7 +391,6 @@ public class WebTaskInstanceResourceImpl implements WebTaskInstanceResource {
     }
 
     @Override
-    @AuditEntry(actionId = ActionId.VIEW_HISTORY)
     public Response<List<TaskOperationLogVO>> getTaskInstanceOperationLog(String username,
                                                                           AppResourceScope appResourceScope,
                                                                           String scopeType,
@@ -382,7 +401,6 @@ public class WebTaskInstanceResourceImpl implements WebTaskInstanceResource {
 
         checkTaskInstanceExist(taskInstanceId, taskInstance, appResourceScope.getAppId());
         authViewTaskInstance(username, appResourceScope, taskInstance);
-        ;
 
         List<OperationLogDTO> operationLogs = taskOperationLogService.listOperationLog(taskInstanceId);
         if (operationLogs == null || operationLogs.isEmpty()) {
@@ -444,6 +462,10 @@ public class WebTaskInstanceResourceImpl implements WebTaskInstanceResource {
 
     @Override
     @AuditEntry(actionId = ActionId.VIEW_HISTORY)
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_HISTORY,
+        content = "View job task [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public Response<TaskInstanceDetailVO> getTaskInstanceDetail(String username,
                                                                 AppResourceScope appResourceScope,
                                                                 String scopeType,
@@ -451,6 +473,14 @@ public class WebTaskInstanceResourceImpl implements WebTaskInstanceResource {
                                                                 Long taskInstanceId) {
 
         TaskInstanceDTO taskInstance = taskInstanceService.getTaskInstanceDetail(taskInstanceId);
+        if (taskInstance == null) {
+            throw new NotFoundException(ErrorCode.TASK_INSTANCE_NOT_EXIST);
+        }
+
+        // 审计
+        ActionAuditContext.current()
+            .setInstanceId(String.valueOf(taskInstanceId))
+            .setInstanceName(taskInstance.getName());
 
         checkTaskInstanceExist(taskInstanceId, taskInstance, appResourceScope.getAppId());
         authViewTaskInstance(username, appResourceScope, taskInstance);
