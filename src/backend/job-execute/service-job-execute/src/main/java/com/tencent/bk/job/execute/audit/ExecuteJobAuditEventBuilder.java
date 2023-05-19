@@ -49,9 +49,9 @@ public class ExecuteJobAuditEventBuilder extends DefaultAuditEventBuilder {
 
         // 事件实例
         auditEvent.setResourceTypeId(ResourceTypeId.HOST);
-        auditEvent.setInstanceId(AuditInstanceUtils.extractToString(actionAuditContext.getInstanceIdList(),
+        auditEvent.setInstanceId(AuditInstanceUtils.extractInstanceIds(actionAuditContext.getInstanceIdList(),
             instance -> instance));
-        auditEvent.setInstanceName(AuditInstanceUtils.extractToString(actionAuditContext.getInstanceNameList(),
+        auditEvent.setInstanceName(AuditInstanceUtils.extractInstanceIds(actionAuditContext.getInstanceNameList(),
             instance -> instance));
 
         // 事件描述

@@ -28,7 +28,7 @@ import com.tencent.bk.audit.annotations.ActionAuditRecord;
 import com.tencent.bk.audit.model.ActionAuditContext;
 import com.tencent.bk.audit.model.AuditContext;
 import com.tencent.bk.audit.utils.AuditInstanceUtils;
-import com.tencent.bk.job.common.audit.config.JobAuditAttributeNames;
+import com.tencent.bk.job.common.audit.JobAuditAttributeNames;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
 import com.tencent.bk.job.common.exception.AbortedException;
@@ -346,10 +346,10 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
         try {
             ActionAuditContext.current()
                 .setInstanceIdList(
-                    AuditInstanceUtils.mapList(hosts, host -> String.valueOf(host.getHostId()))
+                    AuditInstanceUtils.mapInstanceList(hosts, host -> String.valueOf(host.getHostId()))
                 )
                 .setInstanceNameList(
-                    AuditInstanceUtils.mapList(hosts, HostDTO::getPrimaryIp)
+                    AuditInstanceUtils.mapInstanceList(hosts, HostDTO::getPrimaryIp)
                 );
             if (taskInstance.isPlanInstance()) {
                 ActionAuditContext.current()

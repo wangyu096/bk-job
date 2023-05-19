@@ -22,43 +22,38 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.audit.annotations;
+package com.tencent.bk.job.common.audit.config;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import com.tencent.bk.audit.AuditRequestProvider;
+import com.tencent.bk.audit.config.AuditAutoConfiguration;
+import com.tencent.bk.audit.config.AuditProperties;
+import com.tencent.bk.job.common.audit.JobAuditExceptionResolver;
+import com.tencent.bk.job.common.audit.JobAuditRequestProvider;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-/**
- * 用于标识操作实例
- */
-@Target({ElementType.METHOD})
-@Retention(RetentionPolicy.RUNTIME)
-@Inherited
-public @interface AuditInstanceRecord {
-    /**
-     * 操作实例资源类型ID
-     */
-    String resourceType() default "";
 
-    /**
-     * 操作实例ID - SpEL表达式
-     */
-    String instanceIds() default "";
+@Configuration(proxyBeanMethods = false)
+@EnableConfigurationProperties(AuditProperties.class)
+@ConditionalOnProperty(name = "audit.enabled", havingValue = "true", matchIfMissing = true)
+@AutoConfigureBefore(AuditAutoConfiguration.class)
+@Slf4j
+public class JobAuditAutoConfiguration {
 
-    /**
-     * 操作实例名称 - SpEL 表达式
-     */
-    String instanceNames() default "";
+    @Bean
+    public AuditRequestProvider auditRequestProvider() {
+        log.info("Init JobAuditRequestProvider");
+        return new JobAuditRequestProvider();
+    }
 
-    /**
-     * 原始实例 - SpEL 表达式
-     */
-    String originInstances() default "";
 
-    /**
-     * 当前实例 - SpEL 表达式
-     */
-    String instances() default "";
+    @Bean
+    public JobAuditExceptionResolver auditExceptionResolver() {
+        log.info("Init JobAuditExceptionResolver");
+        return new JobAuditExceptionResolver();
+    }
 }

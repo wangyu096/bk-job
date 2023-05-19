@@ -23,7 +23,8 @@
  */
 
 dependencies {
-//    api files("libs/bk-audit-java-sdk-1.0.0.jar")
+    api files("libs/bk-audit-java-sdk-1.0.0.jar")
+    api files("libs/spring-boot-bk-audit-starter-1.0.0.jar")
     api project(":commons:common")
     api project(":commons:common-iam")
     implementation 'io.micrometer:micrometer-registry-prometheus'

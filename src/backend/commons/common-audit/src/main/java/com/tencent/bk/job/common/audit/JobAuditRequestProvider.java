@@ -22,31 +22,59 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.audit.config;
+package com.tencent.bk.job.common.audit;
 
-import com.tencent.bk.audit.AuditExceptionResolver;
-import com.tencent.bk.audit.model.ErrorInfo;
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.ServiceException;
-import com.tencent.bk.job.common.util.I18nUtil;
+import com.tencent.bk.audit.DefaultAuditRequestProvider;
+import com.tencent.bk.audit.constants.AccessTypeEnum;
+import com.tencent.bk.audit.constants.UserIdentifyTypeEnum;
+import com.tencent.bk.job.common.constant.JobCommonHeaders;
+import com.tencent.bk.job.common.util.JobContextUtil;
 
-import java.util.Locale;
+import javax.servlet.http.HttpServletRequest;
 
-public class JobAuditExceptionResolver implements AuditExceptionResolver {
+public class JobAuditRequestProvider extends DefaultAuditRequestProvider {
+
     @Override
-    public ErrorInfo resolveException(Throwable e) {
-        Integer errorCode;
-        String errorMessage;
-        if (e instanceof ServiceException) {
-            ServiceException serviceException = (ServiceException) e;
-            errorCode = serviceException.getErrorCode();
-            // 使用英文描述
-            errorMessage = serviceException.getI18nMessage(Locale.ENGLISH);
-        } else {
-            errorCode = ErrorCode.INTERNAL_ERROR;
-            // 使用英文描述
-            errorMessage = I18nUtil.getI18nMessage(Locale.ENGLISH, String.valueOf(ErrorCode.INTERNAL_ERROR));
-        }
-        return new ErrorInfo(errorCode, errorMessage);
+    public String getUsername() {
+        return JobContextUtil.getUsername();
     }
+
+    @Override
+    public UserIdentifyTypeEnum getUserIdentifyType() {
+        // 当前只支持个人账户
+        return UserIdentifyTypeEnum.PERSONAL;
+    }
+
+    @Override
+    public String getUserIdentifyTenantId() {
+        // 暂不支持多租户
+        return null;
+    }
+
+
+    @Override
+    public String getRequestId() {
+        return JobContextUtil.getRequestId();
+    }
+
+    @Override
+    public String getBkAppCode() {
+        HttpServletRequest request = getRequest();
+        return request.getHeader(JobCommonHeaders.APP_CODE);
+    }
+
+    @Override
+    public AccessTypeEnum getAccessType() {
+        HttpServletRequest request = getRequest();
+        String uri = request.getRequestURI();
+        if (uri.startsWith("/web/")) {
+            return AccessTypeEnum.WEB;
+        } else if (uri.startsWith("/esb/")) {
+            return AccessTypeEnum.API;
+        } else {
+            return AccessTypeEnum.OTHER;
+        }
+    }
+
+
 }

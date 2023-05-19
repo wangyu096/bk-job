@@ -22,21 +22,31 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.audit.model;
+package com.tencent.bk.job.common.audit;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.tencent.bk.audit.AuditExceptionResolver;
+import com.tencent.bk.audit.model.ErrorInfo;
+import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.util.I18nUtil;
 
-@Data
-@NoArgsConstructor
-public class AuditHttpRequest {
-    private String uri;
-    private String queryParams;
-    private Object body;
+import java.util.Locale;
 
-    public AuditHttpRequest(String uri, String queryParams, Object body) {
-        this.uri = uri;
-        this.queryParams = queryParams;
-        this.body = body;
+public class JobAuditExceptionResolver implements AuditExceptionResolver {
+    @Override
+    public ErrorInfo resolveException(Throwable e) {
+        Integer errorCode;
+        String errorMessage;
+        if (e instanceof ServiceException) {
+            ServiceException serviceException = (ServiceException) e;
+            errorCode = serviceException.getErrorCode();
+            // 使用英文描述
+            errorMessage = serviceException.getI18nMessage(Locale.ENGLISH);
+        } else {
+            errorCode = ErrorCode.INTERNAL_ERROR;
+            // 使用英文描述
+            errorMessage = I18nUtil.getI18nMessage(Locale.ENGLISH, String.valueOf(ErrorCode.INTERNAL_ERROR));
+        }
+        return new ErrorInfo(errorCode, errorMessage);
     }
 }

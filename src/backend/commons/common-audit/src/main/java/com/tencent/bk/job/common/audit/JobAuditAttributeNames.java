@@ -22,25 +22,14 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.audit.model;
+package com.tencent.bk.job.common.audit;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@NoArgsConstructor
-public class ErrorInfo {
-    /**
-     * 错误码
-     */
-    private Integer errorCode;
-    /**
-     * 错误描述
-     */
-    private String errorMessage;
-
-    public ErrorInfo(Integer errorCode, String errorMessage) {
-        this.errorCode = errorCode;
-        this.errorMessage = errorMessage;
-    }
+public interface JobAuditAttributeNames {
+    String SCRIPT_ID = "@SCRIPT_ID";
+    String SCRIPT_VERSION_ID = "@SCRIPT_VERSION_ID";
+    String SCRIPT_NAME = "@SCRIPT_NAME";
+    String PLAN_ID = "@PLAN_ID";
+    String PLAN_NAME = "@PLAN_NAME";
+    String VERSION = "@VERSION";
+    String OPERATION = "@OPERATION";
 }
