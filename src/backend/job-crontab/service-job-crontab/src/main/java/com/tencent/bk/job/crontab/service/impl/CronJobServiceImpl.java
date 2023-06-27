@@ -394,7 +394,7 @@ public class CronJobServiceImpl implements CronJobService {
                 List<ServiceTaskVariable> taskVariables = null;
                 if (CollectionUtils.isNotEmpty(originCronJobInfo.getVariableValue())) {
                     taskVariables =
-                        originCronJobInfo.getVariableValue().parallelStream()
+                        originCronJobInfo.getVariableValue().stream()
                             .map(CronJobVariableDTO::toServiceTaskVariable).collect(Collectors.toList());
                 }
                 executeTaskService.authExecuteTask(appId, originCronJobInfo.getTaskPlanId(),
@@ -594,7 +594,7 @@ public class CronJobServiceImpl implements CronJobService {
                             List<ServiceTaskVariable> taskVariables = null;
                             if (CollectionUtils.isNotEmpty(originCronJobInfo.getVariableValue())) {
                                 taskVariables =
-                                    originCronJobInfo.getVariableValue().parallelStream()
+                                    originCronJobInfo.getVariableValue().stream()
                                         .map(CronJobVariableDTO::toServiceTaskVariable).collect(Collectors.toList());
                             }
                             executeTaskService.authExecuteTask(appId, originCronJobInfo.getTaskPlanId(),
@@ -646,7 +646,7 @@ public class CronJobServiceImpl implements CronJobService {
 
     @Override
     public List<CronJobInfoDTO> listCronJobByIds(Long appId, List<Long> cronJobIdList) {
-        cronJobIdList = cronJobIdList.parallelStream().filter(id -> id != null && id > 0).collect(Collectors.toList());
+        cronJobIdList = cronJobIdList.stream().filter(id -> id != null && id > 0).collect(Collectors.toList());
         if (appId != null && appId > 0 && CollectionUtils.isNotEmpty(cronJobIdList)) {
             return cronJobDAO.listCronJobByIds(appId, cronJobIdList);
         } else {

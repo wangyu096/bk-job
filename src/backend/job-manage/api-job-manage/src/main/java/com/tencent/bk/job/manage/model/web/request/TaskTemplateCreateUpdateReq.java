@@ -24,6 +24,8 @@
 
 package com.tencent.bk.job.manage.model.web.request;
 
+import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.util.check.IlegalCharChecker;
 import com.tencent.bk.job.common.util.check.MaxLengthChecker;
 import com.tencent.bk.job.common.util.check.NotEmptyChecker;
@@ -65,15 +67,15 @@ public class TaskTemplateCreateUpdateReq extends TemplateBasicInfoUpdateReq {
     @ApiModelProperty(value = "模版变量, 新增、修改、删除时需要传入")
     private List<TaskVariableVO> variables;
 
-    public boolean validate() {
+    public void validate() throws InvalidParamException {
         // 模板名称检查
         try {
             StringCheckHelper stringCheckHelper = new StringCheckHelper(new TrimChecker(), new NotEmptyChecker(),
                 new IlegalCharChecker(), new MaxLengthChecker(60));
             this.setName(stringCheckHelper.checkAndGetResult(this.getName()));
         } catch (StringCheckException e) {
-            log.warn("Template name is invalid", e);
-            return false;
+            log.warn("Template name is invalid, name: {}", getName());
+            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
         }
         if (this.getDescription() == null) {
             this.setDescription("");
@@ -85,41 +87,26 @@ public class TaskTemplateCreateUpdateReq extends TemplateBasicInfoUpdateReq {
         if (isCreate) {
             if (CollectionUtils.isEmpty(steps)) {
                 log.warn("Empty template step!");
-                return false;
+                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
             }
         }
         if (CollectionUtils.isNotEmpty(steps)) {
             for (TaskStepVO step : steps) {
-                if (!step.validate(isCreate)) {
-                    log.warn("Validate step failed!");
-                    return false;
-                }
-                try {
-                    StringCheckHelper stepCheckHelper = new StringCheckHelper(new TrimChecker(), new NotEmptyChecker(),
-                        new IlegalCharChecker(), new MaxLengthChecker(60));
-                    step.setName(stepCheckHelper.checkAndGetResult(step.getName()));
-                } catch (StringCheckException e) {
-                    log.warn("Step name is invalid:", e);
-                    return false;
-                }
+                step.validate(isCreate);
             }
         }
         if (CollectionUtils.isNotEmpty(variables)) {
             Set<String> variableNameList = new HashSet<>();
             for (TaskVariableVO variable : variables) {
-                if (!variable.validate(isCreate)) {
-                    log.warn("Validate variable failed!");
-                    return false;
-                }
+                variable.validate(isCreate);
                 if (variableNameList.contains(variable.getName())) {
                     log.warn("Variable name duplicated!");
-                    return false;
+                    throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
                 }
                 if (variable.getDelete() != 1) {
                     variableNameList.add(variable.getName());
                 }
             }
         }
-        return true;
     }
 }

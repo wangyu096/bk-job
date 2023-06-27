@@ -33,6 +33,7 @@ import com.tencent.bk.job.common.gse.v2.model.ScriptTaskResult;
 import com.tencent.bk.job.common.model.dto.HostDTO;
 import com.tencent.bk.job.common.util.BatchUtil;
 import com.tencent.bk.job.common.util.date.DateUtils;
+import com.tencent.bk.job.common.util.json.JsonUtils;
 import com.tencent.bk.job.execute.constants.VariableValueTypeEnum;
 import com.tencent.bk.job.execute.engine.consts.AgentTaskStatusEnum;
 import com.tencent.bk.job.execute.engine.evict.TaskEvictPolicyExecutor;
@@ -275,8 +276,8 @@ public class ScriptResultHandleTask extends AbstractResultHandleTask<ScriptTaskR
 
     @Override
     GseTaskExecuteResult analyseGseTaskResult(GseTaskResult<ScriptTaskResult> taskDetail) {
-        if (taskDetail == null || taskDetail.getResult() == null) {
-            log.info("[{}] Analyse gse task result, result is empty!", gseTask.getTaskUniqueName());
+        if (taskDetail == null || taskDetail.isEmptyResult()) {
+            log.info("[{}] Analyse gse task result, result is empty!", gseTaskInfo);
             return analyseExecuteResult();
         }
         long currentTime = DateUtils.currentTimeMillis(); // 当前时间
@@ -284,24 +285,24 @@ public class ScriptResultHandleTask extends AbstractResultHandleTask<ScriptTaskR
         StopWatch watch = new StopWatch("analyse-gse-script-task");
         watch.start("analyse");
         for (ScriptAgentTaskResult agentTaskResult : taskDetail.getResult().getResult()) {
-            log.info("[{}]: Analyse agent task result, result: {}",
-                gseTask.getTaskUniqueName(), agentTaskResult);
+            String agentId = agentTaskResult.getAgentId();
+            if (!shouldAnalyse(agentTaskResult)) {
+                continue;
+            }
 
-            /*为了解决shell上下文传参的问题，在下发用户脚本的时候，实际上下下发两个脚本。第一个脚本是用户脚本，第二个脚本
+            AgentTaskDTO agentTask = targetAgentTasks.get(agentId);
+            if (agentTask == null) {
+                log.warn("[{}] No agent task found for agentId {}. result: {}", gseTaskInfo, agentId,
+                    JsonUtils.toJson(agentTaskResult));
+                continue;
+            }
+
+            log.info("[{}]: Analyse agent task result, result: {}", gseTaskInfo, agentTaskResult);
+
+            /*为了解决shell上下文传参的问题，在下发用户脚本的时候，实际上下发两个脚本。第一个脚本是用户脚本，第二个脚本
              *是获取上下文参数的脚本。所以m_id=0的是用户脚本的执行日志，需要分析记录；m_id=1的，则是获取上下文参数
              *输出的日志内容，不需要记录，仅需要从日志分析提取上下文参数*/
             boolean isUserScriptResult = agentTaskResult.getAtomicTaskId() == 0;
-            String agentId = agentTaskResult.getAgentId();
-
-            // 该Agent已经日志分析结束，不要再分析
-            if (this.analyseFinishedTargetAgentIds.contains(agentId)) {
-                continue;
-            }
-            AgentTaskDTO agentTask = targetAgentTasks.get(agentId);
-            if (agentTask == null) {
-                continue;
-            }
-
             if (isUserScriptResult) {
                 addScriptLogsAndRefreshPullProgress(scriptLogs, agentTaskResult, agentId, agentTask, currentTime);
             }
@@ -319,7 +320,7 @@ public class ScriptResultHandleTask extends AbstractResultHandleTask<ScriptTaskR
         watch.stop();
 
         log.info("[{}] Analyse gse task result -> notFinishedTargetAgentIds={}, analyseFinishedTargetAgentIds={}",
-            this.gseTask.getTaskUniqueName(), this.notFinishedTargetAgentIds, this.analyseFinishedTargetAgentIds);
+            this.gseTaskInfo, this.notFinishedTargetAgentIds, this.analyseFinishedTargetAgentIds);
 
         GseTaskExecuteResult rst = analyseExecuteResult();
         if (!rst.getResultCode().equals(GseTaskExecuteResult.RESULT_CODE_RUNNING)) {
@@ -329,10 +330,23 @@ public class ScriptResultHandleTask extends AbstractResultHandleTask<ScriptTaskR
         }
 
         if (watch.getTotalTimeMillis() > 1000L) {
-            log.info("[{}] Analyse script gse task is slow, statistics: {}", gseTask.getTaskUniqueName(),
-                watch.prettyPrint());
+            log.info("[{}] Analyse script gse task is slow, statistics: {}", gseTaskInfo, watch.prettyPrint());
         }
         return rst;
+    }
+
+    private boolean shouldAnalyse(ScriptAgentTaskResult agentTaskResult) {
+        String agentId = agentTaskResult.getAgentId();
+        // 该Agent已经日志分析结束，不要再分析
+        if (this.analyseFinishedTargetAgentIds.contains(agentId)) {
+            return false;
+        }
+        if (!this.targetAgentIds.contains(agentId)) {
+            log.warn("[{}] Unexpected target agentId {}. result: {}", gseTaskInfo, agentId,
+                JsonUtils.toJson(agentTaskResult));
+            return false;
+        }
+        return true;
     }
 
     private void addScriptLogsAndRefreshPullProgress(List<ServiceScriptLogDTO> logs,

@@ -235,16 +235,13 @@ public class ServiceTaskPlanResourceImpl implements ServiceTaskPlanResource {
     @Override
     public InternalResponse<Long> savePlanForImport(String username, Long appId, Long templateId,
                                                     Long createTime, TaskPlanVO planInfo) {
-        if (planInfo.validateForImport()) {
-            TaskPlanInfoDTO taskPlanInfo = TaskPlanInfoDTO.fromVO(username, appId, planInfo);
-            if (createTime != null && createTime > 0) {
-                taskPlanInfo.setCreateTime(createTime);
-            }
-            Long finalTemplateId = taskPlanService.saveTaskPlanForBackup(taskPlanInfo);
-            return InternalResponse.buildSuccessResp(finalTemplateId);
-        } else {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+        planInfo.validateForImport();
+        TaskPlanInfoDTO taskPlanInfo = TaskPlanInfoDTO.fromVO(username, appId, planInfo);
+        if (createTime != null && createTime > 0) {
+            taskPlanInfo.setCreateTime(createTime);
         }
+        Long finalTemplateId = taskPlanService.saveTaskPlanForBackup(taskPlanInfo);
+        return InternalResponse.buildSuccessResp(finalTemplateId);
     }
 
     @Override
@@ -253,7 +250,7 @@ public class ServiceTaskPlanResourceImpl implements ServiceTaskPlanResource {
         List<TaskVariableDTO> taskVariableList = taskVariableService.listVariablesByParentId(planId);
         if (CollectionUtils.isNotEmpty(taskVariableList)) {
             List<ServiceTaskVariableDTO> variableList =
-                taskVariableList.parallelStream().map(TaskVariableDTO::toServiceDTO).collect(Collectors.toList());
+                taskVariableList.stream().map(TaskVariableDTO::toServiceDTO).collect(Collectors.toList());
             return InternalResponse.buildSuccessResp(variableList);
         }
         return InternalResponse.buildSuccessResp(Collections.emptyList());
@@ -262,7 +259,7 @@ public class ServiceTaskPlanResourceImpl implements ServiceTaskPlanResource {
     @Override
     public InternalResponse<List<ServiceTaskPlanDTO>> listPlans(String username, Long appId, Long templateId) {
         List<TaskPlanInfoDTO> taskPlanInfoDTOList = taskPlanService.listTaskPlansBasicInfo(appId, templateId);
-        List<ServiceTaskPlanDTO> resultList = taskPlanInfoDTOList.parallelStream().map(it -> {
+        List<ServiceTaskPlanDTO> resultList = taskPlanInfoDTOList.stream().map(it -> {
             ServiceTaskPlanDTO serviceTaskPlanDTO = new ServiceTaskPlanDTO();
             serviceTaskPlanDTO.setId(it.getId());
             serviceTaskPlanDTO.setName(it.getName());
@@ -274,7 +271,7 @@ public class ServiceTaskPlanResourceImpl implements ServiceTaskPlanResource {
             List<ServiceTaskStepDTO> serviceTaskStepDTOList = new ArrayList<>();
             if (taskStepDTOList != null && !taskStepDTOList.isEmpty()) {
                 serviceTaskStepDTOList =
-                    taskStepDTOList.parallelStream()
+                    taskStepDTOList.stream()
                         .map(TaskStepConverter::convertToServiceTaskStepDTO).collect(Collectors.toList());
             }
             serviceTaskPlanDTO.setStepList(serviceTaskStepDTOList);
@@ -283,7 +280,7 @@ public class ServiceTaskPlanResourceImpl implements ServiceTaskPlanResource {
             List<ServiceTaskVariableDTO> serviceTaskVariableDTOList = new ArrayList<>();
             if (variableList != null && !variableList.isEmpty()) {
                 serviceTaskVariableDTOList =
-                    variableList.parallelStream()
+                    variableList.stream()
                         .map(TaskVariableConverter::convertToServiceTaskVariableDTO)
                         .collect(Collectors.toList());
             }

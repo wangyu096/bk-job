@@ -33,18 +33,15 @@ const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const LodashWebpackPlugin = require('lodash-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const ESLintPlugin = require('eslint-webpack-plugin');
-const StylelintPlugin = require('stylelint-webpack-plugin');
-// const PreloadWebpackPlugin = require('@vue/preload-webpack-plugin');
-// const SpeedMeasurePlugin = require('speed-measure-webpack-plugin');
+// const ESLintPlugin = require('eslint-webpack-plugin');
+// const StylelintPlugin = require('stylelint-webpack-plugin');
 const figlet = require('figlet');
 const marked = require('marked');
+
 const renderer = new marked.Renderer();
 
 const resolve = dir => path.join(__dirname, dir);
 const genAssetPath = dir => path.posix.join('static', `${dir}/[name].[hash:7].[ext]`);
-
-// const smp = new SpeedMeasurePlugin();
 
 module.exports = function (env) {
   const isDevelopment = env.development;
@@ -82,12 +79,6 @@ module.exports = function (env) {
   return {
     mode: isDevelopment ? 'development' : 'production',
     devtool: isDevelopment ? 'eval-source-map' : 'hidden-source-map',
-    cache: isDevelopment
-      ? {
-        type: 'filesystem',
-        memoryCacheUnaffected: true,
-      }
-      : false,
     entry: {
       main: resolve('/src/main.js'),
     },
@@ -182,7 +173,7 @@ module.exports = function (env) {
           ].filter(_ => _),
         },
         {
-          test: /\.js$/,
+          test: /\.jsx?$/,
           use: [
             appendThreadLoader(),
             {
@@ -205,7 +196,7 @@ module.exports = function (env) {
               loader: 'markdown-loader',
               options: {
                 renderer,
-                highlight (code, lang) {
+                highlight(code, lang) {
                   const hljs = require('highlight.js');
                   const language = hljs.getLanguage(lang) ? lang : 'plaintext';
                   return hljs.highlight(code, { language }).value;
@@ -263,7 +254,7 @@ module.exports = function (env) {
     },
     resolve: {
       modules: [resolve('src'), resolve('node_modules')],
-      extensions: ['.js', '.vue', '.json'],
+      extensions: ['.js', '.jsx', '.vue', '.json'],
       symlinks: false,
       fallback: {
         path: false,
@@ -289,7 +280,7 @@ module.exports = function (env) {
       new webpack.DefinePlugin(isDevelopment
         ? {
           'process.env': {
-            JOB_WELCOME: JSON.stringify(`%c${figlet.textSync('Welcome To Job', {
+            JOB_WELCOME: JSON.stringify(`%c${figlet.textSync('Welcome To BK-Job', {
               horizontalLayout: 'full',
             })}\n%c${figlet.textSync('latest', {
               horizontalLayout: 'full',
@@ -299,7 +290,7 @@ module.exports = function (env) {
         }
         : {
           'process.env': {
-            JOB_WELCOME: JSON.stringify(`%c${figlet.textSync('Welcome To Job', {
+            JOB_WELCOME: JSON.stringify(`%c${figlet.textSync('Welcome To BK-Job', {
               horizontalLayout: 'full',
             })}\n%c${figlet.textSync(process.env.JOB_VERSION, {
               horizontalLayout: 'full',
@@ -330,18 +321,18 @@ module.exports = function (env) {
         filename: 'static/css/[name].[contenthash].css',
         ignoreOrder: true,
       }),
-      isDevelopment && new ESLintPlugin({
-        extensions: ['js', 'vue'],
-        lintDirtyModulesOnly: true,
-        failOnError: false,
-        threads: 2,
-      }),
-      isDevelopment && new StylelintPlugin({
-        files: ['./**/*.vue', './**/*.css'],
-        extensions: ['css', 'scss', 'sass', 'postcss'],
-        lintDirtyModulesOnly: true,
-        emitWarning: true,
-      }),
+      // isDevelopment && new ESLintPlugin({
+      //   extensions: ['js', 'vue'],
+      //   lintDirtyModulesOnly: true,
+      //   failOnError: false,
+      //   threads: 2,
+      // }),
+      // isDevelopment && new StylelintPlugin({
+      //   files: ['./**/*.vue', './**/*.css'],
+      //   extensions: ['css', 'scss', 'sass', 'postcss'],
+      //   lintDirtyModulesOnly: true,
+      //   emitWarning: true,
+      // }),
       new webpack.ProgressPlugin(),
       new VueLoaderPlugin(),
       new LodashWebpackPlugin(),

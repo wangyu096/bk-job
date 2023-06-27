@@ -271,13 +271,11 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
                                                    String scopeId,
                                                    @AuditRequestBody TaskTemplateCreateUpdateReq request) {
 
+        request.validate();
+
         AuthResult authResult = templateAuthService.authCreateJobTemplate(username, appResourceScope);
         if (!authResult.isPass()) {
             throw new PermissionDeniedException(authResult);
-        }
-
-        if (!request.validate()) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
         }
 
         TaskTemplateInfoDTO template = createTemplate(username, appResourceScope, request);
@@ -328,15 +326,13 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
                                                    String scopeId,
                                                    Long templateId,
                                                    @AuditRequestBody TaskTemplateCreateUpdateReq request) {
-        request.setId(templateId);
+        request.validate();
+
         AuthResult authResult = templateAuthService.authEditJobTemplate(username, appResourceScope, templateId);
         if (!authResult.isPass()) {
             throw new PermissionDeniedException(authResult);
         }
 
-        if (!request.validate()) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
-        }
         TaskTemplateInfoDTO updateTemplate = updateTemplate(username, appResourceScope, request);
 
         return Response.buildSuccessResp(TaskTemplateInfoDTO.toVO(updateTemplate));
@@ -361,21 +357,12 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
     }
 
     @Override
-    @AuditEntry(
-        actionId = ActionId.EDIT_JOB_TEMPLATE
-    )
     public Response<Boolean> updateTemplateBasicInfo(String username,
                                                      AppResourceScope appResourceScope,
                                                      String scopeType,
                                                      String scopeId,
                                                      Long templateId,
                                                      @AuditRequestBody TemplateBasicInfoUpdateReq request) {
-
-        if (templateId > 0) {
-            request.setId(templateId);
-        } else {
-            throw new NotFoundException(ErrorCode.TEMPLATE_NOT_EXIST);
-        }
 
         AuthResult authResult = templateAuthService.authEditJobTemplate(username, appResourceScope,
             templateId);
