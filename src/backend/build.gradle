@@ -126,6 +126,7 @@ ext {
         set('bkjobVersion', "1.0.0")
         println "bkjobVersion:" + bkjobVersion
     }
+    set('bkAuditJavaSdkVersion', "1.0.0")
 }
 
 group "com.tencent.bk.job"
@@ -297,6 +298,7 @@ subprojects {
                 entry "hibernate-validator"
             }
             dependency "com.beust:jcommander:$jcommanderVersion"
+            dependency "com.tencent.bk.sdk:spring-boot-bk-audit-starter:$bkAuditJavaSdkVersion"
         }
     }
     dependencies {
