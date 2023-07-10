@@ -487,7 +487,7 @@ export default {
   清空搜索条件: 'Empty it',
   提交: 'Submit',
   '标签名已存在，请重新输入': 'Tag name is exists, please try another one',
-  '允许最小 1s，最大为 86400s': 'The minimum is 1s, the maximum is 86400s',
+  '允许最小 1s，最大为 259200s': 'The minimum is 1s, the maximum is 259200s',
   收起更多: 'Hide',
   展开更多: 'More',
   收起: 'Hide',
@@ -592,4 +592,6 @@ export default {
   清除成功: 'Successful',
   收藏成功: 'Add to my-favorite-list successful',
   取消收藏成功: 'Remove from my-favorite-list successful',
+  '复制 IP': 'Copy IP',
+  '复制 IPv6': 'Copy IPv6',
 };

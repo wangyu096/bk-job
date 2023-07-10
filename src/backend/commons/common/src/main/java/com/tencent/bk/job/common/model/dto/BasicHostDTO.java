@@ -22,39 +22,31 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.util;
+package com.tencent.bk.job.common.model.dto;
 
-import org.junit.jupiter.api.Test;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.List;
+/**
+ * 主机基础信息
+ */
+@Data
+@EqualsAndHashCode
+@NoArgsConstructor
+@AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public class BasicHostDTO {
 
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+    /**
+     * 主机ID
+     */
+    private Long hostId;
+    /**
+     * CMDB数据的上次修改时间
+     */
+    private Long lastTime;
 
-class BatchUtilTest {
-    @Test
-    void testBuildBatchList() {
-        List<String> list = new ArrayList<>();
-        list.add("a");
-        List<List<String>> batchList = BatchUtil.buildBatchList(list, 1);
-        assertThat(batchList).hasSize(1);
-        assertThat(batchList.get(0)).hasSize(1);
-
-        list.add("b");
-        batchList = BatchUtil.buildBatchList(list, 3);
-        assertThat(batchList).hasSize(1);
-        assertThat(batchList.get(0)).hasSize(2);
-
-        list.add("c");
-        batchList = BatchUtil.buildBatchList(list, 2);
-        assertThat(batchList).hasSize(2);
-        assertThat(batchList.get(0)).hasSize(2);
-        assertThat(batchList.get(1)).hasSize(1);
-
-        list.add("d");
-        batchList = BatchUtil.buildBatchList(list, 2);
-        assertThat(batchList).hasSize(2);
-        assertThat(batchList.get(0)).hasSize(2);
-        assertThat(batchList.get(1)).hasSize(2);
-    }
 }
