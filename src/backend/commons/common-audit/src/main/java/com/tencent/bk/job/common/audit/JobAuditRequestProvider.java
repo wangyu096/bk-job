@@ -27,10 +27,9 @@ package com.tencent.bk.job.common.audit;
 import com.tencent.bk.audit.DefaultAuditRequestProvider;
 import com.tencent.bk.audit.constants.AccessTypeEnum;
 import com.tencent.bk.audit.constants.UserIdentifyTypeEnum;
+import com.tencent.bk.audit.model.AuditHttpRequest;
 import com.tencent.bk.job.common.constant.JobCommonHeaders;
 import com.tencent.bk.job.common.util.JobContextUtil;
-
-import javax.servlet.http.HttpServletRequest;
 
 public class JobAuditRequestProvider extends DefaultAuditRequestProvider {
 
@@ -59,14 +58,14 @@ public class JobAuditRequestProvider extends DefaultAuditRequestProvider {
 
     @Override
     public String getBkAppCode() {
-        HttpServletRequest request = getRequest();
-        return request.getHeader(JobCommonHeaders.APP_CODE);
+        AuditHttpRequest request = getRequest();
+        return request.getHttpServletRequest().getHeader(JobCommonHeaders.APP_CODE);
     }
 
     @Override
     public AccessTypeEnum getAccessType() {
-        HttpServletRequest request = getRequest();
-        String uri = request.getRequestURI();
+        AuditHttpRequest request = getRequest();
+        String uri = request.getUri();
         if (uri.startsWith("/web/")) {
             return AccessTypeEnum.WEB;
         } else if (uri.startsWith("/esb/")) {

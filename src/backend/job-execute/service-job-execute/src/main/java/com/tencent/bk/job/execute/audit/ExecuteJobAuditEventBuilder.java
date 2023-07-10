@@ -25,7 +25,7 @@
 package com.tencent.bk.job.execute.audit;
 
 import com.tencent.bk.audit.DefaultAuditEventBuilder;
-import com.tencent.bk.audit.model.ActionAuditContext;
+import com.tencent.bk.audit.context.ActionAuditContext;
 import com.tencent.bk.audit.model.AuditEvent;
 import com.tencent.bk.audit.utils.AuditInstanceUtils;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeId;

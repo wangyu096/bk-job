@@ -25,8 +25,8 @@
 package com.tencent.bk.job.execute.service.impl;
 
 import com.tencent.bk.audit.annotations.ActionAuditRecord;
-import com.tencent.bk.audit.model.ActionAuditContext;
-import com.tencent.bk.audit.model.AuditContext;
+import com.tencent.bk.audit.context.ActionAuditContext;
+import com.tencent.bk.audit.context.AuditContext;
 import com.tencent.bk.audit.utils.AuditInstanceUtils;
 import com.tencent.bk.job.common.audit.JobAuditAttributeNames;
 import com.tencent.bk.job.common.constant.ErrorCode;

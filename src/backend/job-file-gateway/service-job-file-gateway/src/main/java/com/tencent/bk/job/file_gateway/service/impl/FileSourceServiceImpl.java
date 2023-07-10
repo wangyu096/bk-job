@@ -27,7 +27,7 @@ package com.tencent.bk.job.file_gateway.service.impl;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.tencent.bk.audit.annotations.ActionAuditRecord;
 import com.tencent.bk.audit.annotations.AuditInstanceRecord;
-import com.tencent.bk.audit.model.ActionAuditContext;
+import com.tencent.bk.audit.context.ActionAuditContext;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.AlreadyExistsException;
 import com.tencent.bk.job.common.exception.NotFoundException;
