@@ -27,10 +27,9 @@ package com.tencent.bk.job.manage.model.web.vo.task;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.context.JobContext;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.util.JobContextUtil;
-import com.tencent.bk.job.common.util.check.IlegalCharChecker;
+import com.tencent.bk.job.common.util.check.IllegalCharChecker;
 import com.tencent.bk.job.common.util.check.MaxLengthChecker;
 import com.tencent.bk.job.common.util.check.NotEmptyChecker;
 import com.tencent.bk.job.common.util.check.StringCheckHelper;
@@ -194,7 +193,7 @@ public class TaskPlanVO {
         // 模板名称检查
         try {
             StringCheckHelper stringCheckHelper = new StringCheckHelper(new TrimChecker(), new NotEmptyChecker(),
-                new IlegalCharChecker(), new MaxLengthChecker(60));
+                new IllegalCharChecker(), new MaxLengthChecker(60));
             this.setName(stringCheckHelper.checkAndGetResult(this.getName()));
         } catch (StringCheckException e) {
             log.warn("Template name is invalid:", e);

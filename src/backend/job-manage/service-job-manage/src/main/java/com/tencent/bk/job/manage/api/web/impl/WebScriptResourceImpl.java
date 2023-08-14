@@ -40,7 +40,7 @@ import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
 import com.tencent.bk.job.common.util.ArrayUtil;
 import com.tencent.bk.job.common.util.Base64Util;
-import com.tencent.bk.job.common.util.check.IlegalCharChecker;
+import com.tencent.bk.job.common.util.check.IllegalCharChecker;
 import com.tencent.bk.job.common.util.check.MaxLengthChecker;
 import com.tencent.bk.job.common.util.check.NotEmptyChecker;
 import com.tencent.bk.job.common.util.check.StringCheckHelper;
@@ -465,7 +465,7 @@ public class WebScriptResourceImpl implements WebScriptResource {
                                   ScriptInfoUpdateReq scriptInfoUpdateReq) {
         try {
             StringCheckHelper stringCheckHelper = new StringCheckHelper(new TrimChecker(),
-                new NotEmptyChecker(), new IlegalCharChecker(), new MaxLengthChecker(60));
+                new NotEmptyChecker(), new IllegalCharChecker(), new MaxLengthChecker(60));
             scriptInfoUpdateReq
                 .setScriptName(stringCheckHelper.checkAndGetResult(scriptInfoUpdateReq.getScriptName()));
         } catch (StringCheckException e) {
@@ -617,7 +617,7 @@ public class WebScriptResourceImpl implements WebScriptResource {
 
         try {
             StringCheckHelper scriptNameCheckHelper = new StringCheckHelper(new TrimChecker(), new NotEmptyChecker(),
-                new IlegalCharChecker(), new MaxLengthChecker(60));
+                new IllegalCharChecker(), new MaxLengthChecker(60));
             scriptCreateUpdateReq.setName(scriptNameCheckHelper.checkAndGetResult(scriptCreateUpdateReq.getName()));
         } catch (StringCheckException e) {
             log.warn("Script name [{}] is invalid", scriptCreateUpdateReq.getName());

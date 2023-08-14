@@ -39,12 +39,6 @@ import com.tencent.bk.job.common.model.dto.ApplicationHostDTO;
 import com.tencent.bk.job.common.model.vo.HostInfoVO;
 import com.tencent.bk.job.common.model.vo.TaskTargetVO;
 import com.tencent.bk.job.common.service.AppScopeMappingService;
-import com.tencent.bk.job.common.util.check.IlegalCharChecker;
-import com.tencent.bk.job.common.util.check.MaxLengthChecker;
-import com.tencent.bk.job.common.util.check.NotEmptyChecker;
-import com.tencent.bk.job.common.util.check.StringCheckHelper;
-import com.tencent.bk.job.common.util.check.TrimChecker;
-import com.tencent.bk.job.common.util.check.exception.StringCheckException;
 import com.tencent.bk.job.common.util.date.DateUtils;
 import com.tencent.bk.job.crontab.model.CronJobVO;
 import com.tencent.bk.job.manage.api.web.WebTaskPlanResource;
@@ -75,6 +69,7 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
@@ -450,7 +445,7 @@ public class WebTaskPlanResourceImpl implements WebTaskPlanResource {
                                    String scopeId,
                                    Long templateId,
                                    Long planId,
-                                   TaskPlanCreateUpdateReq taskPlanCreateUpdateReq) {
+                                   @Validated TaskPlanCreateUpdateReq taskPlanCreateUpdateReq) {
         taskPlanCreateUpdateReq.setTemplateId(templateId);
         AuthResult authResult;
         if (planId > 0) {
@@ -468,15 +463,7 @@ public class WebTaskPlanResourceImpl implements WebTaskPlanResource {
         if (!authResult.isPass()) {
             throw new PermissionDeniedException(authResult);
         }
-        // 检查执行方案名称
-        try {
-            StringCheckHelper stringCheckHelper = new StringCheckHelper(new TrimChecker(), new NotEmptyChecker(),
-                new IlegalCharChecker(), new MaxLengthChecker(60));
-            taskPlanCreateUpdateReq.setName(stringCheckHelper.checkAndGetResult(taskPlanCreateUpdateReq.getName()));
-        } catch (StringCheckException e) {
-            log.warn("TaskPlan name is invalid:", e);
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
-        }
+
         Long savedPlanId = planService.saveTaskPlan(TaskPlanInfoDTO.fromReq(username, appResourceScope.getAppId(),
             taskPlanCreateUpdateReq));
         if (planId == 0) {

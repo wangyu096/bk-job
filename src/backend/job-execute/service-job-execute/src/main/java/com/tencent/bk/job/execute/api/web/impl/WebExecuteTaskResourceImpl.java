@@ -32,7 +32,7 @@ import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
 import com.tencent.bk.job.common.model.dto.HostDTO;
 import com.tencent.bk.job.common.util.FilePathValidateUtil;
-import com.tencent.bk.job.common.util.check.IlegalCharChecker;
+import com.tencent.bk.job.common.util.check.IllegalCharChecker;
 import com.tencent.bk.job.common.util.check.MaxLengthChecker;
 import com.tencent.bk.job.common.util.check.NotEmptyChecker;
 import com.tencent.bk.job.common.util.check.StringCheckHelper;
@@ -254,7 +254,7 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
             StringCheckHelper stringCheckHelper = new StringCheckHelper(
                 new TrimChecker(),
                 new NotEmptyChecker(),
-                new IlegalCharChecker(),
+                new IllegalCharChecker(),
                 new MaxLengthChecker(60)
             );
             request.setName(stringCheckHelper.checkAndGetResult(request.getName()));
@@ -389,7 +389,7 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
             StringCheckHelper stringCheckHelper = new StringCheckHelper(
                 new TrimChecker(),
                 new NotEmptyChecker(),
-                new IlegalCharChecker(),
+                new IllegalCharChecker(),
                 new MaxLengthChecker(60)
             );
             request.setName(stringCheckHelper.checkAndGetResult(request.getName()));

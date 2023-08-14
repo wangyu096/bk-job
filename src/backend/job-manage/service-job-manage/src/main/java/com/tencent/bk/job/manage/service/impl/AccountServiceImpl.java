@@ -34,7 +34,7 @@ import com.tencent.bk.job.common.exception.ServiceException;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.util.Utils;
-import com.tencent.bk.job.common.util.check.IlegalCharChecker;
+import com.tencent.bk.job.common.util.check.IllegalCharChecker;
 import com.tencent.bk.job.common.util.check.MaxLengthChecker;
 import com.tencent.bk.job.common.util.check.NotEmptyChecker;
 import com.tencent.bk.job.common.util.check.StringCheckHelper;
@@ -217,7 +217,7 @@ public class AccountServiceImpl implements AccountService {
                 StringCheckHelper stringCheckHelper = new StringCheckHelper(
                     new TrimChecker(),
                     new NotEmptyChecker(),
-                    new IlegalCharChecker(),
+                    new IllegalCharChecker(),
                     new MaxLengthChecker(32)
                 );
                 req.setAlias(stringCheckHelper.checkAndGetResult(req.getAlias()));

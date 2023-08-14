@@ -24,11 +24,14 @@
 
 package com.tencent.bk.job.manage.model.web.request;
 
+import com.tencent.bk.job.common.validation.NotContainSpecialChar;
 import com.tencent.bk.job.manage.model.web.vo.task.TaskVariableVO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import org.hibernate.validator.constraints.Length;
 
+import javax.validation.constraints.NotBlank;
 import java.util.List;
 
 /**
@@ -53,6 +56,9 @@ public class TaskPlanCreateUpdateReq {
      * 执行方案名称
      */
     @ApiModelProperty(value = "执行方案名称", required = true)
+    @NotBlank
+    @Length(min = 1, max = 60, message = "{validation.constraints.InvalidJobPlanName.message}")
+    @NotContainSpecialChar(message = "{validation.constraints.InvalidJobPlanName.message}")
     private String name;
 
     /**

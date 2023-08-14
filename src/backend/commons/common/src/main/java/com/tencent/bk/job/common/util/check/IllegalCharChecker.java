@@ -29,33 +29,18 @@ import com.tencent.bk.job.common.util.check.exception.StringCheckException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class IlegalCharChecker implements IStringCheckStrategy {
+public class IllegalCharChecker implements IStringCheckStrategy {
 
     public static final String DEFAULT_PATTERN = "\\\\|/:*<>\"?";
-    private String patternStr;
+    private final String patternStr;
     private Pattern pattern;
 
-    public IlegalCharChecker() {
+    public IllegalCharChecker() {
         this.patternStr = DEFAULT_PATTERN;
     }
 
-    public IlegalCharChecker(String patternStr) {
+    public IllegalCharChecker(String patternStr) {
         this.patternStr = patternStr;
-    }
-
-    public static void main(String[] args) {
-        IStringCheckStrategy checkStrategy = new IlegalCharChecker();
-        System.out.println(checkStrategy.checkAndGetResult("aaa"));
-        System.out.println(checkStrategy.checkAndGetResult("aaa\\"));
-        System.out.println(checkStrategy.checkAndGetResult("aaa|"));
-        System.out.println(checkStrategy.checkAndGetResult("aaa/"));
-        System.out.println(checkStrategy.checkAndGetResult("aaa:"));
-        System.out.println(checkStrategy.checkAndGetResult("aaa*"));
-        System.out.println(checkStrategy.checkAndGetResult("aaa<"));
-        System.out.println(checkStrategy.checkAndGetResult("aaa>"));
-        System.out.println(checkStrategy.checkAndGetResult("aaa\""));
-        System.out.println(checkStrategy.checkAndGetResult("aaa?"));
-        System.out.println(checkStrategy.checkAndGetResult("aaa="));
     }
 
     @Override
@@ -66,7 +51,7 @@ public class IlegalCharChecker implements IStringCheckStrategy {
         Matcher m = pattern.matcher(rawStr);
         if (m.find()) {
             String message = rawStr
-                + " can not contain ilegal char in ["
+                + " can not contain illegal char in ["
                 + this.patternStr.replace("\\\\", "\\")
                 + "]";
             throw new StringCheckException(message);
