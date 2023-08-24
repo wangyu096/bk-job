@@ -111,8 +111,8 @@ public class ArtifactoryClient {
     private final String password;
     private final MeterRegistry meterRegistry;
 
-    ExtHttpHelper httpHelper = HttpHelperFactory.getDefaultHttpHelper();
-    ExtHttpHelper longHttpHelper = HttpHelperFactory.getLongRetryableHttpHelper();
+    private final ExtHttpHelper httpHelper = HttpHelperFactory.getDefaultHttpHelper();
+    private final ExtHttpHelper longHttpHelper = HttpHelperFactory.getLongRetryableHttpHelper();
 
     public ArtifactoryClient(String baseUrl, String username, String password, MeterRegistry meterRegistry) {
         this.baseUrl = StringUtil.removeSuffix(baseUrl, "/");
@@ -647,12 +647,7 @@ public class ArtifactoryClient {
     public void shutdown() {
     }
 
-    private String getSimplifiedStrForLog(String respStr) {
-        String simplifiedStr = StringUtils.deleteWhitespace(respStr);
-        int maxLength = 20000;
-        if (simplifiedStr.length() > maxLength) {
-            simplifiedStr = simplifiedStr.substring(0, maxLength);
-        }
-        return simplifiedStr;
+    private String getSimplifiedStrForLog(String rawStr) {
+        return StringUtil.substring(rawStr, 20000);
     }
 }

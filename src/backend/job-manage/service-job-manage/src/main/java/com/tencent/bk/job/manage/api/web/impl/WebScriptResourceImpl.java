@@ -746,6 +746,9 @@ public class WebScriptResourceImpl extends BaseWebScriptResource implements WebS
                                              ScriptTagBatchPatchReq req) {
 
         req.validate();
+        if (CollectionUtils.isEmpty(req.getAddTagIdList()) && CollectionUtils.isEmpty(req.getDeleteTagIdList())) {
+            return Response.buildSuccessResp(true);
+        }
 
         // 鉴权
         List<String> scriptIdList = req.getIdList();

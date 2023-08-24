@@ -26,6 +26,7 @@ package com.tencent.bk.job.execute.api.esb.v2.impl;
 
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
+import com.tencent.bk.job.common.constant.AccountCategoryEnum;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobConstants;
 import com.tencent.bk.job.common.constant.NotExistPathHandlerEnum;
@@ -41,6 +42,7 @@ import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.service.AppScopeMappingService;
 import com.tencent.bk.job.common.util.ArrayUtil;
+import com.tencent.bk.job.common.util.DataSizeConverter;
 import com.tencent.bk.job.common.util.FilePathValidateUtil;
 import com.tencent.bk.job.common.util.date.DateUtils;
 import com.tencent.bk.job.common.web.metrics.CustomTimed;
@@ -60,7 +62,6 @@ import com.tencent.bk.job.execute.model.esb.v2.EsbJobExecuteDTO;
 import com.tencent.bk.job.execute.model.esb.v2.request.EsbFastPushFileRequest;
 import com.tencent.bk.job.execute.service.AccountService;
 import com.tencent.bk.job.execute.service.TaskExecuteService;
-import com.tencent.bk.job.manage.common.consts.account.AccountCategoryEnum;
 import com.tencent.bk.job.manage.common.consts.task.TaskFileTypeEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -231,10 +232,10 @@ public class EsbFastPushFileResourceImpl extends JobExecuteCommonProcessor imple
         stepInstance.setTimeout(request.getTimeout() == null ?
             JobConstants.DEFAULT_JOB_TIMEOUT_SECONDS : request.getTimeout());
         if (request.getUploadSpeedLimit() != null && request.getUploadSpeedLimit() > 0) {
-            stepInstance.setFileUploadSpeedLimit(request.getUploadSpeedLimit() << 10);
+            stepInstance.setFileUploadSpeedLimit(DataSizeConverter.convertMBToKB(request.getUploadSpeedLimit()));
         }
         if (request.getDownloadSpeedLimit() != null && request.getDownloadSpeedLimit() > 0) {
-            stepInstance.setFileDownloadSpeedLimit(request.getDownloadSpeedLimit() << 10);
+            stepInstance.setFileDownloadSpeedLimit(DataSizeConverter.convertMBToKB(request.getDownloadSpeedLimit()));
         }
         // 新增参数兼容历史接口调用：默认直接创建
         stepInstance.setNotExistPathHandler(NotExistPathHandlerEnum.CREATE_DIR.getValue());
@@ -271,9 +272,7 @@ public class EsbFastPushFileResourceImpl extends JobExecuteCommonProcessor imple
             fileSourceDTO.setFileType(TaskFileTypeEnum.SERVER.getType());
             List<FileDetailDTO> files = new ArrayList<>();
             if (fileSource.getFiles() != null) {
-                fileSource.getFiles().forEach(file -> {
-                    files.add(new FileDetailDTO(file));
-                });
+                fileSource.getFiles().forEach(file -> files.add(new FileDetailDTO(file)));
             }
             fileSourceDTO.setFiles(files);
             fileSourceDTO.setServers(convertToStandardServers(fileSource.getTargetServer(), fileSource.getIpList(),

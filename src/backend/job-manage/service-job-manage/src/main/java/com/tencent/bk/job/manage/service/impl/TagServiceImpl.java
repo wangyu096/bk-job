@@ -242,7 +242,7 @@ public class TagServiceImpl implements TagService {
     }
 
     @Override
-    @Transactional
+    @Transactional(value = "jobManageTransactionManager")
     @ActionAuditRecord(
         actionId = ActionId.MANAGE_TAG,
         instance = @AuditInstanceRecord(
@@ -344,7 +344,7 @@ public class TagServiceImpl implements TagService {
     }
 
     @Override
-    @Transactional(rollbackFor = {Exception.class, Error.class})
+    @Transactional(value = "jobManageTransactionManager", rollbackFor = {Exception.class, Error.class})
     public void batchPatchResourceTags(List<ResourceTagDTO> addResourceTags,
                                        List<ResourceTagDTO> deleteResourceTags) {
         StopWatch watch = new StopWatch("batchPatchResourceTags");

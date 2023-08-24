@@ -50,6 +50,7 @@ import com.tencent.bk.job.common.gse.v2.model.TransferFileRequest;
 import com.tencent.bk.job.common.gse.v2.model.req.ListAgentStateReq;
 import com.tencent.bk.job.common.gse.v2.model.resp.AgentState;
 import com.tencent.bk.job.common.model.dto.HostDTO;
+import com.tencent.bk.job.common.util.DataSizeConverter;
 import com.tencent.bk.job.common.util.FilePathUtils;
 import com.tencent.bk.job.common.util.ThreadUtils;
 import com.tencent.bk.job.common.util.ip.IpUtils;
@@ -404,7 +405,7 @@ public class GseV1ApiClient implements IGseClient {
     private List<api_copy_fileinfoV2> toV1CopyFileInfoRequest(TransferFileRequest request) {
         return request.getTasks().stream()
             .map(task -> buildCopyFileInfo(task, request.getUploadSpeed(),
-                request.getDownloadSpeed(), request.getTimeout()))
+                request.getDownloadSpeed(), request.getTimeout(), request.isAutoMkdir()))
             .collect(Collectors.toList());
     }
 
@@ -621,13 +622,18 @@ public class GseV1ApiClient implements IGseClient {
     /**
      * 构建 GSE 拷贝文件请求
      *
-     * @param task 文件拷贝任务
+     * @param task               文件拷贝任务
+     * @param uploadSpeedLimit   上传限速，null 表示不限速
+     * @param downloadSpeedLimit 下载限速，null 表示不限速
+     * @param timeout            任务超时时间
+     * @param autoMkdir          目标目录不存在，是否自动创建目录
      * @return 拷贝文件请求
      */
     public api_copy_fileinfoV2 buildCopyFileInfo(FileTransferTask task,
                                                  Integer uploadSpeedLimit,
                                                  Integer downloadSpeedLimit,
-                                                 Integer timeout) {
+                                                 Integer timeout,
+                                                 boolean autoMkdir) {
         api_copy_fileinfoV2 copyFileInfo = new api_copy_fileinfoV2();
 
         api_base_file_info baseFileInfo = new api_base_file_info();
@@ -646,14 +652,17 @@ public class GseV1ApiClient implements IGseClient {
         copyFileInfo.setSrc_agent(buildAgent(sourceFile.getAgent()));
         copyFileInfo.setDest_agents(buildAgents(targetFile.getAgents()));
         if (uploadSpeedLimit != null) {
-            copyFileInfo.setUpload_speed(uploadSpeedLimit);
+            // MB -> KB
+            copyFileInfo.setUpload_speed(DataSizeConverter.convertMBToKB(uploadSpeedLimit));
         }
         if (downloadSpeedLimit != null) {
-            copyFileInfo.setDownload_speed(downloadSpeedLimit);
+            // MB -> KB
+            copyFileInfo.setDownload_speed(DataSizeConverter.convertMBToKB(downloadSpeedLimit));
         }
         if (timeout != null) {
             copyFileInfo.setTimeout(timeout);
         }
+        copyFileInfo.setMkdirflag(autoMkdir ? 1 : 0);
         return copyFileInfo;
     }
 

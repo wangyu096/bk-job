@@ -1,4 +1,4 @@
-{{- if .Values.crontabConfig.enabled }}
+{{- if and .Values.crontabConfig.enabled (eq .Values.deploy.mode "standard") }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -35,7 +35,7 @@ data:
         job-crontab:
           driver-class-name: {{ include "job.jdbcMysqlDriverClass" . }}
           type: com.zaxxer.hikari.HikariDataSource
-          jdbc-url: {{ include "job.jdbcMysqlScheme" . }}://{{- include "job.mariadb.host" . }}:{{- include "job.mariadb.port" . }}/job_crontab?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull
+          jdbc-url: {{ include "job.jdbcMysqlScheme" . }}://{{- include "job.mariadb.host" . }}:{{- include "job.mariadb.port" . }}/job_crontab{{ include "job.mariadb.connection.properties" . }}
           username: {{ include "job.mariadb.username" . }}
           {{ if .Values.externalMariaDB.existingPasswordSecret }}
           password: {{ .Values.externalMariaDB.existingPasswordKey | default "mariadb-password" | printf "${%s}" }}
@@ -113,22 +113,20 @@ data:
       ConnectTimeout: 10000
       eureka:
         enabled: false
+    feign:
+      client:
+        config:
+          default:
+            connectTimeout: 5000
+            readTimeout: 20000
     job:
       crontab:
-        db:
-          url: {{ include "job.jdbcMysqlScheme" . }}://{{- include "job.mariadb.host" . }}:{{- include "job.mariadb.port" . }}/job_crontab?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull
-          username: {{ include "job.mariadb.username" . }}
-          {{ if .Values.externalMariaDB.existingPasswordSecret }}
-          password: {{ .Values.externalMariaDB.existingPasswordKey | default "mariadb-password" | printf "${%s}" }}
-          {{- else -}}
-          password: ${mariadb-password}
-          {{- end }}
-    notification-policy:
-      failed:
-        start:
-          begin: {{ .Values.crontabConfig.notificationPolicy.failed.start.begin | default 1 }}
-          frequency: {{ .Values.crontabConfig.notificationPolicy.failed.start.frequency | default 5 }}
-          total: {{ .Values.crontabConfig.notificationPolicy.failed.start.total | default -1 }}
+        notification-policy:
+          failed:
+            start:
+              begin: {{ .Values.crontabConfig.notificationPolicy.failed.start.begin | default 1 }}
+              frequency: {{ .Values.crontabConfig.notificationPolicy.failed.start.frequency | default 5 }}
+              total: {{ .Values.crontabConfig.notificationPolicy.failed.start.total | default -1 }}
     server:
       port: {{ .Values.crontabConfig.containerPort }}
 {{- end }}

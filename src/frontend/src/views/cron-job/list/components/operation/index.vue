@@ -187,15 +187,12 @@
 <script>
   import TaskService from '@service/task-manage';
   import TaskPlanService from '@service/task-plan';
-  import TimeTaskService from '@service/time-task';
+  import CronJobService from '@service/time-task';
 
   import {
-    checkIllegalHostFromVariableStep,
     checkIllegalHostFromVariableTargetValue,
     findUsedVariable,
     generatorDefaultCronTime,
-    removeIllegalHostFromStep,
-    removeIllegalHostFromVariable,
   } from '@utils/assist';
   import { timeTaskNameRule } from '@utils/validator';
 
@@ -424,7 +421,7 @@
       fetchData() {
         this.isLoading = true;
         Promise.all([
-          TimeTaskService.getDetail({
+          CronJobService.getDetail({
             id: this.formData.id,
           }),
           TaskPlanService.fetchPlanDetailInfo({
@@ -558,7 +555,7 @@
        * @param {String} name 定时任务名
        */
       checkName(name) {
-        return TimeTaskService.timeTaskCheckName({
+        return CronJobService.timeTaskCheckName({
           id: this.formData.id,
           name,
         });
@@ -678,7 +675,7 @@
             if (params.endTime) {
               params.endTime = new Date(params.endTime).getTime() / 1000;
             }
-            return TimeTaskService.timeTaskUpdate({
+            return CronJobService.timeTaskUpdate({
               ...params,
               variableValue: variableList,
             }).then(() => {

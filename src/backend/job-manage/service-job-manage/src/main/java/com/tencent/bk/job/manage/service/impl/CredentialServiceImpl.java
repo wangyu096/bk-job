@@ -38,7 +38,6 @@ import com.tencent.bk.job.manage.model.dto.CredentialDTO;
 import com.tencent.bk.job.manage.model.inner.resp.ServiceCredentialDisplayDTO;
 import com.tencent.bk.job.manage.model.web.request.CredentialCreateUpdateReq;
 import com.tencent.bk.job.manage.service.CredentialService;
-import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -51,12 +50,10 @@ import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_NAME;
 @Service
 public class CredentialServiceImpl implements CredentialService {
 
-    private final DSLContext dslContext;
     private final CredentialDAO credentialDAO;
 
     @Autowired
-    public CredentialServiceImpl(DSLContext dslContext, CredentialDAO credentialDAO) {
-        this.dslContext = dslContext;
+    public CredentialServiceImpl(CredentialDAO credentialDAO) {
         this.credentialDAO = credentialDAO;
     }
 
@@ -167,7 +164,7 @@ public class CredentialServiceImpl implements CredentialService {
 
     @Override
     public List<ServiceCredentialDisplayDTO> listCredentialDisplayInfoByIds(Collection<String> ids) {
-        return credentialDAO.listCredentialDisplayInfoByIds(dslContext, ids);
+        return credentialDAO.listCredentialDisplayInfoByIds(ids);
     }
 
     private CredentialDTO buildCredentialDTO(String username, Long appId, CredentialCreateUpdateReq createUpdateReq) {

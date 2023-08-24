@@ -283,6 +283,7 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
     }
 
     @Override
+    @Transactional(value = "jobManageTransactionManager", rollbackFor = {Exception.class, Error.class})
     @AuditEntry(
         actionId = ActionId.DELETE_JOB_TEMPLATE,
         subActionIds = {ActionId.DELETE_JOB_PLAN}

@@ -1,4 +1,4 @@
-{{- if .Values.backupConfig.enabled }}
+{{- if and .Values.backupConfig.enabled (eq .Values.deploy.mode "standard") }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -35,7 +35,7 @@ data:
         job-backup:
           driver-class-name: {{ include "job.jdbcMysqlDriverClass" . }}
           type: com.zaxxer.hikari.HikariDataSource
-          jdbc-url: {{ include "job.jdbcMysqlScheme" . }}://{{- include "job.mariadb.host" . }}:{{- include "job.mariadb.port" . }}/job_backup?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull
+          jdbc-url: {{ include "job.jdbcMysqlScheme" . }}://{{- include "job.mariadb.host" . }}:{{- include "job.mariadb.port" . }}/job_backup{{ include "job.mariadb.connection.properties" . }}
           username: {{ include "job.mariadb.username" . }}
           {{ if .Values.externalMariaDB.existingPasswordSecret }}
           password: {{ .Values.externalMariaDB.existingPasswordKey | default "mariadb-password" | printf "${%s}" }}
@@ -47,10 +47,11 @@ data:
           idle-timeout: 600000
           poolName: "job-backup"
           validationTimeout: 5000
-        job-execute-db:
+        {{- if and .Values.backupConfig.archive.execute.enabled }}
+        job-execute:
           driver-class-name: {{ include "job.jdbcMysqlDriverClass" . }}
           type: com.zaxxer.hikari.HikariDataSource
-          jdbc-url: {{ include "job.jdbcMysqlScheme" . }}://{{- include "job.mariadb.host" . }}:{{- include "job.mariadb.port" . }}/job_execute?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&sessionVariables=binlog_format=statement
+          jdbc-url: {{ include "job.jdbcMysqlScheme" . }}://{{- include "job.mariadb.host" . }}:{{- include "job.mariadb.port" . }}/job_execute{{ include "job.mariadb.connection.properties" . }}
           username: {{ include "job.mariadb.username" . }}
           {{ if .Values.externalMariaDB.existingPasswordSecret }}
           password: {{ .Values.externalMariaDB.existingPasswordKey | default "mariadb-password" | printf "${%s}" }}
@@ -60,23 +61,22 @@ data:
           maximum-pool-size: 10
           minimum-idle: 2
           idle-timeout: 6000
-          poolName: "job-execute-db"
+          poolName: "job-execute"
           validationTimeout: 5000
+        {{- end }}  
+        {{- if and .Values.backupConfig.archive.execute.enabled .Values.backupConfig.archive.execute.backup.enabled }}
         job-execute-archive:
           driver-class-name: {{ include "job.jdbcMysqlDriverClass" . }}
           type: com.zaxxer.hikari.HikariDataSource
-          jdbc-url: {{ include "job.jdbcMysqlScheme" . }}://{{- include "job.mariadb.host" . }}:{{- include "job.mariadb.port" . }}/job_execute?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull
-          username: {{ include "job.mariadb.username" . }}
-          {{ if .Values.externalMariaDB.existingPasswordSecret }}
-          password: {{ .Values.externalMariaDB.existingPasswordKey | default "mariadb-password" | printf "${%s}" }}
-          {{- else -}}
-          password: ${mariadb-password}
-          {{- end }}
+          jdbc-url: {{ include "job.jdbcMysqlScheme" . }}://{{ .Values.backupConfig.archive.mariadb.host }}:{{ .Values.backupConfig.archive.mariadb.port }}/job_execute{{ .Values.backupConfig.archive.mariadb.connection.properties }}
+          username: {{ .Values.backupConfig.archive.mariadb.username }}
+          password: ${archive-mariadb-password}
           maximum-pool-size: 10
           minimum-idle: 2
           idle-timeout: 6000
           poolName: "job-execute-archive"
           validationTimeout: 5000
+        {{- end }}
       redis:
       {{- include "job.redis.config" . | indent 8 }}
         database: 0
@@ -100,18 +100,10 @@ data:
       port: {{ .Values.backupConfig.containerPort }}
     job:
       backup:
-        upload:
-          filesize:
-            max: 2GB
         storage-backend: {{ .Values.backupConfig.storageBackend }}
         artifactory:
           repo: {{ .Values.backupConfig.artifactory.repo }}
-      execute:
-        archive:
-          enabled: true
-          cron: 0 0 4 * * *
-          data:
-            keep_days: 30
-          delete:
-            enabled: true
+        archive:  
+          execute:
+            {{- toYaml .Values.backupConfig.archive.execute | nindent 12 }}
 {{- end }}

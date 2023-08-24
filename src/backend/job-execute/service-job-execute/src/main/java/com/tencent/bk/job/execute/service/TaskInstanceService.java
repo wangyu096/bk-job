@@ -26,14 +26,10 @@ package com.tencent.bk.job.execute.service;
 
 import com.tencent.bk.job.common.model.dto.HostDTO;
 import com.tencent.bk.job.execute.common.constants.RunStatusEnum;
-import com.tencent.bk.job.execute.common.constants.StepExecuteTypeEnum;
-import com.tencent.bk.job.execute.common.constants.TaskStartupModeEnum;
-import com.tencent.bk.job.execute.common.constants.TaskTypeEnum;
 import com.tencent.bk.job.execute.model.FileSourceDTO;
 import com.tencent.bk.job.execute.model.StepInstanceBaseDTO;
 import com.tencent.bk.job.execute.model.StepInstanceDTO;
 import com.tencent.bk.job.execute.model.TaskInstanceDTO;
-import com.tencent.bk.job.manage.common.consts.script.ScriptTypeEnum;
 
 import java.util.Collection;
 import java.util.List;
@@ -59,7 +55,7 @@ public interface TaskInstanceService {
      * 获取作业实例详情-包含步骤信息和全局变量信息
      *
      * @param taskInstanceId 作业实例 ID
-     * @return
+     * @return 作业实例
      */
     TaskInstanceDTO getTaskInstanceDetail(long taskInstanceId);
 
@@ -166,15 +162,16 @@ public interface TaskInstanceService {
      * 更新解析之后的脚本参数
      *
      * @param stepInstanceId      步骤实例ID
+     * @param isSecureParam       是否为敏感参数
      * @param resolvedScriptParam 解析之后的脚本参数
      */
-    void updateResolvedScriptParam(long stepInstanceId, String resolvedScriptParam);
+    void updateResolvedScriptParam(long stepInstanceId, boolean isSecureParam, String resolvedScriptParam);
 
     /**
      * 更新变量解析之后的源文件
      *
      * @param stepInstanceId      步骤实例ID
-     * @param resolvedFileSources
+     * @param resolvedFileSources 解析后的源文件信息
      */
     void updateResolvedSourceFile(long stepInstanceId, List<FileSourceDTO> resolvedFileSources);
 
@@ -218,15 +215,6 @@ public interface TaskInstanceService {
      * @return 步骤详情
      */
     StepInstanceDTO getStepInstanceByTaskInstanceId(long taskInstanceId);
-
-    Integer countTaskInstances(Long appId, Long minTotalTime, Long maxTotalTime, TaskStartupModeEnum taskStartupMode,
-                               TaskTypeEnum taskType, List<Byte> runStatusList, Long fromTime, Long toTime);
-
-    Integer countStepInstances(Long appId, List<Long> stepIdList, StepExecuteTypeEnum stepExecuteType,
-                               ScriptTypeEnum scriptType, RunStatusEnum runStatus, Long fromTime, Long toTime);
-
-    Integer countFastPushFile(Long appId, Integer transferMode, Boolean localUpload, RunStatusEnum runStatus,
-                              Long fromTime, Long toTime);
 
     List<Long> getJoinedAppIdList();
 

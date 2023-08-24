@@ -24,10 +24,10 @@
 
 package com.tencent.bk.job.manage.service;
 
+import com.tencent.bk.job.common.constant.AccountCategoryEnum;
 import com.tencent.bk.job.common.exception.ServiceException;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
-import com.tencent.bk.job.manage.common.consts.account.AccountCategoryEnum;
 import com.tencent.bk.job.manage.common.consts.account.AccountTypeEnum;
 import com.tencent.bk.job.manage.model.dto.AccountDTO;
 import com.tencent.bk.job.manage.model.dto.AccountDisplayDTO;
@@ -92,7 +92,6 @@ public interface AccountService {
     /**
      * 分页查询账号列表
      *
-     * @param accountQuery        账号查询条件
      * @param baseSearchCondition 基础查询条件
      * @return 账号分页
      */
@@ -116,6 +115,7 @@ public interface AccountService {
      * @param appId    业务ID
      * @param category 账号类别
      * @param alias    账号别名
+     * @return 账号信息
      * @return 账号
      */
     AccountDTO getAccount(Long appId, AccountCategoryEnum category, String alias);

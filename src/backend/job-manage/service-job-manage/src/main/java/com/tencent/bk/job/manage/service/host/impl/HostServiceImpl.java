@@ -30,9 +30,9 @@ import com.tencent.bk.job.common.cc.model.CcInstanceDTO;
 import com.tencent.bk.job.common.cc.model.DynamicGroupHostPropDTO;
 import com.tencent.bk.job.common.cc.model.InstanceTopologyDTO;
 import com.tencent.bk.job.common.cc.sdk.BizCmdbClient;
+import com.tencent.bk.job.common.cc.sdk.BkNetClient;
 import com.tencent.bk.job.common.cc.sdk.CmdbClientFactory;
 import com.tencent.bk.job.common.cc.sdk.IBizCmdbClient;
-import com.tencent.bk.job.common.cc.service.CloudAreaService;
 import com.tencent.bk.job.common.cc.util.TopologyUtil;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobConstants;
@@ -105,7 +105,7 @@ public class HostServiceImpl implements HostService {
     private final ApplicationService applicationService;
     private final HostTopoDAO hostTopoDAO;
     private final TopologyHelper topologyHelper;
-    private final CloudAreaService cloudAreaService;
+    private final BkNetClient bkNetClient;
     private final AgentStatusService agentStatusService;
     private final WhiteIPService whiteIPService;
     private final HostCache hostCache;
@@ -117,7 +117,7 @@ public class HostServiceImpl implements HostService {
                            ApplicationService applicationService,
                            HostTopoDAO hostTopoDAO,
                            TopologyHelper topologyHelper,
-                           CloudAreaService cloudAreaService,
+                           BkNetClient bkNetClient,
                            AgentStatusService agentStatusService,
                            WhiteIPService whiteIPService,
                            HostCache hostCache,
@@ -127,7 +127,7 @@ public class HostServiceImpl implements HostService {
         this.applicationService = applicationService;
         this.hostTopoDAO = hostTopoDAO;
         this.topologyHelper = topologyHelper;
-        this.cloudAreaService = cloudAreaService;
+        this.bkNetClient = bkNetClient;
         this.agentStatusService = agentStatusService;
         this.whiteIPService = whiteIPService;
         this.hostCache = hostCache;
@@ -234,7 +234,7 @@ public class HostServiceImpl implements HostService {
         return updateCount;
     }
 
-    @Transactional
+    @Transactional(value = "jobManageTransactionManager")
     @Override
     public int createOrUpdateHostBeforeLastTime(ApplicationHostDTO hostInfoDTO) {
         try {
@@ -312,7 +312,7 @@ public class HostServiceImpl implements HostService {
         hostCache.batchDeleteHost(hostList);
         hostList = applicationHostDAO.listHostInfoByHostIds(hostIdList);
         // 未成功从DB删除的主机重新加入缓存
-        hostCache.addOrUpdateHosts(hostList);
+        hostCache.batchAddOrUpdateHosts(hostList);
         return deletedNum;
     }
 
@@ -822,7 +822,7 @@ public class HostServiceImpl implements HostService {
         List<Long> cloudAreaIds = null;
         if (StringUtils.isNotBlank(searchContent)) {
             cloudAreaIds = new ArrayList<>();
-            List<CcCloudAreaInfoDTO> allCloudAreaInfos = cloudAreaService.getCloudAreaList();
+            List<CcCloudAreaInfoDTO> allCloudAreaInfos = bkNetClient.getCloudAreaList();
             for (CcCloudAreaInfoDTO it : allCloudAreaInfos) {
                 if (matchSearchContent(searchContent, it.getName())) {
                     cloudAreaIds.add(it.getId());
@@ -1126,7 +1126,7 @@ public class HostServiceImpl implements HostService {
 
     private void fillCloudAreaName(List<ApplicationHostDTO> hostDTOList) {
         hostDTOList.forEach(hostDTO ->
-            hostDTO.setCloudAreaName(CloudAreaService.getCloudAreaNameFromCache(hostDTO.getCloudAreaId()))
+            hostDTO.setCloudAreaName(BkNetClient.getCloudAreaNameFromCache(hostDTO.getCloudAreaId()))
         );
     }
 
@@ -1345,57 +1345,81 @@ public class HostServiceImpl implements HostService {
     public ServiceListAppHostResultDTO listAppHostsPreferCache(Long appId,
                                                                List<HostDTO> hosts,
                                                                boolean refreshAgentId) {
-        ServiceListAppHostResultDTO result = new ServiceListAppHostResultDTO();
-        ApplicationDTO application = applicationService.getAppByAppId(appId);
+        StopWatch watch = new StopWatch("listAppHostsPreferCache");
+        try {
+            ServiceListAppHostResultDTO result = new ServiceListAppHostResultDTO();
 
-        Pair<List<HostDTO>, List<ApplicationHostDTO>> hostResult = listHostsFromCacheOrCmdb(hosts);
-        List<HostDTO> notExistHosts = hostResult.getLeft();
-        List<ApplicationHostDTO> existHosts = hostResult.getRight();
-        refreshHostAgentIdIfNeed(refreshAgentId, existHosts);
-        List<HostDTO> validHosts = new ArrayList<>();
-        List<HostDTO> notInAppHosts = new ArrayList<>();
+            watch.start("getAppByAppId");
+            ApplicationDTO application = applicationService.getAppByAppId(appId);
+            watch.stop();
 
-        if (application.isAllBizSet()) {
-            // 如果是全业务，所以主机都是合法的
-            result.setNotExistHosts(notExistHosts);
-            result.setValidHosts(existHosts.stream().map(ApplicationHostDTO::toHostDTO).collect(Collectors.toList()));
-            result.setNotInAppHosts(Collections.emptyList());
-            return result;
-        }
+            watch.start("listHostsFromCacheOrCmdb");
+            Pair<List<HostDTO>, List<ApplicationHostDTO>> hostResult = listHostsFromCacheOrCmdb(hosts);
+            watch.stop();
 
-        // 普通业务集和普通业务需要判断主机是否归属于业务
-        List<Long> includeBizIds = buildIncludeBizIdList(application);
-        if (CollectionUtils.isEmpty(includeBizIds)) {
-            log.warn("App do not contains any biz, appId:{}", appId);
-            result.setValidHosts(Collections.emptyList());
-            result.setNotExistHosts(Collections.emptyList());
-            result.setNotInAppHosts(hosts);
-            return result;
-        }
+            List<HostDTO> notExistHosts = hostResult.getLeft();
+            List<ApplicationHostDTO> existHosts = hostResult.getRight();
 
-        existHosts.forEach(existHost -> {
-            if (includeBizIds.contains(existHost.getBizId())) {
-                validHosts.add(existHost.toHostDTO());
-            } else {
-                notInAppHosts.add(existHost.toHostDTO());
+            watch.start("refreshHostAgentIdIfNeed");
+            refreshHostAgentIdIfNeed(refreshAgentId, existHosts);
+            watch.stop();
+
+            List<HostDTO> validHosts = new ArrayList<>();
+            List<HostDTO> notInAppHosts = new ArrayList<>();
+
+            if (application.isAllBizSet()) {
+                // 如果是全业务，所以主机都是合法的
+                result.setNotExistHosts(notExistHosts);
+                result.setValidHosts(existHosts.stream().map(ApplicationHostDTO::toHostDTO)
+                    .collect(Collectors.toList()));
+                result.setNotInAppHosts(Collections.emptyList());
+                return result;
             }
-        });
 
-        // 对于判定为其他业务下的主机，可能是缓存数据不准确导致，需要根据CMDB实时数据进行二次判定
-        if (CollectionUtils.isNotEmpty(notInAppHosts)) {
-            reConfirmNotInAppHostsByCmdb(notInAppHosts, notExistHosts, validHosts, appId, includeBizIds);
+            // 普通业务集和普通业务需要判断主机是否归属于业务
+            List<Long> includeBizIds = buildIncludeBizIdList(application);
+            if (CollectionUtils.isEmpty(includeBizIds)) {
+                log.warn("App do not contains any biz, appId:{}", appId);
+                result.setValidHosts(Collections.emptyList());
+                result.setNotExistHosts(Collections.emptyList());
+                result.setNotInAppHosts(hosts);
+                return result;
+            }
+
+            existHosts.forEach(existHost -> {
+                if (includeBizIds.contains(existHost.getBizId())) {
+                    validHosts.add(existHost.toHostDTO());
+                } else {
+                    notInAppHosts.add(existHost.toHostDTO());
+                }
+            });
+
+            // 对于判定为其他业务下的主机，可能是缓存数据不准确导致，需要根据CMDB实时数据进行二次判定
+            if (CollectionUtils.isNotEmpty(notInAppHosts)) {
+                watch.start("reConfirmNotInAppHostsByCmdb");
+                reConfirmNotInAppHostsByCmdb(notInAppHosts, notExistHosts, validHosts, appId, includeBizIds);
+                watch.stop();
+            }
+
+            if (CollectionUtils.isNotEmpty(notExistHosts) || CollectionUtils.isNotEmpty(notInAppHosts)) {
+                log.info("Contains invalid hosts, appId: {}, notExistHosts: {}, hostsInOtherApp: {}",
+                    appId, notExistHosts, notInAppHosts);
+            }
+
+            result.setNotExistHosts(notExistHosts);
+            result.setValidHosts(validHosts);
+            result.setNotInAppHosts(notInAppHosts);
+
+            return result;
+        } finally {
+            if (watch.isRunning()) {
+                watch.stop();
+            }
+            if (watch.getTotalTimeMillis() > 3000) {
+                log.warn("ListAppHostsPreferCache slow, watch: {}", watch.prettyPrint());
+            }
         }
 
-        if (CollectionUtils.isNotEmpty(notExistHosts) || CollectionUtils.isNotEmpty(notInAppHosts)) {
-            log.info("Contains invalid hosts, appId: {}, notExistHosts: {}, hostsInOtherApp: {}",
-                appId, notExistHosts, notInAppHosts);
-        }
-
-        result.setNotExistHosts(notExistHosts);
-        result.setValidHosts(validHosts);
-        result.setNotInAppHosts(notInAppHosts);
-
-        return result;
     }
 
     /**
@@ -1584,6 +1608,7 @@ public class HostServiceImpl implements HostService {
     private class ListHostByIpsStrategy implements ListHostStrategy<String> {
         @Override
         public Pair<List<String>, List<ApplicationHostDTO>> listHostsFromCache(List<String> cloudIps) {
+            long start = System.currentTimeMillis();
             List<ApplicationHostDTO> appHosts = new ArrayList<>();
             List<String> notExistCloudIps = new ArrayList<>();
             List<CacheHostDO> cacheHosts = hostCache.batchGetHostsByIps(cloudIps);
@@ -1596,11 +1621,17 @@ public class HostServiceImpl implements HostService {
                     notExistCloudIps.add(cloudIp);
                 }
             }
+
+            long cost = System.currentTimeMillis() - start;
+            if (cost > 1000) {
+                log.warn("ListHostsFromRedis slow, ipSize: {}, cost: {}", cloudIps.size(), cost);
+            }
             return Pair.of(notExistCloudIps, appHosts);
         }
 
         @Override
         public Pair<List<String>, List<ApplicationHostDTO>> listHostsFromDb(List<String> cloudIps) {
+            long start = System.currentTimeMillis();
             List<ApplicationHostDTO> appHosts = new ArrayList<>();
             List<String> notExistCloudIps = new ArrayList<>(cloudIps);
             List<ApplicationHostDTO> hostsInDb = applicationHostDAO.listHostsByCloudIps(cloudIps);
@@ -1611,16 +1642,25 @@ public class HostServiceImpl implements HostService {
                         // DB中缓存的主机可能没有业务信息(依赖的主机事件还没有处理),那么暂时跳过该主机
                         continue;
                     }
-                    hostCache.addOrUpdateHost(appHost);
                     notExistCloudIps.remove(appHost.getCloudIp());
                     appHosts.add(appHost);
                 }
+            }
+            if (CollectionUtils.isNotEmpty(appHosts)) {
+                hostCache.batchAddOrUpdateHosts(appHosts);
+            }
+
+            long cost = System.currentTimeMillis() - start;
+            if (cost > 1000) {
+                log.warn("ListHostsFromMySQL slow, ipSize: {}, cost: {}", cloudIps.size(), cost);
             }
             return Pair.of(notExistCloudIps, appHosts);
         }
 
         @Override
         public Pair<List<String>, List<ApplicationHostDTO>> listHostsFromCmdb(List<String> cloudIps) {
+            long start = System.currentTimeMillis();
+
             List<String> notExistCloudIps = new ArrayList<>(cloudIps);
 
             List<ApplicationHostDTO> cmdbExistHosts = bizCmdbClient.listHostsByCloudIps(cloudIps);
@@ -1631,7 +1671,12 @@ public class HostServiceImpl implements HostService {
                 notExistCloudIps.removeAll(cmdbExistHostIds);
                 log.info("sync new hosts from cmdb, hosts:{}", cmdbExistHosts);
 
-                hostCache.addOrUpdateHosts(cmdbExistHosts);
+                hostCache.batchAddOrUpdateHosts(cmdbExistHosts);
+            }
+
+            long cost = System.currentTimeMillis() - start;
+            if (cost > 1000) {
+                log.warn("ListHostsFromCmdb slow, ipSize: {}, cost: {}", cloudIps.size(), cost);
             }
             return Pair.of(notExistCloudIps, cmdbExistHosts);
         }
@@ -1640,6 +1685,7 @@ public class HostServiceImpl implements HostService {
     private class ListHostByHostIdsStrategy implements ListHostStrategy<Long> {
         @Override
         public Pair<List<Long>, List<ApplicationHostDTO>> listHostsFromCache(List<Long> hostIds) {
+            long start = System.currentTimeMillis();
             List<ApplicationHostDTO> appHosts = new ArrayList<>();
             List<Long> notExistHostIds = new ArrayList<>();
             List<CacheHostDO> cacheHosts = hostCache.batchGetHostsByHostIds(hostIds);
@@ -1652,11 +1698,16 @@ public class HostServiceImpl implements HostService {
                     notExistHostIds.add(hostId);
                 }
             }
+            long cost = System.currentTimeMillis() - start;
+            if (cost > 1000) {
+                log.warn("ListHostsFromRedis slow, hostSize: {}, cost: {}", hostIds.size(), cost);
+            }
             return Pair.of(notExistHostIds, appHosts);
         }
 
         @Override
         public Pair<List<Long>, List<ApplicationHostDTO>> listHostsFromDb(List<Long> hostIds) {
+            long start = System.currentTimeMillis();
             List<ApplicationHostDTO> appHosts = new ArrayList<>();
             List<Long> notExistHostIds = new ArrayList<>(hostIds);
             List<ApplicationHostDTO> hostsInDb = applicationHostDAO.listHostInfoByHostIds(hostIds);
@@ -1667,16 +1718,24 @@ public class HostServiceImpl implements HostService {
                         // DB中缓存的主机可能没有业务信息(依赖的主机事件还没有处理),那么暂时跳过该主机
                         continue;
                     }
-                    hostCache.addOrUpdateHost(appHost);
                     notExistHostIds.remove(appHost.getHostId());
                     appHosts.add(appHost);
                 }
+            }
+
+            if (CollectionUtils.isNotEmpty(appHosts)) {
+                hostCache.batchAddOrUpdateHosts(appHosts);
+            }
+            long cost = System.currentTimeMillis() - start;
+            if (cost > 1000) {
+                log.warn("ListHostsFromMySQL slow, hostSize: {}, cost: {}", hostIds.size(), cost);
             }
             return Pair.of(notExistHostIds, appHosts);
         }
 
         @Override
         public Pair<List<Long>, List<ApplicationHostDTO>> listHostsFromCmdb(List<Long> hostIds) {
+            long start = System.currentTimeMillis();
             List<Long> notExistHostIds = new ArrayList<>(hostIds);
             List<ApplicationHostDTO> cmdbExistHosts = listHostsFromCmdbByHostIds(hostIds);
             if (CollectionUtils.isNotEmpty(cmdbExistHosts)) {
@@ -1686,7 +1745,12 @@ public class HostServiceImpl implements HostService {
                 notExistHostIds.removeAll(cmdbExistHostIds);
                 log.info("sync new hosts from cmdb, hosts:{}", cmdbExistHosts);
 
-                hostCache.addOrUpdateHosts(cmdbExistHosts);
+                hostCache.batchAddOrUpdateHosts(cmdbExistHosts);
+            }
+
+            long cost = System.currentTimeMillis() - start;
+            if (cost > 1000) {
+                log.warn("ListHostsFromCmdb slow, hostSize: {}, cost: {}", hostIds.size(), cost);
             }
             return Pair.of(notExistHostIds, cmdbExistHosts);
         }

@@ -57,11 +57,5 @@ public class ScriptTagBatchPatchReq {
             log.warn("ScriptTagBatchUpdateReq->idList is empty");
             throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, "idList");
         }
-
-        if (CollectionUtils.isEmpty(this.addTagIdList) && CollectionUtils.isEmpty(this.deleteTagIdList)) {
-            log.warn("ScriptTagBatchUpdateReq->No script tags changed!");
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME,
-                "addTagIdList|deleteTagIdList");
-        }
     }
 }

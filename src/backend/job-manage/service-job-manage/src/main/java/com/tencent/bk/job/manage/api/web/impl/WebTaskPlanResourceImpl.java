@@ -461,8 +461,13 @@ public class WebTaskPlanResourceImpl implements WebTaskPlanResource {
         taskPlanCreateUpdateReq.setId(planId);
 
         AuthResult authResult;
-        authResult = planAuthService.authEditJobPlan(username, appResourceScope, templateId,
-            planId, null);
+        if (planService.isDebugPlan(appResourceScope.getAppId(), templateId, planId)) {
+            authResult = templateAuthService.authDebugJobTemplate(username, appResourceScope, templateId);
+        } else {
+            authResult = planAuthService.authEditJobPlan(username, appResourceScope, templateId,
+                planId, null);
+        }
+
         if (!authResult.isPass()) {
             throw new PermissionDeniedException(authResult);
         }
@@ -512,6 +517,7 @@ public class WebTaskPlanResourceImpl implements WebTaskPlanResource {
         planAuthService.registerPlan(savedPlan.getId(), taskPlanCreateUpdateReq.getName(), username);
         return Response.buildSuccessResp(TaskPlanInfoDTO.toVO(savedPlan));
     }
+
 
     @Override
     @AuditEntry(

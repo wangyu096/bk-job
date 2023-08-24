@@ -171,7 +171,7 @@ class GenCompleteDependJarListAndRemoveInfectedJarsTask extends DefaultTask {
     private void writeListToFile(List<String> list, File file) {
         BufferedWriter bw = null;
         try {
-            bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"));
+            bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8));
             for (int i = 0; i < list.size(); i++) {
                 String line = list.get(i);
                 if (i == 0) {

@@ -48,6 +48,10 @@ import static com.tencent.bk.job.common.constant.HttpHeader.HDR_CONTENT_TYPE;
  * ESB API 调用基础实现
  */
 public abstract class AbstractEsbSdkClient {
+
+    // 请求成功
+    protected static final Integer ESB_CODE_OK = 0;
+
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     private static final JsonMapper JSON_MAPPER = JsonMapper.nonDefaultMapper();
@@ -57,13 +61,11 @@ public abstract class AbstractEsbSdkClient {
     private final String appCode;
     private final String lang;
     private final ExtHttpHelper defaultHttpHelper = HttpHelperFactory.getDefaultHttpHelper();
-    /**
-     * 是否对接ESB测试环境
-     */
-    private final boolean useEsbTestEnv;
 
-    public AbstractEsbSdkClient(String esbHostUrl, String appCode, String appSecret,
-                                String lang, boolean useEsbTestEnv) {
+    public AbstractEsbSdkClient(String esbHostUrl,
+                                String appCode,
+                                String appSecret,
+                                String lang) {
         this.esbHostUrl = esbHostUrl;
         this.appCode = appCode;
         this.appSecret = appSecret;
@@ -72,7 +74,6 @@ public abstract class AbstractEsbSdkClient {
         } else {
             this.lang = BK_LANG_EN;
         }
-        this.useEsbTestEnv = useEsbTestEnv;
     }
 
     public <R> EsbResp<R> getEsbRespByReq(String method,
@@ -150,6 +151,10 @@ public abstract class AbstractEsbSdkClient {
             }
 
             esbResp = JSON_MAPPER.fromJson(respStr, typeReference);
+            if (esbResp == null) {
+                log.warn("[AbstractEsbSdkClient] warn:esbResp is null after JSON parse, respStr={}", respStr);
+                throw new InternalException("Esb api resp unexpected, fail to parse json data", ErrorCode.API_ERROR);
+            }
             apiContext.setResp(esbResp);
             if (!esbResp.getResult()) {
                 log.warn(
@@ -267,15 +272,8 @@ public abstract class AbstractEsbSdkClient {
         } else {
             url = esbHostUrl + uri + params.toUrlParams();
         }
-        Header[] header;
-        if (useEsbTestEnv) {
-            header = new Header[2];
-            header[0] = new BasicHeader(HDR_BK_LANG, lang);
-            header[1] = new BasicHeader("x-use-test-env", "1");
-        } else {
-            header = new Header[1];
-            header[0] = new BasicHeader(HDR_BK_LANG, lang);
-        }
+        Header[] header = new Header[1];
+        header[0] = new BasicHeader(HDR_BK_LANG, lang);
         responseBody = httpHelper.get(url, header);
         return responseBody;
     }
@@ -287,26 +285,17 @@ public abstract class AbstractEsbSdkClient {
         if (httpHelper == null) {
             httpHelper = defaultHttpHelper;
         }
-        String responseBody;
         String url;
         if (!esbHostUrl.endsWith("/") && !uri.startsWith("/")) {
             url = esbHostUrl + "/" + uri;
         } else {
             url = esbHostUrl + uri;
         }
-        Header[] header;
-        if (useEsbTestEnv) {
-            header = new Header[3];
-            header[0] = new BasicHeader(HDR_BK_LANG, lang);
-            header[1] = new BasicHeader(HDR_CONTENT_TYPE, "application/json");
-            header[2] = new BasicHeader("x-use-test-env", "1");
-        } else {
-            header = new Header[2];
-            header[0] = new BasicHeader(HDR_BK_LANG, lang);
-            header[1] = new BasicHeader(HDR_CONTENT_TYPE, "application/json");
-        }
-        responseBody = httpHelper.post(url, "UTF-8", buildPostBody(params), header);
-        return responseBody;
+        Header[] header = new Header[2];
+        header[0] = new BasicHeader(HDR_BK_LANG, lang);
+        header[1] = new BasicHeader(HDR_CONTENT_TYPE, "application/json");
+
+        return httpHelper.post(url, "UTF-8", buildPostBody(params), header);
     }
 
     protected <T extends EsbReq> String buildPostBody(T params) {

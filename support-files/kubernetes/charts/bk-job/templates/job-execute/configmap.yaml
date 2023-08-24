@@ -1,4 +1,4 @@
-{{- if .Values.executeConfig.enabled }}
+{{- if and .Values.executeConfig.enabled (eq .Values.deploy.mode "standard") }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -163,7 +163,7 @@ data:
         job-execute:
           driver-class-name: {{ include "job.jdbcMysqlDriverClass" . }}
           type: com.zaxxer.hikari.HikariDataSource
-          jdbc-url: {{ include "job.jdbcMysqlScheme" . }}://{{- include "job.mariadb.host" . }}:{{- include "job.mariadb.port" . }}/job_execute?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&rewriteBatchedStatements=true
+          jdbc-url: {{ include "job.jdbcMysqlScheme" . }}://{{- include "job.mariadb.host" . }}:{{- include "job.mariadb.port" . }}/job_execute{{ include "job.mariadb.connection.properties" . }}
           username: {{ include "job.mariadb.username" . }}
           {{ if .Values.externalMariaDB.existingPasswordSecret }}
           password: {{ .Values.externalMariaDB.existingPasswordKey | default "mariadb-password" | printf "${%s}" }}
@@ -192,15 +192,17 @@ data:
         config:
           default:
             connectTimeout: 5000
-            readTimeout: 5000
+            readTimeout: 20000
           sync:
             connectTimeout: 5000
             readTimeout: 30000
           log:
             connectTimeout: 5000
             readTimeout: 30000
-    log-export:
-      storage-backend: {{ .Values.executeConfig.logExport.storageBackend }}
-      artifactory:
-        repo: {{ .Values.executeConfig.logExport.artifactory.repo }}
+    job:
+      execute:
+        log-export:
+          storage-backend: {{ .Values.executeConfig.logExport.storageBackend }}
+          artifactory:
+            repo: {{ .Values.executeConfig.logExport.artifactory.repo }}
 {{- end }}

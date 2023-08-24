@@ -24,6 +24,7 @@
 
 package com.tencent.bk.job.manage.api.inner.impl;
 
+import com.tencent.bk.job.common.constant.AccountCategoryEnum;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
 import com.tencent.bk.job.common.exception.InvalidParamException;
@@ -31,7 +32,6 @@ import com.tencent.bk.job.common.exception.NotFoundException;
 import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.common.util.json.JsonUtils;
 import com.tencent.bk.job.manage.api.inner.ServiceTaskPlanResource;
-import com.tencent.bk.job.manage.common.consts.account.AccountCategoryEnum;
 import com.tencent.bk.job.manage.common.consts.task.TaskFileTypeEnum;
 import com.tencent.bk.job.manage.common.consts.task.TaskScriptSourceEnum;
 import com.tencent.bk.job.manage.common.consts.task.TaskStepTypeEnum;
@@ -206,7 +206,7 @@ public class ServiceTaskPlanResourceImpl implements ServiceTaskPlanResource {
     }
 
     @Override
-    @Transactional(rollbackFor = {Throwable.class})
+    @Transactional(value = "jobManageTransactionManager", rollbackFor = {Throwable.class})
     public InternalResponse<Long> createPlanWithIdForMigration(
         String username,
         Long appId,
@@ -477,9 +477,7 @@ public class ServiceTaskPlanResourceImpl implements ServiceTaskPlanResource {
             return null;
         }
         List<ServiceTaskVariableDTO> variableDTOS = new ArrayList<>();
-        plan.getVariableList().forEach(variableDTO -> {
-            variableDTOS.add(buildVariable(variableDTO));
-        });
+        plan.getVariableList().forEach(variableDTO -> variableDTOS.add(buildVariable(variableDTO)));
         return variableDTOS;
     }
 

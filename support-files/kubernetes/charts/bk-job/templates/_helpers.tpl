@@ -137,6 +137,13 @@ Return the proper job-config-watcher image name
 {{- end -}}
 
 {{/*
+Return the proper job-assemble image name
+*/}}
+{{- define "job-assemble.image" -}}
+{{ include "common.images.image" (dict "imageRoot" .Values.assembleConfig.image "global" .Values.global) }}
+{{- end -}}
+
+{{/*
 Return the proper Docker Image Registry Secret Names
 */}}
 {{- define "job.imagePullSecrets" -}}
@@ -218,6 +225,17 @@ Return the JDBC MySQL Driver Class
 */}}
 {{- define "job.jdbcMysqlDriverClass" -}}
 {{- printf "io.opentelemetry.instrumentation.jdbc.OpenTelemetryDriver" -}}
+{{- end -}}
+
+{{/*
+Return the MariaDB jdbc connection url properties
+*/}}
+{{- define "job.mariadb.connection.properties" -}}
+{{- if .Values.mariadb.enabled }}
+    {{- printf "%s" .Values.mariadb.connection.properties -}}
+{{- else -}}
+    {{- printf "%s" .Values.externalMariaDB.connection.properties -}}
+{{- end -}}
 {{- end -}}
 
 {{/*
@@ -609,3 +627,44 @@ tls:
 {{- end -}}
 {{- end -}}
 
+
+{{/*
+Return the Job Service Probes Config
+*/}}
+{{- define "job.service.probes" -}}
+startupProbe:
+  httpGet:
+    path: /actuator/health/liveness
+    port: {{ .port }}
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 30
+  successThreshold: 1
+livenessProbe:
+  httpGet:
+    path: /actuator/health/liveness
+    port: {{ .port }}
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 20
+  successThreshold: 1
+readinessProbe:
+  httpGet:
+    path: /actuator/health/readiness
+    port: {{ .port }}
+  initialDelaySeconds: 10
+  periodSeconds: 3
+  timeoutSeconds: 3
+  failureThreshold: 1
+  successThreshold: 1
+{{- end -}}
+
+
+{{/*
+Return the Archive MariaDB secret name
+*/}}
+{{- define "job.archiveMariadb.secretName" -}}
+{{ printf "%s-%s" (include "job.fullname" .) "archive-mariadb" }}
+{{- end -}}

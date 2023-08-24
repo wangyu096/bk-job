@@ -1,4 +1,4 @@
-{{- if .Values.manageConfig.enabled }}
+{{- if and .Values.manageConfig.enabled (eq .Values.deploy.mode "standard") }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -35,7 +35,7 @@ data:
         job-manage:
           driver-class-name: {{ include "job.jdbcMysqlDriverClass" . }}
           type: com.zaxxer.hikari.HikariDataSource
-          jdbc-url: {{ include "job.jdbcMysqlScheme" . }}://{{- include "job.mariadb.host" . }}:{{- include "job.mariadb.port" . }}/job_manage?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull
+          jdbc-url: {{ include "job.jdbcMysqlScheme" . }}://{{- include "job.mariadb.host" . }}:{{- include "job.mariadb.port" . }}/job_manage{{ include "job.mariadb.connection.properties" . }}
           username: {{ include "job.mariadb.username" . }}
           {{ if .Values.externalMariaDB.existingPasswordSecret }}
           password: {{ .Values.externalMariaDB.existingPasswordKey | default "mariadb-password" | printf "${%s}" }}
@@ -61,6 +61,12 @@ data:
         multipart:
           max-file-size: 5GB
           max-request-size: 5GB
+    feign:
+      client:
+        config:
+          default:
+            connectTimeout: 5000
+            readTimeout: 20000
     bk:
       doc:
         root: {{ .Values.bkDocsCenterUrl }}
@@ -78,10 +84,10 @@ data:
               enabled: {{ .Values.manageConfig.sync.resource.watch.enabled }}
           hostEvent:
             handlerNum: {{ .Values.manageConfig.sync.hostEvent.handlerNum }}
-    notify:
-      default:
-        channels:
-          available: mail
+        notify:
+          default:
+            channels:
+              available: mail
     server:
       port: {{ .Values.manageConfig.containerPort }}
 {{- end }}

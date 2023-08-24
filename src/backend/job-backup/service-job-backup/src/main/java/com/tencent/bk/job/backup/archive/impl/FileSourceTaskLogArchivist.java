@@ -25,20 +25,31 @@
 package com.tencent.bk.job.backup.archive.impl;
 
 import com.tencent.bk.job.backup.archive.AbstractArchivist;
+import com.tencent.bk.job.backup.config.ArchiveDBProperties;
 import com.tencent.bk.job.backup.dao.ExecuteArchiveDAO;
-import com.tencent.bk.job.backup.dao.impl.FileSourceTaskRecordDAO;
+import com.tencent.bk.job.backup.dao.impl.FileSourceTaskLogRecordDAO;
 import com.tencent.bk.job.backup.service.ArchiveProgressService;
-import org.jooq.generated.tables.records.FileSourceTaskLogRecord;
+import com.tencent.bk.job.execute.model.tables.records.FileSourceTaskLogRecord;
+
+import java.util.concurrent.CountDownLatch;
 
 /**
  * file_source_task_log 表归档
  */
 public class FileSourceTaskLogArchivist extends AbstractArchivist<FileSourceTaskLogRecord> {
 
-    public FileSourceTaskLogArchivist(FileSourceTaskRecordDAO executeRecordDAO,
+    public FileSourceTaskLogArchivist(FileSourceTaskLogRecordDAO executeRecordDAO,
                                       ExecuteArchiveDAO executeArchiveDAO,
-                                      ArchiveProgressService archiveProgressService) {
-        super(executeRecordDAO, executeArchiveDAO, archiveProgressService);
-        this.deleteIdStepSize = 100_000;
+                                      ArchiveProgressService archiveProgressService,
+                                      ArchiveDBProperties archiveDBProperties,
+                                      Long maxNeedArchiveId,
+                                      CountDownLatch countDownLatch) {
+        super(executeRecordDAO,
+            executeArchiveDAO,
+            archiveProgressService,
+                archiveDBProperties,
+            maxNeedArchiveId,
+            countDownLatch);
+        this.deleteIdStepSize = 1_000;
     }
 }

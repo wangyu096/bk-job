@@ -28,12 +28,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.tencent.bk.job.common.esb.model.EsbAppScopeDTO;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  * 执行方案基础信息
  *
  * @since 15/10/2020 17:54
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 public class EsbPlanBasicInfoV3DTO extends EsbAppScopeDTO {
     /**

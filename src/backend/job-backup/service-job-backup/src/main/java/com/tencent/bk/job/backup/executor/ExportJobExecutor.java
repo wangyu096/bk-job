@@ -31,6 +31,7 @@ import com.tencent.bk.job.backup.constant.BackupJobStatusEnum;
 import com.tencent.bk.job.backup.constant.Constant;
 import com.tencent.bk.job.backup.constant.LogMessage;
 import com.tencent.bk.job.backup.constant.SecretHandlerEnum;
+import com.tencent.bk.job.backup.crypto.BackupFileCryptoService;
 import com.tencent.bk.job.backup.model.dto.BackupTemplateInfoDTO;
 import com.tencent.bk.job.backup.model.dto.ExportJobInfoDTO;
 import com.tencent.bk.job.backup.model.dto.JobBackupInfoDTO;
@@ -49,7 +50,6 @@ import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.util.Base64Util;
 import com.tencent.bk.job.common.util.FileUtil;
-import com.tencent.bk.job.common.util.crypto.AESUtils;
 import com.tencent.bk.job.common.util.file.ZipUtil;
 import com.tencent.bk.job.common.util.json.JsonMapper;
 import com.tencent.bk.job.manage.common.consts.task.TaskFileTypeEnum;
@@ -111,16 +111,22 @@ public class ExportJobExecutor {
     private final ArtifactoryConfig artifactoryConfig;
     private final BackupStorageConfig backupStorageConfig;
     private final LocalFileConfigForBackup localFileConfig;
+    private final BackupFileCryptoService backupFileCryptoService;
 
     @Autowired
-    public ExportJobExecutor(ExportJobService exportJobService, TaskTemplateService taskTemplateService,
-                             TaskPlanService taskPlanService, ScriptService scriptService,
-                             AccountService accountService, LogService logService,
-                             StorageService storageService, MessageI18nService i18nService,
+    public ExportJobExecutor(ExportJobService exportJobService,
+                             TaskTemplateService taskTemplateService,
+                             TaskPlanService taskPlanService,
+                             ScriptService scriptService,
+                             AccountService accountService,
+                             LogService logService,
+                             StorageService storageService,
+                             MessageI18nService i18nService,
                              ArtifactoryClient artifactoryClient,
                              ArtifactoryConfig artifactoryConfig,
                              BackupStorageConfig backupStorageConfig,
-                             LocalFileConfigForBackup localFileConfig) {
+                             LocalFileConfigForBackup localFileConfig,
+                             BackupFileCryptoService backupFileCryptoService) {
         this.exportJobService = exportJobService;
         this.taskTemplateService = taskTemplateService;
         this.taskPlanService = taskPlanService;
@@ -133,6 +139,7 @@ public class ExportJobExecutor {
         this.artifactoryConfig = artifactoryConfig;
         this.backupStorageConfig = backupStorageConfig;
         this.localFileConfig = localFileConfig;
+        this.backupFileCryptoService = backupFileCryptoService;
 
         File storageDirectory = new File(storageService.getStoragePath().concat(JOB_EXPORT_FILE_PREFIX));
         checkDirectory(storageDirectory);
@@ -305,7 +312,7 @@ public class ExportJobExecutor {
                 i18nService.getI18n(LogMessage.START_ENCRYPTING));
             File finalFileTmp = new File(zipFile.getPath().concat(".enc.tmp"));
             try {
-                AESUtils.encrypt(zipFile, finalFileTmp, exportInfo.getPassword());
+                backupFileCryptoService.encryptBackupFile(exportInfo.getPassword(), zipFile, finalFileTmp);
                 FileUtils.deleteQuietly(zipFile);
             } catch (Exception e) {
                 log.error("Error while processing export job! Encrypt failed!", e);
@@ -463,9 +470,18 @@ public class ExportJobExecutor {
         if (SecretHandlerEnum.SAVE_NULL == exportInfo.getSecretHandler()) {
             logService.addExportLog(exportInfo.getAppId(), exportInfo.getId(),
                 i18nService.getI18n(LogMessage.PROCESS_FINISHED) + i18nService.getI18n(LogMessage.SAVE_NULL));
+            for (TaskTemplateVO taskTemplate : jobBackupInfo.getTemplateDetailInfoMap().values()) {
+                setBlankValueForCipherVariables(taskTemplate.getVariableList());
+            }
+
+            if (MapUtils.isNotEmpty(jobBackupInfo.getPlanDetailInfoMap())) {
+                for (TaskPlanVO taskPlan : jobBackupInfo.getPlanDetailInfoMap().values()) {
+                    setBlankValueForCipherVariables(taskPlan.getVariableList());
+                }
+            }
             return;
         }
-
+        // SecretHandlerEnum.SAVE_REAL，保存真实值
         for (TaskTemplateVO taskTemplate : jobBackupInfo.getTemplateDetailInfoMap().values()) {
             extractVariableRealValue(exportInfo, taskTemplate.getId(), null, taskTemplate.getVariableList());
         }
@@ -479,6 +495,22 @@ public class ExportJobExecutor {
 
         logService.addExportLog(exportInfo.getAppId(), exportInfo.getId(),
             i18nService.getI18n(LogMessage.PROCESS_FINISHED) + i18nService.getI18n(LogMessage.SAVE_REAL));
+    }
+
+    private void setBlankValueForCipherVariables(List<TaskVariableVO> variableList) {
+        if (CollectionUtils.isEmpty(variableList)) {
+            return;
+        }
+
+        List<TaskVariableVO> needProcessVariableList = variableList.stream()
+            .filter(taskVariableVO -> taskVariableVO.getType().equals(TaskVariableTypeEnum.CIPHER.getType()))
+            .collect(Collectors.toList());
+
+        if (CollectionUtils.isEmpty(needProcessVariableList)) {
+            return;
+        }
+
+        needProcessVariableList.forEach(cipherVariable -> cipherVariable.setDefaultValue(""));
     }
 
     private void extractVariableRealValue(ExportJobInfoDTO exportInfo, Long templateId, Long planId,

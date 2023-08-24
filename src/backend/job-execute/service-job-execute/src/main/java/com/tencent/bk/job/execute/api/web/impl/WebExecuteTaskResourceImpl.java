@@ -34,6 +34,7 @@ import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
 import com.tencent.bk.job.common.model.dto.HostDTO;
+import com.tencent.bk.job.common.util.DataSizeConverter;
 import com.tencent.bk.job.common.util.FilePathValidateUtil;
 import com.tencent.bk.job.common.util.check.IlegalCharChecker;
 import com.tencent.bk.job.common.util.check.MaxLengthChecker;
@@ -488,11 +489,11 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
         stepInstance.setCreateTime(DateUtils.currentTimeMillis());
         if (request.getDownloadSpeedLimit() != null && request.getDownloadSpeedLimit() > 0) {
             // MB->KB
-            stepInstance.setFileDownloadSpeedLimit(request.getDownloadSpeedLimit() << 10);
+            stepInstance.setFileDownloadSpeedLimit(DataSizeConverter.convertMBToKB(request.getDownloadSpeedLimit()));
         }
         if (request.getUploadSpeedLimit() != null && request.getUploadSpeedLimit() > 0) {
             // MB->KB
-            stepInstance.setFileUploadSpeedLimit(request.getUploadSpeedLimit() << 10);
+            stepInstance.setFileUploadSpeedLimit(DataSizeConverter.convertMBToKB(request.getUploadSpeedLimit()));
         }
         stepInstance.setTimeout(request.getTimeout());
         stepInstance.setFileDuplicateHandle(request.getDuplicateHandler());
