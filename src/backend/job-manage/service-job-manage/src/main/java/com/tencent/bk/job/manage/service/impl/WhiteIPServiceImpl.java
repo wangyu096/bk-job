@@ -445,7 +445,7 @@ public class WhiteIPServiceImpl implements WhiteIPService {
         content = "Create a white list row"
     )
     public WhiteIPRecordDTO createWhiteIP(String username, WhiteIPRecordCreateUpdateReq createUpdateReq) {
-        LOG.infoWithRequestId("Input(" + username + "," + createUpdateReq.toString() + ")");
+        log.info("Input(" + username + "," + createUpdateReq.toString() + ")");
         // 1.参数校验、预处理
         List<String> ipv4List = checkReqAndGetIpList(createUpdateReq);
         List<HostIdWithMeta> hostList = createUpdateReq.getHostList();
@@ -464,7 +464,7 @@ public class WhiteIPServiceImpl implements WhiteIPService {
             System.currentTimeMillis()
         )).collect(Collectors.toList());
 
-        long recordId = whiteIPRecordDAO.insertWhiteIPRecord(dslContext, new WhiteIPRecordDTO(
+        long recordId = whiteIPRecordDAO.insertWhiteIPRecord(new WhiteIPRecordDTO(
             null,
             appIdList,
             createUpdateReq.getRemark(),
@@ -475,7 +475,7 @@ public class WhiteIPServiceImpl implements WhiteIPService {
             username,
             System.currentTimeMillis()
         ));
-        LOG.infoWithRequestId("insert success,recordId=" + recordId);
+        log.info("Insert success");
         return getWhiteIPDetailById(username, recordId);
     }
 
@@ -506,7 +506,7 @@ public class WhiteIPServiceImpl implements WhiteIPService {
         var recordId = createUpdateReq.getId();
         ipDtoList.forEach(it -> it.setRecordId(recordId));
         actionScopeDtoList.forEach(it -> it.setRecordId(recordId));
-        WhiteIPRecordDTO whiteIPRecordDTO = whiteIPRecordDAO.getWhiteIPRecordById(dslContext, recordId);
+        WhiteIPRecordDTO whiteIPRecordDTO = whiteIPRecordDAO.getWhiteIPRecordById(recordId);
         whiteIPRecordDTO.setAppIdList(appIdList);
         whiteIPRecordDTO.setRemark(createUpdateReq.getRemark());
         whiteIPRecordDTO.setIpList(ipDtoList);
@@ -515,14 +515,14 @@ public class WhiteIPServiceImpl implements WhiteIPService {
         whiteIPRecordDTO.setLastModifyTime(System.currentTimeMillis());
 
         //修改
-        int affectedRows = whiteIPRecordDAO.updateWhiteIPRecordById(dslContext, whiteIPRecordDTO);
+        int affectedRows = whiteIPRecordDAO.updateWhiteIPRecordById(whiteIPRecordDTO);
         log.info("{} white ip records updated", affectedRows);
         return getWhiteIPDetailById(username, recordId);
     }
 
     @Override
     public WhiteIPRecordDTO getWhiteIPDetailById(String username, Long id) {
-        WhiteIPRecordDTO record = whiteIPRecordDAO.getWhiteIPRecordById(dslContext, id);
+        WhiteIPRecordDTO record = whiteIPRecordDAO.getWhiteIPRecordById(id);
         List<ApplicationDTO> applicationInfoList = applicationDAO.listAppsByAppIds(record.getAppIdList());
         record.setAppList(applicationInfoList);
         return record;

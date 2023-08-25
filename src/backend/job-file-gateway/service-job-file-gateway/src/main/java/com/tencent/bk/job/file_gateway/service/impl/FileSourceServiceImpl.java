@@ -133,11 +133,11 @@ public class FileSourceServiceImpl implements FileSourceService {
         content = "Create file source [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
     public FileSourceDTO saveFileSource(Long appId, FileSourceDTO fileSource) {
-        if (fileSourceDAO.checkFileSourceExists(dslContext, fileSource.getAppId(), fileSource.getAlias())) {
+        if (fileSourceDAO.checkFileSourceExists(fileSource.getAppId(), fileSource.getAlias())) {
             throw new AlreadyExistsException(ErrorCode.FILE_SOURCE_ALIAS_ALREADY_EXISTS,
                 new String[]{fileSource.getAlias()});
         }
-        Integer id = fileSourceDAO.insertFileSource(dslContext, fileSource);
+        Integer id = fileSourceDAO.insertFileSource(fileSource);
         return getFileSourceById(id);
     }
 
@@ -156,7 +156,7 @@ public class FileSourceServiceImpl implements FileSourceService {
             throw new NotFoundException(ErrorCode.FILE_SOURCE_NOT_EXIST);
         }
 
-        fileSourceDAO.updateFileSource(dslContext, fileSource);
+        fileSourceDAO.updateFileSource(fileSource);
 
         FileSourceDTO updateFileSource = getFileSourceById(fileSource.getId());
 
@@ -200,7 +200,7 @@ public class FileSourceServiceImpl implements FileSourceService {
         }
         ActionAuditContext.current().setInstanceName(fileSource.getAlias());
 
-        return fileSourceDAO.deleteFileSourceById(dslContext, id);
+        return fileSourceDAO.deleteFileSourceById(id);
     }
 
     @Override
@@ -223,7 +223,7 @@ public class FileSourceServiceImpl implements FileSourceService {
             .setInstanceName(fileSource.getAlias())
             .addAttribute("@OPERATION", enableFlag ? "Switch on" : "Switch off");
 
-        return fileSourceDAO.enableFileSourceById(dslContext, username, appId, id, enableFlag) == 1;
+        return fileSourceDAO.enableFileSourceById(username, appId, id, enableFlag) == 1;
     }
 
     @Override

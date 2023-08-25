@@ -128,8 +128,7 @@ public class GlobalSettingsServiceImpl implements GlobalSettingsService {
     private String configedMaxFileSize;
 
 
-    public GlobalSettingsServiceImpl(DSLContext dslContext,
-                                     NotifyEsbChannelDAO notifyEsbChannelDAO,
+    public GlobalSettingsServiceImpl(NotifyEsbChannelDAO notifyEsbChannelDAO,
                                      AvailableEsbChannelDAO availableEsbChannelDAO,
                                      NotifyService notifyService,
                                      NotifySendService notifySendService,
@@ -141,7 +140,6 @@ public class GlobalSettingsServiceImpl implements GlobalSettingsService {
                                      LocalFileConfigForManage localFileConfigForManage,
                                      NotifyTemplateConverter notifyTemplateConverter,
                                      BuildProperties buildProperties) {
-        this.dslContext = dslContext;
         this.notifyEsbChannelDAO = notifyEsbChannelDAO;
         this.availableEsbChannelDAO = availableEsbChannelDAO;
         this.notifyService = notifyService;

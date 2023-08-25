@@ -31,6 +31,7 @@ import com.tencent.bk.job.common.exception.AlreadyExistsException;
 import com.tencent.bk.job.common.exception.FailedPreconditionException;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.exception.ServiceException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
@@ -406,10 +407,12 @@ public class ScriptManagerImpl implements ScriptManager {
     }
 
     @Override
-    public Pair<String, Long> createScriptWithVersionId(Long appId,
-                                                        ScriptDTO script,
-                                                        Long createTime,
-                                                        Long lastModifyTime) {
+    public Pair<String, Long> createScriptWithVersionId(
+        Long appId,
+        ScriptDTO script,
+        Long createTime,
+        Long lastModifyTime
+    ) throws ServiceException {
         log.info("Begin to createScriptWithVersionId, appId={}, script={}, createTime={}, " +
             "lastModifyTime={}", appId, JsonUtils.toJson(script), createTime, lastModifyTime);
         createTime = getTimeOrDefault(createTime);

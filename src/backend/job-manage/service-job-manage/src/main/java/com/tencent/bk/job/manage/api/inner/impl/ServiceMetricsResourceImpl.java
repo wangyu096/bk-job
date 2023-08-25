@@ -35,6 +35,9 @@ import com.tencent.bk.job.manage.common.consts.task.TaskStepTypeEnum;
 import com.tencent.bk.job.manage.model.dto.ResourceTagDTO;
 import com.tencent.bk.job.manage.service.AccountService;
 import com.tencent.bk.job.manage.service.ApplicationService;
+import com.tencent.bk.job.manage.service.ScriptManager;
+import com.tencent.bk.job.manage.service.TagService;
+import com.tencent.bk.job.manage.service.host.HostService;
 import com.tencent.bk.job.manage.service.plan.TaskPlanService;
 import com.tencent.bk.job.manage.service.template.TaskTemplateService;
 import lombok.extern.slf4j.Slf4j;
@@ -56,9 +59,12 @@ public class ServiceMetricsResourceImpl implements ServiceMetricsResource {
     private final TagService tagService;
 
     @Autowired
-    public ServiceMetricsResourceImpl(ApplicationService applicationService, AccountService accountService,
-                                      ScriptManager scriptManager, TaskTemplateService taskTemplateService,
-                                      TaskPlanService taskPlanService, HostService hostService,
+    public ServiceMetricsResourceImpl(ApplicationService applicationService,
+                                      AccountService accountService,
+                                      ScriptManager scriptManager,
+                                      TaskTemplateService taskTemplateService,
+                                      TaskPlanService taskPlanService,
+                                      HostService hostService,
                                       TagService tagService) {
         this.applicationService = applicationService;
         this.accountService = accountService;
@@ -86,14 +92,14 @@ public class ServiceMetricsResourceImpl implements ServiceMetricsResource {
 
     @Override
     public InternalResponse<Integer> countTemplateSteps(Long appId, TaskStepTypeEnum taskStepType,
-                                                   TaskScriptSourceEnum scriptSource, TaskFileTypeEnum fileType) {
+                                                        TaskScriptSourceEnum scriptSource, TaskFileTypeEnum fileType) {
         return InternalResponse.buildSuccessResp(taskTemplateService.countTemplateSteps(appId, taskStepType,
             scriptSource, fileType));
     }
 
     @Override
     public InternalResponse<Integer> countScripts(Long appId, ScriptTypeEnum scriptTypeEnum,
-                                             JobResourceStatusEnum jobResourceStatusEnum) {
+                                                  JobResourceStatusEnum jobResourceStatusEnum) {
         return InternalResponse.buildSuccessResp(scriptManager.countScripts(appId, scriptTypeEnum,
             jobResourceStatusEnum));
     }
@@ -111,7 +117,7 @@ public class ServiceMetricsResourceImpl implements ServiceMetricsResource {
 
     @Override
     public InternalResponse<Integer> countScriptVersions(Long appId, ScriptTypeEnum scriptTypeEnum,
-                                                    JobResourceStatusEnum jobResourceStatusEnum) {
+                                                         JobResourceStatusEnum jobResourceStatusEnum) {
         return InternalResponse.buildSuccessResp(scriptManager.countScriptVersions(appId, scriptTypeEnum,
             jobResourceStatusEnum));
     }

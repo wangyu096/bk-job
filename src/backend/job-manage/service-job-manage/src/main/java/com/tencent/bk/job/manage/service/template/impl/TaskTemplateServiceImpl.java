@@ -106,6 +106,7 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
     private final TaskFavoriteService taskFavoriteService;
     private TaskPlanService taskPlanService;
     private ScriptManager scriptManager;
+    private CronJobService cronJobService;
 
     /**
      * 通过 Set 方式注入，避免循环依赖问题

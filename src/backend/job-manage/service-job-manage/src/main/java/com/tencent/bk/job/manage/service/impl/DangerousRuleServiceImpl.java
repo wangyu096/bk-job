@@ -66,7 +66,7 @@ public class DangerousRuleServiceImpl implements DangerousRuleService {
 
     @Override
     public DangerousRuleDTO getDangerousRuleById(Long id) {
-        return dangerousRuleDAO.getDangerousRuleById(dslContext, id);
+        return dangerousRuleDAO.getDangerousRuleById(id);
     }
 
     @Override
@@ -76,9 +76,9 @@ public class DangerousRuleServiceImpl implements DangerousRuleService {
     )
     public DangerousRuleDTO createDangerousRule(String username, AddOrUpdateDangerousRuleReq req) {
         int scriptType = DangerousRuleDTO.encodeScriptType(req.getScriptTypeList());
-        int maxPriority = dangerousRuleDAO.getMaxPriority(dslContext);
+        int maxPriority = dangerousRuleDAO.getMaxPriority();
         log.info(String.format("currentAuditContext maxPriority:%d", maxPriority));
-        long id = dangerousRuleDAO.insertDangerousRule(dslContext, new DangerousRuleDTO(null, req.getExpression(),
+        long id = dangerousRuleDAO.insertDangerousRule(new DangerousRuleDTO(null, req.getExpression(),
             req.getDescription(), maxPriority + 1, scriptType, username, System.currentTimeMillis(), username,
             System.currentTimeMillis(), req.getAction(), EnableStatusEnum.DISABLED.getValue()));
 
@@ -95,9 +95,9 @@ public class DangerousRuleServiceImpl implements DangerousRuleService {
     )
     public DangerousRuleDTO updateDangerousRule(String username, AddOrUpdateDangerousRuleReq req) {
         int scriptType = DangerousRuleDTO.encodeScriptType(req.getScriptTypeList());
-        DangerousRuleDTO existDangerousRuleDTO = dangerousRuleDAO.getDangerousRuleById(dslContext, req.getId());
+        DangerousRuleDTO existDangerousRuleDTO = dangerousRuleDAO.getDangerousRuleById(req.getId());
         if (existDangerousRuleDTO != null) {
-            dangerousRuleDAO.updateDangerousRule(dslContext, new DangerousRuleDTO(req.getId(),
+            dangerousRuleDAO.updateDangerousRule(new DangerousRuleDTO(req.getId(),
                 req.getExpression(), req.getDescription(), existDangerousRuleDTO.getPriority(), scriptType, null,
                 null, username, System.currentTimeMillis(), req.getAction(), req.getStatus()));
         }

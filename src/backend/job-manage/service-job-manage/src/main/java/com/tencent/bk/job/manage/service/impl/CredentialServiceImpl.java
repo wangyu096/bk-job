@@ -79,7 +79,7 @@ public class CredentialServiceImpl implements CredentialService {
         CredentialDTO credentialDTO = buildCredentialDTO(username, appId, createUpdateReq);
         credentialDTO.setCreator(username);
         credentialDTO.setCreateTime(credentialDTO.getLastModifyTime());
-        String id = credentialDAO.insertCredential(dslContext, credentialDTO);
+        String id = credentialDAO.insertCredential(credentialDTO);
 
         return getCredentialById(id);
     }
@@ -95,7 +95,7 @@ public class CredentialServiceImpl implements CredentialService {
     public CredentialDTO updateCredential(String username, Long appId, CredentialCreateUpdateReq createUpdateReq) {
         String id = createUpdateReq.getId();
         CredentialDTO credentialDTO = buildCredentialDTO(username, appId, createUpdateReq);
-        CredentialDTO originCredentialDTO = credentialDAO.getCredentialById(dslContext, id);
+        CredentialDTO originCredentialDTO = credentialDAO.getCredentialById(id);
         if (originCredentialDTO == null) {
             throw new NotFoundException(ErrorCode.CREDENTIAL_NOT_EXIST);
         }
@@ -112,7 +112,7 @@ public class CredentialServiceImpl implements CredentialService {
         } else {
             credentialDTO.setSecondValue(value2);
         }
-        credentialDAO.updateCredentialById(dslContext, credentialDTO);
+        credentialDAO.updateCredentialById(credentialDTO);
 
         CredentialDTO updateCredential = getCredentialById(id);
 
@@ -144,7 +144,7 @@ public class CredentialServiceImpl implements CredentialService {
         // 审计
         ActionAuditContext.current().setInstanceName(credential.getName());
 
-        return credentialDAO.deleteCredentialById(dslContext, id);
+        return credentialDAO.deleteCredentialById(id);
     }
 
     @Override
@@ -159,7 +159,7 @@ public class CredentialServiceImpl implements CredentialService {
 
     @Override
     public CredentialDTO getCredentialById(String id) {
-        return credentialDAO.getCredentialById(dslContext, id);
+        return credentialDAO.getCredentialById(id);
     }
 
     @Override

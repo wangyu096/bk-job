@@ -68,7 +68,6 @@ import com.tencent.bk.job.crontab.timer.QuartzTriggerBuilder;
 import com.tencent.bk.job.crontab.timer.executor.InnerJobExecutor;
 import com.tencent.bk.job.crontab.timer.executor.NotifyJobExecutor;
 import com.tencent.bk.job.crontab.timer.executor.SimpleJobExecutor;
-import com.tencent.bk.job.execute.model.inner.ServiceCronTaskExecuteResultStatistics;
 import com.tencent.bk.job.execute.model.inner.ServiceTaskVariable;
 import com.tencent.bk.job.manage.model.inner.ServiceTaskPlanDTO;
 import lombok.extern.slf4j.Slf4j;
@@ -560,19 +559,6 @@ public class CronJobServiceImpl implements CronJobService {
             log.error(msg, e);
             return false;
         }
-    }
-
-    @Override
-    public Map<Long, ServiceCronTaskExecuteResultStatistics> getCronJobExecuteHistory(Long appId,
-                                                                                      List<Long> cronIdList) {
-        return taskExecuteResultService.getCronTaskExecuteResultStatistics(appId, cronIdList);
-    }
-
-    @Override
-    @Transactional(value = "jobCrontabTransactionManager", rollbackFor = {Exception.class, Error.class})
-    public Map<Long, ServiceCronTaskExecuteResultStatistics> getCronJobExecuteHistory(Long appId,
-                                                                                      List<Long> cronIdList) {
-        return taskExecuteResultService.getCronTaskExecuteResultStatistics(appId, cronIdList);
     }
 
     @Override
