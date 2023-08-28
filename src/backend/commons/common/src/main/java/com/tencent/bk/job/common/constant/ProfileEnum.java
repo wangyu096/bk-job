@@ -22,27 +22,43 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.crontab;
+package com.tencent.bk.job.common.constant;
 
-import com.tencent.bk.job.common.service.boot.JobBootApplication;
-import com.tencent.bk.job.common.service.config.FeatureToggleConfig;
-import com.tencent.bk.job.crontab.config.JobQuartzProperties;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.availability.ApplicationAvailabilityAutoConfiguration;
-import org.springframework.boot.autoconfigure.jooq.JooqAutoConfiguration;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.cloud.openfeign.EnableFeignClients;
+/**
+ * Job 使用的 Spring profile 定义
+ */
+public enum ProfileEnum {
+    /**
+     * 本地
+     */
+    LOCAL(Constants.LOCAL),
+    /**
+     * 开发
+     */
+    DEV(Constants.DEV),
+    /**
+     * 正式
+     */
+    PROD(Constants.PROD),
+    /**
+     * 单元/继承测试
+     */
+    TEST(Constants.TEST);
 
-@JobBootApplication(
-    scanBasePackages = {
-        "com.tencent.bk.job.crontab"},
-    exclude = {JooqAutoConfiguration.class, ApplicationAvailabilityAutoConfiguration.class})
-@EnableFeignClients(basePackages = {"com.tencent.bk.job.manage.api", "com.tencent.bk.job.execute.api"})
-@EnableConfigurationProperties({FeatureToggleConfig.class, JobQuartzProperties.class})
-public class JobCrontabBootApplication {
-
-    public static void main(String[] args) {
-        SpringApplication.run(JobCrontabBootApplication.class, args);
+    public interface Constants {
+        String LOCAL = "local";
+        String DEV = "dev";
+        String PROD = "prod";
+        String TEST = "test";
     }
 
+    private final String value;
+
+    ProfileEnum(String value) {
+        this.value = value;
+    }
+
+    public String getValue() {
+        return value;
+    }
 }

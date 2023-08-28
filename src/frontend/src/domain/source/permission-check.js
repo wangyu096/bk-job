@@ -55,7 +55,7 @@ class Permission {
   }
 
   jobTicket(params = {}) {
-    return Request.get('/job-ticket/web/permission/manage/check', {
+    return Request.get('/job-manage/web/permission/manage/check', {
       params,
       cache: 2000,
     });
