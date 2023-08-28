@@ -179,7 +179,7 @@ public class AccountServiceImpl implements AccountService {
             account.setPassword(encryptor.encrypt(account.getPassword()));
         }
         if (account.getCategory() == AccountCategoryEnum.DB && StringUtils.isNotEmpty(account.getDbPassword())) {
-            account.setDbPassword(encryptPassword(account.getDbPassword()));
+            account.setDbPassword(encryptor.encrypt(account.getPassword()));
         }
         log.info("Update account, account={}", account);
         accountDAO.updateAccount(account);

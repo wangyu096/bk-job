@@ -427,7 +427,7 @@ public class WebScriptResourceImpl extends BaseWebScriptResource implements WebS
 
         ScriptDTO script = buildCreateOrUpdateScript(request, appResourceScope, username);
         script.setCreator(username);
-        ScriptDTO savedScript = scriptService.saveScript(script);
+        ScriptDTO savedScript = scriptService.createScript(script);
         scriptAuthService.registerScript(savedScript.getId(), savedScript.getName(), username);
 
         ScriptVO scriptVO = ScriptConverter.convertToScriptVO(savedScript);
@@ -459,7 +459,7 @@ public class WebScriptResourceImpl extends BaseWebScriptResource implements WebS
         ScriptDTO script = buildCreateOrUpdateScript(request, appResourceScope, username);
         script.setId(scriptId);
         script.setCreator(username);
-        ScriptDTO savedScript = scriptService.saveScriptVersion(script);
+        ScriptDTO savedScript = scriptService.createScriptVersion(script);
 
         ScriptVO scriptVO = ScriptConverter.convertToScriptVO(savedScript);
         return Response.buildSuccessResp(scriptVO);

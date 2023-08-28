@@ -98,7 +98,7 @@ public class PublicScriptServiceImpl implements PublicScriptService {
         content = "Create public script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
     public ScriptDTO saveScript(ScriptDTO script) {
-        return scriptManager.saveScript(script);
+        return scriptManager.createScript(script);
     }
 
     @Override
@@ -146,7 +146,7 @@ public class PublicScriptServiceImpl implements PublicScriptService {
             "Create a new version [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})({{@VERSION}})"
     )
     public ScriptDTO saveScriptVersion(ScriptDTO scriptVersion) {
-        return scriptManager.saveScriptVersion(scriptVersion);
+        return scriptManager.createScriptVersion(scriptVersion);
     }
 
     @Override

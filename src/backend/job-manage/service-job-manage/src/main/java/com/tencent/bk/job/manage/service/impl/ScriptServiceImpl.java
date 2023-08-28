@@ -96,8 +96,8 @@ public class ScriptServiceImpl implements ScriptService {
         ),
         content = "Create script [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
-    public ScriptDTO saveScript(ScriptDTO script) {
-        return scriptManager.saveScript(script);
+    public ScriptDTO createScript(ScriptDTO script) {
+        return scriptManager.createScript(script);
     }
 
     @Override
@@ -154,8 +154,8 @@ public class ScriptServiceImpl implements ScriptService {
         ),
         content = "Create script version [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})({{@VERSION}})"
     )
-    public ScriptDTO saveScriptVersion(ScriptDTO scriptVersion) {
-        return scriptManager.saveScriptVersion(scriptVersion);
+    public ScriptDTO createScriptVersion(ScriptDTO scriptVersion) {
+        return scriptManager.createScriptVersion(scriptVersion);
     }
 
     @Override

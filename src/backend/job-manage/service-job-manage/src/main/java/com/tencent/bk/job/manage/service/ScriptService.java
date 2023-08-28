@@ -76,11 +76,11 @@ public interface ScriptService {
     List<ScriptBasicDTO> listScriptBasicInfoByScriptIds(Collection<String> scriptIds);
 
     /**
-     * 保存脚本
+     * 创建脚本
      *
      * @param script 脚本信息
      */
-    ScriptDTO saveScript(ScriptDTO script);
+    ScriptDTO createScript(ScriptDTO script);
 
     /**
      * 删除脚本
@@ -117,11 +117,11 @@ public interface ScriptService {
     List<ScriptDTO> listScriptVersion(long appId, String scriptId);
 
     /**
-     * 保存脚本版本
+     * 创建脚本版本
      *
      * @param scriptVersion 脚本版本
      */
-    ScriptDTO saveScriptVersion(ScriptDTO scriptVersion);
+    ScriptDTO createScriptVersion(ScriptDTO scriptVersion);
 
     /**
      * 更新脚本版本

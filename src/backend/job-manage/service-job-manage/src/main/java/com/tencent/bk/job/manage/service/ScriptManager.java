@@ -134,18 +134,18 @@ public interface ScriptManager {
     List<ScriptDTO> listScripts(ScriptQuery scriptQuery);
 
     /**
-     * 保存脚本
+     * 创建脚本
      *
      * @param script 脚本信息
      */
-    ScriptDTO saveScript(ScriptDTO script);
+    ScriptDTO createScript(ScriptDTO script);
 
     /**
-     * 保存脚本版本
+     * 创建脚本版本
      *
      * @param scriptVersion 脚本版本
      */
-    ScriptDTO saveScriptVersion(ScriptDTO scriptVersion);
+    ScriptDTO createScriptVersion(ScriptDTO scriptVersion);
 
     /**
      * 更新脚本版本
