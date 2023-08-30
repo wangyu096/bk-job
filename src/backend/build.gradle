@@ -48,7 +48,7 @@ buildscript {
         // 用户通过命令行方式指定的 extra maven repo
         def extraMavenRepoUrls = System.getProperty("extraMavenRepoUrls")
         if (extraMavenRepoUrls == null || extraMavenRepoUrls.trim().length() == 0) {
-            // gradle.properties 中的 maven repo
+            // gradle.properties 中的 extra maven repo
             extraMavenRepoUrls = project.findProperty("EXTRA_MAVEN_REPO_URLS")
         }
         if (extraMavenRepoUrls != null && extraMavenRepoUrls.trim().length() > 0) {
@@ -194,7 +194,7 @@ allprojects {
         // 用户通过命令行方式指定的 extra maven repo
         def extraMavenRepoUrls = System.getProperty("extraMavenRepoUrls")
         if (extraMavenRepoUrls == null || extraMavenRepoUrls.trim().length() == 0) {
-            // gradle.properties 中的 maven repo
+            // gradle.properties 中的 extra maven repo
             extraMavenRepoUrls = project.findProperty("EXTRA_MAVEN_REPO_URLS")
         }
         if (extraMavenRepoUrls != null && extraMavenRepoUrls.trim().length() > 0) {
