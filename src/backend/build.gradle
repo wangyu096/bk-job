@@ -33,10 +33,22 @@ buildscript {
 
     repositories {
         mavenLocal()
-        // 用户通过命令行方式指定的 maven repo url
+
+        // 设置用户指定的 primary maven repo
+        def mavenRepoUrl = System.getProperty("mavenRepoUrl")
+        if (mavenRepoUrl == null || mavenRepoUrl.trim().length() == 0) {
+            // gradle.properties 中的 maven repo url
+            mavenRepoUrl = project.findProperty("MAVEN_REPO_URL")
+        }
+        if (mavenRepoUrl != null && mavenRepoUrl.trim().length() > 0) {
+            println("Add primary maven repo :" + mavenRepoUrl)
+            maven { url mavenRepoUrl }
+        }
+
+        // 用户通过命令行方式指定的 extra maven repo
         def extraMavenRepoUrls = System.getProperty("extraMavenRepoUrls")
         if (extraMavenRepoUrls == null || extraMavenRepoUrls.trim().length() == 0) {
-            // gradle.properties 中的 maven repo url
+            // gradle.properties 中的 maven repo
             extraMavenRepoUrls = project.findProperty("EXTRA_MAVEN_REPO_URLS")
         }
         if (extraMavenRepoUrls != null && extraMavenRepoUrls.trim().length() > 0) {
@@ -45,9 +57,8 @@ buildscript {
                 println("Add extra maven repo:" + repoUrl)
                 maven { url repoUrl }
             }
-        } else {
-            println("Extra maven repo is empty")
         }
+
         maven { url "https://plugins.gradle.org/m2/" }
         mavenCentral()
         maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
@@ -168,10 +179,22 @@ allprojects {
 
     repositories {
         mavenLocal()
-        // 用户通过命令行方式指定的 maven repo url
+
+        // 设置用户指定的 primary maven repo
+        def mavenRepoUrl = System.getProperty("mavenRepoUrl")
+        if (mavenRepoUrl == null || mavenRepoUrl.trim().length() == 0) {
+            // gradle.properties 中的 maven repo url
+            mavenRepoUrl = project.findProperty("MAVEN_REPO_URL")
+        }
+        if (mavenRepoUrl != null && mavenRepoUrl.trim().length() > 0) {
+            println("Add primary maven repo :" + mavenRepoUrl)
+            maven { url mavenRepoUrl }
+        }
+
+        // 用户通过命令行方式指定的 extra maven repo
         def extraMavenRepoUrls = System.getProperty("extraMavenRepoUrls")
         if (extraMavenRepoUrls == null || extraMavenRepoUrls.trim().length() == 0) {
-            // gradle.properties 中的 maven repo url
+            // gradle.properties 中的 maven repo
             extraMavenRepoUrls = project.findProperty("EXTRA_MAVEN_REPO_URLS")
         }
         if (extraMavenRepoUrls != null && extraMavenRepoUrls.trim().length() > 0) {
@@ -180,13 +203,16 @@ allprojects {
                 println("Add extra maven repo:" + repoUrl)
                 maven { url repoUrl }
             }
-        } else {
-            println("Extra maven repo is empty")
         }
-
         mavenCentral()
-        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+        maven {
+            url "https://repo.spring.io/snapshot"
+        }
+        maven {
+            url "https://repo.spring.io/milestone"
+        }
         maven { url "https://plugins.gradle.org/m2/" }
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
     }
 }
 

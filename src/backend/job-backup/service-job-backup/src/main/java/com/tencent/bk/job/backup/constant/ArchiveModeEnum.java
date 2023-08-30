@@ -22,34 +22,38 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.backup.archive.impl;
-
-import com.tencent.bk.job.backup.archive.AbstractArchivist;
-import com.tencent.bk.job.backup.config.ArchiveDBProperties;
-import com.tencent.bk.job.backup.dao.ExecuteArchiveDAO;
-import com.tencent.bk.job.backup.dao.impl.StepInstanceConfirmRecordDAO;
-import com.tencent.bk.job.backup.service.ArchiveProgressService;
-import com.tencent.bk.job.execute.model.tables.records.StepInstanceConfirmRecord;
-
-import java.util.concurrent.CountDownLatch;
+package com.tencent.bk.job.backup.constant;
 
 /**
- * step_instance_confirm 表归档
+ * 归档模式
  */
-public class StepInstanceConfirmArchivist extends AbstractArchivist<StepInstanceConfirmRecord> {
+public enum ArchiveModeEnum {
+    /**
+     * 仅删除原始数据
+     */
+    DELETE_ONLY(Constants.DELETE_ONLY),
+    /**
+     * 备份数据后再删除
+     */
+    BACKUP_THEN_DELETE(Constants.BACKUP_THEN_DELETE);
 
-    public StepInstanceConfirmArchivist(StepInstanceConfirmRecordDAO executeRecordDAO,
-                                        ExecuteArchiveDAO executeArchiveDAO,
-                                        ArchiveProgressService archiveProgressService,
-                                        ArchiveDBProperties archiveDBProperties,
-                                        Long maxNeedArchiveId,
-                                        CountDownLatch countDownLatch) {
-        super(executeRecordDAO,
-            executeArchiveDAO,
-            archiveProgressService,
-            archiveDBProperties,
-            maxNeedArchiveId,
-            countDownLatch);
-        this.deleteIdStepSize = 100_000;
+    ArchiveModeEnum(String mode) {
+        this.mode = mode;
+    }
+
+    public interface Constants {
+        String DELETE_ONLY = "deleteOnly";
+        String BACKUP_THEN_DELETE = "backupThenDelete";
+    }
+
+    private final String mode;
+
+    public static ArchiveModeEnum valOf(String mode) {
+        for (ArchiveModeEnum value : values()) {
+            if (value.mode.equalsIgnoreCase(mode)) {
+                return value;
+            }
+        }
+        return null;
     }
 }

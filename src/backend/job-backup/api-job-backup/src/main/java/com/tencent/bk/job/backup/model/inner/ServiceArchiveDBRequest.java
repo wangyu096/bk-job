@@ -31,9 +31,7 @@ public class ServiceArchiveDBRequest {
 
     private boolean archiveEnabled;
 
-    private boolean backupEnabled;
+    private String mode;
 
     private int dataKeepDays;
-
-    private boolean deleteEnabled;
 }
