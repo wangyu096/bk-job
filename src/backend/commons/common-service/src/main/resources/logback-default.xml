@@ -132,8 +132,8 @@ Default job logback configuration provided for import
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>${AUDIT_EVENT_LOG_FILE}-%d{yyyy-MM-dd}.log.%i</fileNamePattern>
             <maxFileSize>1GB</maxFileSize>
-            <maxHistory>7</maxHistory>
-            <totalSizeCap>20GB</totalSizeCap>
+            <maxHistory>1</maxHistory>
+            <totalSizeCap>5GB</totalSizeCap>
         </rollingPolicy>
         <encoder>
             <pattern>${AUDIT_EVENT_LOG_PATTERN}</pattern>
