@@ -34,27 +34,16 @@ buildscript {
     repositories {
         mavenLocal()
 
-        // 设置用户指定的 primary maven repo
-        def mavenRepoUrl = System.getProperty("mavenRepoUrl")
-        if (mavenRepoUrl == null || mavenRepoUrl.trim().length() == 0) {
-            // gradle.properties 中的 maven repo url
-            mavenRepoUrl = project.findProperty("MAVEN_REPO_URL")
+        // 用户通过命令行方式指定的 maven repo
+        def mavenRepoUrls = System.getProperty("mavenRepoUrl")
+        if (mavenRepoUrls == null || mavenRepoUrls.trim().length() == 0) {
+            // gradle.properties 中的 maven repo
+            mavenRepoUrls = project.findProperty("MAVEN_REPO_URL")
         }
-        if (mavenRepoUrl != null && mavenRepoUrl.trim().length() > 0) {
-            println("Add primary maven repo :" + mavenRepoUrl)
-            maven { url mavenRepoUrl }
-        }
-
-        // 用户通过命令行方式指定的 extra maven repo
-        def extraMavenRepoUrls = System.getProperty("extraMavenRepoUrls")
-        if (extraMavenRepoUrls == null || extraMavenRepoUrls.trim().length() == 0) {
-            // gradle.properties 中的 extra maven repo
-            extraMavenRepoUrls = project.findProperty("EXTRA_MAVEN_REPO_URLS")
-        }
-        if (extraMavenRepoUrls != null && extraMavenRepoUrls.trim().length() > 0) {
-            String[] repoUrls = extraMavenRepoUrls.trim().replace(" ", "").split(",")
+        if (mavenRepoUrls != null && mavenRepoUrls.trim().length() > 0) {
+            String[] repoUrls = mavenRepoUrls.trim().replace(" ", "").split(",")
             for (String repoUrl : repoUrls) {
-                println("Add extra maven repo:" + repoUrl)
+                println("Add maven repo:" + repoUrl)
                 maven { url repoUrl }
             }
         }
@@ -180,27 +169,16 @@ allprojects {
     repositories {
         mavenLocal()
 
-        // 设置用户指定的 primary maven repo
-        def mavenRepoUrl = System.getProperty("mavenRepoUrl")
-        if (mavenRepoUrl == null || mavenRepoUrl.trim().length() == 0) {
-            // gradle.properties 中的 maven repo url
-            mavenRepoUrl = project.findProperty("MAVEN_REPO_URL")
+        // 用户通过命令行方式指定的 maven repo
+        def mavenRepoUrls = System.getProperty("mavenRepoUrl")
+        if (mavenRepoUrls == null || mavenRepoUrls.trim().length() == 0) {
+            // gradle.properties 中的 maven repo
+            mavenRepoUrls = project.findProperty("MAVEN_REPO_URL")
         }
-        if (mavenRepoUrl != null && mavenRepoUrl.trim().length() > 0) {
-            println("Add primary maven repo :" + mavenRepoUrl)
-            maven { url mavenRepoUrl }
-        }
-
-        // 用户通过命令行方式指定的 extra maven repo
-        def extraMavenRepoUrls = System.getProperty("extraMavenRepoUrls")
-        if (extraMavenRepoUrls == null || extraMavenRepoUrls.trim().length() == 0) {
-            // gradle.properties 中的 extra maven repo
-            extraMavenRepoUrls = project.findProperty("EXTRA_MAVEN_REPO_URLS")
-        }
-        if (extraMavenRepoUrls != null && extraMavenRepoUrls.trim().length() > 0) {
-            String[] repoUrls = extraMavenRepoUrls.trim().replace(" ", "").split(",")
+        if (mavenRepoUrls != null && mavenRepoUrls.trim().length() > 0) {
+            String[] repoUrls = mavenRepoUrls.trim().replace(" ", "").split(",")
             for (String repoUrl : repoUrls) {
-                println("Add extra maven repo:" + repoUrl)
+                println("Add maven repo:" + repoUrl)
                 maven { url repoUrl }
             }
         }
