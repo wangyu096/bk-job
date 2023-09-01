@@ -37,7 +37,11 @@ buildscript {
         // 用户通过命令行方式指定的 maven repo
         def mavenRepoUrls = System.getProperty("mavenRepoUrl")
         if (mavenRepoUrls == null || mavenRepoUrls.trim().length() == 0) {
-            // gradle.properties 中的 maven repo
+            // gradle.properties 中的 maven repo。优先级从高到低:
+            // 1. command line, as set using -D.
+            // 2. gradle.properties in GRADLE_USER_HOME directory (<home directory of the current user>/.gradle by default)
+            // 3. gradle.properties in the project’s directory, then its parent project’s directory up to the build’s root directory.
+            // 4. gradle.properties in Gradle installation directory.
             mavenRepoUrls = project.findProperty("MAVEN_REPO_URL")
         }
         if (mavenRepoUrls != null && mavenRepoUrls.trim().length() > 0) {
@@ -172,7 +176,11 @@ allprojects {
         // 用户通过命令行方式指定的 maven repo
         def mavenRepoUrls = System.getProperty("mavenRepoUrl")
         if (mavenRepoUrls == null || mavenRepoUrls.trim().length() == 0) {
-            // gradle.properties 中的 maven repo
+            // gradle.properties 中的 maven repo。优先级从高到低:
+            // 1. command line, as set using -D.
+            // 2. gradle.properties in GRADLE_USER_HOME directory. (<home directory of the current user>/.gradle by default)
+            // 3. gradle.properties in the project’s directory, then its parent project’s directory up to the build’s root directory.
+            // 4. gradle.properties in Gradle installation directory.
             mavenRepoUrls = project.findProperty("MAVEN_REPO_URL")
         }
         if (mavenRepoUrls != null && mavenRepoUrls.trim().length() > 0) {
