@@ -24,8 +24,10 @@
 
 package com.tencent.bk.job.execute.api.esb.v3;
 
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
+import com.tencent.bk.audit.context.ActionAuditContext;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
 import com.tencent.bk.job.common.esb.model.EsbResp;
@@ -64,6 +66,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_ID;
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_NAME;
+
 @RestController
 @Slf4j
 public class EsbBatchGetJobInstanceIpLogV3ResourceImpl
@@ -85,6 +90,10 @@ public class EsbBatchGetJobInstanceIpLogV3ResourceImpl
     @Override
     @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_batch_get_job_instance_ip_log"})
     @AuditEntry(actionId = ActionId.VIEW_HISTORY)
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_HISTORY,
+        content = "View job task [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public EsbResp<EsbIpLogsV3DTO> batchGetJobInstanceIpLogs(
         @AuditRequestBody EsbBatchGetJobInstanceIpLogV3Request request) {
         request.fillAppResourceScope(appScopeMappingService);
@@ -99,6 +108,11 @@ public class EsbBatchGetJobInstanceIpLogV3ResourceImpl
         if (taskInstance == null) {
             throw new NotFoundException(ErrorCode.TASK_INSTANCE_NOT_EXIST);
         }
+
+        // 审计
+        ActionAuditContext.current()
+            .addAttribute(INSTANCE_ID, taskInstanceId)
+            .addAttribute(INSTANCE_NAME, taskInstance.getName());
 
         authViewTaskInstance(request.getUserName(), request.getAppResourceScope(), taskInstance);
 

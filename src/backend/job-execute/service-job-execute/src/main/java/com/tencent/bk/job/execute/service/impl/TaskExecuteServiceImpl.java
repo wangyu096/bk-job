@@ -335,6 +335,7 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
         stepInstance.setStepOrder(1);
         long stepInstanceId = taskInstanceService.addStepInstance(stepInstance);
         stepInstance.setId(stepInstanceId);
+        taskInstance.setStepInstances(Collections.singletonList(stepInstance));
         watch.stop();
 
         // 保存作业实例与主机的关系，优化根据主机检索作业执行历史的效率

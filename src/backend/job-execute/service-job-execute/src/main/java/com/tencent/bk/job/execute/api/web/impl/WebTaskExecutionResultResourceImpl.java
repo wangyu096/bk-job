@@ -28,6 +28,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.tencent.bk.audit.annotations.ActionAuditRecord;
+import com.tencent.bk.audit.annotations.AuditAttribute;
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.context.ActionAuditContext;
 import com.tencent.bk.job.common.constant.Bool;
@@ -383,6 +384,10 @@ public class WebTaskExecutionResultResourceImpl implements WebTaskExecutionResul
     @AuditEntry(actionId = ActionId.VIEW_HISTORY)
     @ActionAuditRecord(
         actionId = ActionId.VIEW_HISTORY,
+        attributes = {
+            @AuditAttribute(name = INSTANCE_ID, value = "#taskInstanceId"),
+            @AuditAttribute(name = INSTANCE_NAME, value = "#$?.data?.taskExecution?.name")
+        },
         content = "View job task [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
     )
     public Response<TaskExecuteResultVO> getTaskExecutionResult(String username,

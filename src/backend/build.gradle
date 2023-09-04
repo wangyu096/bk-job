@@ -149,9 +149,6 @@ ext {
 group "com.tencent.bk.job"
 version "${bkjobVersion}"
 
-repositories {
-    mavenLocal()
-}
 allprojects {
     group "com.tencent.bk.job"
     version "${bkjobVersion}"
