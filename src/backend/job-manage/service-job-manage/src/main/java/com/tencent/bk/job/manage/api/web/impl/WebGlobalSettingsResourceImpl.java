@@ -26,6 +26,7 @@ package com.tencent.bk.job.manage.api.web.impl;
 
 import com.tencent.bk.audit.annotations.ActionAuditRecord;
 import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.manage.api.web.WebGlobalSettingsResource;
@@ -39,6 +40,7 @@ import com.tencent.bk.job.manage.model.web.request.notify.NotifyBlackUsersReq;
 import com.tencent.bk.job.manage.model.web.request.notify.SetAvailableNotifyChannelReq;
 import com.tencent.bk.job.manage.model.web.vo.globalsetting.AccountNameRulesWithDefaultVO;
 import com.tencent.bk.job.manage.model.web.vo.globalsetting.FileUploadSettingVO;
+import com.tencent.bk.job.manage.model.web.vo.globalsetting.HelperVO;
 import com.tencent.bk.job.manage.model.web.vo.globalsetting.NotifyChannelWithIconVO;
 import com.tencent.bk.job.manage.model.web.vo.globalsetting.TitleFooterWithDefaultVO;
 import com.tencent.bk.job.manage.model.web.vo.notify.ChannelTemplateDetailWithDefaultVO;
@@ -194,5 +196,26 @@ public class WebGlobalSettingsResourceImpl implements WebGlobalSettingsResource 
     @Override
     public Response<TitleFooterWithDefaultVO> getTitleFooterWithDefault(String username) {
         return Response.buildSuccessResp(globalSettingsService.getTitleFooterWithDefault(username));
+    }
+
+    @Override
+    @AuditEntry(actionId = ActionId.GLOBAL_SETTINGS)
+    @ActionAuditRecord(
+        actionId = ActionId.GLOBAL_SETTINGS,
+        content = "Update global settings"
+    )
+    public Response<HelperVO> setHelper(String username,
+                                        @AuditRequestBody HelperVO helperVO) {
+        return Response.buildSuccessResp(globalSettingsService.updateHelper(username, helperVO));
+    }
+
+    @Override
+    @AuditEntry(actionId = ActionId.GLOBAL_SETTINGS)
+    @ActionAuditRecord(
+        actionId = ActionId.GLOBAL_SETTINGS,
+        content = "View global settings"
+    )
+    public Response<HelperVO> getHelper(String username) {
+        return Response.buildSuccessResp(globalSettingsService.getHelper(username));
     }
 }
