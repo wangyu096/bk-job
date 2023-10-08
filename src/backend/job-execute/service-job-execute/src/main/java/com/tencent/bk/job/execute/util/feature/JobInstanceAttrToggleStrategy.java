@@ -22,8 +22,9 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.service.feature.strategy;
+package com.tencent.bk.job.execute.util.feature;
 
+import com.tencent.bk.job.common.service.feature.strategy.AbstractToggleStrategy;
 import com.tencent.bk.job.common.util.feature.FeatureExecutionContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;

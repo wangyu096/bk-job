@@ -110,4 +110,65 @@ class FeatureToggleTest {
         assertThat(FeatureToggle.checkFeature(FeatureIdConstants.FEATURE_GSE_V2, ctx)).isFalse();
 
     }
+
+    @Test
+    void resourceScopeBlackListStrategyTest() {
+        assertThat(FeatureToggle.checkFeature("ResourceScopeBlackListStrategyTest",
+            FeatureExecutionContext.builder().addContextParam(
+                CTX_PARAM_RESOURCE_SCOPE,
+                new ResourceScope(ResourceScopeTypeEnum.BIZ, "2"))
+        )).isFalse();
+        assertThat(FeatureToggle.checkFeature("ResourceScopeBlackListStrategyTest",
+            FeatureExecutionContext.builder().addContextParam(
+                CTX_PARAM_RESOURCE_SCOPE,
+                new ResourceScope(ResourceScopeTypeEnum.BIZ, "100"))
+        )).isTrue();
+    }
+
+    @Test
+    void resourceScopeWhiteListStrategyTest() {
+        assertThat(FeatureToggle.checkFeature("ResourceScopeWhiteListStrategyTest",
+            FeatureExecutionContext.builder().addContextParam(
+                CTX_PARAM_RESOURCE_SCOPE,
+                new ResourceScope(ResourceScopeTypeEnum.BIZ, "2"))
+        )).isTrue();
+        assertThat(FeatureToggle.checkFeature("ResourceScopeWhiteListStrategyTest",
+            FeatureExecutionContext.builder().addContextParam(
+                CTX_PARAM_RESOURCE_SCOPE,
+                new ResourceScope(ResourceScopeTypeEnum.BIZ, "100"))
+        )).isFalse();
+    }
+
+    @Test
+    void anyMatchStrategyTest() {
+        assertThat(FeatureToggle.checkFeature("AnyMatchStrategyTest",
+            FeatureExecutionContext.builder().addContextParam(
+                CTX_PARAM_RESOURCE_SCOPE,
+                new ResourceScope(ResourceScopeTypeEnum.BIZ, "2"))
+        )).isTrue();
+        assertThat(FeatureToggle.checkFeature("AnyMatchStrategyTest",
+            FeatureExecutionContext.builder().addContextParam(
+                CTX_PARAM_RESOURCE_SCOPE,
+                new ResourceScope(ResourceScopeTypeEnum.BIZ, "3"))
+        )).isTrue();
+        assertThat(FeatureToggle.checkFeature("AnyMatchStrategyTest",
+            FeatureExecutionContext.builder().addContextParam(
+                CTX_PARAM_RESOURCE_SCOPE,
+                new ResourceScope(ResourceScopeTypeEnum.BIZ, "100"))
+        )).isFalse();
+    }
+
+    @Test
+    void allMatchStrategyTest() {
+        assertThat(FeatureToggle.checkFeature("AllMatchStrategyTest",
+            FeatureExecutionContext.builder().addContextParam(
+                CTX_PARAM_RESOURCE_SCOPE,
+                new ResourceScope(ResourceScopeTypeEnum.BIZ, "2"))
+        )).isTrue();
+        assertThat(FeatureToggle.checkFeature("AllMatchStrategyTest",
+            FeatureExecutionContext.builder().addContextParam(
+                CTX_PARAM_RESOURCE_SCOPE,
+                new ResourceScope(ResourceScopeTypeEnum.BIZ, "100"))
+        )).isFalse();
+    }
 }
