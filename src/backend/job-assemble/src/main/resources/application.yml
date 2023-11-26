@@ -17,7 +17,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,configprops,env,beans,conditions,loggers,metrics,mappings,prometheus,scheduledtasks,info,refresh,busrefresh,bindings
+        include: health,configprops,env,beans,conditions,loggers,metrics,mappings,prometheus,scheduledtasks,info,refresh,busrefresh,bindings,startup
       base-path: /actuator
     enabled-by-default: false
   endpoint:
