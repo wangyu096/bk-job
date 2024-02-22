@@ -406,8 +406,8 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
             if (!LockUtils.tryGetDistributedLock(lockKey, JobContextUtil.getRequestId(), 60_000)) {
                 throw new AbortedException(ErrorCode.TEMPLATE_LOCK_ACQUIRE_FAILED);
             }
-            // 保存新增的标签并获取tagId
-            createNewTagForTemplateIfNotExist(taskTemplateInfo);
+
+            checkTags(taskTemplateInfo);
 
             // 获取引用的非线上脚本
             Map<String, Long> outdatedScriptMap = getOutdatedScriptMap(taskTemplateInfo.getStepList());
@@ -564,10 +564,10 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
     }
 
     @Override
-    public void createNewTagForTemplateIfNotExist(TaskTemplateInfoDTO taskTemplateInfo) {
+    public void checkTags(TaskTemplateInfoDTO taskTemplateInfo) {
         List<TagDTO> tags = taskTemplateInfo.getTags();
         if (tags != null && !tags.isEmpty()) {
-            List<TagDTO> newTags = tagService.createNewTagIfNotExist(tags, taskTemplateInfo.getAppId(),
+            List<TagDTO> newTags = tagService.removeInvalidTags(tags, taskTemplateInfo.getAppId(),
                 taskTemplateInfo.getLastModifyUser());
             taskTemplateInfo.setTags(newTags);
         }
@@ -654,7 +654,7 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
             throw new NotFoundException(ErrorCode.TEMPLATE_NOT_EXIST);
         }
 
-        createNewTagForTemplateIfNotExist(taskTemplateInfo);
+        checkTags(taskTemplateInfo);
         updateTemplateTags(taskTemplateInfo);
         if (!taskTemplateDAO.updateTaskTemplateById(taskTemplateInfo, false)) {
             throw new InternalException(ErrorCode.UPDATE_TEMPLATE_FAILED);
@@ -749,7 +749,7 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
         if (taskTemplateByName != null) {
             throw new AlreadyExistsException(ErrorCode.TEMPLATE_NAME_EXIST);
         }
-        createNewTagForTemplateIfNotExist(taskTemplateInfo);
+        checkTags(taskTemplateInfo);
 
         if (createTime != null && createTime > 0) {
             taskTemplateInfo.setCreateTime(createTime);
