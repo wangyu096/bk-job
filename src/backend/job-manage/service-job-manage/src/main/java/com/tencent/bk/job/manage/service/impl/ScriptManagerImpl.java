@@ -312,7 +312,7 @@ public class ScriptManagerImpl implements ScriptManager {
     private void saveScriptTags(String operator, Long appId, String scriptId, List<TagDTO> tags) {
         List<TagDTO> newTags = tags;
         if (tags != null && !tags.isEmpty()) {
-            newTags = tagService.createNewTagIfNotExist(tags, appId, operator);
+            newTags = tagService.removeInvalidTags(tags, appId, operator);
         }
 
         Integer resourceType = appId == (JobConstants.PUBLIC_APP_ID) ?

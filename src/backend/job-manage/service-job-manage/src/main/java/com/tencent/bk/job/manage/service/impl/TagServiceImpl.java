@@ -209,31 +209,18 @@ public class TagServiceImpl implements TagService {
     }
 
     @Override
-    public List<TagDTO> createNewTagIfNotExist(List<TagDTO> tags, Long appId, String username) {
-        List<Long> tagIdList = new ArrayList<>();
+    public List<TagDTO> removeInvalidTags(List<TagDTO> tags, Long appId, String username) {
         Iterator<TagDTO> tagIterator = tags.iterator();
         while (tagIterator.hasNext()) {
             TagDTO tag = tagIterator.next();
             if (tag.getId() == null || tag.getId() == 0) {
-                String tagName = tag.getName();
-                TagDTO tagDTO = new TagDTO();
-                tagDTO.setAppId(appId);
-                tagDTO.setName(tagName);
-                tagDTO.setCreator(username);
-                tagDTO.setLastModifyUser(username);
-                Long tagId = tagDAO.insertTag(tagDTO);
-
-                tag.setId(tagId);
-            }
-            if (tagIdList.contains(tag.getId())) {
+                // 移除没有 id 的标签
                 tagIterator.remove();
-            } else {
-                TagDTO existTag = getTagInfoById(appId, tag.getId());
-                if (existTag == null) {
-                    throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                        new String[]{"tagId", String.format("tag (id=%s, app_id=%s) not exist", tag.getId(), appId)});
-                }
-                tagIdList.add(tag.getId());
+            }
+            TagDTO existTag = getTagInfoById(appId, tag.getId());
+            if (existTag == null) {
+                // 移除不存在的标签
+                tagIterator.remove();
             }
         }
         return tags;

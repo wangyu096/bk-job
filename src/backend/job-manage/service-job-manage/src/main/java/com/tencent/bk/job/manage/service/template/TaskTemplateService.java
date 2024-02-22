@@ -209,11 +209,11 @@ public interface TaskTemplateService {
     );
 
     /**
-     * 为模板创建标签
+     * 检查模板标签
      *
      * @param taskTemplateInfo 模版信息
      */
-    void createNewTagForTemplateIfNotExist(TaskTemplateInfoDTO taskTemplateInfo);
+    void checkTags(TaskTemplateInfoDTO taskTemplateInfo);
 
     /**
      * 更新模版步骤信息

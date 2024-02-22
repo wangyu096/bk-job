@@ -98,9 +98,9 @@ public interface TagService {
     boolean updateTagById(String username, TagDTO tag);
 
     /**
-     * 批量创建不存在的标签
+     * 移除非法的标签
      */
-    List<TagDTO> createNewTagIfNotExist(List<TagDTO> tags, Long appId, String username);
+    List<TagDTO> removeInvalidTags(List<TagDTO> tags, Long appId, String username);
 
     /**
      * 标签通用查询
