@@ -50,15 +50,15 @@ public class DangerousRecordVO {
     @ApiModelProperty("规则表达式")
     private String ruleExpression;
     /**
-     * 资源范围类型
+     * 资源管理空间类型
      */
-    @ApiModelProperty(value = "资源范围类型", allowableValues = "biz-业务,biz_set-业务集")
+    @ApiModelProperty(value = "资源管理空间类型", allowableValues = "biz-业务,biz_set-业务集")
     private String scopeType;
 
     /**
-     * 资源范围ID
+     * 资源管理空间ID
      */
-    @ApiModelProperty("资源范围ID")
+    @ApiModelProperty("资源管理空间ID")
     private String scopeId;
 
     /**

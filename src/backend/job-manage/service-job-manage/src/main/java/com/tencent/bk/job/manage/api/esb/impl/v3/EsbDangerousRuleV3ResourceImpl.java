@@ -26,10 +26,10 @@ package com.tencent.bk.job.manage.api.esb.impl.v3;
 
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
-import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
-import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
+import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
 import com.tencent.bk.job.manage.api.esb.v3.EsbDangerousRuleV3Resource;
 import com.tencent.bk.job.manage.common.consts.EnableStatusEnum;
 import com.tencent.bk.job.manage.model.dto.globalsetting.DangerousRuleDTO;
@@ -61,7 +61,7 @@ public class EsbDangerousRuleV3ResourceImpl implements EsbDangerousRuleV3Resourc
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_create_dangerous_rule"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_create_dangerous_rule"})
     @AuditEntry(actionId = ActionId.HIGH_RISK_DETECT_RULE)
     public EsbResp<EsbDangerousRuleV3DTO> createDangerousRule(String username,
                                                               String appCode,
@@ -76,7 +76,7 @@ public class EsbDangerousRuleV3ResourceImpl implements EsbDangerousRuleV3Resourc
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_update_dangerous_rule"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_update_dangerous_rule"})
     @AuditEntry(actionId = ActionId.HIGH_RISK_DETECT_RULE)
     public EsbResp<EsbDangerousRuleV3DTO> updateDangerousRule(String username,
                                                               String appCode,
@@ -94,7 +94,7 @@ public class EsbDangerousRuleV3ResourceImpl implements EsbDangerousRuleV3Resourc
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_delete_dangerous_rule"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_delete_dangerous_rule"})
     @AuditEntry(actionId = ActionId.HIGH_RISK_DETECT_RULE)
     public EsbResp deleteDangerousRule(String username,
                                        String appCode,
@@ -104,7 +104,7 @@ public class EsbDangerousRuleV3ResourceImpl implements EsbDangerousRuleV3Resourc
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_get_dangerous_rule_list"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_get_dangerous_rule_list"})
     @AuditEntry(actionId = ActionId.HIGH_RISK_DETECT_RULE)
     public EsbResp<List<EsbDangerousRuleV3DTO>> getDangerousRuleListUsingPost(
         String username,
@@ -124,7 +124,7 @@ public class EsbDangerousRuleV3ResourceImpl implements EsbDangerousRuleV3Resourc
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_enable_dangerous_rule"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_enable_dangerous_rule"})
     @AuditEntry(actionId = ActionId.HIGH_RISK_DETECT_RULE)
     public EsbResp<EsbDangerousRuleV3DTO> enableDangerousRule(String username,
                                                               String appCode,
@@ -136,7 +136,7 @@ public class EsbDangerousRuleV3ResourceImpl implements EsbDangerousRuleV3Resourc
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_disable_dangerous_rule"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_disable_dangerous_rule"})
     @AuditEntry(actionId = ActionId.HIGH_RISK_DETECT_RULE)
     public EsbResp<EsbDangerousRuleV3DTO> disableDangerousRule(String username,
                                                                String appCode,

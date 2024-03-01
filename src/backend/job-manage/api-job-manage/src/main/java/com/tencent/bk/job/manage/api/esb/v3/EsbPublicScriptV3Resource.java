@@ -26,8 +26,8 @@ package com.tencent.bk.job.manage.api.esb.v3;
 
 import com.tencent.bk.job.common.annotation.EsbAPI;
 import com.tencent.bk.job.common.constant.JobCommonHeaders;
-import com.tencent.bk.job.common.esb.model.EsbResp;
-import com.tencent.bk.job.common.esb.model.job.v3.EsbPageDataV3;
+import com.tencent.bk.job.common.openapi.job.v3.EsbPageDataV3;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.common.validation.Create;
 import com.tencent.bk.job.common.validation.Delete;
 import com.tencent.bk.job.common.validation.Update;

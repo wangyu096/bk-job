@@ -26,10 +26,6 @@ package com.tencent.bk.job.manage.api.esb.impl;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobConstants;
-import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
-import com.tencent.bk.job.common.esb.model.EsbPageData;
-import com.tencent.bk.job.common.esb.model.EsbResp;
-import com.tencent.bk.job.common.esb.util.EsbDTOAppScopeMappingHelper;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeEnum;
@@ -37,6 +33,10 @@ import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.model.ValidateResult;
+import com.tencent.bk.job.common.openapi.job.v2.EsbPageData;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
+import com.tencent.bk.job.common.openapi.job.v3.utils.EsbDTOAppScopeMappingHelper;
+import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
 import com.tencent.bk.job.common.util.date.DateUtils;
 import com.tencent.bk.job.manage.api.esb.EsbGetScriptListResource;
 import com.tencent.bk.job.manage.auth.EsbAuthService;
@@ -73,7 +73,7 @@ public class EsbGetScriptListResourceImpl implements EsbGetScriptListResource {
 
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_get_script_list"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_get_script_list"})
     public EsbResp<EsbPageData<EsbScriptDTO>> getScriptList(String username,
                                                             String appCode,
                                                             EsbGetScriptListRequest request) {

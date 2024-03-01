@@ -25,7 +25,7 @@
 package com.tencent.bk.job.common.cc.model.req;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.tencent.bk.job.common.esb.model.EsbReq;
+import com.tencent.bk.job.common.openapi.model.OpenApiReq;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -33,7 +33,7 @@ import java.util.List;
 
 @Getter
 @Setter
-public class FindHostBizRelationsReq extends EsbReq {
+public class FindHostBizRelationsReq extends OpenApiReq {
     @JsonProperty("bk_host_id")
     private List<Long> hostIdList;
 }

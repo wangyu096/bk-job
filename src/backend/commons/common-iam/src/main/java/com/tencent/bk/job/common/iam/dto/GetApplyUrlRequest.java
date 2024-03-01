@@ -25,7 +25,7 @@
 package com.tencent.bk.job.common.iam.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.tencent.bk.job.common.esb.model.EsbReq;
+import com.tencent.bk.job.common.openapi.model.OpenApiReq;
 import com.tencent.bk.sdk.iam.dto.action.ActionDTO;
 import lombok.Getter;
 import lombok.Setter;
@@ -39,7 +39,7 @@ import java.util.List;
 @Getter
 @Setter
 @ToString
-public class GetApplyUrlRequest extends EsbReq {
+public class GetApplyUrlRequest extends OpenApiReq {
     @JsonProperty("system_id")
     private String system;
 

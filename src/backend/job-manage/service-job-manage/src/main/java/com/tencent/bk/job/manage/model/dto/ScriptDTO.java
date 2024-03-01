@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.manage.model.dto;
 
-import com.tencent.bk.job.common.esb.util.EsbDTOAppScopeMappingHelper;
+import com.tencent.bk.job.common.openapi.job.v3.utils.EsbDTOAppScopeMappingHelper;
 import com.tencent.bk.job.manage.common.consts.JobResourceStatusEnum;
 import com.tencent.bk.job.manage.model.esb.v3.response.EsbScriptV3DTO;
 import com.tencent.bk.job.manage.model.esb.v3.response.EsbScriptVersionDetailV3DTO;

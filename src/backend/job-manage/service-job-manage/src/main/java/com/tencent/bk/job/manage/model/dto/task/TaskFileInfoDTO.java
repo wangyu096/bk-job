@@ -24,8 +24,8 @@
 
 package com.tencent.bk.job.manage.model.dto.task;
 
-import com.tencent.bk.job.common.esb.model.job.v3.EsbAccountV3BasicDTO;
-import com.tencent.bk.job.common.esb.model.job.v3.EsbFileSourceV3DTO;
+import com.tencent.bk.job.common.openapi.job.v3.EsbAccountV3BasicDTO;
+import com.tencent.bk.job.common.openapi.job.v3.EsbFileSourceV3DTO;
 import com.tencent.bk.job.manage.common.consts.task.TaskFileTypeEnum;
 import com.tencent.bk.job.manage.model.inner.ServiceAccountDTO;
 import com.tencent.bk.job.manage.model.inner.ServiceTaskFileInfoDTO;

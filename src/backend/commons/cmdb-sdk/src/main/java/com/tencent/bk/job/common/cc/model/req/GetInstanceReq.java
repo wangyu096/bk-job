@@ -25,7 +25,7 @@
 package com.tencent.bk.job.common.cc.model.req;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.tencent.bk.job.common.esb.model.EsbReq;
+import com.tencent.bk.job.common.openapi.model.OpenApiReq;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -34,7 +34,7 @@ import lombok.Setter;
  */
 @Setter
 @Getter
-public class GetInstanceReq extends EsbReq {
+public class GetInstanceReq extends OpenApiReq {
     @JsonProperty("bk_obj_id")
     private String objectId;
 

@@ -30,9 +30,6 @@ import com.tencent.bk.audit.annotations.AuditInstanceRecord;
 import com.tencent.bk.audit.context.ActionAuditContext;
 import com.tencent.bk.job.common.audit.constants.EventContentConstants;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
-import com.tencent.bk.job.common.esb.model.EsbResp;
-import com.tencent.bk.job.common.esb.util.EsbDTOAppScopeMappingHelper;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.exception.NotFoundException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
@@ -41,6 +38,9 @@ import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.ValidateResult;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
+import com.tencent.bk.job.common.openapi.job.v3.utils.EsbDTOAppScopeMappingHelper;
+import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
 import com.tencent.bk.job.common.util.date.DateUtils;
 import com.tencent.bk.job.manage.api.esb.EsbGetScriptDetailResource;
 import com.tencent.bk.job.manage.auth.ScriptAuthService;
@@ -67,7 +67,7 @@ public class EsbGetScriptDetailResourceImpl implements EsbGetScriptDetailResourc
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_get_script_detail"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_get_script_detail"})
     @AuditEntry(actionId = ActionId.VIEW_SCRIPT)
     @ActionAuditRecord(
         actionId = ActionId.VIEW_SCRIPT,

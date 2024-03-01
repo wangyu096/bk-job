@@ -24,12 +24,12 @@
 
 package com.tencent.bk.job.manage.api.esb.impl.v3;
 
-import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.common.gse.constants.AgentStateStatusEnum;
 import com.tencent.bk.job.common.gse.v2.model.req.ListAgentStateReq;
 import com.tencent.bk.job.common.gse.v2.model.resp.AgentState;
 import com.tencent.bk.job.common.model.dto.ApplicationHostDTO;
 import com.tencent.bk.job.common.model.dto.ResourceScope;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.manage.api.esb.v3.EsbAgentInfoV3Resource;
 import com.tencent.bk.job.manage.model.esb.v3.request.EsbQueryAgentInfoV3Req;
 import com.tencent.bk.job.manage.model.esb.v3.response.EsbAgentInfoV3DTO;

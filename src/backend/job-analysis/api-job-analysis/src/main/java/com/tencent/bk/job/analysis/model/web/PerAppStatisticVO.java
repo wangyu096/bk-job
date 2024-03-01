@@ -46,13 +46,13 @@ public class PerAppStatisticVO {
     @ApiModelProperty("业务名称(勿用，仅做发布期间兼容)")
     private String appName;
 
-    @ApiModelProperty("资源范围类型(biz:业务，biz_set:业务集)")
+    @ApiModelProperty("资源管理空间类型(biz:业务，biz_set:业务集)")
     private String scopeType;
 
-    @ApiModelProperty("资源范围ID")
+    @ApiModelProperty("资源管理空间ID")
     private String scopeId;
 
-    @ApiModelProperty("资源范围名称")
+    @ApiModelProperty("资源管理空间名称")
     private String scopeName;
 
     @ApiModelProperty("统计量数值")

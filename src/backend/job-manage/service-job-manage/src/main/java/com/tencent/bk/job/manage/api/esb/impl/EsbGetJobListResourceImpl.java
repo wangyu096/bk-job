@@ -24,15 +24,15 @@
 
 package com.tencent.bk.job.manage.api.esb.impl;
 
-import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
-import com.tencent.bk.job.common.esb.model.EsbResp;
-import com.tencent.bk.job.common.esb.util.EsbDTOAppScopeMappingHelper;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.iam.service.BusinessAuthService;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.model.ValidateResult;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
+import com.tencent.bk.job.common.openapi.job.v3.utils.EsbDTOAppScopeMappingHelper;
+import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
 import com.tencent.bk.job.common.util.date.DateUtils;
 import com.tencent.bk.job.manage.api.esb.EsbGetJobListResource;
 import com.tencent.bk.job.manage.model.dto.TaskPlanQueryDTO;
@@ -64,7 +64,7 @@ public class EsbGetJobListResourceImpl implements EsbGetJobListResource {
 
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_get_job_list"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_get_job_list"})
     public EsbResp<List<EsbJobBasicInfoDTO>> getJobList(String username,
                                                         String appCode,
                                                         EsbGetJobListRequest request) {

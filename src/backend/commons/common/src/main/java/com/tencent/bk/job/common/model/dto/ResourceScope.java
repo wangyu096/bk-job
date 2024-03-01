@@ -35,22 +35,22 @@ import java.util.Objects;
 import java.util.StringJoiner;
 
 /**
- * 资源范围
+ * 资源管理空间
  */
 @Getter
 @Setter
 @NoArgsConstructor
-@ApiModel("资源范围实体")
+@ApiModel("资源管理空间实体")
 public class ResourceScope {
     /**
-     * 资源范围类型
+     * 资源管理空间类型
      */
-    @ApiModelProperty(value = "枚举，资源范围类型", required = true)
+    @ApiModelProperty(value = "枚举，资源管理空间类型", required = true)
     private ResourceScopeTypeEnum type;
     /**
-     * 资源范围ID,比如cmdb业务ID、cmdb业务集ID
+     * 资源管理空间ID,比如cmdb业务ID、cmdb业务集ID
      */
-    @ApiModelProperty(value = "资源范围Id", required = true)
+    @ApiModelProperty(value = "资源管理空间Id", required = true)
     private String id;
 
     public ResourceScope(String type, String id) {

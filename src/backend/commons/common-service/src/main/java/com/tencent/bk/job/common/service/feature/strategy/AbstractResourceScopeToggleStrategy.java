@@ -35,12 +35,12 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * 根据资源范围灰度策略-基础实现
+ * 根据资源管理空间灰度策略-基础实现
  */
 @Slf4j
 public abstract class AbstractResourceScopeToggleStrategy extends AbstractToggleStrategy {
     /**
-     * 策略初始化参数-资源范围
+     * 策略初始化参数-资源管理空间
      */
     public static final String INIT_PARAM_RESOURCE_SCOPE_LIST = "resourceScopeList";
 

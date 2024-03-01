@@ -32,10 +32,10 @@ import com.tencent.bk.job.common.model.dto.AppResourceScope;
  */
 public interface NotificationAuthService {
     /**
-     * 资源范围下配置消息通知鉴权
+     * 资源管理空间下配置消息通知鉴权
      *
      * @param username      用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @return 鉴权结果
      */
     AuthResult authNotificationSetting(String username, AppResourceScope appResourceScope);

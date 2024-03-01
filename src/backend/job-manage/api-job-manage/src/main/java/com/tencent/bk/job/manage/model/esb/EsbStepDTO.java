@@ -25,8 +25,8 @@
 package com.tencent.bk.job.manage.model.esb;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.tencent.bk.job.common.esb.model.job.EsbFileSourceDTO;
-import com.tencent.bk.job.common.esb.model.job.EsbIpDTO;
+import com.tencent.bk.job.common.openapi.job.v2.EsbFileSourceDTO;
+import com.tencent.bk.job.common.openapi.job.v2.EsbIpDTO;
 import lombok.Getter;
 import lombok.Setter;
 

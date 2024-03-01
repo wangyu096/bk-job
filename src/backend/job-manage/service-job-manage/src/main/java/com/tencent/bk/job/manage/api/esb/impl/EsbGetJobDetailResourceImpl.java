@@ -28,16 +28,16 @@ import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
-import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
-import com.tencent.bk.job.common.esb.model.EsbResp;
-import com.tencent.bk.job.common.esb.model.job.EsbFileSourceDTO;
-import com.tencent.bk.job.common.esb.model.job.EsbIpDTO;
-import com.tencent.bk.job.common.esb.util.EsbDTOAppScopeMappingHelper;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.model.dto.ApplicationHostDTO;
+import com.tencent.bk.job.common.openapi.job.v2.EsbFileSourceDTO;
+import com.tencent.bk.job.common.openapi.job.v2.EsbIpDTO;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
+import com.tencent.bk.job.common.openapi.job.v3.utils.EsbDTOAppScopeMappingHelper;
+import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
 import com.tencent.bk.job.common.util.date.DateUtils;
 import com.tencent.bk.job.manage.api.esb.EsbGetJobDetailResource;
 import com.tencent.bk.job.manage.common.consts.task.TaskFileTypeEnum;
@@ -93,7 +93,7 @@ public class EsbGetJobDetailResourceImpl implements EsbGetJobDetailResource {
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_get_job_detail"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_get_job_detail"})
     @AuditEntry(actionId = ActionId.VIEW_JOB_PLAN)
     public EsbResp<EsbJobDetailDTO> getJobDetail(String username,
                                                  String appCode,

@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.manage.model.esb.v3.request;
 
-import com.tencent.bk.job.common.esb.model.EsbJobReq;
+import com.tencent.bk.job.common.openapi.job.v3.EsbJobReq;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

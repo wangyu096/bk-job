@@ -25,11 +25,11 @@
 package com.tencent.bk.job.execute.api.esb.v2.impl;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
-import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.ValidateResult;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
+import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
 import com.tencent.bk.job.execute.api.esb.v2.EsbGetJobInstanceGlobalVarValueResource;
 import com.tencent.bk.job.execute.api.esb.v3.EsbGetJobInstanceGlobalVarValueV3Resource;
 import com.tencent.bk.job.execute.model.esb.v2.EsbTaskInstanceGlobalVarValueDTO;
@@ -59,7 +59,7 @@ public class EsbGetJobInstanceGlobalVarValueResourceImpl implements EsbGetJobIns
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_get_job_instance_global_var_value"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_get_job_instance_global_var_value"})
     public EsbResp<EsbTaskInstanceGlobalVarValueDTO> getJobInstanceGlobalVarValue(
         String username,
         String appCode,

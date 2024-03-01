@@ -25,9 +25,9 @@
 package com.tencent.bk.job.manage.model.dto.task;
 
 import com.tencent.bk.job.common.model.dto.UserRoleInfoDTO;
+import com.tencent.bk.job.common.openapi.job.v3.EsbApprovalStepV3DTO;
+import com.tencent.bk.job.common.openapi.job.v3.EsbUserRoleInfoV3DTO;
 import com.tencent.bk.job.manage.common.consts.task.TaskApprovalTypeEnum;
-import com.tencent.bk.job.common.esb.model.job.v3.resp.EsbApprovalStepV3DTO;
-import com.tencent.bk.job.common.esb.model.job.v3.resp.EsbUserRoleInfoV3DTO;
 import com.tencent.bk.job.manage.model.inner.ServiceTaskApprovalStepDTO;
 import com.tencent.bk.job.manage.model.inner.ServiceTaskApprovalUserDTO;
 import com.tencent.bk.job.manage.model.web.vo.task.TaskApprovalStepVO;

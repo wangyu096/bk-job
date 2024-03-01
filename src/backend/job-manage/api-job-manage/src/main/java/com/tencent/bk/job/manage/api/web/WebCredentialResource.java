@@ -62,10 +62,10 @@ public interface WebCredentialResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam("搜索条件：凭证ID")
@@ -100,10 +100,10 @@ public interface WebCredentialResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam("分页-开始，不传默认为0")
@@ -124,10 +124,10 @@ public interface WebCredentialResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "创建请求体", required = true)
@@ -144,13 +144,13 @@ public interface WebCredentialResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "credentialId")
             String credentialId,
         @ApiParam(value = "更新请求体", required = true)
@@ -168,10 +168,10 @@ public interface WebCredentialResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam("凭据ID")

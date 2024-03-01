@@ -34,7 +34,7 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * 业务与资源范围映射公共接口
+ * 业务与资源管理空间映射公共接口
  */
 public interface AppScopeMappingService {
     Long getAppIdByScope(ResourceScope resourceScope);
@@ -46,10 +46,10 @@ public interface AppScopeMappingService {
     Map<Long, ResourceScope> getScopeByAppIds(Collection<Long> appIds);
 
     /**
-     * 批量根据资源范围获取业务ID
+     * 批量根据资源管理空间获取业务ID
      *
-     * @param scopeList 资源范围列表
-     * @return 资源范围与业务ID的映射关系Map
+     * @param scopeList 资源管理空间列表
+     * @return 资源管理空间与业务ID的映射关系Map
      */
     Map<ResourceScope, Long> getAppIdByScopeList(Collection<ResourceScope> scopeList);
 
@@ -57,18 +57,18 @@ public interface AppScopeMappingService {
      * 根据业务ID或者scopeType&scopeId获取AppResourceScope
      *
      * @param appId     业务ID
-     * @param scopeType 资源范围类型
-     * @param scopeId   资源范围ID
-     * @return AppResourceScope, 包含业务ID、资源范围类型、资源范围ID
+     * @param scopeType 资源管理空间类型
+     * @param scopeId   资源管理空间ID
+     * @return AppResourceScope, 包含业务ID、资源管理空间类型、资源管理空间ID
      */
     AppResourceScope getAppResourceScope(Long appId, String scopeType, String scopeId);
 
     /**
      * 根据scopeType&scopeId获取AppResourceScope
      *
-     * @param scopeType 资源范围类型
-     * @param scopeId   资源范围ID
-     * @return AppResourceScope, 包含业务ID、资源范围类型、资源范围ID
+     * @param scopeType 资源管理空间类型
+     * @param scopeId   资源管理空间ID
+     * @return AppResourceScope, 包含业务ID、资源管理空间类型、资源管理空间ID
      */
     AppResourceScope getAppResourceScope(String scopeType, String scopeId);
 

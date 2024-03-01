@@ -24,9 +24,9 @@
 
 package com.tencent.bk.job.execute.api.esb.v2.impl;
 
-import com.tencent.bk.job.common.esb.model.job.EsbIpDTO;
-import com.tencent.bk.job.common.esb.model.job.EsbServerDTO;
 import com.tencent.bk.job.common.model.dto.HostDTO;
+import com.tencent.bk.job.common.openapi.job.v2.EsbIpDTO;
+import com.tencent.bk.job.common.openapi.job.v2.EsbServerDTO;
 import com.tencent.bk.job.execute.model.DynamicServerGroupDTO;
 import com.tencent.bk.job.execute.model.DynamicServerTopoNodeDTO;
 import com.tencent.bk.job.execute.model.ExecuteObjectsDTO;

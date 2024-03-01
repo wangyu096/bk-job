@@ -25,12 +25,12 @@
 package com.tencent.bk.job.manage.api.esb.impl;
 
 import com.tencent.bk.job.common.constant.AccountCategoryEnum;
-import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
-import com.tencent.bk.job.common.esb.model.EsbResp;
-import com.tencent.bk.job.common.esb.util.EsbDTOAppScopeMappingHelper;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.ValidateResult;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
+import com.tencent.bk.job.common.openapi.job.v3.utils.EsbDTOAppScopeMappingHelper;
+import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
 import com.tencent.bk.job.common.util.date.DateUtils;
 import com.tencent.bk.job.manage.api.esb.EsbGetDBAccountListResource;
 import com.tencent.bk.job.manage.model.dto.AccountDTO;
@@ -59,7 +59,7 @@ public class EsbGetDBAccountListResourceImpl implements EsbGetDBAccountListResou
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_get_own_db_account_list"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_get_own_db_account_list"})
     public EsbResp<List<EsbDBAccountDTO>> getUserOwnDbAccountList(String username,
                                                                   String appCode,
                                                                   EsbGetDBAccountListRequest request) {

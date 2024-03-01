@@ -27,7 +27,7 @@ package com.tencent.bk.job.common.cc.model.req;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.tencent.bk.job.common.cc.model.BaseRuleDTO;
 import com.tencent.bk.job.common.cc.model.PropertyFilterDTO;
-import com.tencent.bk.job.common.esb.model.EsbReq;
+import com.tencent.bk.job.common.openapi.model.OpenApiReq;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -39,7 +39,7 @@ import java.util.List;
  */
 @Getter
 @Setter
-public class ListBizHostReq extends EsbReq {
+public class ListBizHostReq extends OpenApiReq {
     @JsonProperty("bk_biz_id")
     private long bizId;
 

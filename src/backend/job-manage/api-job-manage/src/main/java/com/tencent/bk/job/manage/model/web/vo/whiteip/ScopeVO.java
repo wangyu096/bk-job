@@ -30,15 +30,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 资源范围VO
+ * 资源管理空间VO
  */
 @NoArgsConstructor
-@ApiModel("资源范围")
+@ApiModel("资源管理空间")
 @Data
 public class ScopeVO {
-    @ApiModelProperty("资源范围类型")
+    @ApiModelProperty("资源管理空间类型")
     private String scopeType;
-    @ApiModelProperty("资源范围ID")
+    @ApiModelProperty("资源管理空间ID")
     private String scopeId;
     @ApiModelProperty("业务名称")
     private String name;

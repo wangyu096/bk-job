@@ -28,14 +28,14 @@ import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobCommonHeaders;
-import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
-import com.tencent.bk.job.common.esb.model.EsbResp;
-import com.tencent.bk.job.common.esb.model.job.v3.EsbPageDataV3;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
+import com.tencent.bk.job.common.openapi.job.v3.EsbPageDataV3;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
+import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
 import com.tencent.bk.job.manage.api.common.ScriptDTOBuilder;
 import com.tencent.bk.job.manage.api.esb.v3.EsbPublicScriptV3Resource;
 import com.tencent.bk.job.manage.common.consts.JobResourceStatusEnum;
@@ -83,7 +83,7 @@ public class EsbPublicScriptResourceV3Impl implements EsbPublicScriptV3Resource 
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_get_public_script_list"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_get_public_script_list"})
     public EsbResp<EsbPageDataV3<EsbScriptV3DTO>> getPublicScriptList(String username,
                                                                       String appCode,
                                                                       String name,
@@ -99,7 +99,7 @@ public class EsbPublicScriptResourceV3Impl implements EsbPublicScriptV3Resource 
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_get_public_script_version_list"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_get_public_script_version_list"})
     public EsbResp<EsbPageDataV3<EsbScriptVersionDetailV3DTO>> getPublicScriptVersionList(String username,
                                                                                           String appCode,
                                                                                           String scriptId,
@@ -115,7 +115,7 @@ public class EsbPublicScriptResourceV3Impl implements EsbPublicScriptV3Resource 
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_get_script_version_detail"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_get_script_version_detail"})
     public EsbResp<EsbScriptVersionDetailV3DTO> getPublicScriptVersionDetail(String username,
                                                                              String appCode,
                                                                              Long scriptVersionId,
@@ -129,7 +129,7 @@ public class EsbPublicScriptResourceV3Impl implements EsbPublicScriptV3Resource 
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_get_public_script_list"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_get_public_script_list"})
     public EsbResp<EsbPageDataV3<EsbScriptV3DTO>> getPublicScriptListUsingPost(
         String username,
         String appCode,
@@ -159,7 +159,7 @@ public class EsbPublicScriptResourceV3Impl implements EsbPublicScriptV3Resource 
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_get_public_script_version_list"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_get_public_script_version_list"})
     public EsbResp<EsbPageDataV3<EsbScriptVersionDetailV3DTO>> getPublicScriptVersionListUsingPost(
         String username,
         String appCode,
@@ -188,7 +188,7 @@ public class EsbPublicScriptResourceV3Impl implements EsbPublicScriptV3Resource 
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_get_public_script_version_detail"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_get_public_script_version_detail"})
     public EsbResp<EsbScriptVersionDetailV3DTO> getPublicScriptVersionDetailUsingPost(
         String username,
         String appCode,
@@ -214,7 +214,7 @@ public class EsbPublicScriptResourceV3Impl implements EsbPublicScriptV3Resource 
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_create_public_script"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_create_public_script"})
     @AuditEntry(actionId = ActionId.CREATE_PUBLIC_SCRIPT)
     public EsbResp<EsbScriptVersionDetailV3DTO> createPublicScript(
         String username,
@@ -238,7 +238,7 @@ public class EsbPublicScriptResourceV3Impl implements EsbPublicScriptV3Resource 
 
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_create_public_script_version"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_create_public_script_version"})
     @AuditEntry(actionId = ActionId.MANAGE_PUBLIC_SCRIPT_INSTANCE)
     public EsbResp<EsbScriptVersionDetailV3DTO> createPublicScriptVersion(
         String username,
@@ -260,7 +260,7 @@ public class EsbPublicScriptResourceV3Impl implements EsbPublicScriptV3Resource 
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_delete_public_script"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_delete_public_script"})
     @AuditEntry(actionId = ActionId.MANAGE_PUBLIC_SCRIPT_INSTANCE)
     public EsbResp deletePublicScript(String username,
                                       String appCode,
@@ -270,7 +270,7 @@ public class EsbPublicScriptResourceV3Impl implements EsbPublicScriptV3Resource 
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_delete_public_script_version"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_delete_public_script_version"})
     @AuditEntry(actionId = ActionId.MANAGE_PUBLIC_SCRIPT_INSTANCE)
     public EsbResp deletePublicScriptVersion(String username,
                                              String appCode,
@@ -280,7 +280,7 @@ public class EsbPublicScriptResourceV3Impl implements EsbPublicScriptV3Resource 
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_disable_public_script_version"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_disable_public_script_version"})
     @AuditEntry(actionId = ActionId.MANAGE_PUBLIC_SCRIPT_INSTANCE)
     public EsbResp<EsbScriptVersionDetailV3DTO> disablePublicScriptVersion(
         String username,
@@ -292,7 +292,7 @@ public class EsbPublicScriptResourceV3Impl implements EsbPublicScriptV3Resource 
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_publish_public_script_version"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_publish_public_script_version"})
     @AuditEntry(actionId = ActionId.MANAGE_PUBLIC_SCRIPT_INSTANCE)
     public EsbResp<EsbScriptVersionDetailV3DTO> publishPublicScriptVersion(
         String username,
@@ -304,7 +304,7 @@ public class EsbPublicScriptResourceV3Impl implements EsbPublicScriptV3Resource 
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_update_public_script_basic"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_update_public_script_basic"})
     @AuditEntry(actionId = ActionId.MANAGE_PUBLIC_SCRIPT_INSTANCE)
     public EsbResp<EsbScriptV3DTO> updatePublicScriptBasic(
         String username,
@@ -322,7 +322,7 @@ public class EsbPublicScriptResourceV3Impl implements EsbPublicScriptV3Resource 
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_update_public_script_version"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_update_public_script_version"})
     @AuditEntry(actionId = ActionId.MANAGE_PUBLIC_SCRIPT_INSTANCE)
     public EsbResp<EsbScriptVersionDetailV3DTO> updatePublicScriptVersion(
         @RequestHeader(value = JobCommonHeaders.USERNAME) String username,

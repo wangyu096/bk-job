@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.common.web.config;
 
-import com.tencent.bk.job.common.esb.metrics.EsbApiTimedAspect;
+import com.tencent.bk.job.common.openapi.metrics.OpenApiTimedAspect;
 import com.tencent.bk.job.common.web.feign.FeignConfiguration;
 import com.tencent.bk.job.common.web.validation.ValidationConfiguration;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -44,8 +44,8 @@ import org.springframework.context.annotation.Import;
 public class WebAutoConfiguration {
 
     @Bean
-    public EsbApiTimedAspect esbApiTimedAspect(@Autowired MeterRegistry meterRegistry) {
-        return new EsbApiTimedAspect(meterRegistry);
+    public OpenApiTimedAspect esbApiTimedAspect(@Autowired MeterRegistry meterRegistry) {
+        return new OpenApiTimedAspect(meterRegistry);
     }
 
     @Bean

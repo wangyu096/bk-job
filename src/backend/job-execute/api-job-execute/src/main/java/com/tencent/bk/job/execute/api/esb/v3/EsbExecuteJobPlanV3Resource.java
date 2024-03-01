@@ -26,7 +26,7 @@ package com.tencent.bk.job.execute.api.esb.v3;
 
 import com.tencent.bk.job.common.annotation.EsbAPI;
 import com.tencent.bk.job.common.constant.JobCommonHeaders;
-import com.tencent.bk.job.common.esb.model.EsbResp;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.execute.model.esb.v3.EsbJobExecuteV3DTO;
 import com.tencent.bk.job.execute.model.esb.v3.request.EsbExecuteJobV3Request;
 import org.springframework.validation.annotation.Validated;

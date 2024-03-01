@@ -26,8 +26,8 @@ package com.tencent.bk.job.crontab.model.esb.v3.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.tencent.bk.job.common.esb.model.EsbAppScopeDTO;
-import com.tencent.bk.job.common.esb.model.job.v3.EsbGlobalVarV3DTO;
+import com.tencent.bk.job.common.openapi.job.v3.EsbAppScopeDTO;
+import com.tencent.bk.job.common.openapi.job.v3.EsbGlobalVarV3DTO;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;

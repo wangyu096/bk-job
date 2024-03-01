@@ -24,7 +24,6 @@
 
 package com.tencent.bk.job.manage.auth.impl;
 
-import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeEnum;
 import com.tencent.bk.job.common.iam.model.PermissionActionResource;
 import com.tencent.bk.job.common.iam.model.PermissionResource;
@@ -32,6 +31,7 @@ import com.tencent.bk.job.common.iam.model.PermissionResourceGroup;
 import com.tencent.bk.job.common.iam.service.AppAuthService;
 import com.tencent.bk.job.common.iam.service.AuthService;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.manage.auth.EsbAuthService;
 import com.tencent.bk.sdk.iam.constants.SystemId;
 import lombok.extern.slf4j.Slf4j;

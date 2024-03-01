@@ -37,11 +37,11 @@ import java.util.Map;
 @NoArgsConstructor
 public class ScriptTemplateVariableRenderDTO {
     /**
-     * 资源范围类型
+     * 资源管理空间类型
      */
     private String scopeType;
     /**
-     * 资源范围ID
+     * 资源管理空间ID
      */
     private String scopeId;
 

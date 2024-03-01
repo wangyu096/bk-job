@@ -69,10 +69,10 @@ public interface WebTagResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam("标签名称,支持模糊查询")
@@ -106,10 +106,10 @@ public interface WebTagResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam("标签名称")
@@ -125,10 +125,10 @@ public interface WebTagResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "标签 ID", required = true)
@@ -148,10 +148,10 @@ public interface WebTagResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam("标签创建请求")
@@ -168,10 +168,10 @@ public interface WebTagResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "标签 ID", required = true)
@@ -189,10 +189,10 @@ public interface WebTagResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "标签 ID", required = true)
@@ -211,10 +211,10 @@ public interface WebTagResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "标签ID，新建时填 0", required = true)

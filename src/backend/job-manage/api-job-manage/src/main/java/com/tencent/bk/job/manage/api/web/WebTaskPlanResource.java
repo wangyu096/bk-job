@@ -66,10 +66,10 @@ public interface WebTaskPlanResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "执行方案 ID")
@@ -107,10 +107,10 @@ public interface WebTaskPlanResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "模版 ID", required = true)
@@ -127,10 +127,10 @@ public interface WebTaskPlanResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "模板ID列表，用英文逗号分隔", required = true)
@@ -147,10 +147,10 @@ public interface WebTaskPlanResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "模版 ID", required = true)
@@ -170,10 +170,10 @@ public interface WebTaskPlanResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "模版 ID", required = true)
@@ -190,10 +190,10 @@ public interface WebTaskPlanResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "模版 ID", required = true)
@@ -216,10 +216,10 @@ public interface WebTaskPlanResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "模版 ID", required = true)
@@ -239,10 +239,10 @@ public interface WebTaskPlanResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "模版 ID", required = true)
@@ -262,10 +262,10 @@ public interface WebTaskPlanResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "执行方案 ID 列表，逗号分隔", required = true, example = "1,2,3")
@@ -282,10 +282,10 @@ public interface WebTaskPlanResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "作业模版 ID", required = true)
@@ -308,10 +308,10 @@ public interface WebTaskPlanResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "作业模版 ID", required = true)
@@ -331,10 +331,10 @@ public interface WebTaskPlanResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "作业模版 ID", required = true)
@@ -357,10 +357,10 @@ public interface WebTaskPlanResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "模版ID", required = true)
@@ -380,10 +380,10 @@ public interface WebTaskPlanResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "模版ID", required = true)
@@ -414,10 +414,10 @@ public interface WebTaskPlanResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "批量更新请求体", required = true)

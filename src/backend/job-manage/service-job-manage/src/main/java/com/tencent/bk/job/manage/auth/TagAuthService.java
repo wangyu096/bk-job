@@ -34,19 +34,19 @@ import java.util.List;
  */
 public interface TagAuthService {
     /**
-     * 资源范围下创建标签鉴权
+     * 资源管理空间下创建标签鉴权
      *
      * @param username      用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @return 鉴权结果
      */
     AuthResult authCreateTag(String username, AppResourceScope appResourceScope);
 
     /**
-     * 资源范围下管理标签鉴权
+     * 资源管理空间下管理标签鉴权
      *
      * @param username      用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param tagId         标签ID
      * @param tagName       标签名称，如果传入为空，则会调用ResourceNameQueryService查询
      * @return 鉴权结果
@@ -57,10 +57,10 @@ public interface TagAuthService {
                              String tagName);
 
     /**
-     * 资源范围下管理标签批量鉴权
+     * 资源管理空间下管理标签批量鉴权
      *
      * @param username      用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param tagIdList     标签ID列表
      * @return 有权限的标签ID
      */

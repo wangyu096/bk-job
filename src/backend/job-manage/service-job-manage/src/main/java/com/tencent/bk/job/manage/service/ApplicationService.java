@@ -47,34 +47,34 @@ public interface ApplicationService {
     boolean existBiz(long bizId);
 
     /**
-     * 根据资源范围获取Job业务ID
+     * 根据资源管理空间获取Job业务ID
      *
-     * @param resourceScope 资源范围
+     * @param resourceScope 资源管理空间
      * @return Job业务ID
      */
     Long getAppIdByScope(ResourceScope resourceScope);
 
     /**
-     * 根据Job业务ID获取资源范围
+     * 根据Job业务ID获取资源管理空间
      *
      * @param appId Job业务ID
-     * @return 资源范围
+     * @return 资源管理空间
      */
     ResourceScope getScopeByAppId(Long appId);
 
     /**
-     * 批量根据业务ID列表获取资源范围
+     * 批量根据业务ID列表获取资源管理空间
      *
      * @param appIds 业务ID列表
-     * @return 业务ID与资源范围的映射关系Map
+     * @return 业务ID与资源管理空间的映射关系Map
      */
     Map<Long, ResourceScope> getScopeByAppIds(Collection<Long> appIds);
 
     /**
-     * 批量根据资源范围获取业务ID
+     * 批量根据资源管理空间获取业务ID
      *
-     * @param scopeList 资源范围列表
-     * @return 资源范围与业务ID的映射关系Map
+     * @param scopeList 资源管理空间列表
+     * @return 资源管理空间与业务ID的映射关系Map
      */
     Map<ResourceScope, Long> getAppIdByScopeList(Collection<ResourceScope> scopeList);
 
@@ -88,18 +88,18 @@ public interface ApplicationService {
     ApplicationDTO getAppByAppId(Long appId) throws NotFoundException;
 
     /**
-     * 根据资源范围拉取业务信息
+     * 根据资源管理空间拉取业务信息
      *
-     * @param scope 资源范围
+     * @param scope 资源管理空间
      * @return 业务信息
      */
     ApplicationDTO getAppByScope(ResourceScope scope);
 
     /**
-     * 根据资源范围拉取业务信息
+     * 根据资源管理空间拉取业务信息
      *
-     * @param scopeType 资源范围类型
-     * @param scopeId   资源范围ID
+     * @param scopeType 资源管理空间类型
+     * @param scopeId   资源管理空间ID
      * @return 业务
      * @throws NotFoundException 业务/业务集不存在时抛出异常
      */
@@ -130,9 +130,9 @@ public interface ApplicationService {
     List<Long> getRelatedAppIds(Long appId);
 
     /**
-     * 根据资源范围类型获取业务列表
+     * 根据资源管理空间类型获取业务列表
      *
-     * @param scopeType 资源范围类型
+     * @param scopeType 资源管理空间类型
      * @return 业务列表
      */
     List<ApplicationDTO> listAppsByScopeType(ResourceScopeTypeEnum scopeType);
@@ -181,9 +181,9 @@ public interface ApplicationService {
     void restoreDeletedApp(long appId);
 
     /**
-     * 根据资源范围获取业务，包含已经被逻辑删除的业务
+     * 根据资源管理空间获取业务，包含已经被逻辑删除的业务
      *
-     * @param scope 资源范围
+     * @param scope 资源管理空间
      * @return 业务
      */
     ApplicationDTO getAppByScopeIncludingDeleted(ResourceScope scope);

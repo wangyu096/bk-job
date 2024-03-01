@@ -47,7 +47,7 @@ public class PerAppStatisticDTO {
     private Long appId;
 
     /**
-     * 资源范围名称
+     * 资源管理空间名称
      */
     private String scopeName;
 

@@ -25,7 +25,7 @@
 package com.tencent.bk.job.common.paas.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.tencent.bk.job.common.esb.model.EsbReq;
+import com.tencent.bk.job.common.openapi.model.OpenApiReq;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -33,7 +33,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class PostSendMsgReq extends EsbReq {
+public class PostSendMsgReq extends OpenApiReq {
 
     @JsonProperty("msg_type")
     private String msgType;

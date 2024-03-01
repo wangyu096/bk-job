@@ -89,10 +89,10 @@ public interface WebGlobalSettingsQueryResource {
         @ApiParam("用户名，网关自动传入")
         @RequestHeader("username")
             String username,
-        @ApiParam(value = "资源范围类型")
+        @ApiParam(value = "资源管理空间类型")
         @RequestParam(value = "scopeType", required = false)
             String scopeType,
-        @ApiParam(value = "资源范围ID")
+        @ApiParam(value = "资源管理空间ID")
         @RequestParam(value = "scopeId", required = false)
             String scopeId
     );
@@ -104,10 +104,10 @@ public interface WebGlobalSettingsQueryResource {
         @ApiParam("用户名，网关自动传入")
         @RequestHeader("username")
             String username,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId
     );

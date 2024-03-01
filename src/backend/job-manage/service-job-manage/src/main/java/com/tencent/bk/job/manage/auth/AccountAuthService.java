@@ -34,19 +34,19 @@ import java.util.List;
  */
 public interface AccountAuthService {
     /**
-     * 资源范围下创建账号鉴权
+     * 资源管理空间下创建账号鉴权
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @return 鉴权结果
      */
     AuthResult authCreateAccount(String username, AppResourceScope appResourceScope);
 
     /**
-     * 资源范围下管理账号鉴权
+     * 资源管理空间下管理账号鉴权
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param accountId        账号ID
      * @param accountName      账号名称，如果传入为空，则会调用ResourceNameQueryService查询
      * @return 鉴权结果
@@ -57,10 +57,10 @@ public interface AccountAuthService {
                                  String accountName);
 
     /**
-     * 资源范围下使用账号鉴权
+     * 资源管理空间下使用账号鉴权
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param accountId        账号ID
      * @param accountName      账号名称，如果传入为空，则会调用ResourceNameQueryService查询
      * @return 鉴权结果
@@ -71,10 +71,10 @@ public interface AccountAuthService {
                               String accountName);
 
     /**
-     * 资源范围下管理账号批量鉴权
+     * 资源管理空间下管理账号批量鉴权
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param accountIdList    账号ID列表
      * @return 有权限的账号ID
      */
@@ -83,10 +83,10 @@ public interface AccountAuthService {
                                       List<Long> accountIdList);
 
     /**
-     * 资源范围下使用账号批量鉴权
+     * 资源管理空间下使用账号批量鉴权
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param accountIdList    账号ID列表
      * @return 有权限的账号ID
      */

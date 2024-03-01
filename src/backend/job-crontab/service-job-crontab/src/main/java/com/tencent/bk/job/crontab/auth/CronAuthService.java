@@ -35,19 +35,19 @@ import java.util.List;
  */
 public interface CronAuthService {
     /**
-     * 资源范围下创建定时任务鉴权
+     * 资源管理空间下创建定时任务鉴权
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @return 鉴权结果
      */
     AuthResult authCreateCron(String username, AppResourceScope appResourceScope);
 
     /**
-     * 资源范围下管理定时任务鉴权
+     * 资源管理空间下管理定时任务鉴权
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param cronId           定时任务ID
      * @param cronName         定时任务名称，如果传入为空，则会调用ResourceNameQueryService查询
      * @return 鉴权结果
@@ -58,10 +58,10 @@ public interface CronAuthService {
                               String cronName);
 
     /**
-     * 资源范围下管理定时任务批量鉴权
+     * 资源管理空间下管理定时任务批量鉴权
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param cronIdList       定时任务ID列表
      * @return 有权限的定时任务ID
      */
@@ -73,7 +73,7 @@ public interface CronAuthService {
      * 定时任务管理批量鉴权
      *
      * @param username         用户账号
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param cronIdList       定时任务ID列表
      * @throws PermissionDeniedException 鉴权未通过
      */

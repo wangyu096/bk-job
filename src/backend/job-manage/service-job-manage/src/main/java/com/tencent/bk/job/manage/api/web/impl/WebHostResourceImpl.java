@@ -397,7 +397,7 @@ public class WebHostResourceImpl implements WebHostResource {
                                     List<Long> hostIdList,
                                     List<ApplicationHostDTO> hostDTOList) {
         if (CollectionUtils.isNotEmpty(hostIdList)) {
-            // 根据hostId查资源范围及白名单内的主机详情
+            // 根据hostId查资源管理空间及白名单内的主机详情
             hostDTOList.addAll(whiteIpAwareScopeHostService.getScopeHostsIncludingWhiteIPByHostId(
                 appResourceScope,
                 actionScope,
@@ -416,7 +416,7 @@ public class WebHostResourceImpl implements WebHostResource {
         Pair<Set<String>, Set<String>> pair = IpUtils.parseCleanIpv4AndCloudIpv4s(ipOrCloudIpList);
         Set<String> ipSet = pair.getLeft();
         Set<String> cloudIpSet = pair.getRight();
-        // 根据ip地址查资源范围及白名单内的主机详情
+        // 根据ip地址查资源管理空间及白名单内的主机详情
         if (CollectionUtils.isNotEmpty(ipSet)) {
             hostDTOList.addAll(whiteIpAwareScopeHostService.getScopeHostsIncludingWhiteIPByIp(
                 appResourceScope,
@@ -461,7 +461,7 @@ public class WebHostResourceImpl implements WebHostResource {
             if (ipv6Set.contains(ipv6) ||
                 // 指定了云区域ID的数据需要精确匹配
                 (ipv6CloudIdMap.containsKey(ipv6) && cloudId.equals(ipv6CloudIdMap.get(ipv6)))) {
-                // 根据ipv6地址查资源范围及白名单内的主机详情
+                // 根据ipv6地址查资源管理空间及白名单内的主机详情
                 hostDTOList.add(host);
             }
         }
@@ -474,7 +474,7 @@ public class WebHostResourceImpl implements WebHostResource {
         if (CollectionUtils.isEmpty(keyList)) {
             return;
         }
-        // 根据关键字（主机名称）查资源范围及白名单内的主机详情
+        // 根据关键字（主机名称）查资源管理空间及白名单内的主机详情
         hostDTOList.addAll(whiteIpAwareScopeHostService.getScopeHostsIncludingWhiteIPByKey(
             appResourceScope,
             actionScope,

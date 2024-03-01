@@ -29,7 +29,7 @@ import com.tencent.bk.job.common.iam.model.AuthResult;
 import java.util.List;
 
 /**
- * 资源范围无关的相关操作鉴权接口
+ * 资源管理空间无关的相关操作鉴权接口
  */
 public interface NoResourceScopeAuthService {
     /**

@@ -29,6 +29,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.UncheckedExecutionException;
+import com.tencent.bk.job.common.bkapigw.config.BkApiGatewayProperties;
 import com.tencent.bk.job.common.cc.config.CmdbConfig;
 import com.tencent.bk.job.common.cc.exception.CmdbException;
 import com.tencent.bk.job.common.cc.model.AppRoleDTO;
@@ -90,12 +91,7 @@ import com.tencent.bk.job.common.cc.util.TopologyUtil;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.HttpMethodEnum;
 import com.tencent.bk.job.common.constant.ResourceScopeTypeEnum;
-import com.tencent.bk.job.common.esb.config.AppProperties;
-import com.tencent.bk.job.common.esb.config.BkApiGatewayProperties;
 import com.tencent.bk.job.common.esb.config.EsbProperties;
-import com.tencent.bk.job.common.esb.constants.ApiGwType;
-import com.tencent.bk.job.common.esb.model.EsbReq;
-import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.common.exception.InternalCmdbException;
 import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.model.PageData;
@@ -104,6 +100,10 @@ import com.tencent.bk.job.common.model.dto.ApplicationHostDTO;
 import com.tencent.bk.job.common.model.dto.HostDTO;
 import com.tencent.bk.job.common.model.dto.ResourceScope;
 import com.tencent.bk.job.common.model.error.ErrorType;
+import com.tencent.bk.job.common.openapi.config.AppProperties;
+import com.tencent.bk.job.common.openapi.constants.ApiGwType;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
+import com.tencent.bk.job.common.openapi.model.OpenApiReq;
 import com.tencent.bk.job.common.util.CollectionUtil;
 import com.tencent.bk.job.common.util.FlowController;
 import com.tencent.bk.job.common.util.JobContextUtil;
@@ -1504,11 +1504,11 @@ public class BizCmdbClient extends BaseCmdbApiClient implements IBizCmdbClient {
     }
 
 
-    private void setSupplierAccount(EsbReq esbReq) {
+    private void setSupplierAccount(OpenApiReq openApiReq) {
         if (StringUtils.isEmpty(cmdbSupplierAccount)) {
-            esbReq.setBkSupplierAccount("0");
+            openApiReq.setBkSupplierAccount("0");
         } else {
-            esbReq.setBkSupplierAccount(cmdbSupplierAccount);
+            openApiReq.setBkSupplierAccount(cmdbSupplierAccount);
         }
     }
 

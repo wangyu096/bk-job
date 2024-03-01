@@ -25,13 +25,7 @@
 package com.tencent.bk.job.common.iam.service.impl;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.esb.config.AppProperties;
 import com.tencent.bk.job.common.esb.config.EsbProperties;
-import com.tencent.bk.job.common.esb.model.EsbResp;
-import com.tencent.bk.job.common.esb.model.iam.EsbActionDTO;
-import com.tencent.bk.job.common.esb.model.iam.EsbApplyPermissionDTO;
-import com.tencent.bk.job.common.esb.model.iam.EsbInstanceDTO;
-import com.tencent.bk.job.common.esb.model.iam.EsbRelatedResourceTypeDTO;
 import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.iam.client.EsbIamClient;
@@ -45,6 +39,12 @@ import com.tencent.bk.job.common.iam.model.PermissionResource;
 import com.tencent.bk.job.common.iam.model.PermissionResourceGroup;
 import com.tencent.bk.job.common.iam.service.AuthService;
 import com.tencent.bk.job.common.iam.service.ResourceNameQueryService;
+import com.tencent.bk.job.common.openapi.config.AppProperties;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
+import com.tencent.bk.job.common.openapi.model.iam.OpenApiActionDTO;
+import com.tencent.bk.job.common.openapi.model.iam.OpenApiApplyPermissionDTO;
+import com.tencent.bk.job.common.openapi.model.iam.OpenApiInstanceDTO;
+import com.tencent.bk.job.common.openapi.model.iam.OpenApiRelatedResourceTypeDTO;
 import com.tencent.bk.job.common.util.CustomCollectionUtils;
 import com.tencent.bk.sdk.iam.config.IamConfiguration;
 import com.tencent.bk.sdk.iam.constants.SystemId;
@@ -313,15 +313,15 @@ public class AuthServiceImpl extends BasicAuthService implements AuthService {
     @Override
     public <T> EsbResp<T> buildEsbAuthFailResp(List<PermissionActionResource> permissionActionResources) {
         List<ActionDTO> actions = buildApplyActions(permissionActionResources);
-        EsbApplyPermissionDTO applyPermission = new EsbApplyPermissionDTO();
+        OpenApiApplyPermissionDTO applyPermission = new OpenApiApplyPermissionDTO();
         applyPermission.setSystemId(SystemId.JOB);
         applyPermission.setSystemName(i18nService.getI18n("system.bk_job"));
         applyPermission.setActions(actions.stream().map(this::convertToEsbAction).collect(Collectors.toList()));
         return EsbResp.buildAuthFailResult(applyPermission);
     }
 
-    private EsbActionDTO convertToEsbAction(ActionDTO action) {
-        EsbActionDTO esbAction = new EsbActionDTO();
+    private OpenApiActionDTO convertToEsbAction(ActionDTO action) {
+        OpenApiActionDTO esbAction = new OpenApiActionDTO();
         esbAction.setId(action.getId());
         esbAction.setName(i18nService.getI18n("permission.action.name." + action.getId()));
 
@@ -330,9 +330,9 @@ public class AuthServiceImpl extends BasicAuthService implements AuthService {
             esbAction.setRelatedResourceTypes(Collections.emptyList());
             return esbAction;
         }
-        List<EsbRelatedResourceTypeDTO> esbRelatedResourceTypes = new ArrayList<>();
+        List<OpenApiRelatedResourceTypeDTO> esbRelatedResourceTypes = new ArrayList<>();
         for (RelatedResourceTypeDTO relatedResourceType : relatedResourceTypes) {
-            EsbRelatedResourceTypeDTO esbRelatedResourceType = new EsbRelatedResourceTypeDTO();
+            OpenApiRelatedResourceTypeDTO esbRelatedResourceType = new OpenApiRelatedResourceTypeDTO();
             esbRelatedResourceType.setSystemId(relatedResourceType.getSystemId());
             esbRelatedResourceType.setSystemName(i18nService.getI18n("system."
                 + relatedResourceType.getSystemId()));
@@ -340,11 +340,11 @@ public class AuthServiceImpl extends BasicAuthService implements AuthService {
             esbRelatedResourceType.setTypeName(i18nService.getI18n("permission.resource.type.name."
                 + relatedResourceType.getType()));
 
-            List<List<EsbInstanceDTO>> esbInstances = new ArrayList<>();
+            List<List<OpenApiInstanceDTO>> esbInstances = new ArrayList<>();
             for (List<InstanceDTO> hierarchicalInstance : relatedResourceType.getInstance()) {
-                List<EsbInstanceDTO> esbHierarchicalInstance = new ArrayList<>(hierarchicalInstance.size());
+                List<OpenApiInstanceDTO> esbHierarchicalInstance = new ArrayList<>(hierarchicalInstance.size());
                 for (InstanceDTO instance : hierarchicalInstance) {
-                    EsbInstanceDTO esbInstance = new EsbInstanceDTO();
+                    OpenApiInstanceDTO esbInstance = new OpenApiInstanceDTO();
                     esbInstance.setId(instance.getId());
                     esbInstance.setName(instance.getName());
                     esbInstance.setType(instance.getType());

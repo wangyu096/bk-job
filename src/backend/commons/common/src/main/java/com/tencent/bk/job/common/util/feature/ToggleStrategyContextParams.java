@@ -26,7 +26,7 @@ package com.tencent.bk.job.common.util.feature;
 
 public interface ToggleStrategyContextParams {
     /**
-     * 上下文参数-资源范围
+     * 上下文参数-资源管理空间
      */
     String CTX_PARAM_RESOURCE_SCOPE = "resourceScope";
 }

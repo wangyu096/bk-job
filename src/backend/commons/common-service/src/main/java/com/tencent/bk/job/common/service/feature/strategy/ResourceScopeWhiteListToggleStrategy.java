@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.StringJoiner;
 
 /**
- * 根据资源范围白名单灰度策略
+ * 根据资源管理空间白名单灰度策略
  */
 public class ResourceScopeWhiteListToggleStrategy extends AbstractResourceScopeToggleStrategy {
     /**

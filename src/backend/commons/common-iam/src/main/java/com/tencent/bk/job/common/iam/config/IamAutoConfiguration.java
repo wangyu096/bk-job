@@ -24,7 +24,6 @@
 
 package com.tencent.bk.job.common.iam.config;
 
-import com.tencent.bk.job.common.esb.config.AppProperties;
 import com.tencent.bk.job.common.esb.config.EsbProperties;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.iam.http.IamHttpClientServiceImpl;
@@ -37,6 +36,7 @@ import com.tencent.bk.job.common.iam.service.impl.AuthServiceImpl;
 import com.tencent.bk.job.common.iam.service.impl.BusinessAuthServiceImpl;
 import com.tencent.bk.job.common.iam.service.impl.WebAuthServiceImpl;
 import com.tencent.bk.job.common.iam.util.BusinessAuthHelper;
+import com.tencent.bk.job.common.openapi.config.AppProperties;
 import com.tencent.bk.sdk.iam.config.IamConfiguration;
 import com.tencent.bk.sdk.iam.helper.AuthHelper;
 import com.tencent.bk.sdk.iam.service.HttpClientService;

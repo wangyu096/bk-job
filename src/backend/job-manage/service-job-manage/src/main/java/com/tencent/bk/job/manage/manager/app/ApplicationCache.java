@@ -84,10 +84,10 @@ public class ApplicationCache {
     }
 
     /**
-     * 根据资源范围获取Job业务
+     * 根据资源管理空间获取Job业务
      *
-     * @param scopeType 资源范围类型
-     * @param scopeId   资源范围ID
+     * @param scopeType 资源管理空间类型
+     * @param scopeId   资源管理空间ID
      * @return 业务
      */
     public ApplicationDTO getApplication(String scopeType, String scopeId) {
@@ -101,9 +101,9 @@ public class ApplicationCache {
     }
 
     /**
-     * 根据资源范围获取Job业务
+     * 根据资源管理空间获取Job业务
      *
-     * @param scope 资源范围
+     * @param scope 资源管理空间
      * @return 业务
      */
     public ApplicationDTO getApplication(ResourceScope scope) {

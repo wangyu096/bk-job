@@ -36,14 +36,14 @@ import lombok.ToString;
 @ApiModel("脚本引用的作业模板")
 public class ScriptCitedTemplateVO {
     /**
-     * 资源范围类型
+     * 资源管理空间类型
      */
-    @ApiModelProperty(value = "资源范围类型", allowableValues = "biz-业务,biz_set-业务集")
+    @ApiModelProperty(value = "资源管理空间类型", allowableValues = "biz-业务,biz_set-业务集")
     private String scopeType;
     /**
-     * 资源范围ID
+     * 资源管理空间ID
      */
-    @ApiModelProperty("资源范围ID")
+    @ApiModelProperty("资源管理空间ID")
     private String scopeId;
     @ApiModelProperty("脚本版本号")
     private String scriptVersion;

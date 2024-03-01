@@ -26,7 +26,7 @@ package com.tencent.bk.job.manage.api.esb.v3;
 
 import com.tencent.bk.job.common.annotation.EsbAPI;
 import com.tencent.bk.job.common.constant.JobCommonHeaders;
-import com.tencent.bk.job.common.esb.model.EsbResp;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.manage.model.esb.v3.request.EsbCreateDangerousRuleV3Req;
 import com.tencent.bk.job.manage.model.esb.v3.request.EsbGetDangerousRuleV3Req;
 import com.tencent.bk.job.manage.model.esb.v3.request.EsbManageDangerousRuleV3Req;

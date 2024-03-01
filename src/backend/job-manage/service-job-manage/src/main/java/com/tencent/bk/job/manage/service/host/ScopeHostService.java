@@ -33,14 +33,14 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * 资源范围主机相关服务
+ * 资源管理空间主机相关服务
  */
 public interface ScopeHostService {
 
     /**
-     * 根据 资源范围 过滤出在该资源范围下的hostIds
+     * 根据 资源管理空间 过滤出在该资源管理空间下的hostIds
      *
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param hostIds          主机ID集合
      * @return 主机ID列表
      */
@@ -50,7 +50,7 @@ public interface ScopeHostService {
     /**
      * 根据 HostId 列表查询主机信息
      *
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param hostIds          主机ID集合
      * @return 主机信息列表
      */
@@ -60,7 +60,7 @@ public interface ScopeHostService {
     /**
      * 根据 IP 列表查询主机信息
      *
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param ips              主机IP地址集合
      * @return 主机信息列表
      */
@@ -70,7 +70,7 @@ public interface ScopeHostService {
     /**
      * 根据 CloudIP 列表查询主机信息
      *
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param cloudIps         主机CloudIP地址集合
      * @return 主机信息列表
      */
@@ -80,7 +80,7 @@ public interface ScopeHostService {
     /**
      * 根据 Ipv6 列表查询主机信息
      *
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param ipv6s            主机Ipv6地址集合
      * @return 主机信息列表
      */
@@ -90,7 +90,7 @@ public interface ScopeHostService {
     /**
      * 根据 关键字 列表查询主机信息
      *
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param keys             关键字集合
      * @return 主机信息列表
      */
@@ -98,9 +98,9 @@ public interface ScopeHostService {
                                                       Collection<String> keys);
 
     /**
-     * 根据拓扑节点、模糊搜索关键字、agent状态分页查询查询资源范围下的主机
+     * 根据拓扑节点、模糊搜索关键字、agent状态分页查询查询资源管理空间下的主机
      *
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param appTopoNodeList  拓扑节点列表
      * @param searchContent    模糊搜索关键字（同时对主机IP/主机名/操作系统/云区域名称进行模糊搜索）
      * @param agentAlive       筛选条件：agentAlive：0为异常，1为正常
@@ -124,9 +124,9 @@ public interface ScopeHostService {
                                                 Long pageSize);
 
     /**
-     * 根据拓扑节点、模糊搜索关键字、agent状态分页查询查询资源范围下的主机
+     * 根据拓扑节点、模糊搜索关键字、agent状态分页查询查询资源管理空间下的主机
      *
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param appTopoNodeList  拓扑节点列表
      * @param agentAlive       筛选条件：agentAlive：0为异常，1为正常
      * @param searchContent    模糊搜索关键字（同时对主机IP/主机名/操作系统/云区域名称进行模糊搜索）

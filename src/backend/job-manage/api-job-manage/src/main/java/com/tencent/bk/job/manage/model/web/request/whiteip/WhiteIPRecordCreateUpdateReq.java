@@ -44,10 +44,10 @@ public class WhiteIPRecordCreateUpdateReq {
     @ApiModelProperty(value = "白名单记录 ID", hidden = true)
     private Long id;
 
-    @ApiModelProperty(value = "是否对所有资源范围生效，默认为false")
+    @ApiModelProperty(value = "是否对所有资源管理空间生效，默认为false")
     private boolean allScope = false;
 
-    @ApiModelProperty(value = "多个资源范围列表")
+    @ApiModelProperty(value = "多个资源管理空间列表")
     private List<ResourceScope> scopeList;
 
     @ApiModelProperty(value = "主机列表", required = true)

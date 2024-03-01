@@ -26,7 +26,7 @@ package com.tencent.bk.job.common.cc.model.req;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.tencent.bk.job.common.cc.model.PropertyFilterDTO;
-import com.tencent.bk.job.common.esb.model.EsbReq;
+import com.tencent.bk.job.common.openapi.model.OpenApiReq;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -35,7 +35,7 @@ import java.util.List;
 
 @Getter
 @Setter
-public class ListHostsWithoutBizReq extends EsbReq {
+public class ListHostsWithoutBizReq extends OpenApiReq {
     @JsonProperty("host_property_filter")
     private PropertyFilterDTO condition;
 

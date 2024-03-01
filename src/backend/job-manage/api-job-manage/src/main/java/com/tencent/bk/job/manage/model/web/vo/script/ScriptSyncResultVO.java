@@ -40,15 +40,15 @@ public class ScriptSyncResultVO {
     public static final int SYNC_FAIL = 2;
 
     /**
-     * 资源范围类型
+     * 资源管理空间类型
      */
-    @ApiModelProperty(value = "资源范围类型", allowableValues = "biz-业务,biz_set-业务集")
+    @ApiModelProperty(value = "资源管理空间类型", allowableValues = "biz-业务,biz_set-业务集")
     private String scopeType;
 
     /**
-     * 资源范围ID
+     * 资源管理空间ID
      */
-    @ApiModelProperty("资源范围ID")
+    @ApiModelProperty("资源管理空间ID")
     private String scopeId;
 
     @ApiModelProperty("脚本ID")

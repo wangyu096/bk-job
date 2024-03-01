@@ -26,8 +26,6 @@ package com.tencent.bk.job.execute.api.esb.v3;
 
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
-import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.exception.NotFoundException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
@@ -35,6 +33,8 @@ import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.model.dto.HostDTO;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
+import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
 import com.tencent.bk.job.common.service.AppScopeMappingService;
 import com.tencent.bk.job.execute.engine.consts.ExecuteObjectTaskStatusEnum;
 import com.tencent.bk.job.execute.model.ExecuteObjectTask;
@@ -127,7 +127,7 @@ public class EsbGetStepInstanceStatusV3ResourceImpl implements EsbGetStepInstanc
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_get_step_instance_status"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_get_step_instance_status"})
     @AuditEntry(actionId = ActionId.VIEW_HISTORY)
     public EsbResp<EsbStepInstanceStatusV3DTO> getStepInstanceStatus(String username,
                                                                      String appCode,

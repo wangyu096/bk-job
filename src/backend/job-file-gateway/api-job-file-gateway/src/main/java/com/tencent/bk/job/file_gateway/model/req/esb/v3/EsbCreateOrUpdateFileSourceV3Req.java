@@ -1,7 +1,7 @@
 package com.tencent.bk.job.file_gateway.model.req.esb.v3;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.tencent.bk.job.common.esb.model.EsbAppScopeReq;
+import com.tencent.bk.job.common.openapi.job.v3.EsbAppScopeReq;
 import com.tencent.bk.job.common.validation.NotContainSpecialChar;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;

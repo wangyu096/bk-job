@@ -52,10 +52,10 @@ public class WhiteIPRecordVO {
     @ApiModelProperty("生效范围")
     private List<ActionScopeVO> actionScopeList;
 
-    @ApiModelProperty(value = "是否对所有资源范围生效，默认为false")
+    @ApiModelProperty(value = "是否对所有资源管理空间生效，默认为false")
     private boolean allScope = false;
 
-    @ApiModelProperty("生效的资源范围列表")
+    @ApiModelProperty("生效的资源管理空间列表")
     private List<ScopeVO> scopeList;
 
     @ApiModelProperty("备注")

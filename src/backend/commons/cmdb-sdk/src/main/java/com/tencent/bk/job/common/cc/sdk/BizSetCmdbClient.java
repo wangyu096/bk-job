@@ -25,6 +25,7 @@
 package com.tencent.bk.job.common.cc.sdk;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.tencent.bk.job.common.bkapigw.config.BkApiGatewayProperties;
 import com.tencent.bk.job.common.cc.config.CmdbConfig;
 import com.tencent.bk.job.common.cc.model.bizset.BizInfo;
 import com.tencent.bk.job.common.cc.model.bizset.BizSetFilter;
@@ -42,13 +43,12 @@ import com.tencent.bk.job.common.cc.model.result.BizSetRelationEventDetail;
 import com.tencent.bk.job.common.cc.model.result.ResourceWatchResult;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.HttpMethodEnum;
-import com.tencent.bk.job.common.esb.config.AppProperties;
-import com.tencent.bk.job.common.esb.config.BkApiGatewayProperties;
 import com.tencent.bk.job.common.esb.config.EsbProperties;
-import com.tencent.bk.job.common.esb.constants.ApiGwType;
-import com.tencent.bk.job.common.esb.model.EsbReq;
-import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.common.exception.InternalCmdbException;
+import com.tencent.bk.job.common.openapi.config.AppProperties;
+import com.tencent.bk.job.common.openapi.constants.ApiGwType;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
+import com.tencent.bk.job.common.openapi.model.OpenApiReq;
 import com.tencent.bk.job.common.util.FlowController;
 import com.tencent.bk.job.common.util.http.HttpHelperFactory;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -86,7 +86,7 @@ public class BizSetCmdbClient extends BaseCmdbApiClient implements IBizSetCmdbCl
      * @return 业务集数量
      */
     public int searchBizSetCount() {
-        SearchBizSetReq req = EsbReq.buildRequest(SearchBizSetReq.class, cmdbSupplierAccount);
+        SearchBizSetReq req = OpenApiReq.buildRequest(SearchBizSetReq.class, cmdbSupplierAccount);
         Page page = new Page();
         page.setStart(0);
         page.setLimit(0);

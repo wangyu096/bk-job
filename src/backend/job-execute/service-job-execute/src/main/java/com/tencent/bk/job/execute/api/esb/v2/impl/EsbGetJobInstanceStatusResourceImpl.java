@@ -28,14 +28,14 @@ import com.google.common.collect.Lists;
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
-import com.tencent.bk.job.common.esb.model.EsbResp;
-import com.tencent.bk.job.common.esb.util.EsbDTOAppScopeMappingHelper;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.exception.NotFoundException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.ValidateResult;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
+import com.tencent.bk.job.common.openapi.job.v3.utils.EsbDTOAppScopeMappingHelper;
+import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
 import com.tencent.bk.job.common.service.AppScopeMappingService;
 import com.tencent.bk.job.execute.api.esb.v2.EsbGetJobInstanceStatusResource;
 import com.tencent.bk.job.execute.common.constants.RunStatusEnum;
@@ -83,7 +83,7 @@ public class EsbGetJobInstanceStatusResourceImpl implements EsbGetJobInstanceSta
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_get_job_instance_status"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_get_job_instance_status"})
     @AuditEntry(actionId = ActionId.VIEW_HISTORY)
     public EsbResp<EsbJobInstanceStatusDTO> getJobInstanceStatusUsingPost(
         String username,
@@ -206,7 +206,7 @@ public class EsbGetJobInstanceStatusResourceImpl implements EsbGetJobInstanceSta
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_get_job_instance_status"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_get_job_instance_status"})
     @AuditEntry(actionId = ActionId.VIEW_HISTORY)
     public EsbResp<EsbJobInstanceStatusDTO> getJobInstanceStatus(String username,
                                                                  String appCode,

@@ -421,7 +421,7 @@ public class ExecuteAuthServiceImpl implements ExecuteAuthService {
     /**
      * 获取业务/业务集资源的名称
      *
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @return 资源名称
      */
     private String getResourceName(AppResourceScope appResourceScope) {

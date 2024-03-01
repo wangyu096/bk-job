@@ -36,9 +36,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class IamUtil {
     /**
-     * 根据资源范围获取IAM资源ID
+     * 根据资源管理空间获取IAM资源ID
      *
-     * @param resourceScope 资源范围
+     * @param resourceScope 资源管理空间
      * @return ResourceId
      */
     public static String getIamResourceTypeIdForResourceScope(ResourceScope resourceScope) {
@@ -46,9 +46,9 @@ public class IamUtil {
     }
 
     /**
-     * 根据资源范围获取IAM资源类型
+     * 根据资源管理空间获取IAM资源类型
      *
-     * @param resourceScope 资源范围
+     * @param resourceScope 资源管理空间
      * @return ResourceType
      */
     public static ResourceTypeEnum getIamResourceTypeForResourceScope(ResourceScope resourceScope) {
@@ -64,11 +64,11 @@ public class IamUtil {
     }
 
     /**
-     * 根据IAM资源类型获取资源范围
+     * 根据IAM资源类型获取资源管理空间
      *
      * @param resourceType 权限资源类型
      * @param resourceId   权限资源ID
-     * @return 资源范围
+     * @return 资源管理空间
      */
     public static ResourceScope getResourceScopeFromIamResource(ResourceTypeEnum resourceType, String resourceId) {
         ResourceScopeTypeEnum resourceScopeType;

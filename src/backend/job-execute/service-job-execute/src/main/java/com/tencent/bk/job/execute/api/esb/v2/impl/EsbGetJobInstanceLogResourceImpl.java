@@ -28,12 +28,12 @@ import com.google.common.collect.Lists;
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
-import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.ValidateResult;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
+import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
 import com.tencent.bk.job.common.service.AppScopeMappingService;
 import com.tencent.bk.job.common.util.Utils;
 import com.tencent.bk.job.execute.api.esb.v2.EsbGetJobInstanceLogResource;
@@ -86,7 +86,7 @@ public class EsbGetJobInstanceLogResourceImpl implements EsbGetJobInstanceLogRes
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_get_job_instance_log"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_get_job_instance_log"})
     @AuditEntry(actionId = ActionId.VIEW_HISTORY)
     public EsbResp<List<EsbStepInstanceResultAndLog>> getJobInstanceLogUsingPost(
         String username,
@@ -188,7 +188,7 @@ public class EsbGetJobInstanceLogResourceImpl implements EsbGetJobInstanceLogRes
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_get_job_instance_log"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_get_job_instance_log"})
     @AuditEntry(actionId = ActionId.VIEW_HISTORY)
     public EsbResp<List<EsbStepInstanceResultAndLog>> getJobInstanceLog(String username,
                                                                         String appCode,

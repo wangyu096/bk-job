@@ -32,14 +32,14 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * 考虑到IP白名单数据的资源范围主机相关服务
+ * 考虑到IP白名单数据的资源管理空间主机相关服务
  */
 public interface WhiteIpAwareScopeHostService {
 
     /**
      * 根据 HostId 列表查询主机信息
      *
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param actionScope      生效场景
      * @param hostIds          主机ID集合
      * @return 主机信息列表
@@ -51,7 +51,7 @@ public interface WhiteIpAwareScopeHostService {
     /**
      * 根据 IP 列表查询主机信息
      *
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param actionScope      生效场景
      * @param ips              IP集合
      * @return 主机信息列表
@@ -63,7 +63,7 @@ public interface WhiteIpAwareScopeHostService {
     /**
      * 根据 CloudIP 列表查询主机信息
      *
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param actionScope      生效场景
      * @param cloudIps         CloudIP集合
      * @return 主机信息列表
@@ -75,7 +75,7 @@ public interface WhiteIpAwareScopeHostService {
     /**
      * 根据 ipv6 集合查询主机信息
      *
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param actionScope      生效场景
      * @param ipv6s            主机Ipv6集合
      * @return 主机信息列表
@@ -87,7 +87,7 @@ public interface WhiteIpAwareScopeHostService {
     /**
      * 根据 关键字 集合查询主机信息
      *
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param actionScope      生效场景
      * @param keys             关键字集合
      * @return 主机信息列表

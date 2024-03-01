@@ -24,8 +24,8 @@
 
 package com.tencent.bk.job.common.paas.config;
 
-import com.tencent.bk.job.common.esb.config.AppProperties;
 import com.tencent.bk.job.common.esb.config.EsbProperties;
+import com.tencent.bk.job.common.openapi.config.AppProperties;
 import com.tencent.bk.job.common.paas.login.CustomLoginClient;
 import com.tencent.bk.job.common.paas.login.ILoginClient;
 import com.tencent.bk.job.common.paas.login.StandardLoginClient;

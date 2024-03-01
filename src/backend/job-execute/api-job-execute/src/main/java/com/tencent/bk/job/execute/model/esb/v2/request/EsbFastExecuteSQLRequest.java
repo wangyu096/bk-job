@@ -26,9 +26,9 @@ package com.tencent.bk.job.execute.model.esb.v2.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.tencent.bk.job.common.constant.JobConstants;
-import com.tencent.bk.job.common.esb.model.EsbAppScopeReq;
-import com.tencent.bk.job.common.esb.model.job.EsbIpDTO;
-import com.tencent.bk.job.common.esb.model.job.EsbServerDTO;
+import com.tencent.bk.job.common.openapi.job.v2.EsbIpDTO;
+import com.tencent.bk.job.common.openapi.job.v2.EsbServerDTO;
+import com.tencent.bk.job.common.openapi.job.v3.EsbAppScopeReq;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.validator.constraints.Range;

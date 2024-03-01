@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.manage.service.impl;
 
-import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
+import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
 import com.tencent.bk.job.common.paas.cmsi.CmsiApiClient;
 import com.tencent.bk.job.manage.metrics.MetricsConstants;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -53,7 +53,7 @@ public class WatchableSendMsgService {
         this.meterRegistry = meterRegistry;
     }
 
-    @EsbApiTimed
+    @OpenApiTimed
     public void sendMsg(
         Long appId,
         long createTimeMillis,

@@ -27,17 +27,17 @@ package com.tencent.bk.job.common.paas.user;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.HttpMethodEnum;
-import com.tencent.bk.job.common.esb.config.AppProperties;
 import com.tencent.bk.job.common.esb.config.EsbProperties;
 import com.tencent.bk.job.common.esb.constants.EsbLang;
-import com.tencent.bk.job.common.esb.metrics.EsbMetricTags;
-import com.tencent.bk.job.common.esb.model.BkApiAuthorization;
-import com.tencent.bk.job.common.esb.model.EsbResp;
-import com.tencent.bk.job.common.esb.model.OpenApiRequestInfo;
-import com.tencent.bk.job.common.esb.sdk.BkApiClient;
 import com.tencent.bk.job.common.exception.InternalUserManageException;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.dto.BkUserDTO;
+import com.tencent.bk.job.common.openapi.config.AppProperties;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
+import com.tencent.bk.job.common.openapi.metrics.OpenApiMetricTags;
+import com.tencent.bk.job.common.openapi.model.BkApiAuthorization;
+import com.tencent.bk.job.common.openapi.model.OpenApiRequestInfo;
+import com.tencent.bk.job.common.openapi.sdk.BkApiClient;
 import com.tencent.bk.job.common.paas.model.EsbListUsersResult;
 import com.tencent.bk.job.common.paas.model.GetUserListReq;
 import com.tencent.bk.job.common.util.http.HttpHelperFactory;
@@ -85,7 +85,7 @@ public class UserMgrApiClient extends BkApiClient {
 
             HttpMetricUtil.setHttpMetricName(CommonMetricNames.ESB_USER_MANAGE_API_HTTP);
             HttpMetricUtil.addTagForCurrentMetric(
-                Tag.of(EsbMetricTags.KEY_API_NAME, API_GET_USER_LIST)
+                Tag.of(OpenApiMetricTags.KEY_API_NAME, API_GET_USER_LIST)
             );
             EsbResp<List<EsbListUsersResult>> esbResp = doRequest(
                 OpenApiRequestInfo.builder()

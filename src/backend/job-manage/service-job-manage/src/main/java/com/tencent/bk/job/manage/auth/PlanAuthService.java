@@ -35,10 +35,10 @@ import java.util.List;
 public interface PlanAuthService {
 
     /**
-     * 资源范围下创建执行方案鉴权
+     * 资源管理空间下创建执行方案鉴权
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param jobTemplateId    作业模板ID
      * @param jobTemplateName  作业模板名称，如果传入为空，则会调用ResourceNameQueryService查询
      * @return 鉴权结果
@@ -49,10 +49,10 @@ public interface PlanAuthService {
                                  String jobTemplateName);
 
     /**
-     * 资源范围下查看执行方案鉴权
+     * 资源管理空间下查看执行方案鉴权
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param jobTemplateId    作业模板ID
      * @param jobPlanId        执行方案ID
      * @param jobPlanName      执行方案名称，如果传入为空，则会调用ResourceNameQueryService查询
@@ -65,10 +65,10 @@ public interface PlanAuthService {
                                String jobPlanName);
 
     /**
-     * 资源范围下编辑执行方案鉴权
+     * 资源管理空间下编辑执行方案鉴权
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param jobTemplateId    作业模板ID
      * @param jobPlanId        执行方案ID
      * @param jobPlanName      执行方案名称，如果传入为空，则会调用ResourceNameQueryService查询
@@ -81,10 +81,10 @@ public interface PlanAuthService {
                                String jobPlanName);
 
     /**
-     * 资源范围下删除执行方案鉴权
+     * 资源管理空间下删除执行方案鉴权
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param jobTemplateId    作业模板ID
      * @param jobPlanId        执行方案ID
      * @param jobPlanName      执行方案名称，如果传入为空，则会调用ResourceNameQueryService查询
@@ -97,10 +97,10 @@ public interface PlanAuthService {
                                  String jobPlanName);
 
     /**
-     * 资源范围下同步执行方案鉴权
+     * 资源管理空间下同步执行方案鉴权
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param jobTemplateId    作业模板ID
      * @param jobPlanId        执行方案ID
      * @param jobPlanName      执行方案名称，如果传入为空，则会调用ResourceNameQueryService查询
@@ -113,10 +113,10 @@ public interface PlanAuthService {
                                String jobPlanName);
 
     /**
-     * 资源范围下查看执行方案批量鉴权
+     * 资源管理空间下查看执行方案批量鉴权
      *
      * @param username          用户名
-     * @param appResourceScope  资源范围
+     * @param appResourceScope  资源管理空间
      * @param jobTemplateIdList 作业模板ID列表
      * @param jobPlanIdList     执行方案ID列表
      * @return 有权限的执行方案ID
@@ -127,10 +127,10 @@ public interface PlanAuthService {
                                     List<Long> jobPlanIdList);
 
     /**
-     * 资源范围下编辑执行方案批量鉴权
+     * 资源管理空间下编辑执行方案批量鉴权
      *
      * @param username          用户名
-     * @param appResourceScope  资源范围
+     * @param appResourceScope  资源管理空间
      * @param jobTemplateIdList 作业模板ID列表
      * @param jobPlanIdList     执行方案ID列表
      * @return 有权限的执行方案ID
@@ -141,10 +141,10 @@ public interface PlanAuthService {
                                     List<Long> jobPlanIdList);
 
     /**
-     * 资源范围下删除执行方案批量鉴权
+     * 资源管理空间下删除执行方案批量鉴权
      *
      * @param username          用户名
-     * @param appResourceScope  资源范围
+     * @param appResourceScope  资源管理空间
      * @param jobTemplateIdList 作业模板ID列表
      * @param jobPlanIdList     执行方案ID列表
      * @return 有权限的执行方案ID

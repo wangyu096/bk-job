@@ -25,7 +25,7 @@
 package com.tencent.bk.job.common.cc.model.req;
 
 import com.tencent.bk.job.common.cc.model.GetHostConditionDTO;
-import com.tencent.bk.job.common.esb.model.EsbReq;
+import com.tencent.bk.job.common.openapi.model.OpenApiReq;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -41,7 +41,7 @@ import java.util.List;
 @Getter
 @Setter
 @ToString
-public class GetHostReq extends EsbReq {
+public class GetHostReq extends OpenApiReq {
     private List<GetHostConditionDTO> condition;
     private Page page;
 }

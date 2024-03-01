@@ -44,15 +44,15 @@ public class FileSourceVO {
     private Integer id;
 
     /**
-     * 资源范围类型
+     * 资源管理空间类型
      */
-    @ApiModelProperty(value = "资源范围类型", allowableValues = "biz-业务,biz_set-业务集")
+    @ApiModelProperty(value = "资源管理空间类型", allowableValues = "biz-业务,biz_set-业务集")
     private String scopeType;
 
     /**
-     * 资源范围ID
+     * 资源管理空间ID
      */
-    @ApiModelProperty("资源范围ID")
+    @ApiModelProperty("资源管理空间ID")
     private String scopeId;
     /**
      * 文件源标识
@@ -90,9 +90,9 @@ public class FileSourceVO {
     @ApiModelProperty("是否为公共文件源")
     private Boolean publicFlag;
     /**
-     * 共享的资源范围列表
+     * 共享的资源管理空间列表
      */
-    @ApiModelProperty(value = "共享的资源范围列表", required = true)
+    @ApiModelProperty(value = "共享的资源管理空间列表", required = true)
     private List<ResourceScope> sharedScopeList;
     /**
      * 是否共享到全业务

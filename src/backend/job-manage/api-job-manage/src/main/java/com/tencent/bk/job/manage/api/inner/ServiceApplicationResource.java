@@ -83,22 +83,22 @@ public interface ServiceApplicationResource {
                                                   @RequestParam("appIds") String appIds);
 
     /**
-     * 根据资源范围查询业务
+     * 根据资源管理空间查询业务
      *
-     * @param scopeType 资源范围类型
-     * @param scopeId   资源范围ID
+     * @param scopeType 资源管理空间类型
+     * @param scopeId   资源管理空间ID
      * @return 业务
      */
-    @ApiOperation("根据资源范围查询业务")
+    @ApiOperation("根据资源管理空间查询业务")
     @RequestMapping("/service/app/scope/{scopeType}/{scopeId}")
-    ServiceApplicationDTO queryAppByScope(@ApiParam(value = "资源范围类型", allowableValues = "1-业务,2-业务集", required = true)
+    ServiceApplicationDTO queryAppByScope(@ApiParam(value = "资源管理空间类型", allowableValues = "1-业务,2-业务集", required = true)
                                           @PathVariable("scopeType") String scopeType,
-                                          @ApiParam(value = "资源范围ID", required = true)
+                                          @ApiParam(value = "资源管理空间ID", required = true)
                                           @PathVariable("scopeId") String scopeId);
 
     @ApiOperation(value = "获取业务列表", produces = "application/json")
     @GetMapping("/service/app/list")
     InternalResponse<List<ServiceApplicationDTO>> listApps(
-        @ApiParam(value = "资源范围类型", allowableValues = "1-业务,2-业务集")
+        @ApiParam(value = "资源管理空间类型", allowableValues = "1-业务,2-业务集")
         @RequestParam(value = "scopeType", required = false) String scopeType);
 }

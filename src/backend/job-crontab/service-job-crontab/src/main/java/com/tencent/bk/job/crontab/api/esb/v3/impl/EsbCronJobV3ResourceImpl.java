@@ -29,10 +29,6 @@ import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.audit.context.AuditContext;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
-import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
-import com.tencent.bk.job.common.esb.model.EsbResp;
-import com.tencent.bk.job.common.esb.model.job.v3.EsbGlobalVarV3DTO;
-import com.tencent.bk.job.common.esb.model.job.v3.EsbPageDataV3;
 import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
@@ -43,6 +39,10 @@ import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
+import com.tencent.bk.job.common.openapi.job.v3.EsbGlobalVarV3DTO;
+import com.tencent.bk.job.common.openapi.job.v3.EsbPageDataV3;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
+import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
 import com.tencent.bk.job.common.service.AppScopeMappingService;
 import com.tencent.bk.job.common.util.date.DateUtils;
 import com.tencent.bk.job.crontab.api.common.CronCheckUtil;
@@ -148,7 +148,7 @@ public class EsbCronJobV3ResourceImpl implements EsbCronJobV3Resource {
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_get_cron_list"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_get_cron_list"})
     public EsbResp<EsbPageDataV3<EsbCronInfoV3DTO>> getCronListUsingPost(String username,
                                                                          String appCode,
                                                                          EsbGetCronListV3Request request) {
@@ -208,7 +208,7 @@ public class EsbCronJobV3ResourceImpl implements EsbCronJobV3Resource {
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_update_cron_status"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_update_cron_status"})
     @AuditEntry(actionId = ActionId.MANAGE_CRON)
     public EsbResp<EsbCronInfoV3DTO> updateCronStatus(String username,
                                                       String appCode,
@@ -288,7 +288,7 @@ public class EsbCronJobV3ResourceImpl implements EsbCronJobV3Resource {
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_save_cron"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_save_cron"})
     @AuditEntry
     public EsbResp<EsbCronInfoV3DTO> saveCron(String username,
                                               String appCode,
@@ -336,7 +336,7 @@ public class EsbCronJobV3ResourceImpl implements EsbCronJobV3Resource {
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_delete_cron"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_delete_cron"})
     @AuditEntry
     public EsbResp deleteCron(String username,
                               String appCode,

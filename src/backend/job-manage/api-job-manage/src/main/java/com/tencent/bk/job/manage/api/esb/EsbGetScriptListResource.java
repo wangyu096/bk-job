@@ -26,8 +26,8 @@ package com.tencent.bk.job.manage.api.esb;
 
 import com.tencent.bk.job.common.annotation.EsbAPI;
 import com.tencent.bk.job.common.constant.JobCommonHeaders;
-import com.tencent.bk.job.common.esb.model.EsbPageData;
-import com.tencent.bk.job.common.esb.model.EsbResp;
+import com.tencent.bk.job.common.openapi.job.v2.EsbPageData;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.manage.model.esb.EsbScriptDTO;
 import com.tencent.bk.job.manage.model.esb.request.EsbGetScriptListRequest;
 import org.springframework.validation.annotation.Validated;

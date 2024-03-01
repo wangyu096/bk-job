@@ -25,22 +25,22 @@
 package com.tencent.bk.job.common.cc.sdk;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.tencent.bk.job.common.bkapigw.config.BkApiGatewayProperties;
 import com.tencent.bk.job.common.cc.config.CmdbConfig;
 import com.tencent.bk.job.common.cc.constants.CmdbMetricNames;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.HttpMethodEnum;
-import com.tencent.bk.job.common.esb.config.AppProperties;
-import com.tencent.bk.job.common.esb.config.BkApiGatewayProperties;
 import com.tencent.bk.job.common.esb.config.EsbProperties;
-import com.tencent.bk.job.common.esb.constants.ApiGwType;
-import com.tencent.bk.job.common.esb.model.BkApiAuthorization;
-import com.tencent.bk.job.common.esb.model.EsbReq;
-import com.tencent.bk.job.common.esb.model.EsbResp;
-import com.tencent.bk.job.common.esb.model.OpenApiRequestInfo;
-import com.tencent.bk.job.common.esb.sdk.BkApiClient;
 import com.tencent.bk.job.common.exception.InternalCmdbException;
 import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
+import com.tencent.bk.job.common.openapi.config.AppProperties;
+import com.tencent.bk.job.common.openapi.constants.ApiGwType;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
+import com.tencent.bk.job.common.openapi.model.BkApiAuthorization;
+import com.tencent.bk.job.common.openapi.model.OpenApiReq;
+import com.tencent.bk.job.common.openapi.model.OpenApiRequestInfo;
+import com.tencent.bk.job.common.openapi.sdk.BkApiClient;
 import com.tencent.bk.job.common.util.ApiUtil;
 import com.tencent.bk.job.common.util.FlowController;
 import com.tencent.bk.job.common.util.http.HttpHelper;
@@ -155,15 +155,15 @@ public class BaseCmdbApiClient {
     }
 
 
-    protected <T extends EsbReq> T makeCmdbBaseReq(Class<T> reqClass) {
-        return EsbReq.buildRequest(reqClass, cmdbSupplierAccount);
+    protected <T extends OpenApiReq> T makeCmdbBaseReq(Class<T> reqClass) {
+        return OpenApiReq.buildRequest(reqClass, cmdbSupplierAccount);
     }
 
     protected <R> EsbResp<R> requestCmdbApi(ApiGwType apiGwType,
                                             HttpMethodEnum method,
                                             String uri,
                                             String queryParams,
-                                            EsbReq reqBody,
+                                            OpenApiReq reqBody,
                                             TypeReference<EsbResp<R>> typeReference) {
         return requestCmdbApi(apiGwType, method, uri, queryParams, reqBody, typeReference, null);
     }
@@ -172,7 +172,7 @@ public class BaseCmdbApiClient {
                                             HttpMethodEnum method,
                                             String uri,
                                             String queryParams,
-                                            EsbReq reqBody,
+                                            OpenApiReq reqBody,
                                             TypeReference<EsbResp<R>> typeReference,
                                             HttpHelper httpHelper) {
 

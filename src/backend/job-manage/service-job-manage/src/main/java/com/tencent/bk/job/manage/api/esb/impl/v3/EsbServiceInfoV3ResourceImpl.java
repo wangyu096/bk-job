@@ -27,7 +27,7 @@ package com.tencent.bk.job.manage.api.esb.impl.v3;
 import com.tencent.bk.job.common.constant.ProfileEnum;
 import com.tencent.bk.job.common.discovery.ServiceInfoProvider;
 import com.tencent.bk.job.common.discovery.model.ServiceInstanceInfoDTO;
-import com.tencent.bk.job.common.esb.model.EsbResp;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.common.util.CompareUtil;
 import com.tencent.bk.job.manage.api.esb.v3.EsbServiceInfoV3Resource;
 import com.tencent.bk.job.manage.model.esb.v3.response.EsbServiceVersionV3DTO;

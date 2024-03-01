@@ -34,19 +34,19 @@ import java.util.List;
  */
 public interface ScriptAuthService {
     /**
-     * 资源范围下创建脚本鉴权
+     * 资源管理空间下创建脚本鉴权
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @return 鉴权结果
      */
     AuthResult authCreateScript(String username, AppResourceScope appResourceScope);
 
     /**
-     * 资源范围下查看脚本鉴权
+     * 资源管理空间下查看脚本鉴权
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param scriptId         脚本ID
      * @param scriptName       脚本名称，如果传入为空，则会调用ResourceNameQueryService查询
      * @return 鉴权结果
@@ -57,10 +57,10 @@ public interface ScriptAuthService {
                               String scriptName);
 
     /**
-     * 资源范围下管理脚本鉴权
+     * 资源管理空间下管理脚本鉴权
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param scriptId         脚本ID
      * @param scriptName       脚本名称，如果传入为空，则会调用ResourceNameQueryService查询
      * @return 鉴权结果
@@ -71,10 +71,10 @@ public interface ScriptAuthService {
                                 String scriptName);
 
     /**
-     * 资源范围下查看脚本批量鉴权
+     * 资源管理空间下查看脚本批量鉴权
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param scriptIdList     脚本ID列表
      * @return 有权限的脚本ID
      */
@@ -83,10 +83,10 @@ public interface ScriptAuthService {
                                      List<String> scriptIdList);
 
     /**
-     * 资源范围下管理脚本批量鉴权
+     * 资源管理空间下管理脚本批量鉴权
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param scriptIdList     脚本ID列表
      * @return 有权限的脚本ID
      */
@@ -95,10 +95,10 @@ public interface ScriptAuthService {
                                        List<String> scriptIdList);
 
     /**
-     * 资源范围下管理脚本批量鉴权并返回鉴权结果
+     * 资源管理空间下管理脚本批量鉴权并返回鉴权结果
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param scriptIdList     脚本ID列表
      * @return 鉴权结果
      */
@@ -107,10 +107,10 @@ public interface ScriptAuthService {
                                            List<String> scriptIdList);
 
     /**
-     * 资源范围下查看脚本批量鉴权并返回鉴权结果
+     * 资源管理空间下查看脚本批量鉴权并返回鉴权结果
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param scriptIdList     脚本ID列表
      * @return 鉴权结果
      */

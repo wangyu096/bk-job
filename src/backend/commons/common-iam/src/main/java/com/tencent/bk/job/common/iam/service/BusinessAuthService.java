@@ -32,10 +32,10 @@ import com.tencent.bk.job.common.model.dto.AppResourceScope;
  */
 public interface BusinessAuthService {
     /**
-     * 资源范围下访问业务（集）
+     * 资源管理空间下访问业务（集）
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @return 鉴权结果
      */
     AuthResult authAccessBusiness(String username, AppResourceScope appResourceScope);

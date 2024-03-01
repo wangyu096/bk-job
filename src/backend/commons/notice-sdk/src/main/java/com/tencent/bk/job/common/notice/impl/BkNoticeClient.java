@@ -25,15 +25,9 @@
 package com.tencent.bk.job.common.notice.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.tencent.bk.job.common.bkapigw.config.BkApiGatewayProperties;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.HttpMethodEnum;
-import com.tencent.bk.job.common.esb.config.AppProperties;
-import com.tencent.bk.job.common.esb.config.BkApiGatewayProperties;
-import com.tencent.bk.job.common.esb.model.BkApiAuthorization;
-import com.tencent.bk.job.common.esb.model.EsbReq;
-import com.tencent.bk.job.common.esb.model.EsbResp;
-import com.tencent.bk.job.common.esb.model.OpenApiRequestInfo;
-import com.tencent.bk.job.common.esb.sdk.BkApiClient;
 import com.tencent.bk.job.common.exception.HttpStatusException;
 import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
@@ -41,6 +35,12 @@ import com.tencent.bk.job.common.notice.IBkNoticeClient;
 import com.tencent.bk.job.common.notice.exception.BkNoticeException;
 import com.tencent.bk.job.common.notice.model.AnnouncementDTO;
 import com.tencent.bk.job.common.notice.model.BkNoticeApp;
+import com.tencent.bk.job.common.openapi.config.AppProperties;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
+import com.tencent.bk.job.common.openapi.model.BkApiAuthorization;
+import com.tencent.bk.job.common.openapi.model.OpenApiReq;
+import com.tencent.bk.job.common.openapi.model.OpenApiRequestInfo;
+import com.tencent.bk.job.common.openapi.sdk.BkApiClient;
 import com.tencent.bk.job.common.util.http.HttpHelperFactory;
 import com.tencent.bk.job.common.util.http.HttpMetricUtil;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -137,7 +137,7 @@ public class BkNoticeClient extends BkApiClient implements IBkNoticeClient {
      */
     private <R> EsbResp<R> requestBkNoticeApi(HttpMethodEnum method,
                                               String uri,
-                                              EsbReq reqBody,
+                                              OpenApiReq reqBody,
                                               TypeReference<EsbResp<R>> typeReference,
                                               Boolean idempotent) {
         try {

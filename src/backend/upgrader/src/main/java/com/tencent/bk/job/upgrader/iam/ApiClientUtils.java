@@ -24,9 +24,9 @@
 
 package com.tencent.bk.job.upgrader.iam;
 
-import com.tencent.bk.job.common.esb.config.AppProperties;
 import com.tencent.bk.job.common.esb.config.EsbProperties;
 import com.tencent.bk.job.common.iam.client.EsbIamClient;
+import com.tencent.bk.job.common.openapi.config.AppProperties;
 import com.tencent.bk.job.upgrader.task.param.ParamNameConsts;
 
 import java.util.Properties;

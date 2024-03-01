@@ -40,9 +40,9 @@ import lombok.NoArgsConstructor;
 public class AppVO {
     @ApiModelProperty(value = "Job业务ID", hidden = true)
     private Long id;
-    @ApiModelProperty("资源范围类型")
+    @ApiModelProperty("资源管理空间类型")
     private String scopeType;
-    @ApiModelProperty("资源范围ID")
+    @ApiModelProperty("资源管理空间ID")
     private String scopeId;
     @ApiModelProperty("业务名称")
     private String name;

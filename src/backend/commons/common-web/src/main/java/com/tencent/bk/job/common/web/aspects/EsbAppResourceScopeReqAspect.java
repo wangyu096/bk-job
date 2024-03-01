@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.common.web.aspects;
 
-import com.tencent.bk.job.common.esb.model.EsbAppScopeReq;
+import com.tencent.bk.job.common.openapi.job.v3.EsbAppScopeReq;
 import com.tencent.bk.job.common.service.AppScopeMappingService;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;

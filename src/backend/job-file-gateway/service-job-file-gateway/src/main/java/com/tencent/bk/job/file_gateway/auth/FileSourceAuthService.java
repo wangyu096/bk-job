@@ -34,19 +34,19 @@ import java.util.List;
  */
 public interface FileSourceAuthService {
     /**
-     * 资源范围下创建文件源鉴权
+     * 资源管理空间下创建文件源鉴权
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @return 鉴权结果
      */
     AuthResult authCreateFileSource(String username, AppResourceScope appResourceScope);
 
     /**
-     * 资源范围下查看文件源鉴权
+     * 资源管理空间下查看文件源鉴权
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param fileSourceId     文件源ID
      * @param fileSourceName   文件源名称，如果传入为空，则会调用ResourceNameQueryService查询
      * @return 鉴权结果
@@ -57,10 +57,10 @@ public interface FileSourceAuthService {
                                   String fileSourceName);
 
     /**
-     * 资源范围下管理文件源鉴权
+     * 资源管理空间下管理文件源鉴权
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param fileSourceId     文件源ID
      * @param fileSourceName   文件源名称，如果传入为空，则会调用ResourceNameQueryService查询
      * @return 鉴权结果
@@ -71,10 +71,10 @@ public interface FileSourceAuthService {
                                     String fileSourceName);
 
     /**
-     * 资源范围下查看文件源批量鉴权
+     * 资源管理空间下查看文件源批量鉴权
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param fileSourceIdList 文件源ID列表
      * @return 有权限的文件源ID
      */
@@ -83,10 +83,10 @@ public interface FileSourceAuthService {
                                           List<Integer> fileSourceIdList);
 
     /**
-     * 资源范围下管理文件源批量鉴权
+     * 资源管理空间下管理文件源批量鉴权
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param fileSourceIdList 文件源ID列表
      * @return 有权限的文件源ID
      */

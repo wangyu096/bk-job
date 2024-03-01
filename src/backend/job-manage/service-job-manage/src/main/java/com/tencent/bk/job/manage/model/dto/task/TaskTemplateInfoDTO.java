@@ -25,8 +25,8 @@
 package com.tencent.bk.job.manage.model.dto.task;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.esb.util.EsbDTOAppScopeMappingHelper;
 import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.openapi.job.v3.utils.EsbDTOAppScopeMappingHelper;
 import com.tencent.bk.job.common.util.date.DateUtils;
 import com.tencent.bk.job.manage.common.consts.task.TaskTemplateStatusEnum;
 import com.tencent.bk.job.manage.model.dto.TagDTO;

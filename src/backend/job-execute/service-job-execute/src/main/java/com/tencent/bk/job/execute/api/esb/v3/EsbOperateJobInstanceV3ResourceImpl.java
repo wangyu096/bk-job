@@ -26,10 +26,10 @@ package com.tencent.bk.job.execute.api.esb.v3;
 
 import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
-import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
+import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
 import com.tencent.bk.job.common.util.json.JsonUtils;
 import com.tencent.bk.job.execute.constants.TaskOperationEnum;
 import com.tencent.bk.job.execute.model.esb.v3.EsbJobExecuteV3DTO;
@@ -48,7 +48,7 @@ public class EsbOperateJobInstanceV3ResourceImpl implements EsbOperateJobInstanc
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_operate_job_instance"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_operate_job_instance"})
     public EsbResp<EsbJobExecuteV3DTO> operateJobInstance(String username,
                                                           String appCode,
                                                           @AuditRequestBody EsbOperateJobInstanceV3Request request) {

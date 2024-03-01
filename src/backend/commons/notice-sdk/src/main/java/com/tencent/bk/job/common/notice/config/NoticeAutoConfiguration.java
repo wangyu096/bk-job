@@ -24,9 +24,9 @@
 
 package com.tencent.bk.job.common.notice.config;
 
-import com.tencent.bk.job.common.esb.config.AppProperties;
-import com.tencent.bk.job.common.esb.config.BkApiGatewayProperties;
+import com.tencent.bk.job.common.bkapigw.config.BkApiGatewayProperties;
 import com.tencent.bk.job.common.notice.impl.BkNoticeClient;
+import com.tencent.bk.job.common.openapi.config.AppProperties;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

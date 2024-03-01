@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.execute.util;
 
-import com.tencent.bk.job.common.esb.model.job.EsbIpDTO;
+import com.tencent.bk.job.common.openapi.job.v2.EsbIpDTO;
 import com.tencent.bk.job.common.util.ip.IpUtils;
 import com.tencent.bk.job.execute.model.ExecuteObjectCompositeKey;
 import org.apache.commons.collections4.CollectionUtils;

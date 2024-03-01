@@ -34,7 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * 业务与资源范围转换
+ * 业务与资源管理空间转换
  */
 @Slf4j
 public class AppScopeMappingServiceImpl extends AbstractLocalCacheAppScopeMappingService {

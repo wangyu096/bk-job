@@ -47,7 +47,7 @@ public interface AppAuthService {
      *
      * @param username         用户名
      * @param actionId         操作ID
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param resourceType     资源类型
      * @param resourceIdList   资源ID列表
      * @return 有权限的资源ID列表
@@ -63,7 +63,7 @@ public interface AppAuthService {
      *
      * @param username         用户名
      * @param actionId         操作ID
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param resources        资源列表
      * @return 鉴权结果
      */
@@ -77,7 +77,7 @@ public interface AppAuthService {
      *
      * @param username         用户名
      * @param actionId         操作 ID
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @param resourceList     资源列表
      * @return 有权限的资源 ID 列表
      */

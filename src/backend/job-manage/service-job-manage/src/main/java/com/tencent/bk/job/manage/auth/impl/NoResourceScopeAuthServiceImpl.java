@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 资源范围无关的相关操作鉴权接口实现
+ * 资源管理空间无关的相关操作鉴权接口实现
  */
 @Service
 public class NoResourceScopeAuthServiceImpl implements NoResourceScopeAuthService {

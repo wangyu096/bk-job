@@ -37,10 +37,10 @@ public class OperationPermissionReq {
     @ApiModelProperty("资源ID,比如执行实例ID/执行步骤实例ID;对于部分不需要资源ID的操作(新建),不需要传参")
     private String resourceId;
 
-    @ApiModelProperty("资源范围类型:biz/business_set")
+    @ApiModelProperty("资源管理空间类型:biz/business_set")
     private String scopeType;
 
-    @ApiModelProperty("资源范围ID")
+    @ApiModelProperty("资源管理空间ID")
     private String scopeId;
 
     @ApiModelProperty("是否返回详细的权限信息(依赖的权限，申请URL)。默认为false")

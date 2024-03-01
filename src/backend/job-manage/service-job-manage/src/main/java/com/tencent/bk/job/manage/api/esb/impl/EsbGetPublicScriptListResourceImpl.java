@@ -26,21 +26,21 @@ package com.tencent.bk.job.manage.api.esb.impl;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobConstants;
-import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
-import com.tencent.bk.job.common.esb.model.EsbPageData;
-import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.model.ValidateResult;
+import com.tencent.bk.job.common.openapi.job.v2.EsbPageData;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
+import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
 import com.tencent.bk.job.common.util.date.DateUtils;
 import com.tencent.bk.job.manage.api.esb.EsbGetPublicScriptListResource;
 import com.tencent.bk.job.manage.common.consts.JobResourceStatusEnum;
 import com.tencent.bk.job.manage.common.consts.script.ScriptTypeEnum;
 import com.tencent.bk.job.manage.model.dto.ScriptDTO;
 import com.tencent.bk.job.manage.model.esb.EsbScriptDTO;
-import com.tencent.bk.job.manage.model.esb.request.EsbGetPublicScriptListRequest;
+import com.tencent.bk.job.manage.model.esb.request.OpenApiGetPublicScriptListRequest;
 import com.tencent.bk.job.manage.model.query.ScriptQuery;
 import com.tencent.bk.job.manage.service.PublicScriptService;
 import lombok.extern.slf4j.Slf4j;
@@ -63,10 +63,10 @@ public class EsbGetPublicScriptListResourceImpl implements EsbGetPublicScriptLis
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_get_public_script_list"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_get_public_script_list"})
     public EsbResp<EsbPageData<EsbScriptDTO>> getPublicScriptList(String username,
                                                                   String appCode,
-                                                                  EsbGetPublicScriptListRequest request) {
+                                                                  OpenApiGetPublicScriptListRequest request) {
         ValidateResult checkResult = checkRequest(request);
         if (!checkResult.isPass()) {
             log.warn("Get public script list, request is illegal!");
@@ -132,7 +132,7 @@ public class EsbGetPublicScriptListResourceImpl implements EsbGetPublicScriptLis
         return esbPageData;
     }
 
-    private ValidateResult checkRequest(EsbGetPublicScriptListRequest request) {
+    private ValidateResult checkRequest(OpenApiGetPublicScriptListRequest request) {
         if (request.getScriptType() != null && ScriptTypeEnum.valOf(request.getScriptType()) == null) {
             log.warn("ScriptType:{} is illegal!", request.getScriptType());
             return ValidateResult.fail(ErrorCode.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME, "script_type");

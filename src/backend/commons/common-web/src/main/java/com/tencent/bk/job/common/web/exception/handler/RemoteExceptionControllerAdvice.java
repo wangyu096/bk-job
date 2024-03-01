@@ -2,8 +2,8 @@ package com.tencent.bk.job.common.web.exception.handler;
 
 import com.tencent.bk.job.common.annotation.RemoteAPI;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.common.util.I18nUtil;
 import com.tencent.bk.sdk.iam.constants.CommonResponseCode;
 import com.tencent.bk.sdk.iam.dto.callback.response.CallbackBaseResponseDTO;

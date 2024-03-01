@@ -121,70 +121,80 @@ data:
               predicates:
                 - JobEsbV2Path=/api/job/v2/job-manage/{api_name}
               filters:
-                - CheckEsbJwt
+                - CheckBkApiGatewayJwt
                 - SetPath=/esb/api/v2/{api_name}
-                - RecordEsbAccessLog
-                - AddEsbLangHeader
+                - RecordBkApiGatewayAccessLog
+                - AddBkApiGatewayLangHeader
 
             - id: job-manage-esb-v3
               uri: lb://job-manage
               predicates:
                 - Path=/api/job/v3/job-manage/{api_name}
               filters:
-                - CheckEsbJwt
+                - CheckBkApiGatewayJwt
                 - SetPath=/esb/api/v3/{api_name}
-                - RecordEsbAccessLog
-                - AddEsbLangHeader
+                - RecordBkApiGatewayAccessLog
+                - AddBkApiGatewayLangHeader
 
             - id: job-crontab-esb
               uri: lb://job-crontab
               predicates:
                 - JobEsbV2Path=/api/job/v2/job-crontab/{api_name}
               filters:
-                - CheckEsbJwt
+                - CheckBkApiGatewayJwt
                 - SetPath=/esb/api/v2/{api_name}
-                - RecordEsbAccessLog
-                - AddEsbLangHeader
+                - RecordBkApiGatewayAccessLog
+                - AddBkApiGatewayLangHeader
 
             - id: job-crontab-esb-v3
               uri: lb://job-crontab
               predicates:
                 - JobEsbV2Path=/api/job/v3/job-crontab/{api_name}
               filters:
-                - CheckEsbJwt
+                - CheckBkApiGatewayJwt
                 - SetPath=/esb/api/v3/{api_name}
-                - RecordEsbAccessLog
-                - AddEsbLangHeader
+                - RecordBkApiGatewayAccessLog
+                - AddBkApiGatewayLangHeader
 
             - id: job-execute-esb
               uri: lb://job-execute
               predicates:
                 - JobEsbV2Path=/api/job/v2/job-execute/{api_name}
               filters:
-                - CheckEsbJwt
+                - CheckBkApiGatewayJwt
                 - SetPath=/esb/api/v2/{api_name}
-                - RecordEsbAccessLog
-                - AddEsbLangHeader
+                - RecordBkApiGatewayAccessLog
+                - AddBkApiGatewayLangHeader
 
             - id: job-execute-esb-v3
               uri: lb://job-execute
               predicates:
                 - JobEsbV2Path=/api/job/v3/job-execute/{api_name}
               filters:
-                - CheckEsbJwt
+                - CheckBkApiGatewayJwt
                 - SetPath=/esb/api/v3/{api_name}
-                - RecordEsbAccessLog
-                - AddEsbLangHeader
+                - RecordBkApiGatewayAccessLog
+                - AddBkApiGatewayLangHeader
+
+            - id: job-execute-openapi-v4
+              uri: lb://job-execute
+              predicates:
+                - Path=/job-*/openapi/job/v4/**
+              filters:
+                - CheckBkApiGatewayJwt
+                - RewritePath=/job-execute/openapi/job/v4/(?<resource_path>.*),/open/api/v4/$\{resource_path}
+                - RecordBkApiGatewayAccessLog
+                - AddBkApiGatewayLangHeader
 
             - id: job-file-gateway-esb-v3
               uri: lb://job-file-gateway
               predicates:
                 - JobEsbV2Path=/api/job/v3/job-file-gateway/{api_name}
               filters:
-                - CheckEsbJwt
+                - CheckBkApiGatewayJwt
                 - SetPath=/esb/api/v3/{api_name}
-                - RecordEsbAccessLog
-                - AddEsbLangHeader
+                - RecordBkApiGatewayAccessLog
+                - AddBkApiGatewayLangHeader
 
             - id: job-file-gateway-iam
               uri: lb://job-file-gateway
@@ -192,7 +202,7 @@ data:
                 - Path=/iam/api/v1/resources/file_source
               filters:
                 - RecordIamAccessLog
-                - AddEsbLangHeader
+                - AddBkApiGatewayLangHeader
 
             - id: job-ticket-iam
               uri: lb://job-manage
@@ -200,7 +210,7 @@ data:
                 - Path=/iam/api/v1/resources/ticket
               filters:
                 - RecordIamAccessLog
-                - AddEsbLangHeader
+                - AddBkApiGatewayLangHeader
 
             - id: job-analysis-iam
               uri: lb://job-analysis
@@ -208,7 +218,7 @@ data:
                 - Path=/iam/api/v1/resources/dashboard_view
               filters:
                 - RecordIamAccessLog
-                - AddEsbLangHeader
+                - AddBkApiGatewayLangHeader
 
             - id: job-manage-iam
               uri: lb://job-manage
@@ -216,7 +226,7 @@ data:
                 - Path=/iam/api/v1/resources/script,/iam/api/v1/resources/task/template,/iam/api/v1/resources/task/plan,/iam/api/v1/resources/account,/iam/api/v1/resources/whitelist,/iam/api/v1/resources/script/public,/iam/api/v1/resources/tag
               filters:
                 - RecordIamAccessLog
-                - AddEsbLangHeader
+                - AddBkApiGatewayLangHeader
 
             - id: job-crontab-iam
               uri: lb://job-crontab
@@ -224,7 +234,7 @@ data:
                 - Path=/iam/api/v1/resources/cron/job
               filters:
                 - RecordIamAccessLog
-                - AddEsbLangHeader
+                - AddBkApiGatewayLangHeader
 
             - id: job-execute-iam
               uri: lb://job-execute
@@ -232,7 +242,7 @@ data:
                 - Path=/iam/api/v1/resources/execute/record
               filters:
                 - RecordIamAccessLog
-                - AddEsbLangHeader
+                - AddBkApiGatewayLangHeader
             {{- else if eq .Values.deploy.mode "lite" }}
             - id: job-logout
               uri: lb://job-gateway
@@ -264,20 +274,30 @@ data:
               predicates:
                 - JobEsbV2Path=/api/job/v2/{module}/{api_name}
               filters:
-                - CheckEsbJwt
+                - CheckBkApiGatewayJwt
                 - SetPath=/esb/api/v2/{api_name}
-                - RecordEsbAccessLog
-                - AddEsbLangHeader
+                - RecordBkApiGatewayAccessLog
+                - AddBkApiGatewayLangHeader
     
             - id: job-esb-v3
               uri: lb://job-assemble
               predicates:
                 - Path=/api/job/v3/{module}/{api_name}
               filters:
-                - CheckEsbJwt
+                - CheckBkApiGatewayJwt
                 - SetPath=/esb/api/v3/{api_name}
-                - RecordEsbAccessLog
-                - AddEsbLangHeader
+                - RecordBkApiGatewayAccessLog
+                - AddBkApiGatewayLangHeader
+
+            - id: job-openapi-v4
+              uri: lb://job-assemble
+              predicates:
+                - Path=/job-*/openapi/job/v4/**
+              filters:
+                - CheckBkApiGatewayJwt
+                - RewritePath=/job-*/openapi/job/v4/(?<resource_path>.*),/open/api/v4/$\{resource_path}
+                - RecordBkApiGatewayAccessLog
+                - AddBkApiGatewayLangHeader
     
             - id: job-iam
               uri: lb://job-assemble
@@ -285,7 +305,7 @@ data:
                 - Path=/iam/api/v1/resources/**
               filters:
                 - RecordIamAccessLog
-                - AddEsbLangHeader
+                - AddBkApiGatewayLangHeader
             {{- end }}      
     job:
       gateway:

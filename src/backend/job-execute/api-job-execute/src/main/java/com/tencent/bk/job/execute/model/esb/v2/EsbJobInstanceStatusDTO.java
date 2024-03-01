@@ -26,7 +26,7 @@ package com.tencent.bk.job.execute.model.esb.v2;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.tencent.bk.job.common.esb.model.EsbAppScopeDTO;
+import com.tencent.bk.job.common.openapi.job.v3.EsbAppScopeDTO;
 import com.tencent.bk.job.common.util.json.LongTimestampSerializer;
 import com.tencent.bk.job.common.util.json.LongToDecimalJsonSerializer;
 import lombok.Data;

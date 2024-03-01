@@ -34,10 +34,10 @@ import java.util.List;
 @ApiModel("获取拓扑树请求")
 public class ListTopologyTreesReq {
 
-    @ApiModelProperty(value = "是否获取所有资源范围的拓扑结构，默认为false", required = true)
+    @ApiModelProperty(value = "是否获取所有资源管理空间的拓扑结构，默认为false", required = true)
     Boolean allScope = false;
 
-    @ApiModelProperty(value = "要获取拓扑树的资源范围列表")
+    @ApiModelProperty(value = "要获取拓扑树的资源管理空间列表")
     List<Scope> scopeList;
 
 }

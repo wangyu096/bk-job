@@ -36,7 +36,7 @@ public interface ScopeTopoHostService {
      * 查询带主机数量信息的业务拓扑树
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围
+     * @param appResourceScope 资源管理空间
      * @return 带主机数量信息的拓扑结构树
      */
     CcTopologyNodeVO listAppTopologyHostCountTree(String username, AppResourceScope appResourceScope);

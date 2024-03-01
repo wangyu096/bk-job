@@ -53,7 +53,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 资源范围下的主机服务
+ * 资源管理空间下的主机服务
  */
 @Slf4j
 @Service

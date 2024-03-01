@@ -25,7 +25,7 @@
 package com.tencent.bk.job.common.iam.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.tencent.bk.job.common.esb.model.EsbReq;
+import com.tencent.bk.job.common.openapi.model.OpenApiReq;
 import com.tencent.bk.sdk.iam.constants.SystemId;
 import lombok.Getter;
 import lombok.Setter;
@@ -36,7 +36,7 @@ import java.util.List;
 @Getter
 @Setter
 @ToString
-public class BatchAuthByPathReq extends EsbReq {
+public class BatchAuthByPathReq extends OpenApiReq {
     private boolean asynchronous = false;
 
     private String operate = "grant";

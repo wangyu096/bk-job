@@ -26,7 +26,7 @@ package com.tencent.bk.job.crontab.api.esb;
 
 import com.tencent.bk.job.common.annotation.EsbAPI;
 import com.tencent.bk.job.common.constant.JobCommonHeaders;
-import com.tencent.bk.job.common.esb.model.EsbResp;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.crontab.model.esb.request.EsbGetCronListRequest;
 import com.tencent.bk.job.crontab.model.esb.request.EsbSaveCronRequest;
 import com.tencent.bk.job.crontab.model.esb.request.EsbUpdateCronStatusRequest;

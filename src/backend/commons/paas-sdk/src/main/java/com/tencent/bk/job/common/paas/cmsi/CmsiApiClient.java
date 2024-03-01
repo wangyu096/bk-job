@@ -27,17 +27,17 @@ package com.tencent.bk.job.common.paas.cmsi;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.HttpMethodEnum;
-import com.tencent.bk.job.common.esb.config.AppProperties;
 import com.tencent.bk.job.common.esb.config.EsbProperties;
-import com.tencent.bk.job.common.esb.metrics.EsbMetricTags;
-import com.tencent.bk.job.common.esb.model.BkApiAuthorization;
-import com.tencent.bk.job.common.esb.model.EsbReq;
-import com.tencent.bk.job.common.esb.model.EsbResp;
-import com.tencent.bk.job.common.esb.model.OpenApiRequestInfo;
-import com.tencent.bk.job.common.esb.sdk.BkApiClient;
 import com.tencent.bk.job.common.exception.InternalCmsiException;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.error.ErrorType;
+import com.tencent.bk.job.common.openapi.config.AppProperties;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
+import com.tencent.bk.job.common.openapi.metrics.OpenApiMetricTags;
+import com.tencent.bk.job.common.openapi.model.BkApiAuthorization;
+import com.tencent.bk.job.common.openapi.model.OpenApiReq;
+import com.tencent.bk.job.common.openapi.model.OpenApiRequestInfo;
+import com.tencent.bk.job.common.openapi.sdk.BkApiClient;
 import com.tencent.bk.job.common.paas.exception.PaasException;
 import com.tencent.bk.job.common.paas.model.EsbNotifyChannelDTO;
 import com.tencent.bk.job.common.paas.model.PostSendMsgReq;
@@ -77,7 +77,7 @@ public class CmsiApiClient extends BkApiClient {
         try {
             HttpMetricUtil.setHttpMetricName(CommonMetricNames.ESB_CMSI_API_HTTP);
             HttpMetricUtil.addTagForCurrentMetric(
-                Tag.of(EsbMetricTags.KEY_API_NAME, API_GET_NOTIFY_CHANNEL_LIST)
+                Tag.of(OpenApiMetricTags.KEY_API_NAME, API_GET_NOTIFY_CHANNEL_LIST)
             );
             EsbResp<List<EsbNotifyChannelDTO>> esbResp = doRequest(
                 OpenApiRequestInfo.builder()
@@ -107,7 +107,7 @@ public class CmsiApiClient extends BkApiClient {
         String uri = API_POST_SEND_MSG;
         try {
             HttpMetricUtil.setHttpMetricName(CommonMetricNames.ESB_CMSI_API_HTTP);
-            HttpMetricUtil.addTagForCurrentMetric(Tag.of(EsbMetricTags.KEY_API_NAME, uri));
+            HttpMetricUtil.addTagForCurrentMetric(Tag.of(OpenApiMetricTags.KEY_API_NAME, uri));
             EsbResp<Object> esbResp = doRequest(
                 OpenApiRequestInfo.builder()
                     .method(HttpMethodEnum.POST)
@@ -147,7 +147,7 @@ public class CmsiApiClient extends BkApiClient {
                                            Set<String> receivers,
                                            String title,
                                            String content) {
-        PostSendMsgReq req = EsbReq.buildRequest(PostSendMsgReq.class, "superadmin");
+        PostSendMsgReq req = OpenApiReq.buildRequest(PostSendMsgReq.class, "superadmin");
         if (title == null || title.isEmpty()) {
             title = "Default Title";
         }

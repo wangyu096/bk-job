@@ -49,7 +49,7 @@ public class ApplicationDTO {
     private Long id;
 
     /**
-     * 资源范围
+     * 资源管理空间
      */
     private ResourceScope scope;
 

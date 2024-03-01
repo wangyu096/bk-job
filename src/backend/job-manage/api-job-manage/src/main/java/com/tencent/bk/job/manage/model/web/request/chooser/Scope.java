@@ -29,11 +29,11 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 @Data
-@ApiModel("资源范围")
+@ApiModel("资源管理空间")
 public class Scope {
-    @ApiModelProperty(value = "资源范围类型", required = true)
+    @ApiModelProperty(value = "资源管理空间类型", required = true)
     String scopeType;
 
-    @ApiModelProperty(value = "资源范围Id", required = true)
+    @ApiModelProperty(value = "资源管理空间Id", required = true)
     String scopeId;
 }

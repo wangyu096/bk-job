@@ -26,7 +26,7 @@ package com.tencent.bk.job.common.cc.model.req;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.tencent.bk.job.common.cc.model.InstanceTopologyDTO;
-import com.tencent.bk.job.common.esb.model.EsbReq;
+import com.tencent.bk.job.common.openapi.model.OpenApiReq;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -38,7 +38,7 @@ import java.util.List;
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class GetTopoNodePathReq extends EsbReq {
+public class GetTopoNodePathReq extends OpenApiReq {
     /**
      * 业务ID
      */

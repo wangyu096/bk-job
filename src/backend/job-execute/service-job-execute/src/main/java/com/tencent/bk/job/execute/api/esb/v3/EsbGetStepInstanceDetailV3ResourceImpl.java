@@ -25,17 +25,17 @@
 package com.tencent.bk.job.execute.api.esb.v3;
 
 import com.tencent.bk.audit.annotations.AuditEntry;
-import com.tencent.bk.job.common.esb.model.EsbResp;
-import com.tencent.bk.job.common.esb.model.job.v3.EsbAccountV3BasicDTO;
-import com.tencent.bk.job.common.esb.model.job.v3.EsbFileDestinationV3DTO;
-import com.tencent.bk.job.common.esb.model.job.v3.EsbFileSourceV3DTO;
-import com.tencent.bk.job.common.esb.model.job.v3.resp.EsbApprovalStepV3DTO;
-import com.tencent.bk.job.common.esb.model.job.v3.resp.EsbFileStepV3DTO;
-import com.tencent.bk.job.common.esb.model.job.v3.resp.EsbScriptStepV3DTO;
-import com.tencent.bk.job.common.esb.model.job.v3.resp.EsbStepV3DTO;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.model.ValidateResult;
+import com.tencent.bk.job.common.openapi.job.v3.EsbAccountV3BasicDTO;
+import com.tencent.bk.job.common.openapi.job.v3.EsbApprovalStepV3DTO;
+import com.tencent.bk.job.common.openapi.job.v3.EsbFileDestinationV3DTO;
+import com.tencent.bk.job.common.openapi.job.v3.EsbFileSourceV3DTO;
+import com.tencent.bk.job.common.openapi.job.v3.EsbFileStepV3DTO;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
+import com.tencent.bk.job.common.openapi.job.v3.EsbScriptStepV3DTO;
+import com.tencent.bk.job.common.openapi.job.v3.EsbStepV3DTO;
 import com.tencent.bk.job.common.service.AppScopeMappingService;
 import com.tencent.bk.job.execute.model.FileDetailDTO;
 import com.tencent.bk.job.execute.model.FileSourceDTO;

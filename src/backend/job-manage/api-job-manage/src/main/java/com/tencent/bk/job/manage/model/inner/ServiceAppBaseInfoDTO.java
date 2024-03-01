@@ -35,10 +35,10 @@ import lombok.Data;
 @ApiModel("业务")
 public class ServiceAppBaseInfoDTO {
 
-    @ApiModelProperty("资源范围类型")
+    @ApiModelProperty("资源管理空间类型")
     private String scopeType;
 
-    @ApiModelProperty("资源范围ID")
+    @ApiModelProperty("资源管理空间ID")
     private String scopeId;
 
     @ApiModelProperty("Job业务ID")

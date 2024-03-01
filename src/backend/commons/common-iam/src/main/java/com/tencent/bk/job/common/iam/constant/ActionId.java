@@ -28,7 +28,7 @@ package com.tencent.bk.job.common.iam.constant;
  * @since 9/6/2020 15:20
  */
 public class ActionId {
-    // job-manage资源范围相关操作
+    // job-manage资源管理空间相关操作
     // 业务查看
     public static final String ACCESS_BUSINESS = "access_business";
     // 脚本
@@ -67,7 +67,7 @@ public class ActionId {
     // 通知设置
     public static final String NOTIFICATION_SETTING = "notification_setting";
 
-    // job-manage资源范围无关操作
+    // job-manage资源管理空间无关操作
     // 白名单
     public static final String CREATE_WHITELIST = "create_whitelist";
     public static final String MANAGE_WHITELIST = "manage_whitelist";
@@ -87,12 +87,12 @@ public class ActionId {
     // 高危语句拦截记录查看
     public static final String HIGH_RISK_DETECT_RECORD = "high-risk_detect_record";
 
-    // job-crontab资源范围相关操作
+    // job-crontab资源管理空间相关操作
     // 定时任务
     public static final String CREATE_CRON = "create_cron";
     public static final String MANAGE_CRON = "manage_cron";
 
-    // job-execute资源范围相关操作
+    // job-execute资源管理空间相关操作
     // 快速脚本执行
     public static final String QUICK_EXECUTE_SCRIPT = "quick_execute_script";
     // 快速文件分发

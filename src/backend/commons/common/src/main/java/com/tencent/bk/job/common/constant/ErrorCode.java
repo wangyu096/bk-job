@@ -269,7 +269,7 @@ public class ErrorCode {
     public static final int APP_NOT_EXIST = 1243049;
     // 文件后缀不允许
     public static final int UPLOAD_FILE_SUFFIX_NOT_ALLOW = 1243050;
-    // 资源范围不存在:{0}
+    // 资源管理空间不存在:{0}
     public static final int SCOPE_NOT_EXIST = 1243051;
     // IP（含云区域ID）在CMDB中不存在:{0}
     public static final int IP_NOT_EXIST_IN_CMDB = 1243052;

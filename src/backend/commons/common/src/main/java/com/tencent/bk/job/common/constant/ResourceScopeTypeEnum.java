@@ -28,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
- * 资源范围类型
+ * 资源管理空间类型
  */
 public enum ResourceScopeTypeEnum {
     /**
@@ -41,7 +41,7 @@ public enum ResourceScopeTypeEnum {
     BIZ_SET("biz_set");
 
     /**
-     * 资源范围类型
+     * 资源管理空间类型
      */
     @JsonValue
     private final String value;

@@ -25,7 +25,7 @@
 package com.tencent.bk.job.common.cc.model.req;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.tencent.bk.job.common.esb.model.EsbReq;
+import com.tencent.bk.job.common.openapi.model.OpenApiReq;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -36,7 +36,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class GetObjAttributeReq extends EsbReq {
+public class GetObjAttributeReq extends OpenApiReq {
 
     /**
      * CMDB 模型ID

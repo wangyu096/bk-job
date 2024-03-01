@@ -27,16 +27,16 @@ package com.tencent.bk.job.execute.api.esb.v2.impl;
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
-import com.tencent.bk.job.common.esb.model.EsbResp;
-import com.tencent.bk.job.common.esb.model.job.EsbGlobalVarDTO;
-import com.tencent.bk.job.common.esb.model.job.EsbIpDTO;
-import com.tencent.bk.job.common.esb.model.job.EsbServerDTO;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.model.dto.HostDTO;
+import com.tencent.bk.job.common.openapi.job.v2.EsbGlobalVarDTO;
+import com.tencent.bk.job.common.openapi.job.v2.EsbIpDTO;
+import com.tencent.bk.job.common.openapi.job.v2.EsbServerDTO;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
+import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
 import com.tencent.bk.job.common.util.json.JsonUtils;
 import com.tencent.bk.job.common.web.metrics.CustomTimed;
 import com.tencent.bk.job.execute.api.esb.v2.EsbExecuteTaskResource;
@@ -71,7 +71,7 @@ public class EsbExecuteTaskResourceImpl extends JobExecuteCommonProcessor implem
     }
 
     @Override
-    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_execute_job"})
+    @OpenApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_execute_job"})
     @CustomTimed(metricName = ExecuteMetricsConstants.NAME_JOB_TASK_START,
         extraTags = {
             ExecuteMetricsConstants.TAG_KEY_START_MODE, ExecuteMetricsConstants.TAG_VALUE_START_MODE_API,

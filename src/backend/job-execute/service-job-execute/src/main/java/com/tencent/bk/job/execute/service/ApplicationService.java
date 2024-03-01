@@ -43,8 +43,8 @@ public interface ApplicationService {
     /**
      * 根据业务范围获取业务信息
      *
-     * @param scopeType 资源范围类型
-     * @param scopeId   资源范围Id
+     * @param scopeType 资源管理空间类型
+     * @param scopeId   资源管理空间Id
      * @return Job业务对象
      */
     ServiceApplicationDTO getAppByScope(String scopeType, String scopeId);

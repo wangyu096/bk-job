@@ -27,13 +27,7 @@ package com.tencent.bk.job.common.iam.client;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.HttpMethodEnum;
-import com.tencent.bk.job.common.esb.config.AppProperties;
 import com.tencent.bk.job.common.esb.config.EsbProperties;
-import com.tencent.bk.job.common.esb.model.BkApiAuthorization;
-import com.tencent.bk.job.common.esb.model.EsbReq;
-import com.tencent.bk.job.common.esb.model.EsbResp;
-import com.tencent.bk.job.common.esb.model.OpenApiRequestInfo;
-import com.tencent.bk.job.common.esb.sdk.BkApiClient;
 import com.tencent.bk.job.common.exception.InternalIamException;
 import com.tencent.bk.job.common.iam.dto.AuthByPathReq;
 import com.tencent.bk.job.common.iam.dto.BatchAuthByPathReq;
@@ -47,6 +41,12 @@ import com.tencent.bk.job.common.iam.dto.GetApplyUrlRequest;
 import com.tencent.bk.job.common.iam.dto.GetApplyUrlResponse;
 import com.tencent.bk.job.common.iam.dto.RegisterResourceRequest;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
+import com.tencent.bk.job.common.openapi.config.AppProperties;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
+import com.tencent.bk.job.common.openapi.model.BkApiAuthorization;
+import com.tencent.bk.job.common.openapi.model.OpenApiReq;
+import com.tencent.bk.job.common.openapi.model.OpenApiRequestInfo;
+import com.tencent.bk.job.common.openapi.sdk.BkApiClient;
 import com.tencent.bk.job.common.util.http.HttpHelperFactory;
 import com.tencent.bk.job.common.util.http.HttpMetricUtil;
 import com.tencent.bk.sdk.iam.constants.SystemId;
@@ -86,7 +86,7 @@ public class EsbIamClient extends BkApiClient implements IIamClient {
 
     @Override
     public String getApplyUrl(List<ActionDTO> actionList) {
-        GetApplyUrlRequest getApplyUrlRequest = EsbReq.buildRequest(GetApplyUrlRequest.class, null);
+        GetApplyUrlRequest getApplyUrlRequest = OpenApiReq.buildRequest(GetApplyUrlRequest.class, null);
         getApplyUrlRequest.setSystem(SystemId.JOB);
         getApplyUrlRequest.setAction(actionList);
         EsbResp<GetApplyUrlResponse> esbResp = requestIamApi(
@@ -105,7 +105,7 @@ public class EsbIamClient extends BkApiClient implements IIamClient {
 
     @Override
     public boolean registerResource(String id, String name, String type, String creator, List<ResourceDTO> ancestor) {
-        RegisterResourceRequest registerResourceRequest = EsbReq.buildRequest(RegisterResourceRequest.class, null);
+        RegisterResourceRequest registerResourceRequest = OpenApiReq.buildRequest(RegisterResourceRequest.class, null);
         registerResourceRequest.setSystem(SystemId.JOB);
         registerResourceRequest.setId(id);
         registerResourceRequest.setName(name);
@@ -129,7 +129,7 @@ public class EsbIamClient extends BkApiClient implements IIamClient {
         EsbIamSubject esbIamSubject,
         List<EsbIamResource> esbIamResources
     ) {
-        AuthByPathReq authByPathReq = EsbReq.buildRequest(AuthByPathReq.class, null);
+        AuthByPathReq authByPathReq = OpenApiReq.buildRequest(AuthByPathReq.class, null);
         authByPathReq.setAction(esbIamAction);
         authByPathReq.setSubject(esbIamSubject);
         authByPathReq.setResources(esbIamResources);
@@ -151,7 +151,7 @@ public class EsbIamClient extends BkApiClient implements IIamClient {
         Long expiredAt
     ) {
         BatchAuthByPathReq batchAuthByPathReq =
-            EsbReq.buildRequest(BatchAuthByPathReq.class, null);
+            OpenApiReq.buildRequest(BatchAuthByPathReq.class, null);
         batchAuthByPathReq.setActions(esbIamActions);
         batchAuthByPathReq.setSubject(esbIamSubject);
         batchAuthByPathReq.setResources(esbIamBatchPathResources);
@@ -177,7 +177,7 @@ public class EsbIamClient extends BkApiClient implements IIamClient {
      */
     private <R> EsbResp<R> requestIamApi(HttpMethodEnum method,
                                          String uri,
-                                         EsbReq reqBody,
+                                         OpenApiReq reqBody,
                                          TypeReference<EsbResp<R>> typeReference) {
         try {
             HttpMetricUtil.setHttpMetricName(CommonMetricNames.IAM_API_HTTP);

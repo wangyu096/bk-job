@@ -78,8 +78,8 @@ public interface WebPermissionResource {
      * 检查操作权限
      *
      * @param username               用户名
-     * @param scopeType              资源范围类型
-     * @param scopeId                资源范围ID
+     * @param scopeType              资源管理空间类型
+     * @param scopeId                资源管理空间ID
      * @param operation              操作ID
      * @param resourceId             资源ID
      * @param returnPermissionDetail 是否返回详细的权限信息
@@ -90,10 +90,10 @@ public interface WebPermissionResource {
     Response<AuthResultVO> checkOperationPermission(
         @ApiParam("用户名，网关自动传入")
         @RequestHeader("username") String username,
-        @ApiParam(value = "资源范围类型")
+        @ApiParam(value = "资源管理空间类型")
         @RequestParam(value = "scopeType", required = false)
             String scopeType,
-        @ApiParam(value = "资源范围ID")
+        @ApiParam(value = "资源管理空间ID")
         @RequestParam(value = "scopeId", required = false)
             String scopeId,
         @ApiParam("操作ID,取值为: [script/create,script/view," +

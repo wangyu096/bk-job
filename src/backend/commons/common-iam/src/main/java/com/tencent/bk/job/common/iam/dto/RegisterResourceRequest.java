@@ -25,7 +25,7 @@
 package com.tencent.bk.job.common.iam.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.tencent.bk.job.common.esb.model.EsbReq;
+import com.tencent.bk.job.common.openapi.model.OpenApiReq;
 import com.tencent.bk.sdk.iam.dto.resource.ResourceDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -37,7 +37,7 @@ import java.util.List;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-public class RegisterResourceRequest extends EsbReq {
+public class RegisterResourceRequest extends OpenApiReq {
 
     /**
      * 系统 ID

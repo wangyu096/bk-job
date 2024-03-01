@@ -45,7 +45,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 业务与资源范围转换公共实现 - 使用本地缓存
+ * 业务与资源管理空间转换公共实现 - 使用本地缓存
  */
 @Slf4j
 public abstract class AbstractLocalCacheAppScopeMappingService implements AppScopeMappingService {
@@ -164,19 +164,19 @@ public abstract class AbstractLocalCacheAppScopeMappingService implements AppSco
     }
 
     /**
-     * 根据资源范围查询JOB业务ID
+     * 根据资源管理空间查询JOB业务ID
      *
-     * @param resourceScope 资源范围
+     * @param resourceScope 资源管理空间
      * @return JOB业务ID
      * @throws NotFoundException 如果业务不存在，抛出NotFoundException
      */
     public abstract Long queryAppByScope(ResourceScope resourceScope) throws NotFoundException;
 
     /**
-     * 根据JOB业务ID查询资源范围
+     * 根据JOB业务ID查询资源管理空间
      *
      * @param appId Job业务ID
-     * @return 资源范围
+     * @return 资源管理空间
      * @throws NotFoundException 如果业务不存在，抛出NotFoundException
      */
     public abstract ResourceScope queryScopeByAppId(Long appId) throws NotFoundException;

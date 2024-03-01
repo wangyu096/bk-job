@@ -61,9 +61,9 @@ public interface WebCronJobResource {
      * 获取定时任务列表
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围；Spring拦截器注入
-     * @param scopeType        资源范围类型
-     * @param scopeId          资源范围ID
+     * @param appResourceScope 资源管理空间；Spring拦截器注入
+     * @param scopeType        资源管理空间类型
+     * @param scopeId          资源管理空间ID
      * @param cronJobId        定时任务 ID
      * @param planId           执行方案 ID
      * @param name             定时任务名称
@@ -84,10 +84,10 @@ public interface WebCronJobResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "定时任务 ID")
@@ -123,9 +123,9 @@ public interface WebCronJobResource {
      * 获取定时任务执行状态信息列表
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围；Spring拦截器注入
-     * @param scopeType        资源范围类型
-     * @param scopeId          资源范围ID
+     * @param appResourceScope 资源管理空间；Spring拦截器注入
+     * @param scopeType        资源管理空间类型
+     * @param scopeId          资源管理空间ID
      * @param cronJobId        定时任务 ID 列表
      * @return 定时任务执行状态信息列表
      */
@@ -138,10 +138,10 @@ public interface WebCronJobResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "定时任务 ID 列表，逗号分隔")
@@ -153,9 +153,9 @@ public interface WebCronJobResource {
      * 获取定时任务信息
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围；Spring拦截器注入
-     * @param scopeType        资源范围类型
-     * @param scopeId          资源范围ID
+     * @param appResourceScope 资源管理空间；Spring拦截器注入
+     * @param scopeType        资源管理空间类型
+     * @param scopeId          资源管理空间ID
      * @param cronJobId        定时任务 ID
      * @return 定时任务信息
      */
@@ -168,10 +168,10 @@ public interface WebCronJobResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "定时任务 ID", required = true)
@@ -183,9 +183,9 @@ public interface WebCronJobResource {
      * 更新定时任务
      *
      * @param username               用户名
-     * @param appResourceScope       资源范围；Spring拦截器注入
-     * @param scopeType              资源范围类型
-     * @param scopeId                资源范围ID
+     * @param appResourceScope       资源管理空间；Spring拦截器注入
+     * @param scopeType              资源管理空间类型
+     * @param scopeId                资源管理空间ID
      * @param cronJobCreateUpdateReq 定时任务信息
      * @return 定时任务
      */
@@ -198,10 +198,10 @@ public interface WebCronJobResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "创建的定时任务对象", name = "cronJobCreateUpdateReq", required = true)
@@ -213,9 +213,9 @@ public interface WebCronJobResource {
      * 更新定时任务
      *
      * @param username               用户名
-     * @param appResourceScope       资源范围；Spring拦截器注入
-     * @param scopeType              资源范围类型
-     * @param scopeId                资源范围ID
+     * @param appResourceScope       资源管理空间；Spring拦截器注入
+     * @param scopeType              资源管理空间类型
+     * @param scopeId                资源管理空间ID
      * @param cronJobId              定时任务 ID
      * @param cronJobCreateUpdateReq 定时任务信息
      * @return 定时任务
@@ -229,10 +229,10 @@ public interface WebCronJobResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "定时任务 ID，新建时填 0", required = true)
@@ -247,9 +247,9 @@ public interface WebCronJobResource {
      * 删除定时任务
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围；Spring拦截器注入
-     * @param scopeType        资源范围类型
-     * @param scopeId          资源范围ID
+     * @param appResourceScope 资源管理空间；Spring拦截器注入
+     * @param scopeType        资源管理空间类型
+     * @param scopeId          资源管理空间ID
      * @param cronJobId        定时任务 ID
      * @return 删除是否成功
      */
@@ -262,10 +262,10 @@ public interface WebCronJobResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "定时任务 ID", required = true)
@@ -277,9 +277,9 @@ public interface WebCronJobResource {
      * 修改定时任务状态
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围；Spring拦截器注入
-     * @param scopeType        资源范围类型
-     * @param scopeId          资源范围ID
+     * @param appResourceScope 资源管理空间；Spring拦截器注入
+     * @param scopeType        资源管理空间类型
+     * @param scopeId          资源管理空间ID
      * @param cronJobId        定时任务 ID
      * @param enable           状态
      * @return 修改是否成功
@@ -293,10 +293,10 @@ public interface WebCronJobResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "定时任务 ID", required = true)
@@ -311,9 +311,9 @@ public interface WebCronJobResource {
      * 查询定时任务启动记录
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围；Spring拦截器注入
-     * @param scopeType        资源范围类型
-     * @param scopeId          资源范围ID
+     * @param appResourceScope 资源管理空间；Spring拦截器注入
+     * @param scopeType        资源管理空间类型
+     * @param scopeId          资源管理空间ID
      * @param cronJobId        定时任务 ID
      * @param start            分页起始
      * @param pageSize         每页大小
@@ -328,10 +328,10 @@ public interface WebCronJobResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "定时任务 ID", required = true)
@@ -349,9 +349,9 @@ public interface WebCronJobResource {
      * 检查定时任务名称是否可用
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围；Spring拦截器注入
-     * @param scopeType        资源范围类型
-     * @param scopeId          资源范围ID
+     * @param appResourceScope 资源管理空间；Spring拦截器注入
+     * @param scopeType        资源管理空间类型
+     * @param scopeId          资源管理空间ID
      * @param cronJobId        定时任务 ID
      * @param name             定时任务名称
      * @return 是否可用
@@ -365,10 +365,10 @@ public interface WebCronJobResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "定时任务 ID，新建时填 0", required = true)
@@ -384,9 +384,9 @@ public interface WebCronJobResource {
      * 只更新 变量 和 启用 字段
      *
      * @param username              用户名
-     * @param appResourceScope      资源范围；Spring拦截器注入
-     * @param scopeType             资源范围类型
-     * @param scopeId               资源范围ID
+     * @param appResourceScope      资源管理空间；Spring拦截器注入
+     * @param scopeType             资源管理空间类型
+     * @param scopeId               资源管理空间ID
      * @param batchUpdateCronJobReq 批量更新请求
      * @return 是否更新成功
      */
@@ -400,10 +400,10 @@ public interface WebCronJobResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "批量更新定时任务请求", name = "batchUpdateCronJobReq", required = true)
@@ -415,9 +415,9 @@ public interface WebCronJobResource {
      * 根据执行方案 ID 批量拉取定时任务信息
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围；Spring拦截器注入
-     * @param scopeType        资源范围类型
-     * @param scopeId          资源范围ID
+     * @param appResourceScope 资源管理空间；Spring拦截器注入
+     * @param scopeType        资源管理空间类型
+     * @param scopeId          资源管理空间ID
      * @param planId           执行方案 ID
      * @return 定时任务信息列表
      */
@@ -430,10 +430,10 @@ public interface WebCronJobResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "执行方案 ID", required = true)
@@ -445,9 +445,9 @@ public interface WebCronJobResource {
      * 根据执行方案 ID 列表批量拉取定时任务信息
      *
      * @param username         用户名
-     * @param appResourceScope 资源范围；Spring拦截器注入
-     * @param scopeType        资源范围类型
-     * @param scopeId          资源范围ID
+     * @param appResourceScope 资源管理空间；Spring拦截器注入
+     * @param scopeType        资源管理空间类型
+     * @param scopeId          资源管理空间ID
      * @param planIdList       执行方案 ID 列表
      * @return 执行方案 ID 与定时任务信息列表对应表
      */
@@ -460,10 +460,10 @@ public interface WebCronJobResource {
         @ApiIgnore
         @RequestAttribute(value = "appResourceScope")
             AppResourceScope appResourceScope,
-        @ApiParam(value = "资源范围类型", required = true)
+        @ApiParam(value = "资源管理空间类型", required = true)
         @PathVariable(value = "scopeType")
             String scopeType,
-        @ApiParam(value = "资源范围ID", required = true)
+        @ApiParam(value = "资源管理空间ID", required = true)
         @PathVariable(value = "scopeId")
             String scopeId,
         @ApiParam(value = "执行方案 ID 列表，逗号分隔", required = true)

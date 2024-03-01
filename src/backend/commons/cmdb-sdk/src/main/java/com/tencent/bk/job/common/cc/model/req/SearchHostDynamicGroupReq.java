@@ -25,7 +25,7 @@
 package com.tencent.bk.job.common.cc.model.req;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.tencent.bk.job.common.esb.model.EsbReq;
+import com.tencent.bk.job.common.openapi.model.OpenApiReq;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -34,7 +34,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class SearchHostDynamicGroupReq extends EsbReq {
+public class SearchHostDynamicGroupReq extends OpenApiReq {
     @JsonProperty("bk_biz_id")
     private Long bizId;
     private HostCondition condition = new HostCondition();

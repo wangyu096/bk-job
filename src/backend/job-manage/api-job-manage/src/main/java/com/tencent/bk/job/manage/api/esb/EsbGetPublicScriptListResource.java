@@ -26,10 +26,10 @@ package com.tencent.bk.job.manage.api.esb;
 
 import com.tencent.bk.job.common.annotation.EsbAPI;
 import com.tencent.bk.job.common.constant.JobCommonHeaders;
-import com.tencent.bk.job.common.esb.model.EsbPageData;
-import com.tencent.bk.job.common.esb.model.EsbResp;
+import com.tencent.bk.job.common.openapi.job.v2.EsbPageData;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.manage.model.esb.EsbScriptDTO;
-import com.tencent.bk.job.manage.model.esb.request.EsbGetPublicScriptListRequest;
+import com.tencent.bk.job.manage.model.esb.request.OpenApiGetPublicScriptListRequest;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -51,7 +51,7 @@ public interface EsbGetPublicScriptListResource {
         @RequestHeader(value = JobCommonHeaders.APP_CODE) String appCode,
         @RequestBody
         @Validated
-            EsbGetPublicScriptListRequest request
+            OpenApiGetPublicScriptListRequest request
     );
 
 }

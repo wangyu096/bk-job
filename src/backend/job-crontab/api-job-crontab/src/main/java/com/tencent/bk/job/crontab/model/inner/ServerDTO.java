@@ -25,10 +25,6 @@
 package com.tencent.bk.job.crontab.model.inner;
 
 import com.tencent.bk.job.common.annotation.PersistenceObject;
-import com.tencent.bk.job.common.esb.model.job.EsbCmdbTopoNodeDTO;
-import com.tencent.bk.job.common.esb.model.job.EsbIpDTO;
-import com.tencent.bk.job.common.esb.model.job.v3.EsbDynamicGroupDTO;
-import com.tencent.bk.job.common.esb.model.job.v3.EsbServerV3DTO;
 import com.tencent.bk.job.common.model.dto.CmdbTopoNodeDTO;
 import com.tencent.bk.job.common.model.dto.HostDTO;
 import com.tencent.bk.job.common.model.vo.DynamicGroupIdWithMeta;
@@ -37,6 +33,10 @@ import com.tencent.bk.job.common.model.vo.TargetNodeVO;
 import com.tencent.bk.job.common.model.vo.TaskExecuteObjectsInfoVO;
 import com.tencent.bk.job.common.model.vo.TaskHostNodeVO;
 import com.tencent.bk.job.common.model.vo.TaskTargetVO;
+import com.tencent.bk.job.common.openapi.job.v2.EsbIpDTO;
+import com.tencent.bk.job.common.openapi.job.v3.EsbCmdbTopoNodeDTO;
+import com.tencent.bk.job.common.openapi.job.v3.EsbDynamicGroupDTO;
+import com.tencent.bk.job.common.openapi.job.v3.EsbServerV3DTO;
 import com.tencent.bk.job.execute.model.inner.ServiceTargetServers;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;

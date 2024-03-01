@@ -32,9 +32,9 @@ import lombok.Data;
 @ApiModel("收藏业务")
 public class FavorAppReq {
 
-    @ApiModelProperty(value = "要收藏的资源范围类型", required = true)
+    @ApiModelProperty(value = "要收藏的资源管理空间类型", required = true)
     private String scopeType;
 
-    @ApiModelProperty(value = "要收藏的资源范围ID", required = true)
+    @ApiModelProperty(value = "要收藏的资源管理空间ID", required = true)
     private String scopeId;
 }

@@ -24,9 +24,9 @@
 
 package com.tencent.bk.job.manage.auth;
 
-import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeEnum;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
+import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 
 import java.util.List;
 import java.util.Map;

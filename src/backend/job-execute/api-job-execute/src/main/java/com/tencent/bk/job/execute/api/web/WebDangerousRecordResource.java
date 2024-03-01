@@ -54,10 +54,10 @@ public interface WebDangerousRecordResource {
         @ApiParam(name = "id", value = "记录ID")
         @RequestParam(value = "id", required = false)
             Long id,
-        @ApiParam(value = "资源范围类型")
+        @ApiParam(value = "资源管理空间类型")
         @RequestParam(value = "scopeType", required = false)
             String scopeType,
-        @ApiParam(value = "资源范围ID")
+        @ApiParam(value = "资源管理空间ID")
         @RequestParam(value = "scopeId", required = false)
             String scopeId,
         @ApiParam(value = "规则ID", name = "ruleId")

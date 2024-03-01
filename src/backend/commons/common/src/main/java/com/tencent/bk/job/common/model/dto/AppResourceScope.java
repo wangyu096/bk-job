@@ -32,7 +32,7 @@ import lombok.Setter;
 import java.util.StringJoiner;
 
 /**
- * 资源范围-包含业务ID
+ * 资源管理空间-包含业务ID
  */
 @Getter
 @Setter

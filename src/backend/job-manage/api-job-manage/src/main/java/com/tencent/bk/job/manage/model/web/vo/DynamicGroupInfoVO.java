@@ -39,22 +39,22 @@ import java.util.List;
 public class DynamicGroupInfoVO {
 
     /**
-     * 资源范围类型
+     * 资源管理空间类型
      */
-    @ApiModelProperty(value = "资源范围类型", allowableValues = "biz-业务,biz_set-业务集")
+    @ApiModelProperty(value = "资源管理空间类型", allowableValues = "biz-业务,biz_set-业务集")
     private String scopeType;
 
     /**
-     * 资源范围ID
+     * 资源管理空间ID
      */
-    @ApiModelProperty("资源范围ID")
+    @ApiModelProperty("资源管理空间ID")
     private String scopeId;
 
     @Deprecated
     @ApiModelProperty("业务名")
     private String appName;
 
-    @ApiModelProperty("资源范围名称")
+    @ApiModelProperty("资源管理空间名称")
     private String scopeName;
 
     @ApiModelProperty("动态分组 ID")

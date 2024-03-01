@@ -25,15 +25,15 @@
 package com.tencent.bk.job.common.cc.config;
 
 import com.tencent.bk.job.common.WatchableThreadPoolExecutor;
+import com.tencent.bk.job.common.bkapigw.config.BkApiGatewayProperties;
 import com.tencent.bk.job.common.cc.sdk.BizCmdbClient;
 import com.tencent.bk.job.common.cc.sdk.BizSetCmdbClient;
 import com.tencent.bk.job.common.cc.sdk.BkNetClient;
 import com.tencent.bk.job.common.cc.sdk.IBizCmdbClient;
-import com.tencent.bk.job.common.esb.config.AppProperties;
-import com.tencent.bk.job.common.esb.config.BkApiAutoConfiguration;
-import com.tencent.bk.job.common.esb.config.BkApiGatewayProperties;
 import com.tencent.bk.job.common.esb.config.EsbProperties;
 import com.tencent.bk.job.common.esb.constants.EsbLang;
+import com.tencent.bk.job.common.openapi.config.AppProperties;
+import com.tencent.bk.job.common.openapi.config.OpenApiAutoConfiguration;
 import com.tencent.bk.job.common.util.FlowController;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +50,7 @@ import java.util.concurrent.TimeUnit;
 
 @Configuration(proxyBeanMethods = false)
 @Import({CmdbConfig.class})
-@AutoConfigureAfter(BkApiAutoConfiguration.class)
+@AutoConfigureAfter(OpenApiAutoConfiguration.class)
 @Slf4j
 public class CmdbAutoConfiguration {
     @Bean("cmdbThreadPoolExecutor")

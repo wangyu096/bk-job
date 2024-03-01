@@ -37,12 +37,12 @@ public class AppInfo {
     private Long id;
 
     /**
-     * 资源范围类型
+     * 资源管理空间类型
      */
     private String scopeType;
 
     /**
-     * 资源范围ID,比如cmdb业务ID、cmdb业务集ID
+     * 资源管理空间ID,比如cmdb业务ID、cmdb业务集ID
      */
     private String scopeId;
 

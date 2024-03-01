@@ -36,7 +36,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class AddHostIdMigrationReq {
-    // 迁移数据限定的资源范围，不传该参数则表示迁移所有资源范围下的数据
+    // 迁移数据限定的资源管理空间，不传该参数则表示迁移所有资源管理空间下的数据
     private List<ResourceScope> scopeList;
 
     private boolean dryRun;
