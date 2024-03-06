@@ -29,6 +29,10 @@ package com.tencent.bk.job.common.model.error;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
+/**
+ * Replace by
+ */
+@Deprecated
 public enum ErrorType {
     OK(1),
     INVALID_PARAM(2),

@@ -61,7 +61,7 @@ import static com.tencent.bk.job.common.constant.JobConstants.JOB_BUILD_IN_BIZ_S
  * Job AppResourceScope 处理
  */
 @Slf4j
-@JobInterceptor(pathPatterns = {"/web/**", "/service/**", "/esb/api/**"},
+@JobInterceptor(pathPatterns = {"/web/**", "/service/**", "/esb/api/**", "/open/api/**"},
     order = InterceptorOrder.Init.REWRITE_REQUEST)
 public class AppResourceScopeInterceptor implements AsyncHandlerInterceptor {
     private static final Pattern SCOPE_PATTERN = Pattern.compile("/scope/(\\w+)/(\\d+)");
@@ -86,8 +86,9 @@ public class AppResourceScopeInterceptor implements AsyncHandlerInterceptor {
 
     private boolean shouldFilter(HttpServletRequest request) {
         String uri = request.getRequestURI();
-        // 只拦截web/service/esb的API请求
-        return uri.startsWith("/web/") || uri.startsWith("/service/") || uri.startsWith("/esb/");
+        // 只拦截web/service/esb/openapi的API请求
+        return uri.startsWith("/web/") || uri.startsWith("/service/") || uri.startsWith("/esb/")
+            || uri.startsWith("/open/");
     }
 
     private void addAppResourceScope(HttpServletRequest request) {
@@ -99,6 +100,7 @@ public class AppResourceScopeInterceptor implements AsyncHandlerInterceptor {
         AppResourceScope appResourceScope = null;
         switch (requestSource) {
             case WEB:
+            case BK_API_GW:
                 appResourceScope = parseAppResourceScopeFromPath(request.getRequestURI());
                 log.debug("Scope from path:{}", appResourceScope);
                 break;

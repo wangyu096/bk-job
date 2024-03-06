@@ -10,7 +10,11 @@ import lombok.ToString;
 @ToString
 public class IncorrectConfigException extends InternalException {
 
-    public IncorrectConfigException(String message, Integer errorCode, Object[] errorParams) {
-        super(message, errorCode, errorParams);
+    public IncorrectConfigException(String internalErrorMessage, Throwable cause) {
+        super(internalErrorMessage, cause);
+    }
+
+    public IncorrectConfigException(String internalErrorMessage) {
+        super(internalErrorMessage);
     }
 }

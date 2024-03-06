@@ -81,7 +81,7 @@ public class ServiceExceptionControllerAdvice extends ExceptionControllerAdviceB
                                                         PermissionDeniedException ex) {
         log.info("Handle PermissionDeniedException, uri: {}, authResult: {}",
             request.getRequestURI(), ex.getAuthResult());
-        return InternalResponse.buildAuthFailResp(AuthResult.toAuthResultDTO(ex.getAuthResult()));
+        return InternalResponse.buildCommonFailResp(AuthResult.toAuthResultDTO(ex.getAuthResult()));
     }
 
     @ExceptionHandler(InternalException.class)

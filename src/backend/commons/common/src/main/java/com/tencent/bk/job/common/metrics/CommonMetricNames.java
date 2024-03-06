@@ -103,4 +103,9 @@ public class CommonMetricNames {
      * 统计调用 GSE API整个过程，含反序列化
      */
     public static final String ESB_GSE_API = "job.client.gse.api";
+
+    /**
+     * 被调用 Open API
+     */
+    public static final String OPEN_API = "job.server.open.api";
 }

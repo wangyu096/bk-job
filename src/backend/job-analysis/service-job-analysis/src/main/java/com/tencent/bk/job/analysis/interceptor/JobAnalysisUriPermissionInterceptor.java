@@ -38,7 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
-import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
+import org.springframework.web.servlet.AsyncHandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -50,7 +50,7 @@ import javax.servlet.http.HttpServletResponse;
 @Component
 @JobInterceptor(pathPatterns = {"/web/statistics/**"},
     order = InterceptorOrder.AUTH.AUTH_COMMON)
-public class JobAnalysisUriPermissionInterceptor extends HandlerInterceptorAdapter {
+public class JobAnalysisUriPermissionInterceptor implements AsyncHandlerInterceptor {
     private final String URI_PATTERN_WEB_STATISTICS = "/web/statistics/**";
     private final AuthService authService;
     private final PathMatcher pathMatcher;

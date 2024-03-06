@@ -28,16 +28,17 @@ import com.tencent.bk.job.common.artifactory.config.ArtifactoryConfig;
 import com.tencent.bk.job.common.artifactory.model.dto.TempUrlInfo;
 import com.tencent.bk.job.common.artifactory.sdk.ArtifactoryClient;
 import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.error.SubErrorCode;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.common.util.StringUtil;
 import com.tencent.bk.job.common.util.Utils;
-import com.tencent.bk.job.common.util.check.ParamCheckUtil;
 import com.tencent.bk.job.manage.api.esb.v3.EsbLocalFileV3Resource;
 import com.tencent.bk.job.manage.config.LocalFileConfigForManage;
 import com.tencent.bk.job.manage.model.esb.v3.request.EsbGenLocalFileUploadUrlV3Req;
 import com.tencent.bk.job.manage.model.esb.v3.response.EsbUploadUrlV3DTO;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.RestController;
@@ -75,12 +76,10 @@ public class EsbLocalFileResourceV3Impl implements EsbLocalFileV3Resource {
         List<String> fileNameList = req.getFileNameList();
         String fileNameDesc = "fileName in file_name_list";
         if (fileNameList == null) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                new String[]{"file_name_list", fileNameDesc + " cannot be null"});
+            throw new InvalidParamException(SubErrorCode.of(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
+                "file_name_list", fileNameDesc + " cannot be null"));
         }
-        fileNameList.forEach(fileName -> {
-            ParamCheckUtil.checkLocalUploadFileName(fileName, fileNameDesc);
-        });
+        fileNameList.forEach(fileName -> checkLocalUploadFileName(fileName, fileNameDesc));
         // 权限校验：在切面层已实现
         List<String> filePathList = new ArrayList<>();
         fileNameList.forEach(fileName -> {
@@ -126,5 +125,16 @@ public class EsbLocalFileResourceV3Impl implements EsbLocalFileV3Resource {
         }
         esbUploadUrlV3DTO.setUrlMap(urlMap);
         return EsbResp.buildSuccessResp(esbUploadUrlV3DTO);
+    }
+
+    private void checkLocalUploadFileName(String fileName, String paramName) {
+        if (StringUtils.isBlank(fileName)) {
+            throw new InvalidParamException(SubErrorCode.of(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
+                paramName, paramName + " cannot be null or blank"));
+        }
+        if (fileName.length() > 1024) {
+            throw new InvalidParamException(SubErrorCode.of(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
+                paramName, paramName + " length cannot be longer than 1024"));
+        }
     }
 }

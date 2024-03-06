@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.common.exception;
 
-import com.tencent.bk.job.common.model.error.ErrorType;
+import com.tencent.bk.job.common.error.BkErrorCodeEnum;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -34,36 +34,14 @@ import lombok.ToString;
 @Getter
 @ToString
 public class NotFoundException extends ServiceException {
-    public NotFoundException(Integer errorCode) {
-        super(ErrorType.NOT_FOUND, errorCode);
+
+    public NotFoundException(String internalErrorMessage, Throwable cause) {
+        super(internalErrorMessage, cause);
+        setErrorCode(BkErrorCodeEnum.NOT_FOUND);
     }
 
-    public NotFoundException(Integer errorCode, Object[] errorParams) {
-        super(ErrorType.NOT_FOUND, errorCode, errorParams);
-    }
-
-    public NotFoundException(String message, Integer errorCode) {
-        super(message, ErrorType.NOT_FOUND, errorCode);
-    }
-
-    public NotFoundException(String message, Integer errorCode, Object[] errorParams) {
-        super(message, ErrorType.NOT_FOUND, errorCode, errorParams);
-    }
-
-    public NotFoundException(Throwable cause, Integer errorCode) {
-        super(cause, ErrorType.NOT_FOUND, errorCode);
-    }
-
-    public NotFoundException(Throwable cause, Integer errorCode, Object[] errorParams) {
-        super(cause, ErrorType.NOT_FOUND, errorCode, errorParams);
-    }
-
-    public NotFoundException(String message, Throwable cause, Integer errorCode) {
-        super(message, cause, ErrorType.NOT_FOUND, errorCode);
-    }
-
-    public NotFoundException(String message, Throwable cause, Integer errorCode,
-                                 Object[] errorParams) {
-        super(message, cause, ErrorType.NOT_FOUND, errorCode, errorParams);
+    public NotFoundException(String internalErrorMessage) {
+        super(internalErrorMessage);
+        setErrorCode(BkErrorCodeEnum.NOT_FOUND);
     }
 }

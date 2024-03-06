@@ -25,40 +25,45 @@
 package com.tencent.bk.job.common.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.tencent.bk.job.common.annotation.CompatibleImplementation;
+import com.tencent.bk.job.common.constant.CompatibleType;
 import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.error.BkErrorCodeEnum;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.error.internal.InternalApiError;
+import com.tencent.bk.job.common.error.payload.ErrorPayloadDTO;
 import com.tencent.bk.job.common.exception.ServiceException;
-import com.tencent.bk.job.common.model.error.ErrorDetailDTO;
 import com.tencent.bk.job.common.model.error.ErrorType;
 import com.tencent.bk.job.common.model.iam.AuthResultDTO;
-import com.tencent.bk.job.common.util.I18nUtil;
 import com.tencent.bk.job.common.util.JobContextUtil;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
 @Getter
 @Setter
 @ToString
-@NoArgsConstructor
-@ApiModel("job内部微服务间调用通用返回结构")
+@ApiModel("job内部微服务间RPC调用通用响应")
 public class InternalResponse<T> {
 
-    @ApiModelProperty("是否成功")
+    @Deprecated
+    @CompatibleImplementation(name = "openapi", type = CompatibleType.DEPLOY, explain = "发布完成后可删除")
     private boolean success;
 
-    @ApiModelProperty("返回码")
+    @Deprecated
+    @CompatibleImplementation(name = "openapi", type = CompatibleType.DEPLOY, explain = "发布完成后可删除")
     private Integer code;
 
-    @ApiModelProperty("错误类型")
+    @Deprecated
+    @CompatibleImplementation(name = "openapi", type = CompatibleType.DEPLOY, explain = "发布完成后可删除")
     private Integer errorType;
 
-    @ApiModelProperty("错误信息")
+    @Deprecated
+    @CompatibleImplementation(name = "openapi", type = CompatibleType.DEPLOY, explain = "发布完成后可删除")
     private String errorMsg;
 
     @ApiModelProperty("请求成功返回的数据")
@@ -67,77 +72,96 @@ public class InternalResponse<T> {
     @ApiModelProperty("请求 ID")
     private String requestId;
 
-    @ApiModelProperty("鉴权结果，当返回码为1238001时，该字段有值")
     @JsonProperty("authResult")
+    @Deprecated
+    @CompatibleImplementation(name = "openapi", type = CompatibleType.DEPLOY, explain = "发布完成后可删除")
     private AuthResultDTO authResult;
 
-    @ApiModelProperty("错误详情")
-    @JsonProperty("errorDetail")
-    private ErrorDetailDTO errorDetail;
+    /**
+     * API 错误信息
+     */
+    private InternalApiError error;
 
-    public InternalResponse(ErrorType errorType, Integer errorCode, T data) {
-        this.code = errorCode;
-        this.success = errorCode != null && errorCode.equals(ErrorCode.RESULT_OK);
-        this.errorMsg = I18nUtil.getI18nMessage(String.valueOf(errorCode));
-        this.errorType = errorType.getType();
-        this.data = data;
-        this.requestId = JobContextUtil.getRequestId();
+    public InternalResponse() {
+
     }
 
-    public InternalResponse(ErrorType errorType, Integer errorCode, Object[] errorParams, T data) {
-        this.code = errorCode;
-        this.success = errorCode != null && errorCode.equals(ErrorCode.RESULT_OK);
-        this.errorMsg = I18nUtil.getI18nMessage(String.valueOf(errorCode), errorParams);
-        this.errorType = errorType.getType();
-        this.data = data;
+    private InternalResponse(BkErrorCodeEnum errorCode,
+                             SubErrorCode subErrorCode) {
+        this(errorCode, subErrorCode, null);
+    }
+
+    private InternalResponse(BkErrorCodeEnum errorCode,
+                             SubErrorCode subErrorCode,
+                             ErrorPayloadDTO errorPayload) {
+        // 兼容处理
+        this.code = subErrorCode.getCode();
+        this.success = false;
+        this.errorMsg = subErrorCode.getI18nMessage();
+        this.errorType = convertToErrorType(errorCode);
         this.requestId = JobContextUtil.getRequestId();
+
+        // 标准错误处理
+        InternalApiError error = new InternalApiError();
+        error.setCode(errorCode.getErrorCode());
+        error.setMessage(subErrorCode.getI18nMessage());
+        error.setSubCode(subErrorCode.getCode());
+        error.setData(errorPayload);
+        this.error = error;
+    }
+
+
+    @CompatibleImplementation(name = "openapi", type = CompatibleType.DEPLOY, explain = "发布完成后可删除")
+    private Integer convertToErrorType(BkErrorCodeEnum errorCode) {
+        switch (errorCode) {
+            case IAM_NO_PERMISSION:
+                return ErrorType.PERMISSION_DENIED.getType();
+            case INVALID_ARGUMENT:
+            case OUT_OF_RANGE:
+            case INVALID_REQUEST:
+                return ErrorType.INVALID_PARAM.getType();
+            case FAILED_PRECONDITION:
+                return ErrorType.FAILED_PRECONDITION.getType();
+            case UNAUTHENTICATED:
+                return ErrorType.UNAUTHENTICATED.getType();
+            case NOT_FOUND:
+                return ErrorType.NOT_FOUND.getType();
+            case ALREADY_EXISTS:
+                return ErrorType.ALREADY_EXISTS.getType();
+            case ABORTED:
+                return ErrorType.ABORTED.getType();
+            case RESOURCE_EXHAUSTED:
+            case RATELIMIT_EXCEED:
+                return ErrorType.RESOURCE_EXHAUSTED.getType();
+            case NOT_IMPLEMENTED:
+                return ErrorType.UNIMPLEMENTED.getType();
+            case INTERNAL:
+            case UNKNOWN:
+                return ErrorType.INTERNAL.getType();
+            case UNAVAILABLE:
+                return ErrorType.UNAVAILABLE.getType();
+            default:
+                return ErrorType.INTERNAL.getType();
+        }
     }
 
     public static <T> InternalResponse<T> buildSuccessResp(T data) {
-        return new InternalResponse<>(ErrorType.OK, ErrorCode.RESULT_OK, data);
+        InternalResponse<T> response = new InternalResponse<>();
+        response.code = ErrorCode.RESULT_OK;
+        response.success = true;
+        response.data = data;
+        response.errorType = ErrorType.OK.getType();
+        response.requestId = JobContextUtil.getRequestId();
+        return response;
     }
 
-    public static <T> InternalResponse<T> buildAuthFailResp(AuthResultDTO authResult) {
-        InternalResponse<T> resp = new InternalResponse<>(ErrorType.PERMISSION_DENIED,
-            ErrorCode.PERMISSION_DENIED, null);
-        resp.authResult = authResult;
-        return resp;
-    }
-
-    public static <T> InternalResponse<T> buildCommonFailResp(ErrorType errorType, Integer errorCode) {
-        return new InternalResponse<>(errorType, errorCode, null);
-    }
-
-    public static <T> InternalResponse<T> buildCommonFailResp(ErrorType errorType, Integer errorCode, Object[] params) {
-        return new InternalResponse<>(errorType, errorCode, params, null);
+    public static <T> InternalResponse<T> buildCommonFailResp(BkErrorCodeEnum errorCode,
+                                                              SubErrorCode subErrorCode) {
+        return new InternalResponse<>(errorCode, subErrorCode);
     }
 
     public static <T> InternalResponse<T> buildCommonFailResp(ServiceException e) {
-        return new InternalResponse<>(e.getErrorType(), e.getErrorCode(), e.getErrorParams(), null);
+        return new InternalResponse<>(e.getErrorCode(), e.getSubErrorCode(), e.getErrorPayload());
     }
 
-    public static <T> InternalResponse<T> buildValidateFailResp(ValidateResult validateResult) {
-        return new InternalResponse<>(ErrorType.INVALID_PARAM, validateResult.getErrorCode(),
-            validateResult.getErrorParams(), null);
-    }
-
-    public static <T> InternalResponse<T> buildCommonFailResp(ErrorType errorType, Integer errorCode,
-                                                              ErrorDetailDTO errorDetail) {
-        InternalResponse<T> resp = buildCommonFailResp(errorType, errorCode);
-        resp.setErrorDetail(errorDetail);
-        return resp;
-    }
-
-    public static <T> InternalResponse<T> buildValidateFailResp(ErrorDetailDTO errorDetail) {
-        InternalResponse<T> resp = buildCommonFailResp(ErrorType.INVALID_PARAM, ErrorCode.BAD_REQUEST);
-        if (errorDetail != null && errorDetail.getBadRequestDetail() != null) {
-            String errorMsg = errorDetail.getBadRequestDetail().findFirstFieldErrorDesc();
-            if (StringUtils.isNotBlank(errorMsg)) {
-                // set validation detailed message instead of common error message
-                resp.setErrorMsg(errorMsg);
-            }
-        }
-        resp.setErrorDetail(errorDetail);
-        return resp;
-    }
 }

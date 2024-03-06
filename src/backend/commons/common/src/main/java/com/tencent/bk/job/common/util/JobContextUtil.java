@@ -243,4 +243,18 @@ public class JobContextUtil {
         }
         return metricTagsMap;
     }
+
+    public static String getAppCode() {
+        JobContext jobContext = JobContextThreadLocal.get();
+        String appCode = null;
+        if (jobContext != null) {
+            appCode = jobContext.getAppCode();
+        }
+        return appCode;
+    }
+
+    public static void setAppCode(String appCode) {
+        JobContext jobContext = getOrInitContext();
+        jobContext.setAppCode(appCode);
+    }
 }

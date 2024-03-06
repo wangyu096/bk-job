@@ -24,8 +24,8 @@
 
 package com.tencent.bk.job.common.validation;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.InternalException;
 
 import javax.validation.Constraint;
 import javax.validation.ConstraintValidator;
@@ -96,8 +96,9 @@ public @interface CheckEnum {
                 Boolean result = (Boolean) method.invoke(null, value);
                 return result != null && result;
             } catch (Exception e) {
-                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+                throw new InternalException(e, SubErrorCode.INTERNAL_ERROR);
             }
+
         }
 
     }

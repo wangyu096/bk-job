@@ -35,21 +35,22 @@ import com.tencent.bk.job.common.web.model.RepeatableReadWriteHttpServletRequest
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpMethod;
-import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
+import org.springframework.web.servlet.AsyncHandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.StringJoiner;
 
 @Slf4j
-@JobInterceptor(order = InterceptorOrder.Init.LOG, pathPatterns = "/esb/api/**")
-public class EsbApiLogInterceptor extends HandlerInterceptorAdapter {
+@JobInterceptor(order = InterceptorOrder.Init.LOG, pathPatterns = {"/esb/api/**", "/open/api/**"})
+public class EsbApiLogInterceptor implements AsyncHandlerInterceptor {
 
     private static final String ATTR_REQUEST_START = "request-start";
-    private static final String ATTR_API_NAME = "api-name";
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+    public boolean preHandle(HttpServletRequest request,
+                             HttpServletResponse response,
+                             Object handler) {
         if (!(request instanceof RepeatableReadWriteHttpServletRequest)) {
             return true;
         }
@@ -58,21 +59,18 @@ public class EsbApiLogInterceptor extends HandlerInterceptorAdapter {
         String desensitizedQueryParams = "";
         String username = request.getHeader(JobCommonHeaders.USERNAME);
         String appCode = request.getHeader(JobCommonHeaders.APP_CODE);
-        String apiName = "";
         String lang = request.getHeader(JobCommonHeaders.BK_GATEWAY_LANG);
         String requestId = request.getHeader(JobCommonHeaders.BK_GATEWAY_REQUEST_ID);
 
         try {
             request.setAttribute(ATTR_REQUEST_START, System.currentTimeMillis());
-            apiName = getAPIName(wrapperRequest.getRequestURI());
-            request.setAttribute(ATTR_API_NAME, apiName);
             desensitizedQueryParams = desensitizeQueryParams(request.getQueryString());
             desensitizedBody = desensitizeRequestBody(wrapperRequest);
         } catch (Throwable ignore) {
             // do nothing
         } finally {
-            log.info("request-id: {}|lang: {}|API: {}|uri: {}|appCode: {}|username: {}|body: {}|queryParams: {}",
-                requestId, lang, apiName, request.getRequestURI(), appCode, username, desensitizedBody,
+            log.info("request-id: {}|lang: {}|uri: {}|appCode: {}|username: {}|body: {}|queryParams: {}",
+                requestId, lang, request.getRequestURI(), appCode, username, desensitizedBody,
                 desensitizedQueryParams);
         }
         return true;
@@ -87,7 +85,7 @@ public class EsbApiLogInterceptor extends HandlerInterceptorAdapter {
                     return null;
                 }
 
-                // 由于历史原因，ESB API 的调用方会在 Body 中直接传入 bk_app_secret 这个敏感参数，需要在日志记录的时候脱敏
+                // 由于历史原因, API 的调用方会在 Body 中直接传入 bk_app_secret 这个敏感参数，需要在日志记录的时候脱敏
                 if (jsonBody.get("bk_app_secret") != null) {
                     jsonBody.remove("bk_app_secret");
                 }
@@ -121,28 +119,25 @@ public class EsbApiLogInterceptor extends HandlerInterceptorAdapter {
         return desensitizedQueryParams;
     }
 
-    private String getAPIName(String uri) {
-        return uri.substring(uri.lastIndexOf("/") + 1);
-    }
 
     @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception
-        ex) throws Exception {
+    public void afterCompletion(HttpServletRequest request,
+                                HttpServletResponse response,
+                                Object handler,
+                                Exception ex) {
         if (!(response instanceof RepeatableReadHttpServletResponse)) {
             return;
         }
         RepeatableReadHttpServletResponse wrapperResponse = (RepeatableReadHttpServletResponse) response;
         try {
             Long startTimeInMills = (Long) request.getAttribute(ATTR_REQUEST_START);
-            String apiName = (String) request.getAttribute(ATTR_API_NAME);
             String username = request.getHeader(JobCommonHeaders.USERNAME);
             String appCode = request.getHeader(JobCommonHeaders.APP_CODE);
             String requestId = request.getHeader(JobCommonHeaders.BK_GATEWAY_REQUEST_ID);
             int respStatus = response.getStatus();
             long cost = System.currentTimeMillis() - startTimeInMills;
-            log.info("request-id: {}|API: {}|uri: {}|appCode: {}|username: {}|status: {}|resp: {}|cost: {}",
+            log.info("request-id: {}|uri: {}|appCode: {}|username: {}|status: {}|resp: {}|cost: {}",
                 requestId,
-                apiName,
                 request.getRequestURI(),
                 appCode,
                 username,
@@ -151,9 +146,6 @@ public class EsbApiLogInterceptor extends HandlerInterceptorAdapter {
                 cost);
         } catch (Throwable e) {
             log.warn("Handle after completion fail", e);
-        } finally {
-
-            super.afterCompletion(request, response, handler, ex);
         }
     }
 }

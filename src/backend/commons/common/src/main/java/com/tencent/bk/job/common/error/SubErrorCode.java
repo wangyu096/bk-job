@@ -24,14 +24,20 @@
 
 package com.tencent.bk.job.common.error;
 
+import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.util.I18nUtil;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.Locale;
+
 /**
- * 系统子错误码
+ * Job 自定义子错误码
  */
 public class SubErrorCode {
     /**
      * 子错误码
      */
-    private Long code;
+    private Integer code;
 
     /**
      * 错误提示信息引用的参数
@@ -39,11 +45,28 @@ public class SubErrorCode {
     private Object[] params;
 
     /**
-     * 错误提示信息
+     * 错误消息（面向用户)
      */
     private String message;
 
-    public static SubErrorCode of(Long code, Object... params) {
+    public static final SubErrorCode INTERNAL_ERROR = SubErrorCode.of(ErrorCode.INTERNAL_ERROR);
+    public static final SubErrorCode ILLEGAL_PARAM = SubErrorCode.of(ErrorCode.ILLEGAL_PARAM);
+    public static final SubErrorCode API_ERROR = SubErrorCode.of(ErrorCode.API_ERROR);
+
+    private SubErrorCode() {
+    }
+
+    public SubErrorCode(Integer code, String errorMsg) {
+        this.code = code;
+        this.message = errorMsg;
+    }
+
+    public SubErrorCode(Integer code, Object[] params) {
+        this.code = code;
+        this.params = params;
+    }
+
+    public static SubErrorCode of(Integer code, Object... params) {
         SubErrorCode subErrorCode = new SubErrorCode();
         subErrorCode.code = code;
         if (params != null && params.length > 0) {
@@ -53,7 +76,7 @@ public class SubErrorCode {
         return subErrorCode;
     }
 
-    public Long getCode() {
+    public Integer getCode() {
         return code;
     }
 
@@ -61,7 +84,17 @@ public class SubErrorCode {
         return params;
     }
 
-    public String getMessage() {
-        return message;
+    public String getI18nMessage() {
+        if (StringUtils.isNotEmpty(message)) {
+            return message;
+        }
+        return I18nUtil.getI18nMessage(String.valueOf(code), params);
+    }
+
+    public String getI18nMessage(Locale locale) {
+        if (StringUtils.isNotEmpty(message)) {
+            return message;
+        }
+        return I18nUtil.getI18nMessage(locale, String.valueOf(code), params);
     }
 }

@@ -22,49 +22,19 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.exception;
+package com.tencent.bk.job.common.openapi.job.v4;
 
-import com.tencent.bk.job.common.model.error.ErrorType;
-import lombok.Getter;
-import lombok.ToString;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import lombok.Data;
 
 /**
- * 请求超时
+ * 动态分组
  */
-@Getter
-@ToString
-public class TimeoutException extends ServiceException {
-
-    public TimeoutException(Integer errorCode) {
-        super(ErrorType.TIMEOUT, errorCode);
-    }
-
-    public TimeoutException(Integer errorCode, Object[] errorParams) {
-        super(ErrorType.TIMEOUT, errorCode, errorParams);
-    }
-
-    public TimeoutException(String message, Integer errorCode) {
-        super(message, ErrorType.TIMEOUT, errorCode);
-    }
-
-    public TimeoutException(String message, Integer errorCode, Object[] errorParams) {
-        super(message, ErrorType.TIMEOUT, errorCode, errorParams);
-    }
-
-    public TimeoutException(Throwable cause, Integer errorCode) {
-        super(cause, ErrorType.TIMEOUT, errorCode);
-    }
-
-    public TimeoutException(Throwable cause, Integer errorCode, Object[] errorParams) {
-        super(cause, ErrorType.TIMEOUT, errorCode, errorParams);
-    }
-
-    public TimeoutException(String message, Throwable cause, Integer errorCode) {
-        super(message, cause, ErrorType.TIMEOUT, errorCode);
-    }
-
-    public TimeoutException(String message, Throwable cause, Integer errorCode,
-                                      Object[] errorParams) {
-        super(message, cause, ErrorType.TIMEOUT, errorCode, errorParams);
-    }
+@Data
+public class OpenApiDynamicGroupV4DTO {
+    /**
+     * 动态分组ID
+     */
+    @JsonPropertyDescription("Cmdb dynamic group id")
+    private String id;
 }

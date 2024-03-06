@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.common.exception;
 
-import com.tencent.bk.job.common.model.error.ErrorType;
+import com.tencent.bk.job.common.error.BkErrorCodeEnum;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -35,36 +35,13 @@ import lombok.ToString;
 @ToString
 public class ResourceExhaustedException extends ServiceException {
 
-    public ResourceExhaustedException(Integer errorCode) {
-        super(ErrorType.RESOURCE_EXHAUSTED, errorCode);
+    public ResourceExhaustedException(String internalErrorMessage, Throwable cause) {
+        super(internalErrorMessage, cause);
+        setErrorCode(BkErrorCodeEnum.RESOURCE_EXHAUSTED);
     }
 
-    public ResourceExhaustedException(Integer errorCode, Object[] errorParams) {
-        super(ErrorType.RESOURCE_EXHAUSTED, errorCode, errorParams);
-    }
-
-    public ResourceExhaustedException(String message, Integer errorCode) {
-        super(message, ErrorType.RESOURCE_EXHAUSTED, errorCode);
-    }
-
-    public ResourceExhaustedException(String message, Integer errorCode, Object[] errorParams) {
-        super(message, ErrorType.RESOURCE_EXHAUSTED, errorCode, errorParams);
-    }
-
-    public ResourceExhaustedException(Throwable cause, Integer errorCode) {
-        super(cause, ErrorType.RESOURCE_EXHAUSTED, errorCode);
-    }
-
-    public ResourceExhaustedException(Throwable cause, Integer errorCode, Object[] errorParams) {
-        super(cause, ErrorType.RESOURCE_EXHAUSTED, errorCode, errorParams);
-    }
-
-    public ResourceExhaustedException(String message, Throwable cause, Integer errorCode) {
-        super(message, cause, ErrorType.RESOURCE_EXHAUSTED, errorCode);
-    }
-
-    public ResourceExhaustedException(String message, Throwable cause, Integer errorCode,
-                                   Object[] errorParams) {
-        super(message, cause, ErrorType.RESOURCE_EXHAUSTED, errorCode, errorParams);
+    public ResourceExhaustedException(String internalErrorMessage) {
+        super(internalErrorMessage);
+        setErrorCode(BkErrorCodeEnum.RESOURCE_EXHAUSTED);
     }
 }

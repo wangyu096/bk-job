@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.common.exception;
 
-import com.tencent.bk.job.common.model.error.ErrorType;
+import com.tencent.bk.job.common.error.BkErrorCodeEnum;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -35,36 +35,13 @@ import lombok.ToString;
 @ToString
 public class FailedPreconditionException extends ServiceException {
 
-    public FailedPreconditionException(Integer errorCode) {
-        super(ErrorType.FAILED_PRECONDITION, errorCode);
+    public FailedPreconditionException(String internalErrorMessage, Throwable cause) {
+        super(internalErrorMessage, cause);
+        setErrorCode(BkErrorCodeEnum.FAILED_PRECONDITION);
     }
 
-    public FailedPreconditionException(Integer errorCode, Object[] errorParams) {
-        super(ErrorType.FAILED_PRECONDITION, errorCode, errorParams);
-    }
-
-    public FailedPreconditionException(String message, Integer errorCode) {
-        super(message, ErrorType.FAILED_PRECONDITION, errorCode);
-    }
-
-    public FailedPreconditionException(String message, Integer errorCode, Object[] errorParams) {
-        super(message, ErrorType.FAILED_PRECONDITION, errorCode, errorParams);
-    }
-
-    public FailedPreconditionException(Throwable cause, Integer errorCode) {
-        super(cause, ErrorType.FAILED_PRECONDITION, errorCode);
-    }
-
-    public FailedPreconditionException(Throwable cause, Integer errorCode, Object[] errorParams) {
-        super(cause, ErrorType.FAILED_PRECONDITION, errorCode, errorParams);
-    }
-
-    public FailedPreconditionException(String message, Throwable cause, Integer errorCode) {
-        super(message, cause, ErrorType.FAILED_PRECONDITION, errorCode);
-    }
-
-    public FailedPreconditionException(String message, Throwable cause, Integer errorCode,
-                                       Object[] errorParams) {
-        super(message, cause, ErrorType.FAILED_PRECONDITION, errorCode, errorParams);
+    public FailedPreconditionException(String internalErrorMessage) {
+        super(internalErrorMessage);
+        setErrorCode(BkErrorCodeEnum.FAILED_PRECONDITION);
     }
 }

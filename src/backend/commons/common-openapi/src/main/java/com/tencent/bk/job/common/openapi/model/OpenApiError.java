@@ -24,7 +24,9 @@
 
 package com.tencent.bk.job.common.openapi.model;
 
+import com.tencent.bk.job.common.error.BkErrorCodeEnum;
 import com.tencent.bk.job.common.openapi.model.iam.OpenApiApplyPermissionDTO;
+import com.tencent.bk.job.common.util.I18nUtil;
 import lombok.Data;
 
 /**
@@ -48,4 +50,20 @@ public class OpenApiError {
      * 无权限返回数据。当 http status = 403 且 code = IAM_NO_PERMISSION 时，该字段有效
      */
     private OpenApiApplyPermissionDTO permission;
+
+
+
+    public static OpenApiError internalError() {
+        OpenApiError error = new OpenApiError();
+        error.setCode(BkErrorCodeEnum.INTERNAL.getErrorCode());
+        error.setMessage(I18nUtil.getI18nMessage(""));
+        return error;
+    }
+
+    public static OpenApiError badRequest() {
+        OpenApiError error = new OpenApiError();
+        error.setCode(BkErrorCodeEnum.INVALID_ARGUMENT.getErrorCode());
+        error.setMessage(I18nUtil.getI18nMessage(""));
+        return error;
+    }
 }

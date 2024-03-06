@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.common.exception;
 
-import com.tencent.bk.job.common.model.error.ErrorType;
+import com.tencent.bk.job.common.error.BkErrorCodeEnum;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -35,36 +35,13 @@ import lombok.ToString;
 @ToString
 public class UnauthenticatedException extends ServiceException {
 
-    public UnauthenticatedException(Integer errorCode) {
-        super(ErrorType.UNAUTHENTICATED, errorCode);
+    public UnauthenticatedException(String internalErrorMessage, Throwable cause) {
+        super(internalErrorMessage, cause);
+        setErrorCode(BkErrorCodeEnum.UNAUTHENTICATED);
     }
 
-    public UnauthenticatedException(Integer errorCode, Object[] errorParams) {
-        super(ErrorType.UNAUTHENTICATED, errorCode, errorParams);
-    }
-
-    public UnauthenticatedException(String message, Integer errorCode) {
-        super(message, ErrorType.UNAUTHENTICATED, errorCode);
-    }
-
-    public UnauthenticatedException(String message, Integer errorCode, Object[] errorParams) {
-        super(message, ErrorType.UNAUTHENTICATED, errorCode, errorParams);
-    }
-
-    public UnauthenticatedException(Throwable cause, Integer errorCode) {
-        super(cause, ErrorType.UNAUTHENTICATED, errorCode);
-    }
-
-    public UnauthenticatedException(Throwable cause, Integer errorCode, Object[] errorParams) {
-        super(cause, ErrorType.UNAUTHENTICATED, errorCode, errorParams);
-    }
-
-    public UnauthenticatedException(String message, Throwable cause, Integer errorCode) {
-        super(message, cause, ErrorType.UNAUTHENTICATED, errorCode);
-    }
-
-    public UnauthenticatedException(String message, Throwable cause, Integer errorCode,
-                            Object[] errorParams) {
-        super(message, cause, ErrorType.UNAUTHENTICATED, errorCode, errorParams);
+    public UnauthenticatedException(String internalErrorMessage) {
+        super(internalErrorMessage);
+        setErrorCode(BkErrorCodeEnum.UNAUTHENTICATED);
     }
 }

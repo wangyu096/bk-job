@@ -24,47 +24,16 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package com.tencent.bk.job.common.model.error;
+package com.tencent.bk.job.common.annotation;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.apache.commons.collections4.CollectionUtils;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import java.util.ArrayList;
-import java.util.List;
-
-@Data
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@NoArgsConstructor
-public class BadRequestDetailDTO {
-
-    @JsonProperty("fieldViolations")
-    private List<FieldViolationDTO> fieldViolations;
-
-    /**
-     * 新增参数校验错误
-     *
-     * @param fieldViolation 参数校验错误
-     */
-    public void addFieldViolation(FieldViolationDTO fieldViolation) {
-        if (fieldViolations == null) {
-            this.fieldViolations = new ArrayList<>();
-        }
-        this.fieldViolations.add(fieldViolation);
-    }
-
-    /**
-     * 返回第一个参数校验错误描述
-     *
-     * @return 错误描述
-     */
-    public String findFirstFieldErrorDesc() {
-        if (CollectionUtils.isEmpty(this.fieldViolations)) {
-            return "";
-        }
-        return this.fieldViolations.get(0).getDescription();
-    }
-
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface OpenAPI {
 }

@@ -27,7 +27,7 @@ package com.tencent.bk.job.execute.api.open.v4.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.tencent.bk.job.common.constant.JobConstants;
 import com.tencent.bk.job.common.openapi.job.v4.OpenApiExecuteObjectsV4DTO;
-import com.tencent.bk.job.common.openapi.model.OpenApiResourceScopeReq;
+import com.tencent.bk.job.common.openapi.model.OpenApiReq;
 import com.tencent.bk.job.execute.model.esb.v3.EsbRollingConfigDTO;
 import lombok.Getter;
 import lombok.Setter;
@@ -42,7 +42,7 @@ import javax.validation.Valid;
 @Getter
 @Setter
 @ToString
-public class OpenApiFastExecuteScriptV4Request extends OpenApiResourceScopeReq {
+public class OpenApiFastExecuteScriptV4Request extends OpenApiReq {
 
     /**
      * 脚本执行任务名称

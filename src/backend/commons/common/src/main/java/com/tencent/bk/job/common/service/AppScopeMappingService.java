@@ -24,8 +24,6 @@
 
 package com.tencent.bk.job.common.service;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
 import com.tencent.bk.job.common.model.dto.ResourceScope;
 import org.apache.commons.lang3.StringUtils;
@@ -85,8 +83,6 @@ public interface AppScopeMappingService {
             ResourceScope scope = getScopeByAppId(appResourceScope.getAppId());
             appResourceScope.setType(scope.getType());
             appResourceScope.setId(scope.getId());
-            return;
         }
-        throw new InternalException("Invalid AppResourceScope", ErrorCode.INTERNAL_ERROR);
     }
 }

@@ -24,6 +24,7 @@
 
 package com.tencent.bk.job.common.model.iam;
 
+import com.tencent.bk.job.common.error.payload.ErrorPayloadDTO;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -33,7 +34,7 @@ import java.util.List;
  * 鉴权结果
  */
 @Data
-public class AuthResultDTO {
+public class AuthResultDTO extends ErrorPayloadDTO {
     /**
      * 是否鉴权通过
      */

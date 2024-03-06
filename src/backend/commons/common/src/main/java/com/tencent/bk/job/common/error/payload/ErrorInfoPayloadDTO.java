@@ -21,50 +21,35 @@
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
+package com.tencent.bk.job.common.error.payload;
 
-package com.tencent.bk.job.common.exception;
-
-import com.tencent.bk.job.common.model.error.ErrorType;
-import lombok.Getter;
-import lombok.ToString;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.tencent.bk.job.common.error.BkErrorCodeEnum;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 /**
- * IPv6地址不合法
+ * 后台错误 Payload
+ * <p>
+ * {@link BkErrorCodeEnum#INTERNAL}
+ * {@link BkErrorCodeEnum#UNKNOWN}
+ * {@link BkErrorCodeEnum#UNAVAILABLE}
  */
-@Getter
-@ToString
-public class InvalidIpv6Exception extends ServiceException {
+@EqualsAndHashCode(callSuper = true)
+@Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@NoArgsConstructor
+public class ErrorInfoPayloadDTO extends ErrorPayloadDTO {
 
-    public InvalidIpv6Exception(Integer errorCode) {
-        super(ErrorType.INTERNAL, errorCode);
-    }
+    /**
+     * 错误原因的简要描述
+     */
+    private String reason;
 
-    public InvalidIpv6Exception(Integer errorCode, Object[] errorParams) {
-        super(ErrorType.INTERNAL, errorCode, errorParams);
-    }
+    /**
+     * 错误所属范围（比如微服务名)
+     */
+    private String domain;
 
-    public InvalidIpv6Exception(String message, Integer errorCode) {
-        super(message, ErrorType.INTERNAL, errorCode);
-    }
-
-    public InvalidIpv6Exception(String message, Integer errorCode, Object[] errorParams) {
-        super(message, ErrorType.INTERNAL, errorCode, errorParams);
-    }
-
-    public InvalidIpv6Exception(Throwable cause, Integer errorCode) {
-        super(cause, ErrorType.INTERNAL, errorCode);
-    }
-
-    public InvalidIpv6Exception(Throwable cause, Integer errorCode, Object[] errorParams) {
-        super(cause, ErrorType.INTERNAL, errorCode, errorParams);
-    }
-
-    public InvalidIpv6Exception(String message, Throwable cause, Integer errorCode) {
-        super(message, cause, ErrorType.INTERNAL, errorCode);
-    }
-
-    public InvalidIpv6Exception(String message, Throwable cause, Integer errorCode,
-                                Object[] errorParams) {
-        super(message, cause, ErrorType.INTERNAL, errorCode, errorParams);
-    }
 }

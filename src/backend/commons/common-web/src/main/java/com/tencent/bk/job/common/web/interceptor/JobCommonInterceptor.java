@@ -24,8 +24,6 @@
 
 package com.tencent.bk.job.common.web.interceptor;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.tencent.bk.job.common.annotation.JobInterceptor;
 import com.tencent.bk.job.common.constant.HttpRequestSourceEnum;
 import com.tencent.bk.job.common.constant.InterceptorOrder;
@@ -33,16 +31,12 @@ import com.tencent.bk.job.common.constant.JobCommonHeaders;
 import com.tencent.bk.job.common.i18n.locale.LocaleUtils;
 import com.tencent.bk.job.common.util.JobContextUtil;
 import com.tencent.bk.job.common.util.RequestUtil;
-import com.tencent.bk.job.common.util.json.JsonUtils;
-import com.tencent.bk.job.common.web.model.RepeatableReadWriteHttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
-import org.slf4j.helpers.MessageFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.sleuth.Span;
 import org.springframework.cloud.sleuth.Tracer;
-import org.springframework.http.HttpMethod;
 import org.springframework.lang.NonNull;
 import org.springframework.web.servlet.AsyncHandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
@@ -81,14 +75,16 @@ public class JobCommonInterceptor implements AsyncHandlerInterceptor {
 
         addUsername(request);
         addLang(request);
+        addAppCode(request);
 
         return true;
     }
 
     private boolean shouldFilter(HttpServletRequest request) {
         String uri = request.getRequestURI();
-        // 只拦截web/service/esb的API请求
-        return uri.startsWith("/web/") || uri.startsWith("/service/") || uri.startsWith("/esb/");
+        // 只拦截web/service/esb/OpenAPI的API请求
+        return uri.startsWith("/web/") || uri.startsWith("/service/") || uri.startsWith("/esb/")
+            || uri.startsWith("/open/");
     }
 
     private void initSpanAndAddRequestId() {
@@ -113,19 +109,36 @@ public class JobCommonInterceptor implements AsyncHandlerInterceptor {
                 username = request.getHeader("username");
                 break;
             case ESB:
-                // 网关从ESB JWT中解析出的Username最高优先级
+            case BK_API_GW:
+                // Job 网关设置的用户名 Header
                 username = request.getHeader(JobCommonHeaders.USERNAME);
-                log.debug("username from gateway:{}", username);
-                // QueryString/Body中的Username次优先
-                if (StringUtils.isBlank(username)) {
-                    username = parseUsernameFromQueryStringOrBody(request);
-                    log.debug("username from query/body:{}", username);
-                }
                 break;
         }
 
         if (StringUtils.isNotBlank(username)) {
             JobContextUtil.setUsername(username);
+        } else {
+            log.warn("Request missing username");
+        }
+    }
+
+    private void addAppCode(HttpServletRequest request) {
+        HttpRequestSourceEnum requestSource = RequestUtil.parseHttpRequestSource(request);
+        if (requestSource == HttpRequestSourceEnum.UNKNOWN) {
+            return;
+        }
+
+        switch (requestSource) {
+            case ESB:
+            case BK_API_GW:
+                // Job 网关设置的 appCode Header
+                String appCode = request.getHeader(JobCommonHeaders.APP_CODE);
+                if (StringUtils.isNotBlank(appCode)) {
+                    JobContextUtil.setAppCode(appCode);
+                } else {
+                    log.warn("Request missing appCode");
+                }
+                break;
         }
     }
 
@@ -137,44 +150,6 @@ public class JobCommonInterceptor implements AsyncHandlerInterceptor {
         } else {
             JobContextUtil.setUserLang(LocaleUtils.LANG_ZH_CN);
         }
-    }
-
-    private String parseUsernameFromQueryStringOrBody(HttpServletRequest request) {
-        return parseValueFromQueryStringOrBody(request, "bk_username");
-    }
-
-    private String parseValueFromQueryStringOrBody(HttpServletRequest request, String key) {
-        try {
-            if (request.getMethod().equals(HttpMethod.POST.name())
-                || request.getMethod().equals(HttpMethod.PUT.name())) {
-                if (!(request instanceof RepeatableReadWriteHttpServletRequest)) {
-                    return null;
-                }
-                RepeatableReadWriteHttpServletRequest wrapperRequest =
-                    (RepeatableReadWriteHttpServletRequest) request;
-                if (StringUtils.isNotBlank(wrapperRequest.getBody())) {
-                    ObjectNode jsonBody = (ObjectNode) JsonUtils.toJsonNode(wrapperRequest.getBody());
-                    if (jsonBody == null) {
-                        return null;
-                    }
-                    JsonNode valueNode = jsonBody.get(key);
-                    String value = (valueNode == null || valueNode.isNull()) ? null : jsonBody.get(key).asText();
-                    log.debug("Parsed from POST/PUT: {}={}", key, value);
-                    return value;
-                }
-            } else if (request.getMethod().equals(HttpMethod.GET.name())) {
-                String value = request.getParameter(key);
-                log.debug("Parsed from GET: {}={}", key, value);
-                return value;
-            }
-        } catch (Exception e) {
-            String msg = MessageFormatter.format(
-                "Fail to parse {} from request",
-                key
-            ).getMessage();
-            log.warn(msg, e);
-        }
-        return null;
     }
 
     @Override

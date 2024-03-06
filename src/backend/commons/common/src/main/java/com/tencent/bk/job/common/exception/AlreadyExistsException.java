@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.common.exception;
 
-import com.tencent.bk.job.common.model.error.ErrorType;
+import com.tencent.bk.job.common.error.BkErrorCodeEnum;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -34,36 +34,14 @@ import lombok.ToString;
 @Getter
 @ToString
 public class AlreadyExistsException extends ServiceException {
-    public AlreadyExistsException(Integer errorCode) {
-        super(ErrorType.ALREADY_EXISTS, errorCode);
+
+    public AlreadyExistsException(String internalErrorMessage, Throwable cause) {
+        super(internalErrorMessage, cause);
+        setErrorCode(BkErrorCodeEnum.ALREADY_EXISTS);
     }
 
-    public AlreadyExistsException(Integer errorCode, Object[] errorParams) {
-        super(ErrorType.ALREADY_EXISTS, errorCode, errorParams);
-    }
-
-    public AlreadyExistsException(String message, Integer errorCode) {
-        super(message, ErrorType.ALREADY_EXISTS, errorCode);
-    }
-
-    public AlreadyExistsException(String message, Integer errorCode, Object[] errorParams) {
-        super(message, ErrorType.ALREADY_EXISTS, errorCode, errorParams);
-    }
-
-    public AlreadyExistsException(Throwable cause, Integer errorCode) {
-        super(cause, ErrorType.ALREADY_EXISTS, errorCode);
-    }
-
-    public AlreadyExistsException(Throwable cause, Integer errorCode, Object[] errorParams) {
-        super(cause, ErrorType.ALREADY_EXISTS, errorCode, errorParams);
-    }
-
-    public AlreadyExistsException(String message, Throwable cause, Integer errorCode) {
-        super(message, cause, ErrorType.ALREADY_EXISTS, errorCode);
-    }
-
-    public AlreadyExistsException(String message, Throwable cause, Integer errorCode,
-                            Object[] errorParams) {
-        super(message, cause, ErrorType.ALREADY_EXISTS, errorCode, errorParams);
+    public AlreadyExistsException(String internalErrorMessage) {
+        super(internalErrorMessage);
+        setErrorCode(BkErrorCodeEnum.ALREADY_EXISTS);
     }
 }

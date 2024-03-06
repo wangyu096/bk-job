@@ -24,6 +24,12 @@
 
 package com.tencent.bk.job.common.web.feign;
 
+import com.tencent.bk.job.common.annotation.CompatibleImplementation;
+import com.tencent.bk.job.common.constant.CompatibleType;
+import com.tencent.bk.job.common.error.BkErrorCodeEnum;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.error.internal.InternalApiError;
+import com.tencent.bk.job.common.error.internal.InternalApiErrorDetail;
 import com.tencent.bk.job.common.exception.AlreadyExistsException;
 import com.tencent.bk.job.common.exception.FailedPreconditionException;
 import com.tencent.bk.job.common.exception.InternalException;
@@ -59,9 +65,11 @@ public class FeignErrorDecoder extends ErrorDecoder.Default {
                 String responseBody = feignException.contentUTF8();
 
                 if (StringUtils.isNotEmpty(responseBody)) {
-                    InternalResponse<?> serviceResponse = JsonUtils.fromJson(responseBody, InternalResponse.class);
-                    if (serviceResponse != null && serviceResponse.getCode() != null) {
-                        return decodeErrorCode(feignException, serviceResponse);
+                    InternalResponse<?> internalResponse = JsonUtils.fromJson(responseBody, InternalResponse.class);
+                    if (internalResponse.getError() != null) {
+                        return decodeErrorCode(feignException, internalResponse);
+                    } else {
+                        // 解析 errorCode
                     }
                 }
             }
@@ -72,6 +80,54 @@ public class FeignErrorDecoder extends ErrorDecoder.Default {
     }
 
     private Exception decodeErrorCode(FeignException exception, InternalResponse<?> response) {
+        InternalApiError error = response.getError();
+
+        if (log.isDebugEnabled()) {
+            log.debug("Decode error code, error: {}", JsonUtils.toJson(error));
+        }
+
+        BkErrorCodeEnum type =
+            BkErrorCodeEnum.valOf(error.getCode());
+        InternalApiErrorDetail errorDetail = error.getDetails().get(0);
+        switch (type) {
+            case INVALID_ARGUMENT:
+            case INVALID_REQUEST:
+            case OUT_OF_RANGE:
+            case UNAUTHENTICATED:
+            case NO_PERMISSION:
+            case ABORTED:
+            case RESOURCE_EXHAUSTED:
+            case RATELIMIT_EXCEED:
+            case NOT_IMPLEMENTED:
+            case INTERNAL:
+            case UNKNOWN:
+                // 微服务内部调用错误，应该转换为外部的错误;例如，从另一个服务接收 INVALID_ARGUMENT 错误,应该将 INTERNAL_ERROR 传播给它自己的调用者。
+                return new InternalException(exception, new SubErrorCode(error.getSubCode(), error.getMessage()));
+            case IAM_NO_PERMISSION:
+                return new PermissionDeniedException(AuthResult.fromAuthResultDTO(response.getAuthResult()));
+            case NOT_FOUND:
+                return new NotFoundException(exception, new SubErrorCode(error.getSubCode(), error.getMessage()));
+            case ALREADY_EXISTS:
+                return new AlreadyExistsException(exception, new SubErrorCode(error.getSubCode(), error.getMessage()));
+            case FAILED_PRECONDITION:
+                return new FailedPreconditionException(exception, new SubErrorCode(error.getSubCode(),
+                    error.getMessage()));
+            default:
+                // 无法识别的错误，统一转换为系统内部异常
+                return new InternalException(exception, SubErrorCode.INTERNAL_ERROR);
+        }
+
+    }
+
+    /**
+     * 兼容模式解析错误信息
+     *
+     * @param exception 异常
+     * @param response  请求响应数据
+     */
+    @Deprecated
+    @CompatibleImplementation(name = "openapi", type = CompatibleType.DEPLOY, explain = "发布完成后可删除")
+    private Exception decodeErrorCodeCompatibly(FeignException exception, InternalResponse<?> response) {
         Integer errorType = response.getErrorType();
         Integer errorCode = response.getCode();
         String errorMsg = response.getErrorMsg();

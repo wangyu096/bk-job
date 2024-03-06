@@ -34,7 +34,7 @@ import com.tencent.bk.job.common.util.JobContextUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
+import org.springframework.web.servlet.AsyncHandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -46,7 +46,7 @@ import javax.servlet.http.HttpServletResponse;
 @Component
 @JobInterceptor(pathPatterns = {"/web/dangerous-record/**"},
     order = InterceptorOrder.AUTH.AUTH_COMMON)
-public class JobExecuteUriPermissionInterceptor extends HandlerInterceptorAdapter {
+public class JobExecuteUriPermissionInterceptor implements AsyncHandlerInterceptor {
     private final AuthService authService;
 
     @Autowired

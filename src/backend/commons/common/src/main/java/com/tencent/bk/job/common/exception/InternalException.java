@@ -24,8 +24,7 @@
 
 package com.tencent.bk.job.common.exception;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.model.error.ErrorType;
+import com.tencent.bk.job.common.error.BkErrorCodeEnum;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -36,40 +35,12 @@ import lombok.ToString;
 @ToString
 public class InternalException extends ServiceException {
 
-    public InternalException(Integer errorCode) {
-        super(ErrorType.INTERNAL, errorCode);
+    public InternalException(String internalErrorMessage, Throwable cause) {
+        super(internalErrorMessage, cause);
+        setErrorCode(BkErrorCodeEnum.INTERNAL);
     }
 
-    public InternalException(Integer errorCode, Object[] errorParams) {
-        super(ErrorType.INTERNAL, errorCode, errorParams);
-    }
-
-    public InternalException(String message, Integer errorCode) {
-        super(message, ErrorType.INTERNAL, errorCode);
-    }
-
-    public InternalException(String message, Integer errorCode, Object[] errorParams) {
-        super(message, ErrorType.INTERNAL, errorCode, errorParams);
-    }
-
-    public InternalException(Throwable cause, Integer errorCode) {
-        super(cause, ErrorType.INTERNAL, errorCode);
-    }
-
-    public InternalException(Throwable cause, Integer errorCode, Object[] errorParams) {
-        super(cause, ErrorType.INTERNAL, errorCode, errorParams);
-    }
-
-    public InternalException(String message, Throwable cause, Integer errorCode) {
-        super(message, cause, ErrorType.INTERNAL, errorCode);
-    }
-
-    public InternalException(String message, Throwable cause) {
-        super(message, cause, ErrorType.INTERNAL, ErrorCode.INTERNAL_ERROR);
-    }
-
-    public InternalException(String message, Throwable cause, Integer errorCode,
-                             Object[] errorParams) {
-        super(message, cause, ErrorType.INTERNAL, errorCode, errorParams);
+    public InternalException(String internalErrorMessage) {
+        this(internalErrorMessage, null);
     }
 }

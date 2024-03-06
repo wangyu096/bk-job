@@ -67,4 +67,9 @@ public class JobContext {
     private String httpMetricName;
 
     private AbstractList<Tag> httpMetricTags;
+
+    /**
+     * Open API 请求应用方的 app_code
+     */
+    private String appCode;
 }

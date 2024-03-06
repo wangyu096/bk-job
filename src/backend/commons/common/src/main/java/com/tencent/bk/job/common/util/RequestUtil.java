@@ -42,9 +42,6 @@ import java.util.Map;
 public class RequestUtil {
     public static String getHeaderValue(ServerHttpRequest request, String header) {
         HttpHeaders httpHeaders = request.getHeaders();
-        if (httpHeaders == null) {
-            return null;
-        }
         List<String> values = httpHeaders.get(header);
         if (values != null && !values.isEmpty()) {
             return values.get(0);
@@ -54,13 +51,7 @@ public class RequestUtil {
 
     public static String getCookieValue(ServerHttpRequest request, String cookieName) {
         MultiValueMap<String, HttpCookie> multiValueCookieMap = request.getCookies();
-        if (multiValueCookieMap == null) {
-            return null;
-        }
         Map<String, HttpCookie> cookieMap = multiValueCookieMap.toSingleValueMap();
-        if (cookieMap == null) {
-            return null;
-        }
         HttpCookie cookie = cookieMap.get(cookieName);
         if (cookie == null) {
             return null;
@@ -120,6 +111,8 @@ public class RequestUtil {
             return HttpRequestSourceEnum.ESB;
         } else if (uri.startsWith("/service/")) {
             return HttpRequestSourceEnum.INTERNAL;
+        } else if (uri.startsWith("/open/")) {
+            return HttpRequestSourceEnum.BK_API_GW;
         }
         return HttpRequestSourceEnum.UNKNOWN;
     }

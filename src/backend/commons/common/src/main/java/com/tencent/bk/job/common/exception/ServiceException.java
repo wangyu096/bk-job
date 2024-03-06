@@ -24,81 +24,50 @@
 
 package com.tencent.bk.job.common.exception;
 
-import com.tencent.bk.job.common.model.error.ErrorType;
-import com.tencent.bk.job.common.util.I18nUtil;
-import lombok.Getter;
+import com.tencent.bk.job.common.error.BkErrorCodeEnum;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.error.payload.ErrorPayloadDTO;
 import lombok.ToString;
 
-import java.util.Locale;
-
 /**
- * 服务异常
+ * Job 内部通用服务异常基础类，所有其他类型的异常需要继承该类
  */
-@Getter
 @ToString
 public class ServiceException extends RuntimeException {
-    private final ErrorType errorType;
-    private final Integer errorCode;
-    private Object[] errorParams;
+    private BkErrorCodeEnum errorCode;
+    private SubErrorCode subErrorCode;
+    private ErrorPayloadDTO errorPayload;
 
-    public ServiceException(ErrorType errorType, Integer errorCode) {
-        super();
-        this.errorType = errorType;
+    public ServiceException(String internalErrorMessage,
+                            Throwable cause) {
+        super(internalErrorMessage, cause);
+    }
+
+    public ServiceException(String internalErrorMessage) {
+        super(internalErrorMessage);
+    }
+
+    public void setErrorCode(BkErrorCodeEnum errorCode) {
         this.errorCode = errorCode;
     }
 
-    public ServiceException(ErrorType errorType, Integer errorCode, Object[] errorParams) {
-        super();
-        this.errorType = errorType;
-        this.errorCode = errorCode;
-        this.errorParams = errorParams;
+    public void setSubErrorCode(SubErrorCode subErrorCode) {
+        this.subErrorCode = subErrorCode;
     }
 
-    public ServiceException(String message, ErrorType errorType, Integer errorCode) {
-        super(message);
-        this.errorType = errorType;
-        this.errorCode = errorCode;
+    public void setErrorPayload(ErrorPayloadDTO errorPayload) {
+        this.errorPayload = errorPayload;
     }
 
-    public ServiceException(String message, ErrorType errorType, Integer errorCode, Object[] errorParams) {
-        super(message);
-        this.errorType = errorType;
-        this.errorCode = errorCode;
-        this.errorParams = errorParams;
+    public BkErrorCodeEnum getErrorCode() {
+        return errorCode;
     }
 
-    public ServiceException(Throwable cause, ErrorType errorType, Integer errorCode) {
-        super(cause);
-        this.errorType = errorType;
-        this.errorCode = errorCode;
+    public SubErrorCode getSubErrorCode() {
+        return subErrorCode;
     }
 
-    public ServiceException(Throwable cause, ErrorType errorType, Integer errorCode, Object[] errorParams) {
-        super(cause);
-        this.errorType = errorType;
-        this.errorCode = errorCode;
-        this.errorParams = errorParams;
-    }
-
-    public ServiceException(String message, Throwable cause, ErrorType errorType, Integer errorCode) {
-        super(message, cause);
-        this.errorType = errorType;
-        this.errorCode = errorCode;
-    }
-
-    public ServiceException(String message, Throwable cause, ErrorType errorType, Integer errorCode,
-                            Object[] errorParams) {
-        super(message, cause);
-        this.errorType = errorType;
-        this.errorCode = errorCode;
-        this.errorParams = errorParams;
-    }
-
-    public String getI18nMessage() {
-        return I18nUtil.getI18nMessage(String.valueOf(errorCode), errorParams);
-    }
-
-    public String getI18nMessage(Locale locale) {
-        return I18nUtil.getI18nMessage(locale, String.valueOf(errorCode), errorParams);
+    public ErrorPayloadDTO getErrorPayload() {
+        return errorPayload;
     }
 }

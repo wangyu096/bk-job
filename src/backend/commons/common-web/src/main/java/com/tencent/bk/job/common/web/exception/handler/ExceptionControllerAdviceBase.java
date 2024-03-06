@@ -24,10 +24,10 @@
 
 package com.tencent.bk.job.common.web.exception.handler;
 
-import com.tencent.bk.job.common.model.error.BadRequestDetailDTO;
+import com.tencent.bk.job.common.error.payload.BadRequestPayloadDTO;
+import com.tencent.bk.job.common.error.payload.FieldViolationDTO;
 import com.tencent.bk.job.common.model.error.ErrorDetailDTO;
 import com.tencent.bk.job.common.model.error.ErrorType;
-import com.tencent.bk.job.common.model.error.FieldViolationDTO;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
@@ -43,7 +43,7 @@ public class ExceptionControllerAdviceBase extends ResponseEntityExceptionHandle
         ErrorDetailDTO errorDetail = new ErrorDetailDTO();
         errorDetail.setType(ErrorType.INVALID_PARAM.getType());
         if (bindingResult.hasFieldErrors()) {
-            BadRequestDetailDTO badRequestDetail = new BadRequestDetailDTO();
+            BadRequestPayloadDTO badRequestDetail = new BadRequestPayloadDTO();
             bindingResult.getFieldErrors().forEach(fieldError -> {
                 badRequestDetail.addFieldViolation(new FieldViolationDTO(fieldError.getField(),
                     fieldError.getRejectedValue(), fieldError.getDefaultMessage()));
@@ -57,7 +57,7 @@ public class ExceptionControllerAdviceBase extends ResponseEntityExceptionHandle
         ErrorDetailDTO errorDetail = new ErrorDetailDTO();
         errorDetail.setType(ErrorType.INVALID_PARAM.getType());
         Set<ConstraintViolation<?>> constraintViolations = ex.getConstraintViolations();
-        BadRequestDetailDTO badRequestDetail = new BadRequestDetailDTO();
+        BadRequestPayloadDTO badRequestDetail = new BadRequestPayloadDTO();
         for (ConstraintViolation<?> constraintViolation : constraintViolations) {
             badRequestDetail.addFieldViolation(new FieldViolationDTO(constraintViolation.getPropertyPath().toString(),
                 constraintViolation.getInvalidValue(), constraintViolation.getMessage()));

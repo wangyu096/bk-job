@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.common.exception;
 
-import com.tencent.bk.job.common.model.error.ErrorType;
+import com.tencent.bk.job.common.error.BkErrorCodeEnum;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -35,36 +35,13 @@ import lombok.ToString;
 @ToString
 public class NotImplementedException extends ServiceException {
 
-    public NotImplementedException(Integer errorCode) {
-        super(ErrorType.UNIMPLEMENTED, errorCode);
+    public NotImplementedException(String internalErrorMessage, Throwable cause) {
+        super(internalErrorMessage, cause);
+        setErrorCode(BkErrorCodeEnum.NOT_IMPLEMENTED);
     }
 
-    public NotImplementedException(Integer errorCode, Object[] errorParams) {
-        super(ErrorType.UNIMPLEMENTED, errorCode, errorParams);
-    }
-
-    public NotImplementedException(String message, Integer errorCode) {
-        super(message, ErrorType.UNIMPLEMENTED, errorCode);
-    }
-
-    public NotImplementedException(String message, Integer errorCode, Object[] errorParams) {
-        super(message, ErrorType.UNIMPLEMENTED, errorCode, errorParams);
-    }
-
-    public NotImplementedException(Throwable cause, Integer errorCode) {
-        super(cause, ErrorType.UNIMPLEMENTED, errorCode);
-    }
-
-    public NotImplementedException(Throwable cause, Integer errorCode, Object[] errorParams) {
-        super(cause, ErrorType.UNIMPLEMENTED, errorCode, errorParams);
-    }
-
-    public NotImplementedException(String message, Throwable cause, Integer errorCode) {
-        super(message, cause, ErrorType.UNIMPLEMENTED, errorCode);
-    }
-
-    public NotImplementedException(String message, Throwable cause, Integer errorCode,
-                                   Object[] errorParams) {
-        super(message, cause, ErrorType.UNIMPLEMENTED, errorCode, errorParams);
+    public NotImplementedException(String internalErrorMessage) {
+        super(internalErrorMessage);
+        setErrorCode(BkErrorCodeEnum.NOT_IMPLEMENTED);
     }
 }

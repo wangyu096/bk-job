@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.common.exception;
 
-import com.tencent.bk.job.common.model.error.ErrorType;
+import com.tencent.bk.job.common.error.BkErrorCodeEnum;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -35,36 +35,13 @@ import lombok.ToString;
 @ToString
 public class AbortedException extends ServiceException {
 
-    public AbortedException(Integer errorCode) {
-        super(ErrorType.ABORTED, errorCode);
+    public AbortedException(String internalErrorMessage, Throwable cause) {
+        super(internalErrorMessage, cause);
+        setErrorCode(BkErrorCodeEnum.ABORTED);
     }
 
-    public AbortedException(Integer errorCode, Object[] errorParams) {
-        super(ErrorType.ABORTED, errorCode, errorParams);
-    }
-
-    public AbortedException(String message, Integer errorCode) {
-        super(message, ErrorType.ABORTED, errorCode);
-    }
-
-    public AbortedException(String message, Integer errorCode, Object[] errorParams) {
-        super(message, ErrorType.ABORTED, errorCode, errorParams);
-    }
-
-    public AbortedException(Throwable cause, Integer errorCode) {
-        super(cause, ErrorType.ABORTED, errorCode);
-    }
-
-    public AbortedException(Throwable cause, Integer errorCode, Object[] errorParams) {
-        super(cause, ErrorType.ABORTED, errorCode, errorParams);
-    }
-
-    public AbortedException(String message, Throwable cause, Integer errorCode) {
-        super(message, cause, ErrorType.ABORTED, errorCode);
-    }
-
-    public AbortedException(String message, Throwable cause, Integer errorCode,
-                             Object[] errorParams) {
-        super(message, cause, ErrorType.ABORTED, errorCode, errorParams);
+    public AbortedException(String internalErrorMessage) {
+        super(internalErrorMessage);
+        setErrorCode(BkErrorCodeEnum.ABORTED);
     }
 }

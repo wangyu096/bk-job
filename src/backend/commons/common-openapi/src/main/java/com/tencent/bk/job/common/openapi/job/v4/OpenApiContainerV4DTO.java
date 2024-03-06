@@ -44,7 +44,7 @@ public class OpenApiContainerV4DTO {
      * 容器在 cmdb 注册的 ID
      */
     @JsonProperty("id")
-    private String id;
+    private Long id;
 
     /**
      * 容器 ID
@@ -56,7 +56,7 @@ public class OpenApiContainerV4DTO {
     /**
      * 容器所在 Node 对应的主机ID
      */
-    @JsonProperty("hostId")
+    @JsonProperty("bk_host_id")
     private Long hostId;
 
     /**

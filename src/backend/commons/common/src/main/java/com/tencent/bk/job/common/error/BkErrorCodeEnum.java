@@ -25,13 +25,25 @@
 package com.tencent.bk.job.common.error;
 
 /**
- * 系统错误分类定义
+ * 蓝鲸通用错误分类定义
  */
-public enum ErrorType {
+public enum BkErrorCodeEnum {
     /**
      * 参数不合法
      */
     INVALID_ARGUMENT("INVALID_ARGUMENT", 400),
+    /**
+     * 参数符合参数格式，但参数不符合业务规则
+     */
+    INVALID_REQUEST("INVALID_REQUEST", 400),
+    /**
+     * 客户端指定了无效范围
+     */
+    OUT_OF_RANGE("OUT_OF_RANGE", 400),
+    /**
+     * 请求无法在当前系统状态下执行，例如删除非空目录
+     */
+    FAILED_PRECONDITION("FAILED_PRECONDITION", 400),
     /**
      * 未提供身份认证凭证
      */
@@ -75,12 +87,16 @@ public enum ErrorType {
     /**
      * API 方法未通过服务器实现
      */
-    NOT_IMPLEMENTED("NOT_IMPLEMENTED", 501);
+    NOT_IMPLEMENTED("NOT_IMPLEMENTED", 501),
+    /**
+     * 服务不可用。通常是由于服务器宕机了
+     */
+    UNAVAILABLE("UNAVAILABLE", 503);
 
     private final String errorCode;
     private final int statusCode;
 
-    ErrorType(String errorCode, int statusCode) {
+    BkErrorCodeEnum(String errorCode, int statusCode) {
         this.errorCode = errorCode;
         this.statusCode = statusCode;
     }
@@ -93,8 +109,8 @@ public enum ErrorType {
         return statusCode;
     }
 
-    public static ErrorType valOf(String errorCode) {
-        for (ErrorType errorType : values()) {
+    public static BkErrorCodeEnum valOf(String errorCode) {
+        for (BkErrorCodeEnum errorType : values()) {
             if (errorType.getErrorCode().equals(errorCode)) {
                 return errorType;
             }

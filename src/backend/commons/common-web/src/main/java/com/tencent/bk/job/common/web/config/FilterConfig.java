@@ -37,6 +37,7 @@ public class FilterConfig {
             new FilterRegistrationBean<>();
         registration.setFilter(repeatableRRRFilter());
         registration.addUrlPatterns("/esb/api/*");
+        registration.addUrlPatterns("/open/api/*");
         registration.setName("repeatableReadRequestResponseFilter");
         registration.setOrder(0);
         return registration;

@@ -32,12 +32,13 @@ import lombok.ToString;
  */
 @Getter
 @ToString
-public class SubThreadException extends RuntimeException {
+public class SubThreadException extends InternalException {
 
-    private final String message;
+    public SubThreadException(String internalErrorMessage, Throwable cause) {
+        super(internalErrorMessage, cause);
+    }
 
-    public SubThreadException(String message, Throwable cause) {
-        super(cause);
-        this.message = message;
+    public SubThreadException(String internalErrorMessage) {
+        super(internalErrorMessage);
     }
 }

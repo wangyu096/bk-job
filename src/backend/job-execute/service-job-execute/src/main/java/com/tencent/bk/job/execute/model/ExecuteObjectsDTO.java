@@ -39,6 +39,7 @@ import com.tencent.bk.job.common.openapi.job.v2.EsbIpDTO;
 import com.tencent.bk.job.common.openapi.job.v3.EsbCmdbTopoNodeDTO;
 import com.tencent.bk.job.common.openapi.job.v3.EsbDynamicGroupDTO;
 import com.tencent.bk.job.common.openapi.job.v3.EsbServerV3DTO;
+import com.tencent.bk.job.common.openapi.job.v4.OpenApiExecuteObjectsV4DTO;
 import com.tencent.bk.job.execute.engine.model.ExecuteObject;
 import lombok.Data;
 import org.apache.commons.collections4.CollectionUtils;
@@ -487,5 +488,40 @@ public class ExecuteObjectsDTO implements Cloneable {
             // 兼容方式，写入 ipList 字段
             this.ipList = extractHosts();
         }
+    }
+
+    public static ExecuteObjectsDTO from(OpenApiExecuteObjectsV4DTO executeObjects) {
+        if (executeObjects == null) {
+            return null;
+        }
+        ExecuteObjectsDTO executeObjectsDTO = new ExecuteObjectsDTO();
+
+        // 主机拓扑节点
+        if (CollectionUtils.isNotEmpty(executeObjects.getHostTopoNodes())) {
+            List<DynamicServerTopoNodeDTO> topoNodes = new ArrayList<>();
+            executeObjects.getHostTopoNodes()
+                .forEach(topoNode ->
+                    topoNodes.add(new DynamicServerTopoNodeDTO(topoNode.getId(), topoNode.getNodeType())));
+            executeObjectsDTO.setTopoNodes(topoNodes);
+        }
+
+        // 主机动态分组
+        if (CollectionUtils.isNotEmpty(executeObjects.getHostDynamicGroups())) {
+            List<DynamicServerGroupDTO> dynamicServerGroups = new ArrayList<>();
+            executeObjects.getHostDynamicGroups().forEach(
+                group -> dynamicServerGroups.add(new DynamicServerGroupDTO(group.getId())));
+            executeObjectsDTO.setDynamicServerGroups(dynamicServerGroups);
+        }
+
+        // 静态主机列表
+        if (CollectionUtils.isNotEmpty(executeObjects.getHosts())) {
+            executeObjectsDTO.setStaticIpList(
+                executeObjects.getHosts()
+                    .stream()
+                    .map(host -> HostDTO.fromHostId(host.getHostId()))
+                    .collect(Collectors.toList()));
+        }
+
+        return executeObjectsDTO;
     }
 }

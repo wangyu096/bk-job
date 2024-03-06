@@ -68,10 +68,6 @@ public class Response<T> {
     @JsonProperty("authResult")
     private AuthResultVO authResult;
 
-    @ApiModelProperty("错误详情")
-    @JsonProperty("errorDetail")
-    private ErrorDetailDTO errorDetail;
-
     public Response(Integer errorCode, T data) {
         this.code = errorCode;
         this.success = errorCode.equals(ErrorCode.RESULT_OK);

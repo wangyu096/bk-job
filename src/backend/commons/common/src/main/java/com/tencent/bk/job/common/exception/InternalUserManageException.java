@@ -10,7 +10,11 @@ import lombok.ToString;
 @ToString
 public class InternalUserManageException extends InternalException {
 
-    public InternalUserManageException(String message, Throwable cause, Integer errorCode) {
-        super(message, cause, errorCode);
+    public InternalUserManageException(String internalErrorMessage, Throwable cause) {
+        super(internalErrorMessage, cause);
+    }
+
+    public InternalUserManageException(String internalErrorMessage) {
+        super(internalErrorMessage);
     }
 }

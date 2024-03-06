@@ -61,7 +61,7 @@ public class JobAuditRequestProvider extends DefaultAuditRequestProvider {
         String uri = request.getUri();
         if (uri.startsWith("/web/")) {
             return AccessTypeEnum.WEB;
-        } else if (uri.startsWith("/esb/")) {
+        } else if (uri.startsWith("/esb/") || uri.startsWith("/open/")) {
             return AccessTypeEnum.API;
         } else {
             return AccessTypeEnum.OTHER;

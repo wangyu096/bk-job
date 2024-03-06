@@ -36,7 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
-import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
+import org.springframework.web.servlet.AsyncHandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -55,7 +55,7 @@ import javax.servlet.http.HttpServletResponse;
     "/web/serviceInfo/**",
     "/web/dangerousRule/**"},
     order = InterceptorOrder.AUTH.AUTH_COMMON)
-public class JobManageUriPermissionInterceptor extends HandlerInterceptorAdapter {
+public class JobManageUriPermissionInterceptor implements AsyncHandlerInterceptor {
     private final String URI_PATTERN_WHITE_IP = "/web/whiteIP/**";
     private final String URI_PATTERN_NOTIFY_BLACKLIST = "/web/notify/users/blacklist";
     private final String URI_PATTERN_GLOBAL_SETTINGS = "/web/globalSettings/**";

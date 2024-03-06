@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.common.util.http;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.error.SubErrorCode;
 import com.tencent.bk.job.common.exception.InternalException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.Header;
@@ -114,7 +114,7 @@ public class HttpConPoolUtil {
             return new String(resp, charset);
         } catch (IOException e) {
             log.error("Post request fail", e);
-            throw new InternalException(e, ErrorCode.API_ERROR);
+            throw new InternalException(e, SubErrorCode.API_ERROR);
         }
     }
 
@@ -159,7 +159,7 @@ public class HttpConPoolUtil {
             return new String(resp, charset);
         } catch (IOException e) {
             log.error("Post request fail", e);
-            throw new InternalException(e, ErrorCode.API_ERROR);
+            throw new InternalException(e, SubErrorCode.API_ERROR);
         }
     }
 
@@ -201,13 +201,13 @@ public class HttpConPoolUtil {
                 String errorMsg = buildErrorMessage("Post", url, statusCode,
                     httpResponse.getStatusLine().getReasonPhrase());
                 log.error(errorMsg);
-                throw new InternalException(errorMsg, ErrorCode.API_ERROR);
+                throw new InternalException(errorMsg, SubErrorCode.API_ERROR);
             }
             HttpEntity entity = httpResponse.getEntity();
             return EntityUtils.toByteArray(entity);
         } catch (IOException e) {
             log.error("Post request fail", e);
-            throw new InternalException(e, ErrorCode.API_ERROR);
+            throw new InternalException(e, SubErrorCode.API_ERROR);
         }
     }
 
@@ -242,7 +242,7 @@ public class HttpConPoolUtil {
             return EntityUtils.toString(entity, CHARSET);
         } catch (IOException e) {
             log.error("Get request fail", e);
-            throw new InternalException(e, ErrorCode.API_ERROR);
+            throw new InternalException(e, SubErrorCode.API_ERROR);
         }
     }
 
@@ -257,7 +257,7 @@ public class HttpConPoolUtil {
                 String errorMsg = buildErrorMessage("Delete", url, statusCode,
                     httpResponse.getStatusLine().getReasonPhrase());
                 log.error(errorMsg);
-                throw new InternalException(errorMsg, ErrorCode.API_ERROR);
+                throw new InternalException(errorMsg, SubErrorCode.API_ERROR);
             }
             HttpEntity entity = httpResponse.getEntity();
             byte[] respBytes = EntityUtils.toByteArray(entity);
@@ -267,7 +267,7 @@ public class HttpConPoolUtil {
             return new String(EntityUtils.toByteArray(entity), CHARSET);
         } catch (IOException e) {
             log.error("Delete request fail", e);
-            throw new InternalException(e, ErrorCode.API_ERROR);
+            throw new InternalException(e, SubErrorCode.API_ERROR);
         }
     }
 

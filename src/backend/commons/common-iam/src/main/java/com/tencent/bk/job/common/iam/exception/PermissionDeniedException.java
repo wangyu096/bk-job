@@ -42,6 +42,7 @@ public class PermissionDeniedException extends ServiceException {
     public PermissionDeniedException(AuthResult authResult) {
         super(ErrorType.PERMISSION_DENIED, ErrorCode.PERMISSION_DENIED);
         this.authResult = authResult;
+        AuthResult.toAuthResultDTO(ex.getAuthResult())
     }
 
     public AuthResult getAuthResult() {

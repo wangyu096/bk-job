@@ -27,8 +27,6 @@ package com.tencent.bk.job.common.openapi.job.v4;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.tencent.bk.job.common.openapi.job.v3.EsbCmdbTopoNodeDTO;
-import com.tencent.bk.job.common.openapi.job.v3.EsbDynamicGroupDTO;
 import lombok.Data;
 
 import javax.validation.Valid;
@@ -46,11 +44,17 @@ public class OpenApiExecuteObjectsV4DTO {
     @JsonPropertyDescription("Variable name")
     private String variable;
 
+    /**
+     * 主机列表
+     */
     @JsonProperty("host_list")
     @JsonPropertyDescription("Hosts")
     @Valid
     private List<OpenApiHostV4DTO> hosts;
 
+    /**
+     * 容器列表
+     */
     @JsonProperty("container_list")
     @JsonPropertyDescription("Containers")
     @Valid
@@ -58,18 +62,26 @@ public class OpenApiExecuteObjectsV4DTO {
 
 
     /**
-     * 动态分组ID列表
+     * 主机动态分组列表
      */
     @JsonProperty("host_dynamic_group_list")
-    @JsonPropertyDescription("Cmdb dynamic groups")
+    @JsonPropertyDescription("Cmdb host dynamic groups")
     @Valid
-    private List<EsbDynamicGroupDTO> hostDynamicGroups;
+    private List<OpenApiDynamicGroupV4DTO> hostDynamicGroups;
 
     /**
-     * 分布式拓扑节点列表
+     * 主机拓扑节点列表
      */
     @JsonProperty("host_topo_node_list")
-    @JsonPropertyDescription("Cmdb topo nodes")
+    @JsonPropertyDescription("Cmdb host topo nodes")
     @Valid
-    private List<EsbCmdbTopoNodeDTO> hostTopoNodes;
+    private List<OpenApiHostTopoNodeV4DTO> hostTopoNodes;
+
+    /**
+     * 容器拓扑节点列表
+     */
+    @JsonProperty("container_topo_node_list")
+    @JsonPropertyDescription("Cmdb container topo nodes")
+    @Valid
+    private List<OpenApiHostTopoNodeV4DTO> containerTopoNodes;
 }

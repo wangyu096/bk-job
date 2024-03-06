@@ -25,7 +25,8 @@
 package com.tencent.bk.job.common.util.ip;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidIpv6Exception;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.model.dto.HostDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -420,7 +421,8 @@ public class IpUtils {
      */
     public static String getFullIpv6ByCompressedOne(String compressedIpv6) {
         if (!checkIpv6(compressedIpv6)) {
-            throw new InvalidIpv6Exception(ErrorCode.INVALID_IPV6_ADDRESS, new String[]{compressedIpv6});
+            throw new InternalException(
+                SubErrorCode.of(ErrorCode.INVALID_IPV6_ADDRESS, compressedIpv6));
         }
         String[] finalSeqArr = new String[]{"0000", "0000", "0000", "0000", "0000", "0000", "0000", "0000"};
         // 连续0标识符

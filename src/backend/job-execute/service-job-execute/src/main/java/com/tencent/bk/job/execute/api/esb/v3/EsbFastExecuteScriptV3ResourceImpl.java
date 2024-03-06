@@ -29,7 +29,6 @@ import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobConstants;
 import com.tencent.bk.job.common.exception.InvalidParamException;
-import com.tencent.bk.job.common.exception.ServiceException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.ValidateResult;
@@ -86,8 +85,7 @@ public class EsbFastExecuteScriptV3ResourceImpl extends JobExecuteCommonV3Proces
     @AuditEntry
     public EsbResp<EsbJobExecuteV3DTO> fastExecuteScript(String username,
                                                          String appCode,
-                                                         @AuditRequestBody EsbFastExecuteScriptV3Request request)
-        throws ServiceException {
+                                                         @AuditRequestBody EsbFastExecuteScriptV3Request request) {
         ValidateResult checkResult = checkFastExecuteScriptRequest(request);
         if (!checkResult.isPass()) {
             log.warn("Fast execute script request is illegal!");

@@ -25,6 +25,7 @@ package com.tencent.bk.job.common.model.error;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.tencent.bk.job.common.error.payload.BadRequestPayloadDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -38,9 +39,9 @@ public class ErrorDetailDTO {
     private Integer type;
 
     @JsonProperty("badRequestDetail")
-    private BadRequestDetailDTO badRequestDetail;
+    private BadRequestPayloadDTO badRequestDetail;
 
-    public ErrorDetailDTO(BadRequestDetailDTO badRequestDetail) {
+    public ErrorDetailDTO(BadRequestPayloadDTO badRequestDetail) {
         this.badRequestDetail = badRequestDetail;
         this.type = ErrorType.INVALID_PARAM.getType();
     }

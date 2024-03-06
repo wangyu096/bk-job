@@ -36,16 +36,16 @@ import com.tencent.bk.job.common.model.dto.AppResourceScope;
 import com.tencent.bk.job.common.util.JobContextUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.web.servlet.AsyncHandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 @Slf4j
-@JobInterceptor(pathPatterns = {"/web/**", "/esb/api/**"},
+@JobInterceptor(pathPatterns = {"/web/**", "/esb/api/**", "/open/api/**"},
     order = InterceptorOrder.AUTH.AUTH_GLOBAL)
-public class AuthAppInterceptor extends HandlerInterceptorAdapter {
+public class AuthAppInterceptor implements AsyncHandlerInterceptor {
 
     private final BusinessAuthService businessAuthService;
 

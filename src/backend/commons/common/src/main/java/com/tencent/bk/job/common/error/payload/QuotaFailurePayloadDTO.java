@@ -21,34 +21,38 @@
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
+package com.tencent.bk.job.common.error.payload;
 
-package com.tencent.bk.job.common.util.check;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.tencent.bk.job.common.error.BkErrorCodeEnum;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
-import org.apache.commons.lang3.StringUtils;
+/**
+ * 资源配额不足错误 Payload
+ * <p>
+ * {@link BkErrorCodeEnum#RATELIMIT_EXCEED}
+ * {@link BkErrorCodeEnum#RESOURCE_EXHAUSTED}
+ */
+@EqualsAndHashCode(callSuper = true)
+@Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@NoArgsConstructor
+public class QuotaFailurePayloadDTO extends ErrorPayloadDTO {
 
-public class ParamCheckUtil {
+    /**
+     * 资源配额检查失败的对象，比如某个业务下的作业执行(job_instance)
+     */
+    private String subject;
 
-    public static void checkAppId(Long appId, String paramName) {
-        if (appId == null) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                new String[]{paramName, paramName + " cannot be null"});
-        }
-        if (appId <= 0) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                new String[]{paramName, paramName + " must be a positive number"});
-        }
-    }
+    /**
+     * 描述资源配额不足原因
+     */
+    private String description;
 
-    public static void checkLocalUploadFileName(String fileName, String paramName) {
-        if (StringUtils.isBlank(fileName)) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                new String[]{paramName, paramName + " cannot be null or blank"});
-        }
-        if (fileName.length() > 1024) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                new String[]{paramName, paramName + " length cannot be longer than 1024"});
-        }
+    public QuotaFailurePayloadDTO(String subject, String description) {
+        this.subject = subject;
+        this.description = description;
     }
 }

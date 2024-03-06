@@ -22,40 +22,37 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.exception;
+package com.tencent.bk.job.common.openapi.job.v4;
 
-import lombok.Getter;
-import lombok.ToString;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import lombok.Data;
+
+import java.util.List;
 
 /**
- * 错误信息
+ * 容器拓扑节点
  */
-@Getter
-@ToString
-public class ErrorInfo {
-    private final Integer errorCode;
-    private Object[] errorParams;
-    private String errorMsg;
+@Data
+public class OpenApiContainerTopoNodeV4DTO {
+    /**
+     * topo节点ID
+     */
+    @JsonProperty("id")
+    @JsonPropertyDescription("Cmdb topo node id")
+    private Long id;
 
-    private ErrorInfo(Integer errorCode, Object[] errorParams) {
-        this.errorCode = errorCode;
-        this.errorParams = errorParams;
-    }
+    /**
+     * topo节点类型
+     */
+    @JsonProperty("node_type")
+    @JsonPropertyDescription("Cmdb topo node type")
+    private String nodeType;
 
-    private ErrorInfo(Integer errorCode, String errorMsg) {
-        this.errorCode = errorCode;
-        this.errorMsg = errorMsg;
-    }
-
-    public static ErrorInfo from(Integer errorCode) {
-        return new ErrorInfo(errorCode, "");
-    }
-
-    public static ErrorInfo from(Integer errorCode, Object[] errorParams) {
-        return new ErrorInfo(errorCode, errorParams);
-    }
-
-    public static ErrorInfo from(Integer errorCode, String errorMsg) {
-        return new ErrorInfo(errorCode, errorMsg);
-    }
+    /**
+     * 容器 label selector，多个表达式之间为 AND 关系
+     */
+    @JsonProperty("label_selector")
+    @JsonPropertyDescription("Label selector")
+    private List<OpenApiLabelExprV4DTO> labelSelector;
 }

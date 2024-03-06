@@ -25,7 +25,6 @@
 package com.tencent.bk.job.common.model.vo;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -52,7 +51,7 @@ public class UserRoleInfoVO {
     public void validate() throws InvalidParamException {
         if (CollectionUtils.isEmpty(userList) && CollectionUtils.isEmpty(roleList)) {
             log.warn("Approval user info is empty!");
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
     }
 }

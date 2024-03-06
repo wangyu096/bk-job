@@ -10,15 +10,11 @@ import lombok.ToString;
 @ToString
 public class InternalIamException extends InternalException {
 
-    public InternalIamException(Throwable cause, Integer errorCode, Object[] errorParams) {
-        super(cause, errorCode, errorParams);
+    public InternalIamException(String internalErrorMessage, Throwable cause) {
+        super(internalErrorMessage, cause);
     }
 
-    public InternalIamException(String message, Integer errorCode) {
-        super(message, errorCode);
-    }
-
-    public InternalIamException(String message, Throwable cause, Integer errorCode) {
-        super(message, cause, errorCode);
+    public InternalIamException(String internalErrorMessage) {
+        super(internalErrorMessage);
     }
 }

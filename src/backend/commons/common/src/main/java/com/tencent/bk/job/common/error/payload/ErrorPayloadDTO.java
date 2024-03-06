@@ -22,36 +22,29 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.execute.api.open.v4;
+package com.tencent.bk.job.common.error.payload;
 
-import com.tencent.bk.job.common.annotation.EsbAPI;
-import com.tencent.bk.job.common.constant.JobCommonHeaders;
-import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
-import com.tencent.bk.job.execute.model.esb.v3.EsbJobExecuteV3DTO;
-import com.tencent.bk.job.execute.model.esb.v3.request.EsbOperateJobInstanceV3Request;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.tencent.bk.job.common.model.iam.AuthResultDTO;
+
+import java.util.Map;
 
 /**
- * 步骤操作API-V3
+ * 错误 Payload
  */
-@RequestMapping("/esb/api/v3")
-@RestController
-@EsbAPI
-public interface EsbOperateJobInstanceV3Resource {
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "code")
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = AuthResultDTO.class, name = "IAM_NO_PERMISSION"),
+    @JsonSubTypes.Type(value = BadRequestPayloadDTO.class, name = "INVALID_ARGUMENT")
+})
+public class ErrorPayloadDTO {
+    /**
+     * 其他错误信息
+     */
+    protected Map<String, String> metadata;
 
-    @PostMapping("/operate_job_instance")
-    EsbResp<EsbJobExecuteV3DTO> operateJobInstance(
-        @RequestHeader(value = JobCommonHeaders.USERNAME) String username,
-        @RequestHeader(value = JobCommonHeaders.APP_CODE) String appCode,
-        @RequestBody
-        @Validated
-            EsbOperateJobInstanceV3Request request
-    );
-
-
+    public Map<String, String> getMetadata() {
+        return metadata;
+    }
 }

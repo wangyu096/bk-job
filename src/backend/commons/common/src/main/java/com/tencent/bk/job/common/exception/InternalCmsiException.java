@@ -10,7 +10,11 @@ import lombok.ToString;
 @ToString
 public class InternalCmsiException extends InternalException {
 
-    public InternalCmsiException(String message, Throwable cause, Integer errorCode) {
-        super(message, cause, errorCode);
+    public InternalCmsiException(String internalErrorMessage, Throwable cause) {
+        super(internalErrorMessage, cause);
+    }
+
+    public InternalCmsiException(String internalErrorMessage) {
+        super(internalErrorMessage);
     }
 }

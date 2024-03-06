@@ -26,6 +26,8 @@ package com.tencent.bk.job.common.openapi.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.util.I18nUtil;
 import com.tencent.bk.job.common.util.JobContextUtil;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -52,8 +54,31 @@ public class OpenApiResp<T> {
         this.requestId = JobContextUtil.getRequestId();
     }
 
+    private OpenApiResp(OpenApiError error) {
+        this.error = error;
+        this.requestId = JobContextUtil.getRequestId();
+    }
 
-    public static <T> OpenApiResp<T> buildSuccessResp(T data) {
+
+    public static <T> OpenApiResp<T> success(T data) {
         return new OpenApiResp<>(data);
+    }
+
+    public static <T> OpenApiResp<T> success() {
+        return new OpenApiResp<>(null);
+    }
+
+    public static <T> OpenApiResp<T> fail(OpenApiError error) {
+        return new OpenApiResp<>(error);
+    }
+
+    public static <T> OpenApiResp<T> fail(ServiceException e) {
+        return fail(e.getErrorCode(), e.getErrorParams(), null);
+    }
+
+    public static <T> OpenApiResp<T> fail(Integer errorCode, Object[] errorParams, T data) {
+
+        String message = I18nUtil.getI18nMessage(String.valueOf(errorCode), errorParams);
+        return new OpenApiResp<>(errorCode, message, data);
     }
 }

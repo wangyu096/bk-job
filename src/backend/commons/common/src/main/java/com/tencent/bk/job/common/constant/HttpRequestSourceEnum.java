@@ -46,7 +46,11 @@ public enum HttpRequestSourceEnum {
     /**
      * Job微服务内部请求
      */
-    INTERNAL(3);
+    INTERNAL(3),
+    /**
+     * 蓝鲸网关请求
+     */
+    BK_API_GW(4);
 
     @JsonValue
     private final int value;

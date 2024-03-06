@@ -25,7 +25,6 @@
 package com.tencent.bk.job.common.model.vo;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.InvalidParamException;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -50,7 +49,7 @@ public class TargetNodeVO {
         }
         if (StringUtils.isBlank(objectId)) {
             log.warn("Invalid target node type");
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
     }
 }

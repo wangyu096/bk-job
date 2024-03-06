@@ -22,19 +22,24 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.model.error;
+package com.tencent.bk.job.common.error.payload;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
+/**
+ * API 参数校验错误
+ */
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FieldViolationDTO {
     @JsonProperty("field")
     private String field;
-    @JsonProperty("rejectedValue")
+
+    @JsonProperty("rejected_value")
     private Object rejectedValue;
+
     @JsonProperty("description")
     private String description;
 
