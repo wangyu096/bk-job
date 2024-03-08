@@ -25,6 +25,7 @@
 package com.tencent.bk.job.common.exception;
 
 import com.tencent.bk.job.common.error.BkErrorCodeEnum;
+import com.tencent.bk.job.common.error.SubErrorCode;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -35,13 +36,9 @@ import lombok.ToString;
 @ToString
 public class AbortedException extends ServiceException {
 
-    public AbortedException(String internalErrorMessage, Throwable cause) {
-        super(internalErrorMessage, cause);
-        setErrorCode(BkErrorCodeEnum.ABORTED);
-    }
-
-    public AbortedException(String internalErrorMessage) {
-        super(internalErrorMessage);
+    public AbortedException(SubErrorCode subErrorCode) {
+        super();
+        setSubErrorCode(subErrorCode);
         setErrorCode(BkErrorCodeEnum.ABORTED);
     }
 }

@@ -25,6 +25,8 @@
 package com.tencent.bk.job.common.exception;
 
 import com.tencent.bk.job.common.error.BkErrorCodeEnum;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.error.payload.ResourceInfoPayloadDTO;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -35,13 +37,10 @@ import lombok.ToString;
 @ToString
 public class AlreadyExistsException extends ServiceException {
 
-    public AlreadyExistsException(String internalErrorMessage, Throwable cause) {
-        super(internalErrorMessage, cause);
+    public AlreadyExistsException(SubErrorCode subErrorCode, ResourceInfoPayloadDTO resourceInfoPayload) {
+        super();
         setErrorCode(BkErrorCodeEnum.ALREADY_EXISTS);
+        setSubErrorCode(subErrorCode);
     }
 
-    public AlreadyExistsException(String internalErrorMessage) {
-        super(internalErrorMessage);
-        setErrorCode(BkErrorCodeEnum.ALREADY_EXISTS);
-    }
 }

@@ -38,25 +38,31 @@ public class ServiceException extends RuntimeException {
     private SubErrorCode subErrorCode;
     private ErrorPayloadDTO errorPayload;
 
-    public ServiceException(String internalErrorMessage,
-                            Throwable cause) {
-        super(internalErrorMessage, cause);
+    public ServiceException() {
     }
 
     public ServiceException(String internalErrorMessage) {
         super(internalErrorMessage);
     }
 
-    public void setErrorCode(BkErrorCodeEnum errorCode) {
+    public ServiceException(String internalErrorMessage,
+                            Throwable cause) {
+        super(internalErrorMessage, cause);
+    }
+
+    public ServiceException setErrorCode(BkErrorCodeEnum errorCode) {
         this.errorCode = errorCode;
+        return this;
     }
 
-    public void setSubErrorCode(SubErrorCode subErrorCode) {
+    public ServiceException setSubErrorCode(SubErrorCode subErrorCode) {
         this.subErrorCode = subErrorCode;
+        return this;
     }
 
-    public void setErrorPayload(ErrorPayloadDTO errorPayload) {
+    public ServiceException setErrorPayload(ErrorPayloadDTO errorPayload) {
         this.errorPayload = errorPayload;
+        return this;
     }
 
     public BkErrorCodeEnum getErrorCode() {

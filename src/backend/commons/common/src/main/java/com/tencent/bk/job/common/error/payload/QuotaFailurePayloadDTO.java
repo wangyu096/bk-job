@@ -32,7 +32,6 @@ import lombok.NoArgsConstructor;
 /**
  * 资源配额不足错误 Payload
  * <p>
- * {@link BkErrorCodeEnum#RATELIMIT_EXCEED}
  * {@link BkErrorCodeEnum#RESOURCE_EXHAUSTED}
  */
 @EqualsAndHashCode(callSuper = true)

@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.tencent.bk.job.common.model.iam.AuthResultDTO;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -44,7 +45,15 @@ public class ErrorPayloadDTO {
      */
     protected Map<String, String> metadata;
 
+    protected List<String> links;
+
+    protected List<String> docs;
+
     public Map<String, String> getMetadata() {
         return metadata;
+    }
+
+    public void setMetadata(Map<String, String> metadata) {
+        this.metadata = metadata;
     }
 }

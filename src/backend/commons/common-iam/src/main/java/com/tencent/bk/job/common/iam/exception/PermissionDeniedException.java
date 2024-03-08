@@ -25,9 +25,10 @@
 package com.tencent.bk.job.common.iam.exception;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.error.BkErrorCodeEnum;
+import com.tencent.bk.job.common.error.SubErrorCode;
 import com.tencent.bk.job.common.exception.ServiceException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
-import com.tencent.bk.job.common.model.error.ErrorType;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -40,9 +41,10 @@ public class PermissionDeniedException extends ServiceException {
     private final AuthResult authResult;
 
     public PermissionDeniedException(AuthResult authResult) {
-        super(ErrorType.PERMISSION_DENIED, ErrorCode.PERMISSION_DENIED);
+        super();
         this.authResult = authResult;
-        AuthResult.toAuthResultDTO(ex.getAuthResult())
+        setErrorCode(BkErrorCodeEnum.IAM_NO_PERMISSION);
+        setSubErrorCode(SubErrorCode.of(ErrorCode.BK_PERMISSION_DENIED));
     }
 
     public AuthResult getAuthResult() {

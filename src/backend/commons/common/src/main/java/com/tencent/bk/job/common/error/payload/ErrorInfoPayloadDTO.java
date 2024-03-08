@@ -48,7 +48,7 @@ public class ErrorInfoPayloadDTO extends ErrorPayloadDTO {
     private String reason;
 
     /**
-     * 错误所属范围（比如微服务名)
+     * 错误所属范围（比如微服务名、应用名)
      */
     private String domain;
 
