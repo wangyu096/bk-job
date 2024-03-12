@@ -29,15 +29,14 @@ import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.AccountCategoryEnum;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobConstants;
-import com.tencent.bk.job.common.exception.InvalidParamException;
-import com.tencent.bk.job.common.exception.NotFoundException;
-import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
+import com.tencent.bk.job.common.exception.base.ServiceException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
-import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
-import com.tencent.bk.job.common.util.ArrayUtil;
 import com.tencent.bk.job.common.util.date.DateUtils;
 import com.tencent.bk.job.common.web.metrics.CustomTimed;
 import com.tencent.bk.job.execute.api.esb.common.ConfigFileUtil;
@@ -101,11 +100,7 @@ public class EsbPushConfigFileResourceImpl extends JobExecuteCommonProcessor imp
     public EsbResp<EsbJobExecuteDTO> pushConfigFile(String username,
                                                     String appCode,
                                                     @AuditRequestBody EsbPushConfigFileRequest request) {
-        ValidateResult checkResult = checkPushConfigFileRequest(request);
-        if (!checkResult.isPass()) {
-            log.warn("Fast transfer file request is illegal!");
-            throw new InvalidParamException(checkResult);
-        }
+        checkPushConfigFileRequest(request);
 
         request.trimIps();
 
@@ -174,11 +169,11 @@ public class EsbPushConfigFileResourceImpl extends JobExecuteCommonProcessor imp
         AccountDTO account = accountService.getSystemAccountByAlias(accountAlias, appId);
         if (account == null) {
             log.info("Account:{} is not exist in app:{}", accountAlias, appId);
-            throw new NotFoundException(ErrorCode.ACCOUNT_NOT_EXIST, ArrayUtil.toArray(accountAlias));
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.ACCOUNT_NOT_EXIST, accountAlias));
         }
         if (AccountCategoryEnum.SYSTEM != account.getCategory()) {
             log.info("Account:{} is not os account in app:{}", accountAlias, appId);
-            throw new NotFoundException(ErrorCode.ACCOUNT_NOT_EXIST, ArrayUtil.toArray(accountAlias));
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.ACCOUNT_NOT_EXIST, accountAlias));
         }
         return account;
     }
@@ -214,36 +209,35 @@ public class EsbPushConfigFileResourceImpl extends JobExecuteCommonProcessor imp
         return fileSourceDTOS;
     }
 
-    private ValidateResult checkPushConfigFileRequest(EsbPushConfigFileRequest request) {
+    private void checkPushConfigFileRequest(EsbPushConfigFileRequest request) {
         if (StringUtils.isBlank(request.getTargetPath())) {
             log.warn("Push config file, targetPath is empty!");
-            return ValidateResult.fail(ErrorCode.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME, "file_target_path");
+            throw InvalidParamException.withInvalidField("file_target_path");
         }
         if (StringUtils.isBlank(request.getAccount())) {
             log.warn("Push config file, account is empty!");
-            return ValidateResult.fail(ErrorCode.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME, "account");
+            throw InvalidParamException.withInvalidField("account");
         }
         if (request.getIpList() == null || request.getIpList().isEmpty()) {
             log.warn("Push config file, ipList is empty!");
-            return ValidateResult.fail(ErrorCode.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME, "ip_list");
+            throw InvalidParamException.withInvalidField("ip_list");
         }
         if (request.getFileList() == null || request.getFileList().isEmpty()) {
             log.warn("Push config file, fileList is empty!");
-            return ValidateResult.fail(ErrorCode.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME, "file_list");
+            throw InvalidParamException.withInvalidField("file_list");
         }
 
         List<EsbPushConfigFileRequest.EsbConfigFileDTO> fileList = request.getFileList();
         for (EsbPushConfigFileRequest.EsbConfigFileDTO fileInfo : fileList) {
             if (StringUtils.isBlank(fileInfo.getFileName())) {
                 log.warn("Push config file, empty file name!");
-                return ValidateResult.fail(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, "file_list.file_name");
+                throw InvalidParamException.withInvalidField("file_list.file_name");
             }
             if (StringUtils.isBlank(fileInfo.getContent())) {
                 log.warn("Push config file, config file content is empty!");
-                return ValidateResult.fail(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, "file_list.content");
+                throw InvalidParamException.withInvalidField("file_list.content");
             }
         }
-        return ValidateResult.pass();
     }
 
 }

@@ -28,8 +28,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.UncheckedExecutionException;
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.common.model.dto.BkUserDTO;
 import com.tencent.bk.job.common.paas.config.LoginConfiguration;
 import com.tencent.bk.job.common.paas.login.ILoginClient;
@@ -109,7 +108,7 @@ public class LoginServiceImpl implements LoginService {
             if (cause instanceof RuntimeException) {
                 throw (RuntimeException) cause;
             } else {
-                throw new InternalException("Query userinfo from paas fail", e, ErrorCode.INTERNAL_ERROR);
+                throw new InternalException("Query userinfo from paas fail", e);
             }
         }
     }

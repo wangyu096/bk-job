@@ -25,9 +25,7 @@
 package com.tencent.bk.job.manage.api.esb.impl;
 
 import com.tencent.bk.job.common.constant.AccountCategoryEnum;
-import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
-import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.common.openapi.job.v3.utils.EsbDTOAppScopeMappingHelper;
 import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
@@ -63,11 +61,8 @@ public class EsbGetDBAccountListResourceImpl implements EsbGetDBAccountListResou
     public EsbResp<List<EsbDBAccountDTO>> getUserOwnDbAccountList(String username,
                                                                   String appCode,
                                                                   EsbGetDBAccountListRequest request) {
-        ValidateResult checkResult = checkRequest(request);
-        if (!checkResult.isPass()) {
-            log.warn("Get db account list, request is illegal!");
-            throw new InvalidParamException(checkResult);
-        }
+        checkRequest(request);
+
         long appId = request.getAppId();
         List<AccountDTO> dbAccounts = accountService.listAppAccount(appId, AccountCategoryEnum.DB);
         List<AccountDTO> grantedDbAccounts = new ArrayList<>();
@@ -104,13 +99,12 @@ public class EsbGetDBAccountListResourceImpl implements EsbGetDBAccountListResou
         return esbAccounts;
     }
 
-    private ValidateResult checkRequest(EsbGetDBAccountListRequest request) {
+    private void checkRequest(EsbGetDBAccountListRequest request) {
         if (request.getStart() == null) {
             request.setStart(0);
         }
         if (request.getLength() == null || request.getLength() < 1) {
             request.setLength(Integer.MAX_VALUE);
         }
-        return ValidateResult.pass();
     }
 }

@@ -42,7 +42,7 @@ import com.tencent.bk.job.analysis.task.analysis.task.pojo.AnalysisTaskResultDat
 import com.tencent.bk.job.analysis.task.analysis.task.pojo.AnalysisTaskResultItem;
 import com.tencent.bk.job.analysis.task.analysis.task.pojo.AnalysisTaskResultVO;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.exception.base.ServiceException;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.util.Counter;
@@ -112,7 +112,9 @@ public class ForbiddenScriptFinder extends BaseAnalysisTask {
                 } catch (ServiceException e) {
                     log.debug("script not exist by scriptVersionId {}"
                         , taskStepDTO.getScriptStepInfo().getScriptVersionId());
-                    if (e.getErrorCode() == ErrorCode.SCRIPT_NOT_EXIST) {
+                    if (e.getSubErrorCode() != null
+                        && e.getSubErrorCode().getCode().equals(ErrorCode.SCRIPT_NOT_EXIST)) {
+
                         badTplPlanInfoList.add(new BadTplPlanInfo(
                             AnalysisResourceEnum.TASK_PLAN
                             , new AnalysisTaskResultItemLocation(
@@ -167,7 +169,8 @@ public class ForbiddenScriptFinder extends BaseAnalysisTask {
                 } catch (ServiceException e) {
                     log.debug("script not exist by scriptVersionId {}"
                         , taskStepDTO.getScriptStepInfo().getScriptVersionId());
-                    if (e.getErrorCode() == ErrorCode.SCRIPT_NOT_EXIST) {
+                    if (e.getSubErrorCode() != null
+                        && e.getSubErrorCode().getCode().equals(ErrorCode.SCRIPT_NOT_EXIST)) {
                         badTplPlanInfoList.add(new BadTplPlanInfo(
                             AnalysisResourceEnum.TASK_PLAN
                             , new AnalysisTaskResultItemLocation(

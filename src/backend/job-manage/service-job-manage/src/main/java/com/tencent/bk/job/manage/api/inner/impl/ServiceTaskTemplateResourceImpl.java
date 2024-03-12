@@ -27,8 +27,9 @@ package com.tencent.bk.job.manage.api.inner.impl;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobConstants;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
-import com.tencent.bk.job.common.exception.NotFoundException;
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.InternalResponse;
@@ -110,7 +111,7 @@ public class ServiceTaskTemplateResourceImpl implements ServiceTaskTemplateResou
     public InternalResponse<ServiceTaskTemplateDTO> getTemplateById(String username, Long appId, Long templateId) {
         TaskTemplateInfoDTO templateInfo = templateService.getTaskTemplateById(appId, templateId);
         if (templateInfo == null) {
-            throw new NotFoundException(ErrorCode.TEMPLATE_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.TEMPLATE_NOT_EXIST));
         }
         ServiceTaskTemplateDTO serviceTaskTemplateDTO = TaskTemplateInfoDTO.toServiceDTO(templateInfo);
         return InternalResponse.buildSuccessResp(serviceTaskTemplateDTO);
@@ -120,7 +121,7 @@ public class ServiceTaskTemplateResourceImpl implements ServiceTaskTemplateResou
     public InternalResponse<ServiceTaskTemplateDTO> getTemplateById(Long templateId) {
         TaskTemplateInfoDTO templateInfo = templateService.getTemplateById(templateId);
         if (templateInfo == null) {
-            throw new NotFoundException(ErrorCode.TEMPLATE_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.TEMPLATE_NOT_EXIST));
         }
         ServiceTaskTemplateDTO serviceTaskTemplateDTO = TaskTemplateInfoDTO.toServiceDTO(templateInfo);
         return InternalResponse.buildSuccessResp(serviceTaskTemplateDTO);
@@ -150,7 +151,7 @@ public class ServiceTaskTemplateResourceImpl implements ServiceTaskTemplateResou
                 AuthResult authResult =
                     templateAuthService.authEditJobTemplate(username, new AppResourceScope(appId), templateId);
                 if (!authResult.isPass()) {
-                    throw new PermissionDeniedException(authResult);
+                    throw new IamPermissionDeniedException(authResult);
                 }
             } else {
                 log.warn("Skip update perm check for migration!");
@@ -160,7 +161,7 @@ public class ServiceTaskTemplateResourceImpl implements ServiceTaskTemplateResou
                 AuthResult authResult =
                     templateAuthService.authCreateJobTemplate(username, new AppResourceScope(appId));
                 if (!authResult.isPass()) {
-                    throw new PermissionDeniedException(authResult);
+                    throw new IamPermissionDeniedException(authResult);
                 }
             } else {
                 log.warn("Skip create perm check for migration!");

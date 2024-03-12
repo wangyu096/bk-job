@@ -92,7 +92,7 @@ public class ErrorCode {
     // 用户({0})权限不足，请前往权限中心确认并申请补充后重试
     public static final int PERMISSION_DENIED = 1238001;
     // 蓝鲸统一权限错误码，用户({0})权限不足，请前往权限中心确认并申请补充后重试
-    public static final int BK_PERMISSION_DENIED = 9900403;
+    public static final int IAM_PERMISSION_DENIED = 9900403;
 
     // ========= 系统错误-请求 ====================//
     // 内部服务异常
@@ -383,26 +383,26 @@ public class ErrorCode {
     // ======= 系统错误-公共组件错误 =======//
 
     // 文件网关 start
-    // 文件源不存在:{0}
+    // 文件源不存在
     public static final int FILE_SOURCE_NOT_EXIST = 1260001;
-    // 接入点响应异常：ListFileNode，详情：{0}
+    // 接入点响应异常：ListFileNode
     public static final int FAIL_TO_REQUEST_FILE_WORKER_LIST_FILE_NODE = 1260002;
-    // 接入点响应异常：FileAvailable，详情：{0}
+    // 接入点响应异常：FileAvailable
     public static final int FAIL_TO_REQUEST_FILE_WORKER_FILE_AVAILABLE = 1260003;
-    // 接入点响应异常：ExecuteAction，详情：{0}
+    // 接入点响应异常：ExecuteAction
     public static final int FAIL_TO_REQUEST_FILE_WORKER_EXECUTE_ACTION = 1260008;
-    // 接入点响应异常：DeleteBucketFile，详情：{0}
+    // 接入点响应异常：DeleteBucketFile
     public static final int FAIL_TO_REQUEST_FILE_WORKER_DELETE_BUCKET_FILE = 1260009;
 
     // 文件源别名已存在：{0}
     public static final int FILE_SOURCE_ALIAS_ALREADY_EXISTS = 1260004;
     // 无法匹配到有效接入点，请检查文件源配置
     public static final int CAN_NOT_FIND_AVAILABLE_FILE_WORKER = 1260005;
-    // 接入点响应异常：ClearTaskFiles，详情：{0}
+    // 接入点响应异常：ClearTaskFiles
     public static final int FAIL_TO_REQUEST_FILE_WORKER_CLEAR_TASK_FILES = 1260006;
-    // 接入点响应异常：StartFileSourceDownloadTask，详情：{0}
+    // 接入点响应异常：StartFileSourceDownloadTask
     public static final int FAIL_TO_REQUEST_FILE_WORKER_START_FILE_SOURCE_DOWNLOAD_TASK = 1260007;
-    // 接入点响应异常：StopTasks，详情：{0}
+    // 接入点响应异常：StopTasks
     public static final int FAIL_TO_REQUEST_FILE_WORKER_STOP_TASKS = 1260011;
     // 不可删除文件未清空的Bucket
     public static final int CAN_NOT_DELETE_BUCKET_CONTAINS_FILES = 1260010;
@@ -418,7 +418,7 @@ public class ErrorCode {
     public static final int ID_AND_CODE_AT_LEAST_ONE = 1260016;
     // 文件源[id={0}]不在业务/业务集下
     public static final int FILE_SOURCE_ID_NOT_IN_BIZ = 1260017;
-    // 接入点响应异常，详情：{0}
+    // 接入点响应异常
     public static final int FAIL_TO_REQUEST_FILE_WORKER_WITH_REASON = 1260018;
     // 文件源code不可为空
     public static final int FILE_SOURCE_CODE_CAN_NOT_BE_EMPTY = 1260019;
@@ -427,17 +427,17 @@ public class ErrorCode {
     // 文件代理 start
     // 文件代理 end
     // 文件Worker start
-    // 第三方文件源响应异常：ListBucket，详情：{0}
+    // 第三方文件源响应异常：ListBucket
     public static final int FAIL_TO_REQUEST_THIRD_FILE_SOURCE_LIST_BUCKET = 1262001;
-    // 第三方文件源响应异常：ListObjects，详情：{0}
+    // 第三方文件源响应异常：ListObjects
     public static final int FAIL_TO_REQUEST_THIRD_FILE_SOURCE_LIST_OBJECTS = 1262002;
-    // 第三方文件源响应异常：DeleteBucket，详情：{0}
+    // 第三方文件源响应异常：DeleteBucket
     public static final int FAIL_TO_REQUEST_THIRD_FILE_SOURCE_DELETE_BUCKET = 1262003;
-    // 第三方文件源响应异常：DeleteObject，详情：{0}
+    // 第三方文件源响应异常：DeleteObject
     public static final int FAIL_TO_REQUEST_THIRD_FILE_SOURCE_DELETE_OBJECT = 1262004;
-    // 第三方文件源响应异常：DownloadGenericFile，详情：{0}
+    // 第三方文件源响应异常：DownloadGenericFile
     public static final int FAIL_TO_REQUEST_THIRD_FILE_SOURCE_DOWNLOAD_GENERIC_FILE = 1262005;
-    // 第三方文件源响应异常：GetObject，详情：{0}
+    // 第三方文件源响应异常：GetObject
     public static final int FAIL_TO_REQUEST_THIRD_FILE_SOURCE_GET_OBJECT = 1262006;
     // 文件Worker end
 

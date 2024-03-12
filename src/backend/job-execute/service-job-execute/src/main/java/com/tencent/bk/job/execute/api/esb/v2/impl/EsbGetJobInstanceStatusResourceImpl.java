@@ -28,11 +28,11 @@ import com.google.common.collect.Lists;
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
-import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
-import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.common.openapi.job.v3.utils.EsbDTOAppScopeMappingHelper;
 import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
@@ -89,11 +89,8 @@ public class EsbGetJobInstanceStatusResourceImpl implements EsbGetJobInstanceSta
         String username,
         String appCode,
         @AuditRequestBody EsbGetJobInstanceStatusRequest request) {
-        ValidateResult checkResult = checkRequest(request);
-        if (!checkResult.isPass()) {
-            log.warn("Get job instance status request is illegal!");
-            throw new InvalidParamException(checkResult);
-        }
+
+        checkRequest(request);
 
         long taskInstanceId = request.getTaskInstanceId();
         TaskInstanceDTO taskInstance = taskInstanceService.getTaskInstance(username,
@@ -103,7 +100,7 @@ public class EsbGetJobInstanceStatusResourceImpl implements EsbGetJobInstanceSta
             stepInstanceService.listBaseStepInstanceByTaskInstanceId(taskInstanceId);
         if (stepInstances == null || stepInstances.isEmpty()) {
             log.warn("Get job instance status by taskInstanceId:{}, stepInstanceList is empty!", taskInstanceId);
-            throw new NotFoundException(ErrorCode.STEP_INSTANCE_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.STEP_INSTANCE_NOT_EXIST));
         }
 
         Map<Long, List<EsbIpStatusDTO>> stepIpResultMap = getStepIpResult(stepInstances);
@@ -111,12 +108,11 @@ public class EsbGetJobInstanceStatusResourceImpl implements EsbGetJobInstanceSta
         return EsbResp.buildSuccessResp(buildEsbJobInstanceStatusDTO(taskInstance, stepInstances, stepIpResultMap));
     }
 
-    private ValidateResult checkRequest(EsbGetJobInstanceStatusRequest request) {
+    private void checkRequest(EsbGetJobInstanceStatusRequest request) {
         if (request.getTaskInstanceId() == null || request.getTaskInstanceId() < 1) {
             log.warn("TaskInstanceId is empty or illegal, taskInstanceId={}", request.getTaskInstanceId());
-            return ValidateResult.fail(ErrorCode.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME, "job_instance_id");
+            throw InvalidParamException.withInvalidField("job_instance_id");
         }
-        return ValidateResult.pass();
     }
 
     private Map<Long, List<EsbIpStatusDTO>> getStepIpResult(List<StepInstanceBaseDTO> stepInstanceList) {

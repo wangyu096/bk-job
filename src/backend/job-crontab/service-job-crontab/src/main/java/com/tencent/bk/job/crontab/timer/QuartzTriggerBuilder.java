@@ -24,8 +24,7 @@
 
 package com.tencent.bk.job.crontab.timer;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import org.quartz.DateBuilder;
 import org.quartz.JobKey;
 import org.quartz.SimpleTrigger;
@@ -88,7 +87,7 @@ public class QuartzTriggerBuilder {
         quartzTrigger.setJobKey(this.jobKey);
 
         if (key == null) {
-            throw new InternalException("Trigger mast have key!", ErrorCode.INTERNAL_ERROR);
+            throw new InternalException("Trigger mast have key!");
         }
 
         quartzTrigger.setKey(this.key);

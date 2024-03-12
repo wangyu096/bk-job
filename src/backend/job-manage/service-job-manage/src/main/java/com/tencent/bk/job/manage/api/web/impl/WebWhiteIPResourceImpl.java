@@ -29,7 +29,7 @@ import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.audit.constants.EventContentConstants;
 import com.tencent.bk.job.common.iam.constant.ActionId;
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.model.PageDataWithManagePermission;
@@ -88,7 +88,7 @@ public class WebWhiteIPResourceImpl implements WebWhiteIPResource {
     ) {
         AuthResult authResult = noResourceScopeAuthService.authManageWhiteList(username);
         if (!authResult.isPass()) {
-            throw new PermissionDeniedException(authResult);
+            throw new IamPermissionDeniedException(authResult);
         }
         PageData<WhiteIPRecordVO> pageData = whiteIPService.listWhiteIPRecord(username, ipStr, appIdStr, appNameStr,
             actionScopeStr, creator, lastModifier, start, pageSize, orderField, order);
@@ -107,7 +107,7 @@ public class WebWhiteIPResourceImpl implements WebWhiteIPResource {
                                                    @AuditRequestBody WhiteIPRecordCreateUpdateReq createUpdateReq) {
         AuthResult authResult = noResourceScopeAuthService.authCreateWhiteList(username);
         if (!authResult.isPass()) {
-            throw new PermissionDeniedException(authResult);
+            throw new IamPermissionDeniedException(authResult);
         }
 
         WhiteIPRecordDTO record = whiteIPService.createWhiteIP(username, createUpdateReq);
@@ -132,7 +132,7 @@ public class WebWhiteIPResourceImpl implements WebWhiteIPResource {
         createUpdateReq.setId(id);
         AuthResult authResult = noResourceScopeAuthService.authManageWhiteList(username);
         if (!authResult.isPass()) {
-            throw new PermissionDeniedException(authResult);
+            throw new IamPermissionDeniedException(authResult);
         }
 
         WhiteIPRecordDTO record = whiteIPService.updateWhiteIP(username, createUpdateReq);
@@ -143,7 +143,7 @@ public class WebWhiteIPResourceImpl implements WebWhiteIPResource {
     public Response<WhiteIPRecordVO> getWhiteIPDetailById(String username, Long id) {
         AuthResult authResult = noResourceScopeAuthService.authManageWhiteList(username);
         if (!authResult.isPass()) {
-            throw new PermissionDeniedException(authResult);
+            throw new IamPermissionDeniedException(authResult);
         }
 
         WhiteIPRecordDTO record = whiteIPService.getWhiteIPDetailById(username, id);
@@ -165,7 +165,7 @@ public class WebWhiteIPResourceImpl implements WebWhiteIPResource {
     public Response<Long> deleteWhiteIPById(String username, Long id) {
         AuthResult authResult = noResourceScopeAuthService.authManageWhiteList(username);
         if (!authResult.isPass()) {
-            throw new PermissionDeniedException(authResult);
+            throw new IamPermissionDeniedException(authResult);
         }
         return Response.buildSuccessResp(whiteIPService.deleteWhiteIPById(username, id));
     }

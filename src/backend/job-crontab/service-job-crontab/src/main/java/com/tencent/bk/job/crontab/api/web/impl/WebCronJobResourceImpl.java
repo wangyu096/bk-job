@@ -28,13 +28,18 @@ import com.google.common.base.CaseFormat;
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.error.payload.ResourceInfoPayloadDTO;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
+import com.tencent.bk.job.common.iam.constant.ResourceTypeEnum;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
 import com.tencent.bk.job.common.util.JobContextUtil;
+import com.tencent.bk.job.common.util.MessageFormatUtil;
 import com.tencent.bk.job.common.util.check.IlegalCharChecker;
 import com.tencent.bk.job.common.util.check.MaxLengthChecker;
 import com.tencent.bk.job.common.util.check.NotEmptyChecker;
@@ -357,7 +362,7 @@ public class WebCronJobResourceImpl implements WebCronJobResource {
             return Response.buildSuccessResp(CronJobInfoDTO.toVO(createdCronJob));
         } else {
             log.warn("Validate cron job failed!|{}", JobContextUtil.getDebugMessage());
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
     }
 
@@ -380,7 +385,7 @@ public class WebCronJobResourceImpl implements WebCronJobResource {
             return Response.buildSuccessResp(CronJobInfoDTO.toVO(updatedCronJob));
         } else {
             log.warn("Validate cron job failed!|{}", JobContextUtil.getDebugMessage());
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
     }
 
@@ -391,7 +396,7 @@ public class WebCronJobResourceImpl implements WebCronJobResource {
             cronJobCreateUpdateReq.setName(stringCheckHelper.checkAndGetResult(cronJobCreateUpdateReq.getName()));
         } catch (StringCheckException e) {
             log.warn("Cron Job Name is invalid:", e);
-            throw new InvalidParamException(e, ErrorCode.ILLEGAL_PARAM);
+            throw InvalidParamException.withInvalidField("name", "Invalid cron name");
         }
     }
 
@@ -494,40 +499,44 @@ public class WebCronJobResourceImpl implements WebCronJobResource {
         Long appId = appResourceScope.getAppId();
 
         CronJobInfoDTO cronJobInfo = cronJobService.getCronJobInfoById(appId, cronJobId);
-        if (cronJobInfo != null) {
-            CronJobHistoryDTO historyCondition = new CronJobHistoryDTO();
-            historyCondition.setAppId(appId);
-            historyCondition.setCronJobId(cronJobId);
-            historyCondition.setStatus(ExecuteStatusEnum.FAIL);
+        if (cronJobInfo == null) {
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.CRON_JOB_NOT_EXIST),
+                new ResourceInfoPayloadDTO(ResourceTypeEnum.CRON.getId(), "CronJobId:" + cronJobId,
+                    MessageFormatUtil.format("Cron job with id : {} not found", cronJobId)));
+        }
 
-            BaseSearchCondition baseSearchCondition = new BaseSearchCondition();
-            baseSearchCondition.setStart(start);
-            baseSearchCondition.setLength(pageSize);
-            PageData<CronJobHistoryDTO> cronJobHistoryPageData =
-                cronJobHistoryService.listPageHistoryByCondition(historyCondition,
-                    baseSearchCondition);
+        CronJobHistoryDTO historyCondition = new CronJobHistoryDTO();
+        historyCondition.setAppId(appId);
+        historyCondition.setCronJobId(cronJobId);
+        historyCondition.setStatus(ExecuteStatusEnum.FAIL);
 
-            List<CronJobLaunchHistoryVO> resultCronJobHistories = new ArrayList<>();
-            if (cronJobHistoryPageData != null) {
-                cronJobHistoryPageData.getData().forEach(cronJobHistoryInfo ->
-                    resultCronJobHistories.add(CronJobHistoryDTO.toVO(cronJobHistoryInfo)));
-            } else {
-                PageData<CronJobLaunchHistoryVO> resultPageData = new PageData<>();
-                resultPageData.setStart(start);
-                resultPageData.setPageSize(pageSize);
-                resultPageData.setTotal(0L);
-                resultPageData.setData(Collections.emptyList());
-                return Response.buildSuccessResp(resultPageData);
-            }
+        BaseSearchCondition baseSearchCondition = new BaseSearchCondition();
+        baseSearchCondition.setStart(start);
+        baseSearchCondition.setLength(pageSize);
+        PageData<CronJobHistoryDTO> cronJobHistoryPageData =
+            cronJobHistoryService.listPageHistoryByCondition(historyCondition,
+                baseSearchCondition);
 
+        List<CronJobLaunchHistoryVO> resultCronJobHistories = new ArrayList<>();
+        if (cronJobHistoryPageData != null) {
+            cronJobHistoryPageData.getData().forEach(cronJobHistoryInfo ->
+                resultCronJobHistories.add(CronJobHistoryDTO.toVO(cronJobHistoryInfo)));
+        } else {
             PageData<CronJobLaunchHistoryVO> resultPageData = new PageData<>();
-            resultPageData.setStart(cronJobHistoryPageData.getStart());
-            resultPageData.setPageSize(cronJobHistoryPageData.getPageSize());
-            resultPageData.setTotal(cronJobHistoryPageData.getTotal());
-            resultPageData.setData(resultCronJobHistories);
-
+            resultPageData.setStart(start);
+            resultPageData.setPageSize(pageSize);
+            resultPageData.setTotal(0L);
+            resultPageData.setData(Collections.emptyList());
             return Response.buildSuccessResp(resultPageData);
         }
-        return Response.buildCommonFailResp(ErrorCode.CRON_JOB_NOT_EXIST);
+
+        PageData<CronJobLaunchHistoryVO> resultPageData = new PageData<>();
+        resultPageData.setStart(cronJobHistoryPageData.getStart());
+        resultPageData.setPageSize(cronJobHistoryPageData.getPageSize());
+        resultPageData.setTotal(cronJobHistoryPageData.getTotal());
+        resultPageData.setData(resultCronJobHistories);
+
+        return Response.buildSuccessResp(resultPageData);
+
     }
 }

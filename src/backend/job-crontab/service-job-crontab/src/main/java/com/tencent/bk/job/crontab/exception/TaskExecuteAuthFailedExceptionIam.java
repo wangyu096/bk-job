@@ -22,25 +22,22 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.exception;
+package com.tencent.bk.job.crontab.exception;
 
-import com.tencent.bk.job.common.error.BkErrorCodeEnum;
-import com.tencent.bk.job.common.error.SubErrorCode;
-import com.tencent.bk.job.common.error.payload.ResourceInfoPayloadDTO;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
+import com.tencent.bk.job.common.iam.model.AuthResult;
+import com.tencent.bk.job.common.model.permission.AuthResultVO;
 import lombok.Getter;
-import lombok.ToString;
 
 /**
- * 创建的资源已存在
+ * @since 26/11/2020 21:22
  */
 @Getter
-@ToString
-public class AlreadyExistsException extends ServiceException {
+public class TaskExecuteAuthFailedExceptionIam extends IamPermissionDeniedException {
+    private final AuthResultVO authResultVO;
 
-    public AlreadyExistsException(SubErrorCode subErrorCode, ResourceInfoPayloadDTO resourceInfoPayload) {
-        super();
-        setErrorCode(BkErrorCodeEnum.ALREADY_EXISTS);
-        setSubErrorCode(subErrorCode);
+    public TaskExecuteAuthFailedExceptionIam(AuthResult authResult, AuthResultVO authResultVO) {
+        super(authResult);
+        this.authResultVO = authResultVO;
     }
-
 }

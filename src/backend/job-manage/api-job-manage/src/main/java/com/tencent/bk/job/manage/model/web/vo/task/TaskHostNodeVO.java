@@ -25,8 +25,7 @@
 package com.tencent.bk.job.manage.model.web.vo.task;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.model.vo.HostInfoVO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -68,7 +67,7 @@ public class TaskHostNodeVO {
             for (String dynamicGroup : dynamicGroupList) {
                 if (!StringUtils.isNoneBlank(dynamicGroup)) {
                     log.warn("Host dynamic group id is empty!");
-                    throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+                    throw new InvalidParamException();
                 }
             }
         }
@@ -80,7 +79,7 @@ public class TaskHostNodeVO {
         }
         if (allEmpty) {
             log.warn("TaskHostNode is empty!");
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
     }
 }

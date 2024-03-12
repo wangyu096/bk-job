@@ -26,9 +26,7 @@ package com.tencent.bk.job.manage.service.host.impl;
 
 import com.tencent.bk.job.common.cc.model.InstanceTopologyDTO;
 import com.tencent.bk.job.common.cc.sdk.BkNetClient;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.ResourceScopeTypeEnum;
-import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
 import com.tencent.bk.job.common.model.dto.ApplicationDTO;
@@ -115,7 +113,7 @@ public class ScopeTopoHostServiceImpl implements ScopeTopoHostService {
     public CcTopologyNodeVO listAppTopologyTree(String username, AppResourceScope appResourceScope) {
         ApplicationDTO appInfo = applicationService.getAppByAppId(appResourceScope.getAppId());
         if (appInfo == null) {
-            throw new InvalidParamException(ErrorCode.WRONG_APP_ID);
+            throw new IllegalArgumentException("Wrong app id");
         }
         CcTopologyNodeVO ccTopologyNodeVO = fillObjInfoForNode(appInfo, new CcTopologyNodeVO());
         ccTopologyNodeVO.setInstanceId(Long.valueOf(appResourceScope.getId()));

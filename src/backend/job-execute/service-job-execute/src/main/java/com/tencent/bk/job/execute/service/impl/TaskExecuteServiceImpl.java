@@ -33,12 +33,11 @@ import com.tencent.bk.job.common.audit.constants.EventContentConstants;
 import com.tencent.bk.job.common.constant.AccountCategoryEnum;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
-import com.tencent.bk.job.common.exception.AbortedException;
-import com.tencent.bk.job.common.exception.FailedPreconditionException;
-import com.tencent.bk.job.common.exception.InternalException;
-import com.tencent.bk.job.common.exception.NotFoundException;
-import com.tencent.bk.job.common.exception.ResourceExhaustedException;
-import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.exception.base.FailedPreconditionException;
+import com.tencent.bk.job.common.exception.base.InternalException;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
+import com.tencent.bk.job.common.exception.base.ResourceExhaustedException;
+import com.tencent.bk.job.common.exception.base.ServiceException;
 import com.tencent.bk.job.common.gse.constants.AgentAliveStatusEnum;
 import com.tencent.bk.job.common.gse.constants.DefaultBeanNames;
 import com.tencent.bk.job.common.gse.service.AgentStateClient;
@@ -47,7 +46,7 @@ import com.tencent.bk.job.common.gse.util.AgentUtils;
 import com.tencent.bk.job.common.gse.v2.model.resp.AgentState;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
@@ -735,7 +734,7 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
         }
 
         if (!authResult.isPass()) {
-            throw new PermissionDeniedException(authResult);
+            throw new IamPermissionDeniedException(authResult);
         }
     }
 
@@ -1718,7 +1717,7 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
 
     private void authExecuteJobPlan(String username, long appId, ServiceTaskPlanDTO plan,
                                     List<StepInstanceDTO> stepInstanceList,
-                                    Map<Long, List<String>> whiteHostAllowActions) throws PermissionDeniedException {
+                                    Map<Long, List<String>> whiteHostAllowActions) throws IamPermissionDeniedException {
         boolean needAuth = stepInstanceList.stream()
             .anyMatch(stepInstance -> stepInstance.isScriptStep() || stepInstance.isFileStep());
         if (!needAuth) {
@@ -1763,7 +1762,7 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
         }
 
         if (!authResult.isPass()) {
-            throw new PermissionDeniedException(authResult);
+            throw new IamPermissionDeniedException(authResult);
         }
     }
 
@@ -1834,7 +1833,7 @@ public class TaskExecuteServiceImpl implements TaskExecuteService {
             authFastExecute(taskInstance, fileStepInstance, whiteHostAllowActions);
         } else {
             log.warn("Auth fail because of invalid task type!");
-            throw new PermissionDeniedException(AuthResult.fail());
+            throw new IamPermissionDeniedException(AuthResult.fail());
         }
     }
 

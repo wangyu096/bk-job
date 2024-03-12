@@ -24,8 +24,9 @@
 
 package com.tencent.bk.job.crontab.validation.provider;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.error.payload.BadRequestPayloadDTO;
+import com.tencent.bk.job.common.error.payload.FieldViolationDTO;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.validation.Create;
 import com.tencent.bk.job.common.validation.Update;
 import com.tencent.bk.job.crontab.model.esb.v3.request.EsbSaveCronV3Request;
@@ -49,8 +50,11 @@ public class EsbSaveCronV3RequestSequenceProvider implements DefaultGroupSequenc
             if (id == null || id == -1) {
                 if (StringUtils.isBlank(bean.getCronExpression())
                     && (bean.getExecuteTime() == null || bean.getExecuteTime() <= 0)) {
-                    throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON, new String[]{
-                        "expression/execute_time", "expression/execute_time cannot both be null or invalid"});
+                    throw new InvalidParamException(
+                        BadRequestPayloadDTO.instance()
+                            .addFieldViolation(
+                                new FieldViolationDTO("expression/execute_time",
+                                    "expression/execute_time cannot both be null or invalid")));
                 }
                 defaultGroupSequence.add(Create.class);
             } else {
@@ -72,10 +76,12 @@ public class EsbSaveCronV3RequestSequenceProvider implements DefaultGroupSequenc
                     hasChange = true;
                 }
                 if (!hasChange) {
-                    throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON, new String[]{
-                        "job_plan_id/name/expression/execute_time",
-                        "At least one of job_plan_id/name/expression/execute_time must be given to update cron "
-                            + id});
+                    throw new InvalidParamException(
+                        BadRequestPayloadDTO.instance()
+                            .addFieldViolation(
+                                new FieldViolationDTO("job_plan_id/name/expression/execute_time",
+                                    "At least one of job_plan_id/name/expression/execute_time must be given to update" +
+                                        " cron " + id)));
                 }
                 defaultGroupSequence.add(Update.class);
             }

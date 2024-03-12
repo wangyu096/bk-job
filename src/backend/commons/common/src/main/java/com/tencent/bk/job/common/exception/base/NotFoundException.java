@@ -22,9 +22,11 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.exception;
+package com.tencent.bk.job.common.exception.base;
 
 import com.tencent.bk.job.common.error.BkErrorCodeEnum;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.error.payload.ResourceInfoPayloadDTO;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -35,13 +37,18 @@ import lombok.ToString;
 @ToString
 public class NotFoundException extends ServiceException {
 
-    public NotFoundException(String internalErrorMessage, Throwable cause) {
-        super(internalErrorMessage, cause);
+    public NotFoundException(SubErrorCode subErrorCode, ResourceInfoPayloadDTO payload) {
+        super(subErrorCode, payload);
         setErrorCode(BkErrorCodeEnum.NOT_FOUND);
     }
 
-    public NotFoundException(String internalErrorMessage) {
-        super(internalErrorMessage);
+    public NotFoundException(SubErrorCode subErrorCode) {
+        super(subErrorCode);
+        setErrorCode(BkErrorCodeEnum.NOT_FOUND);
+    }
+
+    public NotFoundException(Throwable cause, SubErrorCode subErrorCode, ResourceInfoPayloadDTO payload) {
+        super(null, cause, subErrorCode, payload);
         setErrorCode(BkErrorCodeEnum.NOT_FOUND);
     }
 }

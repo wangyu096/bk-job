@@ -27,11 +27,12 @@ package com.tencent.bk.job.execute.api.web.impl;
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
-import com.tencent.bk.job.common.exception.InvalidParamException;
-import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.iam.constant.ActionId;
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.iam.service.BusinessAuthService;
 import com.tencent.bk.job.common.model.Response;
@@ -424,17 +425,17 @@ public class WebTaskInstanceResourceImpl implements WebTaskInstanceResource {
     public Response<TaskInstanceVO> getTaskInstanceBasic(String username, Long taskInstanceId) {
         if (taskInstanceId == null || taskInstanceId <= 0) {
             log.warn("Get task instance basic, task instance id is null or empty!");
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         TaskInstanceDTO taskInstance = taskInstanceService.getTaskInstance(taskInstanceId);
         if (taskInstance == null) {
-            throw new NotFoundException(ErrorCode.TASK_INSTANCE_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.TASK_INSTANCE_NOT_EXIST));
         }
         AuthResult authResult = businessAuthService.authAccessBusiness(
             username, new AppResourceScope(taskInstance.getAppId())
         );
         if (!authResult.isPass()) {
-            throw new PermissionDeniedException(authResult);
+            throw new IamPermissionDeniedException(authResult);
         }
         return Response.buildSuccessResp(TaskInstanceConverter.convertToTaskInstanceVO(taskInstance));
     }

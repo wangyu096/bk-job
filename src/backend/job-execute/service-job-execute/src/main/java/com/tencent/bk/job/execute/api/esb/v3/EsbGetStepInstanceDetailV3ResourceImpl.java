@@ -25,9 +25,7 @@
 package com.tencent.bk.job.execute.api.esb.v3;
 
 import com.tencent.bk.audit.annotations.AuditEntry;
-import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
-import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.openapi.job.v3.EsbAccountV3BasicDTO;
 import com.tencent.bk.job.common.openapi.job.v3.EsbApprovalStepV3DTO;
 import com.tencent.bk.job.common.openapi.job.v3.EsbFileDestinationV3DTO;
@@ -86,15 +84,11 @@ public class EsbGetStepInstanceDetailV3ResourceImpl implements EsbGetStepInstanc
                                                        Long stepInstanceId) {
         long appId = appScopeMappingService.getAppIdByScope(scopeType, scopeId);
 
-        ValidateResult checkResult = stepInstanceValidateService.checkStepInstance(
+        stepInstanceValidateService.checkStepInstance(
             appId,
             taskInstanceId,
             stepInstanceId
         );
-        if (!checkResult.isPass()) {
-            log.warn("Get step instance detail request is illegal!");
-            throw new InvalidParamException(checkResult);
-        }
 
         StepInstanceDTO stepInstance = stepInstanceService.getStepInstanceDetail(appId, stepInstanceId);
 

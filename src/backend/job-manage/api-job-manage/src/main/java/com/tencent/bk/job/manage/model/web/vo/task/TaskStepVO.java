@@ -24,8 +24,7 @@
 
 package com.tencent.bk.job.manage.model.web.vo.task;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.util.check.IlegalCharChecker;
 import com.tencent.bk.job.common.util.check.MaxLengthChecker;
 import com.tencent.bk.job.common.util.check.NotEmptyChecker;
@@ -84,11 +83,11 @@ public class TaskStepVO {
         if (isCreate) {
             if (id != null && id > 0) {
                 log.warn("Create request has step id!");
-                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+                throw new InvalidParamException();
             }
             if (StringUtils.isBlank(name)) {
                 log.warn("Create request missing step name!");
-                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+                throw new InvalidParamException();
             }
         }
         if (delete != null && delete == 1) {
@@ -100,34 +99,34 @@ public class TaskStepVO {
             this.name = stepCheckHelper.checkAndGetResult(name);
         } catch (StringCheckException e) {
             log.warn("Step name is invalid, stepName: {}", name);
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         TaskStepTypeEnum stepType = TaskStepTypeEnum.valueOf(type);
         switch (stepType) {
             case SCRIPT:
                 if (scriptStepInfo == null) {
                     log.warn("Empty script step");
-                    throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+                    throw new InvalidParamException();
                 }
                 scriptStepInfo.validate(isCreate);
                 break;
             case FILE:
                 if (fileStepInfo == null) {
                     log.warn("Empty file step");
-                    throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+                    throw new InvalidParamException();
                 }
                 fileStepInfo.validate(isCreate);
                 break;
             case APPROVAL:
                 if (approvalStepInfo == null) {
                     log.warn("Empty approval step");
-                    throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+                    throw new InvalidParamException();
                 }
                 approvalStepInfo.validate(isCreate);
                 break;
             default:
                 log.warn("Invalid step type: {}", type);
-                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+                throw new InvalidParamException();
         }
     }
 }

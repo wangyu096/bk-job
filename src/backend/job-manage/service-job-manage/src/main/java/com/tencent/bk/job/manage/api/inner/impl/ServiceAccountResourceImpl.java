@@ -26,16 +26,16 @@ package com.tencent.bk.job.manage.api.inner.impl;
 
 import com.tencent.bk.job.common.constant.AccountCategoryEnum;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
-import com.tencent.bk.job.common.exception.NotFoundException;
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
 import com.tencent.bk.job.common.mysql.JobTransactional;
 import com.tencent.bk.job.common.service.AppScopeMappingService;
-import com.tencent.bk.job.common.util.ArrayUtil;
 import com.tencent.bk.job.common.util.date.DateUtils;
 import com.tencent.bk.job.manage.api.inner.ServiceAccountResource;
 import com.tencent.bk.job.manage.auth.AccountAuthService;
@@ -72,7 +72,7 @@ public class ServiceAccountResourceImpl implements ServiceAccountResource {
         AccountDTO accountDTO = accountService.getAccountById(accountId);
         if (accountDTO == null) {
             log.warn("Account is not exist, accountId={}", accountId);
-            throw new NotFoundException(ErrorCode.ACCOUNT_NOT_EXIST, ArrayUtil.toArray(accountId));
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.ACCOUNT_NOT_EXIST, accountId));
         }
         ServiceAccountDTO result = accountDTO.toServiceAccountDTO();
         if (accountDTO.getCategory() == AccountCategoryEnum.DB) {
@@ -80,7 +80,7 @@ public class ServiceAccountResourceImpl implements ServiceAccountResource {
             AccountDTO dbSystemAccount = accountService.getAccountById(systemAccountId);
             if (dbSystemAccount == null) {
                 log.warn("Db related system account is not exist, accountId={}", accountId);
-                throw new NotFoundException(ErrorCode.ACCOUNT_NOT_EXIST, ArrayUtil.toArray(systemAccountId));
+                throw new NotFoundException(SubErrorCode.of(ErrorCode.ACCOUNT_NOT_EXIST, systemAccountId));
             }
             result.setDbSystemAccount(dbSystemAccount.toServiceAccountDTO());
         }
@@ -92,7 +92,7 @@ public class ServiceAccountResourceImpl implements ServiceAccountResource {
         AccountDTO accountDTO = accountService.getAccountByAccount(appId, account);
         if (accountDTO == null) {
             log.warn("Account is not exist, appId={},account={}", appId, account);
-            throw new NotFoundException(ErrorCode.ACCOUNT_NOT_EXIST, ArrayUtil.toArray(account));
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.ACCOUNT_NOT_EXIST, account));
         }
         ServiceAccountDTO result = accountDTO.toServiceAccountDTO();
         if (accountDTO.getCategory() == AccountCategoryEnum.DB) {
@@ -100,7 +100,7 @@ public class ServiceAccountResourceImpl implements ServiceAccountResource {
             AccountDTO dbSystemAccount = accountService.getAccountById(systemAccountId);
             if (dbSystemAccount == null) {
                 log.warn("Db related system account is not exist,appId={}, account={}", appId, account);
-                throw new NotFoundException(ErrorCode.ACCOUNT_NOT_EXIST);
+                throw new NotFoundException(SubErrorCode.of(ErrorCode.ACCOUNT_NOT_EXIST, account));
             }
             result.setDbSystemAccount(dbSystemAccount.toServiceAccountDTO());
         }
@@ -114,7 +114,7 @@ public class ServiceAccountResourceImpl implements ServiceAccountResource {
         AccountDTO accountDTO = accountService.getAccount(appId, AccountCategoryEnum.valOf(category), alias);
         if (accountDTO == null) {
             log.warn("Account is not exist, appId={}, category={}, alias={}", appId, category, alias);
-            throw new NotFoundException(ErrorCode.ACCOUNT_NOT_EXIST, ArrayUtil.toArray(alias));
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.ACCOUNT_NOT_EXIST, alias));
         }
 
         return InternalResponse.buildSuccessResp(toServiceAccountDTO(accountDTO));
@@ -127,7 +127,7 @@ public class ServiceAccountResourceImpl implements ServiceAccountResource {
             AccountDTO dbSystemAccount = accountService.getAccountById(systemAccountId);
             if (dbSystemAccount == null) {
                 log.warn("Db related system account is not exist, account: {}", accountDTO);
-                throw new NotFoundException(ErrorCode.ACCOUNT_NOT_EXIST, ArrayUtil.toArray(systemAccountId));
+                throw new NotFoundException(SubErrorCode.of(ErrorCode.ACCOUNT_NOT_EXIST, systemAccountId));
             }
             result.setDbSystemAccount(dbSystemAccount.toServiceAccountDTO());
         }
@@ -140,7 +140,7 @@ public class ServiceAccountResourceImpl implements ServiceAccountResource {
                                                                 String lastModifyUser, Long appId,
                                                                 AccountCreateUpdateReq accountCreateUpdateReq) {
         if (!accountService.checkCreateParam(accountCreateUpdateReq, true, true)) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         AccountDTO accountDTO =
             accountService.getAccount(appId, AccountCategoryEnum.SYSTEM, accountCreateUpdateReq.getAlias());
@@ -177,7 +177,7 @@ public class ServiceAccountResourceImpl implements ServiceAccountResource {
         AppResourceScope appResourceScope = appScopeMappingService.getAppResourceScope(appId, null, null);
         AuthResult authResult = accountAuthService.authCreateAccount(username, appResourceScope);
         if (!authResult.isPass()) {
-            throw new PermissionDeniedException(authResult);
+            throw new IamPermissionDeniedException(authResult);
         }
         accountService.checkCreateParam(accountCreateUpdateReq, true, true);
 

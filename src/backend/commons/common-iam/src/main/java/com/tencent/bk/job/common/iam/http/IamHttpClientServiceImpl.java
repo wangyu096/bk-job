@@ -24,7 +24,6 @@
 
 package com.tencent.bk.job.common.iam.http;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.HttpMethodEnum;
 import com.tencent.bk.job.common.exception.InternalIamException;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
@@ -44,7 +43,6 @@ import org.apache.http.message.BasicHeader;
 @Slf4j
 public class IamHttpClientServiceImpl implements HttpClientService {
 
-    private final String DEFAULT_CHARSET = "UTF-8";
     private final HttpHelper httpHelper = HttpHelperFactory.getDefaultHttpHelper();
     private final IamConfiguration iamConfiguration;
 
@@ -64,7 +62,7 @@ public class IamHttpClientServiceImpl implements HttpClientService {
                     .build())
                 .getEntity();
         } catch (Exception e) {
-            throw new InternalIamException(e, ErrorCode.IAM_API_DATA_ERROR, null);
+            throw new InternalIamException(e);
         } finally {
             HttpMetricUtil.clearHttpMetric();
         }
@@ -83,7 +81,7 @@ public class IamHttpClientServiceImpl implements HttpClientService {
                 .getEntity();
         } catch (Exception e) {
             log.error("Fail to request IAM", e);
-            throw new InternalIamException(e, ErrorCode.IAM_API_DATA_ERROR, null);
+            throw new InternalIamException(e);
         } finally {
             HttpMetricUtil.clearHttpMetric();
         }
@@ -102,7 +100,7 @@ public class IamHttpClientServiceImpl implements HttpClientService {
                 .getEntity();
         } catch (Exception e) {
             log.error("Fail to request IAM", e);
-            throw new InternalIamException(e, ErrorCode.IAM_API_DATA_ERROR, null);
+            throw new InternalIamException(e);
         } finally {
             HttpMetricUtil.clearHttpMetric();
         }
@@ -119,7 +117,7 @@ public class IamHttpClientServiceImpl implements HttpClientService {
                     .build())
                 .getEntity();
         } catch (Exception e) {
-            throw new InternalIamException(e, ErrorCode.IAM_API_DATA_ERROR, null);
+            throw new InternalIamException(e);
         } finally {
             HttpMetricUtil.clearHttpMetric();
         }

@@ -24,8 +24,9 @@
 
 package com.tencent.bk.job.manage.model.inner.request;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.error.payload.BadRequestPayloadDTO;
+import com.tencent.bk.job.common.error.payload.FieldViolationDTO;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.model.dto.HostDTO;
 import com.tencent.bk.job.common.util.ip.IpUtils;
 import lombok.Getter;
@@ -65,21 +66,17 @@ public class ServiceBatchGetAppHostsReq {
         if (CollectionUtils.isEmpty(hosts)) {
             log.error("Empty param: hosts");
             throw new InvalidParamException(
-                ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                new Object[]{
-                    "hosts",
-                    "hosts must not be empty"
-                });
+                BadRequestPayloadDTO.instance()
+                    .addFieldViolation(
+                        new FieldViolationDTO("hosts", "hosts must not be empty")));
         }
         hosts.forEach(host -> {
             if (host.getHostId() == null && !IpUtils.checkCloudIp(host.toCloudIp())) {
                 log.error("Invalid host: {}", host);
                 throw new InvalidParamException(
-                    ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                    new Object[]{
-                        "hosts",
-                        "Invalid host"
-                    });
+                    BadRequestPayloadDTO.instance()
+                        .addFieldViolation(
+                            new FieldViolationDTO("hosts", "Invalid host")));
             }
         });
     }

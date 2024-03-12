@@ -26,8 +26,8 @@ package com.tencent.bk.job.common.web.exception.handler;
 
 import com.tencent.bk.job.common.error.payload.BadRequestPayloadDTO;
 import com.tencent.bk.job.common.error.payload.FieldViolationDTO;
-import com.tencent.bk.job.common.model.error.ErrorDetailDTO;
-import com.tencent.bk.job.common.model.error.ErrorType;
+import com.tencent.bk.job.common.exception.base.ServiceException;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
@@ -38,31 +38,33 @@ import java.util.Set;
 
 public class ExceptionControllerAdviceBase extends ResponseEntityExceptionHandler {
 
-    protected ErrorDetailDTO buildErrorDetail(BindException ex) {
+    protected BadRequestPayloadDTO buildBadRequestPayloadDTO(BindException ex) {
         BindingResult bindingResult = ex.getBindingResult();
-        ErrorDetailDTO errorDetail = new ErrorDetailDTO();
-        errorDetail.setType(ErrorType.INVALID_PARAM.getType());
+        BadRequestPayloadDTO payload = new BadRequestPayloadDTO();
         if (bindingResult.hasFieldErrors()) {
-            BadRequestPayloadDTO badRequestDetail = new BadRequestPayloadDTO();
-            bindingResult.getFieldErrors().forEach(fieldError -> {
-                badRequestDetail.addFieldViolation(new FieldViolationDTO(fieldError.getField(),
-                    fieldError.getRejectedValue(), fieldError.getDefaultMessage()));
-            });
-            errorDetail = new ErrorDetailDTO(badRequestDetail);
+            bindingResult.getFieldErrors().forEach(fieldError ->
+                payload.addFieldViolation(
+                    new FieldViolationDTO(fieldError.getField(), fieldError.getDefaultMessage())));
         }
-        return errorDetail;
+        return payload;
     }
 
-    protected ErrorDetailDTO buildErrorDetail(ConstraintViolationException ex) {
-        ErrorDetailDTO errorDetail = new ErrorDetailDTO();
-        errorDetail.setType(ErrorType.INVALID_PARAM.getType());
+    protected BadRequestPayloadDTO buildBadRequestPayloadDTO(ConstraintViolationException ex) {
+        BadRequestPayloadDTO payload = new BadRequestPayloadDTO();
         Set<ConstraintViolation<?>> constraintViolations = ex.getConstraintViolations();
-        BadRequestPayloadDTO badRequestDetail = new BadRequestPayloadDTO();
         for (ConstraintViolation<?> constraintViolation : constraintViolations) {
-            badRequestDetail.addFieldViolation(new FieldViolationDTO(constraintViolation.getPropertyPath().toString(),
-                constraintViolation.getInvalidValue(), constraintViolation.getMessage()));
+            payload.addFieldViolation(new FieldViolationDTO(
+                constraintViolation.getPropertyPath().toString(),
+                constraintViolation.getMessage()));
         }
-        errorDetail.setBadRequestDetail(badRequestDetail);
-        return errorDetail;
+        return payload;
+    }
+
+    protected HttpStatus getHttpStatusByServiceException(ServiceException ex) {
+        HttpStatus httpStatus = HttpStatus.resolve(ex.getErrorCode().getStatusCode());
+        if (httpStatus == null) {
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        }
+        return httpStatus;
     }
 }

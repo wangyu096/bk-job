@@ -1,8 +1,11 @@
 package com.tencent.bk.job.common.iam.aspect;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.FailedPreconditionException;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.error.ErrorReason;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.error.payload.ErrorInfoPayloadDTO;
+import com.tencent.bk.job.common.exception.base.FailedPreconditionException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.sdk.iam.exception.IamException;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -51,8 +54,8 @@ public class IamExceptionHandleAspect {
         long errCode = e.getErrorCode();
         long iamErrorCodeUserAccountFrozen = 1901403L;
         if (errCode == iamErrorCodeUserAccountFrozen) {
-            throw new FailedPreconditionException(e, ErrorCode.IAM_USER_ACCOUNT_FROZEN, new String[]{username});
+            throw new FailedPreconditionException(e, SubErrorCode.of(ErrorCode.IAM_USER_ACCOUNT_FROZEN, username));
         }
-        throw new InternalException(e, ErrorCode.IAM_API_DATA_ERROR);
+        throw new InternalException(e, new ErrorInfoPayloadDTO("IAM", ErrorReason.REQUEST_THIRD_API_ERROR));
     }
 }

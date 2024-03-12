@@ -26,8 +26,7 @@ package com.tencent.bk.job.manage.api.esb.impl.v3;
 
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.manage.api.esb.v3.EsbCredentialV3Resource;
@@ -74,12 +73,12 @@ public class EsbCredentialResourceV3Impl implements EsbCredentialV3Resource {
         String name = req.getName();
         String type = req.getType();
         if (StringUtils.isBlank(name)) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                new String[]{"name", "name cannot be null or blank"});
+            throw InvalidParamException.withInvalidField(
+                "name", "name cannot be null or blank");
         }
         if (StringUtils.isBlank(type)) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                new String[]{"type", "type cannot be null or blank"});
+            throw InvalidParamException.withInvalidField(
+                "type", "type cannot be null or blank");
         }
     }
 
@@ -102,8 +101,8 @@ public class EsbCredentialResourceV3Impl implements EsbCredentialV3Resource {
 
     private void checkUpdateParam(EsbCreateOrUpdateCredentialV3Req req) {
         if (StringUtils.isBlank(req.getId())) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                new String[]{"id", "id cannot be null or blank"});
+            throw InvalidParamException.withInvalidField(
+                "id", "id cannot be null or blank");
         }
     }
 
@@ -127,16 +126,11 @@ public class EsbCredentialResourceV3Impl implements EsbCredentialV3Resource {
             createUpdateReq.setValue1(req.getCredentialUsername());
             createUpdateReq.setValue2(req.getCredentialPassword());
         } else {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                new String[]{
-                    "type",
-                    String.format(
-                        "Unsupported type:%s, supported types:%s",
-                        type,
-                        CredentialTypeEnum.getAllNameStr()
-                    )}
-
-            );
+            throw InvalidParamException.withInvalidField("type", String.format(
+                "Unsupported type:%s, supported types:%s",
+                type,
+                CredentialTypeEnum.getAllNameStr()
+            ));
         }
         return createUpdateReq;
     }

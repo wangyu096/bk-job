@@ -28,8 +28,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.tencent.bk.job.common.error.BkErrorCodeEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +42,6 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@NoArgsConstructor
 public class BadRequestPayloadDTO extends ErrorPayloadDTO {
 
     /**
@@ -53,28 +50,24 @@ public class BadRequestPayloadDTO extends ErrorPayloadDTO {
     @JsonProperty("field_violations")
     private List<FieldViolationDTO> fieldViolations;
 
+    public BadRequestPayloadDTO() {
+        this.fieldViolations = new ArrayList<>();
+    }
+
+    public static BadRequestPayloadDTO instance() {
+        return new BadRequestPayloadDTO();
+    }
+
     /**
      * 新增参数校验错误
      *
      * @param fieldViolation 参数校验错误
      */
-    public void addFieldViolation(FieldViolationDTO fieldViolation) {
+    public BadRequestPayloadDTO addFieldViolation(FieldViolationDTO fieldViolation) {
         if (fieldViolations == null) {
             this.fieldViolations = new ArrayList<>();
         }
         this.fieldViolations.add(fieldViolation);
+        return this;
     }
-
-    /**
-     * 返回第一个参数校验错误描述
-     *
-     * @return 错误描述
-     */
-    public String findFirstFieldErrorDesc() {
-        if (CollectionUtils.isEmpty(this.fieldViolations)) {
-            return "";
-        }
-        return this.fieldViolations.get(0).getDescription();
-    }
-
 }

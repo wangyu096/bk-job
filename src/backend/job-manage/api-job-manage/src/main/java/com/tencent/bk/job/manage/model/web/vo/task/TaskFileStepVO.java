@@ -26,10 +26,9 @@ package com.tencent.bk.job.manage.model.web.vo.task;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.tencent.bk.job.common.constant.DuplicateHandlerEnum;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobConstants;
 import com.tencent.bk.job.common.constant.NotExistPathHandlerEnum;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.util.FilePathValidateUtil;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -102,27 +101,27 @@ public class TaskFileStepVO {
     public void validate(boolean isCreate) throws InvalidParamException {
         if (CollectionUtils.isEmpty(fileSourceList)) {
             log.warn("Empty origin file list!");
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         for (TaskFileSourceInfoVO taskFileSourceInfoVO : fileSourceList) {
             taskFileSourceInfoVO.validate(isCreate);
         }
         if (fileDestination == null) {
             log.warn("Empty destination info!");
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         if (!FilePathValidateUtil.validateFileSystemAbsolutePath(fileDestination.getPath())) {
             log.warn("fileDestinationPath is illegal! fileDestinationPath: {}", fileDestination.getPath());
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         if (fileDestination.getAccount() == null || fileDestination.getAccount() <= 0) {
             log.warn("Empty account!");
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         fileDestination.getServer().validate();
         if (transferMode == null || transferMode < 1 || transferMode > 4) {
             log.warn("Invalid transferMode : {}", transferMode);
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         if (timeout == null || timeout < 0) {
             timeout = (long) JobConstants.DEFAULT_JOB_TIMEOUT_SECONDS;

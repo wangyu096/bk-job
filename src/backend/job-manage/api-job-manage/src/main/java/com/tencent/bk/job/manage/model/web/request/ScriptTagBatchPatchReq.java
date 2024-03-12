@@ -25,8 +25,7 @@
 package com.tencent.bk.job.manage.model.web.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -55,7 +54,7 @@ public class ScriptTagBatchPatchReq {
     public void validate() {
         if (CollectionUtils.isEmpty(this.idList)) {
             log.warn("ScriptTagBatchUpdateReq->idList is empty");
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, "idList");
+            throw InvalidParamException.withInvalidField("idList", "idList is empty");
         }
     }
 }

@@ -25,7 +25,6 @@
 package com.tencent.bk.job.common.iam.client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.HttpMethodEnum;
 import com.tencent.bk.job.common.esb.config.EsbProperties;
 import com.tencent.bk.job.common.exception.InternalIamException;
@@ -76,10 +75,13 @@ public class EsbIamClient extends BkApiClient implements IIamClient {
 
     private final BkApiAuthorization authorization;
 
+    private static final String CLIENT_NAME = "bk_iam";
+
     public EsbIamClient(MeterRegistry meterRegistry,
                         AppProperties appProperties,
                         EsbProperties esbProperties) {
-        super(meterRegistry, IAM_API, esbProperties.getService().getUrl(), HttpHelperFactory.getDefaultHttpHelper());
+        super(meterRegistry, IAM_API, esbProperties.getService().getUrl(),
+            HttpHelperFactory.getDefaultHttpHelper(), CLIENT_NAME);
         this.authorization = BkApiAuthorization.appAuthorization(appProperties.getCode(),
             appProperties.getSecret(), "admin");
     }
@@ -191,7 +193,7 @@ public class EsbIamClient extends BkApiClient implements IIamClient {
                 .build();
             return doRequest(requestInfo, typeReference);
         } catch (Exception e) {
-            throw new InternalIamException(e, ErrorCode.IAM_API_DATA_ERROR, null);
+            throw new InternalIamException(e);
         } finally {
             HttpMetricUtil.clearHttpMetric();
         }

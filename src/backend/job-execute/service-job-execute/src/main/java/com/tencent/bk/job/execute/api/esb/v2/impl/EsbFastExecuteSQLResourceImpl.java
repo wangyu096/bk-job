@@ -29,15 +29,14 @@ import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.AccountCategoryEnum;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobConstants;
-import com.tencent.bk.job.common.exception.InvalidParamException;
-import com.tencent.bk.job.common.exception.NotFoundException;
-import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
+import com.tencent.bk.job.common.exception.base.ServiceException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
-import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
-import com.tencent.bk.job.common.util.ArrayUtil;
 import com.tencent.bk.job.common.util.Base64Util;
 import com.tencent.bk.job.common.util.date.DateUtils;
 import com.tencent.bk.job.common.web.metrics.CustomTimed;
@@ -95,11 +94,7 @@ public class EsbFastExecuteSQLResourceImpl extends JobExecuteCommonProcessor imp
                                                     @AuditRequestBody EsbFastExecuteSQLRequest request) {
 
 
-        ValidateResult validateResult = checkFastExecuteSQLRequest(request);
-        if (!validateResult.isPass()) {
-            log.warn("Fast execute SQL request is illegal!");
-            throw new InvalidParamException(validateResult);
-        }
+        checkFastExecuteSQLRequest(request);
 
         request.trimIps();
 
@@ -120,16 +115,16 @@ public class EsbFastExecuteSQLResourceImpl extends JobExecuteCommonProcessor imp
             + DateUtils.formatLocalDateTime(LocalDateTime.now(), "yyyyMMddHHmmssSSS");
     }
 
-    private ValidateResult checkFastExecuteSQLRequest(EsbFastExecuteSQLRequest request) {
+    private void checkFastExecuteSQLRequest(EsbFastExecuteSQLRequest request) {
         if (request.getScriptVersionId() != null) {
             if (request.getScriptVersionId() < 1) {
                 log.warn("Fast execute SQL, scriptId:{} is invalid", request.getScriptVersionId());
-                return ValidateResult.fail(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, "script_id");
+                throw InvalidParamException.withInvalidField("script_id");
             }
         } else {
             if (StringUtils.isBlank(request.getContent())) {
                 log.warn("Fast execute SQL, script content is empty!");
-                return ValidateResult.fail(ErrorCode.MISSING_PARAM_WITH_PARAM_NAME, "script_id");
+                throw InvalidParamException.withInvalidField("script_id");
             }
         }
 
@@ -137,14 +132,12 @@ public class EsbFastExecuteSQLResourceImpl extends JobExecuteCommonProcessor imp
             CollectionUtils.isEmpty(request.getDynamicGroupIdList())
             && request.getTargetServer() == null) {
             log.warn("Fast execute SQL, target server is empty!");
-            return ValidateResult.fail(ErrorCode.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME,
-                "ip_list|custom_query_id|target_server");
+            throw InvalidParamException.withInvalidField("ip_list|custom_query_id|target_server");
         }
         if (request.getDbAccountId() == null) {
             log.warn("Fast execute SQL, account is empty!");
-            return ValidateResult.fail(ErrorCode.MISSING_PARAM_WITH_PARAM_NAME, "db_account_id");
+            throw InvalidParamException.withInvalidField("db_account_id");
         }
-        return ValidateResult.pass();
     }
 
 
@@ -202,13 +195,13 @@ public class EsbFastExecuteSQLResourceImpl extends JobExecuteCommonProcessor imp
         AccountDTO account = accountService.getAccountById(request.getDbAccountId());
         if (account == null) {
             log.info("Account:{} is not exist in app:{}", request.getDbAccountId(), request.getAppId());
-            throw new NotFoundException(ErrorCode.ACCOUNT_NOT_EXIST,
-                ArrayUtil.toArray("ID=" + request.getDbAccountId()));
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.ACCOUNT_NOT_EXIST,
+                "ID=" + request.getDbAccountId()));
         }
         if (AccountCategoryEnum.DB != account.getCategory()) {
             log.info("Account:{} is not db account in app:{}", request.getDbAccountId(), request.getAppId());
-            throw new NotFoundException(ErrorCode.ACCOUNT_NOT_EXIST,
-                ArrayUtil.toArray("ID=" + request.getDbAccountId()));
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.ACCOUNT_NOT_EXIST,
+                "ID=" + request.getDbAccountId()));
         }
         stepInstance.setAccountId(account.getDbSystemAccountId());
         stepInstance.setDbAccountId(account.getId());

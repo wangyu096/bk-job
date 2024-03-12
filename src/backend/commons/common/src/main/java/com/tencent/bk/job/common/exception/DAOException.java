@@ -24,6 +24,8 @@
 
 package com.tencent.bk.job.common.exception;
 
+import com.tencent.bk.job.common.error.payload.ErrorInfoPayloadDTO;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -34,11 +36,13 @@ import lombok.ToString;
 @ToString
 public class DAOException extends InternalException {
 
-    public DAOException(String internalErrorMessage, Throwable cause) {
-        super(internalErrorMessage, cause);
+    public DAOException(String message) {
+        super(message, new ErrorInfoPayloadDTO("db.mysql", "db operation error"));
     }
 
-    public DAOException(String internalErrorMessage) {
-        super(internalErrorMessage);
+    public DAOException(String message,
+                        Throwable cause) {
+        super(message, cause, new ErrorInfoPayloadDTO("db.mysql", "db operation error"));
+
     }
 }

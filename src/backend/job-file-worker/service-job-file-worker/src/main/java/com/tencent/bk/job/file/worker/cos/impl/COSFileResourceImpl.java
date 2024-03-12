@@ -25,7 +25,8 @@
 package com.tencent.bk.job.file.worker.cos.impl;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.common.util.PageUtil;
 import com.tencent.bk.job.common.util.StringUtil;
@@ -100,7 +101,8 @@ public class COSFileResourceImpl implements IFileResource {
             return bucketDTOList;
         } catch (Throwable t) {
             log.error("Fail to listBucket", t);
-            throw new InvalidParamException(t.getMessage(), ErrorCode.FAIL_TO_REQUEST_THIRD_FILE_SOURCE_LIST_BUCKET);
+            throw new InternalException(t.getMessage(), t,
+                SubErrorCode.of(ErrorCode.FAIL_TO_REQUEST_THIRD_FILE_SOURCE_LIST_BUCKET));
         }
     }
 
@@ -113,7 +115,8 @@ public class COSFileResourceImpl implements IFileResource {
         } catch (Exception e) {
             String msg = "Fail to listAllObjects from " + cosBaseService.getEndPointDomain(req);
             log.error(msg, e);
-            throw new InvalidParamException(msg, ErrorCode.FAIL_TO_REQUEST_THIRD_FILE_SOURCE_LIST_OBJECTS);
+            throw new InternalException(e.getMessage(), e,
+                SubErrorCode.of(ErrorCode.FAIL_TO_REQUEST_THIRD_FILE_SOURCE_LIST_OBJECTS));
         }
         List<FileDTO> fileDTOList = new ArrayList<>();
         cosObjectSummaryList.forEach(cosObjectSummary -> {
@@ -145,7 +148,8 @@ public class COSFileResourceImpl implements IFileResource {
                 bucketName
             ).getMessage();
             log.error(msg, e);
-            throw new InvalidParamException(e.getMessage(), ErrorCode.FAIL_TO_REQUEST_THIRD_FILE_SOURCE_DELETE_BUCKET);
+            throw new InternalException(e.getMessage(), e,
+                SubErrorCode.of(ErrorCode.FAIL_TO_REQUEST_THIRD_FILE_SOURCE_DELETE_BUCKET));
         }
     }
 
@@ -165,20 +169,22 @@ public class COSFileResourceImpl implements IFileResource {
                 }
             ).getMessage();
             log.error(msg, e);
-            throw new InvalidParamException(e.getMessage(), ErrorCode.FAIL_TO_REQUEST_THIRD_FILE_SOURCE_DELETE_OBJECT);
+            throw new InternalException(e.getMessage(), e,
+                SubErrorCode.of(ErrorCode.FAIL_TO_REQUEST_THIRD_FILE_SOURCE_DELETE_OBJECT));
         }
     }
 
     private void checkBucketName(String bucketName) {
         if (StringUtils.isBlank(bucketName)) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, new String[]{"bucketName"});
+            throw new IllegalArgumentException("Bucket name is blank");
         }
     }
 
     private void checkKey(String key) {
         if (StringUtils.isBlank(key)) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, new String[]{"key"});
+            throw new IllegalArgumentException("Bucket key is blank");
         }
+
     }
 
     private String getCompleteKey(String prefix, String key) {
@@ -376,7 +382,7 @@ public class COSFileResourceImpl implements IFileResource {
             fillFileFileNodesDTO(fileNodesDTO, req);
             return InternalResponse.buildSuccessResp(fileNodesDTO);
         } else {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, new String[]{"nodeType"});
+            throw new IllegalArgumentException("Invalid nodeType");
         }
     }
 
@@ -393,7 +399,7 @@ public class COSFileResourceImpl implements IFileResource {
             if (StringUtils.isNotBlank(bucketName)) {
                 deleteBucket(bucketName, req);
             } else {
-                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, new String[]{"bucketName"});
+                throw new IllegalArgumentException("BucketName is blank");
             }
         } else if (COSActionCodeEnum.DELETE_FILE.name().equals(actionCode)) {
             // deleteBucketFile
@@ -410,7 +416,7 @@ public class COSFileResourceImpl implements IFileResource {
                 log.debug("deleteBucketFile:bucketName={},path={}", bucketName, path);
                 deleteBucketFile(bucketName, path, req);
             } else {
-                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, new String[]{"path"});
+                throw new IllegalArgumentException("Invalid path");
             }
         }
         return InternalResponse.buildSuccessResp(true);

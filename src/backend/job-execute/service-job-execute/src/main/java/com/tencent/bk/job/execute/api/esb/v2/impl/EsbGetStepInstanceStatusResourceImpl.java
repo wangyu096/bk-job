@@ -27,12 +27,12 @@ package com.tencent.bk.job.execute.api.esb.v2.impl;
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
-import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
-import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.model.dto.HostDTO;
 import com.tencent.bk.job.common.openapi.job.v2.EsbIpDTO;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
@@ -84,11 +84,8 @@ public class EsbGetStepInstanceStatusResourceImpl implements EsbGetStepInstanceS
         String username,
         String appCode,
         @AuditRequestBody EsbGetStepInstanceStatusRequest request) {
-        ValidateResult checkResult = checkRequest(request);
-        if (!checkResult.isPass()) {
-            log.warn("Get step instance status request is illegal!");
-            throw new InvalidParamException(checkResult);
-        }
+
+        checkRequest(request);
 
         EsbStepInstanceStatusDTO resultData = new EsbStepInstanceStatusDTO();
 
@@ -104,7 +101,7 @@ public class EsbGetStepInstanceStatusResourceImpl implements EsbGetStepInstanceS
         if (stepInstance == null) {
             log.warn("Get step instance status by taskInstanceId:{}, stepInstanceId:{}, stepInstance is null!",
                 request.getTaskInstanceId(), request.getStepInstanceId());
-            throw new NotFoundException(ErrorCode.STEP_INSTANCE_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.STEP_INSTANCE_NOT_EXIST));
         }
         EsbStepInstanceStatusDTO.StepInstance stepDetail = convertStepInstance(stepInstance);
         resultData.setStepInstance(stepDetail);
@@ -142,16 +139,15 @@ public class EsbGetStepInstanceStatusResourceImpl implements EsbGetStepInstanceS
     }
 
 
-    private ValidateResult checkRequest(EsbGetStepInstanceStatusRequest request) {
+    private void checkRequest(EsbGetStepInstanceStatusRequest request) {
         if (request.getTaskInstanceId() == null || request.getTaskInstanceId() < 1) {
             log.warn("TaskInstanceId is empty or illegal, taskInstanceId={}", request.getTaskInstanceId());
-            return ValidateResult.fail(ErrorCode.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME, "job_instance_id");
+            throw InvalidParamException.withInvalidField("job_instance_id");
         }
         if (request.getStepInstanceId() == null || request.getStepInstanceId() < 1) {
             log.warn("StepInstanceId is empty or illegal, stepInstanceId={}", request.getStepInstanceId());
-            return ValidateResult.fail(ErrorCode.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME, "step_instance_id");
+            throw InvalidParamException.withInvalidField("step_instance_id");
         }
-        return ValidateResult.pass();
     }
 
     private List<Map<String, Object>> convertToStandardAnalyseResult(StepExecutionDetailDTO stepExecutionDetail) {

@@ -27,7 +27,8 @@ package com.tencent.bk.job.common.audit;
 import com.tencent.bk.audit.AuditExceptionResolver;
 import com.tencent.bk.audit.model.ErrorInfo;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.ServiceException;
 import com.tencent.bk.job.common.util.I18nUtil;
 
 import java.util.Locale;
@@ -35,18 +36,20 @@ import java.util.Locale;
 public class JobAuditExceptionResolver implements AuditExceptionResolver {
     @Override
     public ErrorInfo resolveException(Throwable e) {
-        Integer errorCode;
         String errorMessage;
         if (e instanceof ServiceException) {
             ServiceException serviceException = (ServiceException) e;
-            errorCode = serviceException.getErrorCode();
+            SubErrorCode subErrorCode = serviceException.getSubErrorCode();
             // 使用英文描述
-            errorMessage = serviceException.getI18nMessage(Locale.ENGLISH);
+            if (subErrorCode != null) {
+                errorMessage = subErrorCode.getI18nMessage(Locale.ENGLISH);
+            } else {
+                errorMessage = "Unknown error";
+            }
         } else {
-            errorCode = ErrorCode.INTERNAL_ERROR;
             // 使用英文描述
             errorMessage = I18nUtil.getI18nMessage(Locale.ENGLISH, String.valueOf(ErrorCode.INTERNAL_ERROR));
         }
-        return new ErrorInfo(errorCode, errorMessage);
+        return new ErrorInfo(ErrorCode.INTERNAL_ERROR, errorMessage);
     }
 }

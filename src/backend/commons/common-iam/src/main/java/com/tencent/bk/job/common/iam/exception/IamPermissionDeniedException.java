@@ -22,23 +22,30 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.exception;
+package com.tencent.bk.job.common.iam.exception;
 
 import com.tencent.bk.job.common.error.BkErrorCodeEnum;
 import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.ServiceException;
+import com.tencent.bk.job.common.iam.model.AuthResult;
 import lombok.Getter;
 import lombok.ToString;
 
 /**
- * 并发冲突，例如读取/修改/写入冲突
+ * IAM 权限不足异常
  */
 @Getter
 @ToString
-public class AbortedException extends ServiceException {
+public class IamPermissionDeniedException extends ServiceException {
+    private final AuthResult authResult;
 
-    public AbortedException(SubErrorCode subErrorCode) {
-        super();
-        setSubErrorCode(subErrorCode);
-        setErrorCode(BkErrorCodeEnum.ABORTED);
+    public IamPermissionDeniedException(AuthResult authResult) {
+        super(SubErrorCode.IAM_PERMISSION_DELY);
+        this.authResult = authResult;
+        setErrorCode(BkErrorCodeEnum.IAM_NO_PERMISSION);
+    }
+
+    public AuthResult getAuthResult() {
+        return authResult;
     }
 }

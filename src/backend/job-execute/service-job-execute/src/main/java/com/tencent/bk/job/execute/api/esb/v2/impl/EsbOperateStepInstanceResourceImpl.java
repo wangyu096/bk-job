@@ -24,8 +24,7 @@
 
 package com.tencent.bk.job.execute.api.esb.v2.impl;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
@@ -55,7 +54,7 @@ public class EsbOperateStepInstanceResourceImpl implements EsbOperateStepInstanc
                                                          EsbOperateStepInstanceRequest request) {
         log.info("Operate step instance, request={}", JsonUtils.toJson(request));
         if (!checkRequest(request)) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         StepOperationEnum operationEnum = StepOperationEnum.getStepOperation(request.getOperationCode());
         StepOperationDTO stepOperation = new StepOperationDTO();

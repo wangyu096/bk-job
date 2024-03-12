@@ -24,11 +24,11 @@
 
 package com.tencent.bk.job.common.util.http;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.HttpMethodEnum;
+import com.tencent.bk.job.common.error.SubErrorCode;
 import com.tencent.bk.job.common.exception.HttpStatusException;
-import com.tencent.bk.job.common.exception.InternalException;
-import com.tencent.bk.job.common.exception.NotImplementedException;
+import com.tencent.bk.job.common.exception.base.InternalException;
+import com.tencent.bk.job.common.exception.base.NotImplementedException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -72,7 +72,7 @@ public class BaseHttpHelper implements HttpHelper {
             return Pair.of(get, httpClient.execute(get));
         } catch (IOException e) {
             log.error("Get request fail", e);
-            throw new InternalException(e, ErrorCode.API_ERROR);
+            throw new InternalException("Get request fail", e, SubErrorCode.API_ERROR);
         } finally {
             if (log.isDebugEnabled()) {
                 log.debug("getRawResp,url={},headers={}", url, header);
@@ -100,7 +100,7 @@ public class BaseHttpHelper implements HttpHelper {
                 break;
             default:
                 log.warn("Unsupported http method : {}", method);
-                throw new NotImplementedException(ErrorCode.API_ERROR);
+                throw new NotImplementedException("Unsupported http method", SubErrorCode.API_ERROR);
         }
         return execute(httpClientRequest, httpContext);
     }
@@ -147,7 +147,7 @@ public class BaseHttpHelper implements HttpHelper {
             try {
                 request.setEntity(new ByteArrayEntity(httpRequest.getStringEntity().getBytes(CHARSET)));
             } catch (IOException e) {
-                throw new InternalException(e, ErrorCode.API_ERROR);
+                throw new InternalException(null, e, SubErrorCode.API_ERROR);
             }
         }
     }
@@ -196,7 +196,7 @@ public class BaseHttpHelper implements HttpHelper {
             }
         } catch (IOException e) {
             log.error("Request fail", e);
-            throw new InternalException(e, ErrorCode.API_ERROR);
+            throw new InternalException("Request fail", e, SubErrorCode.API_ERROR);
         } finally {
             httpClientRequest.releaseConnection();
             if (log.isDebugEnabled()) {

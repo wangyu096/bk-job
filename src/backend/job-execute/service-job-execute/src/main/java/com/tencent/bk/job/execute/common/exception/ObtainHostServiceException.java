@@ -25,7 +25,7 @@
 package com.tencent.bk.job.execute.common.exception;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 
 /**
  * 获取主机失败

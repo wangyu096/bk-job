@@ -22,7 +22,7 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.exception;
+package com.tencent.bk.job.common.exception.base;
 
 import com.tencent.bk.job.common.error.BkErrorCodeEnum;
 import com.tencent.bk.job.common.error.SubErrorCode;
@@ -34,40 +34,72 @@ import lombok.ToString;
  */
 @ToString
 public class ServiceException extends RuntimeException {
-    private BkErrorCodeEnum errorCode;
-    private SubErrorCode subErrorCode;
+    /**
+     * 异常对应的 API 请求错误码
+     */
+    private BkErrorCodeEnum errorCode = BkErrorCodeEnum.UNKNOWN;
+
+    /**
+     * 异常对应的 Job 业务子错误码
+     */
+    private SubErrorCode subErrorCode = SubErrorCode.INTERNAL_ERROR;
+
+    /**
+     * 错误详情负载信息
+     */
     private ErrorPayloadDTO errorPayload;
 
     public ServiceException() {
     }
 
-    public ServiceException(String internalErrorMessage) {
-        super(internalErrorMessage);
+    public ServiceException(String message) {
+        super(message);
     }
 
-    public ServiceException(String internalErrorMessage,
+    public ServiceException(String message,
                             Throwable cause) {
-        super(internalErrorMessage, cause);
+        super(message, cause);
     }
 
-    public ServiceException setErrorCode(BkErrorCodeEnum errorCode) {
-        this.errorCode = errorCode;
-        return this;
+    public ServiceException(Throwable cause) {
+        super(cause);
     }
 
-    public ServiceException setSubErrorCode(SubErrorCode subErrorCode) {
+    public ServiceException(SubErrorCode subErrorCode) {
+        this();
         this.subErrorCode = subErrorCode;
-        return this;
     }
 
-    public ServiceException setErrorPayload(ErrorPayloadDTO errorPayload) {
+    public ServiceException(String message, SubErrorCode subErrorCode) {
+        this(message);
+        this.subErrorCode = subErrorCode;
+    }
+
+    public ServiceException(String message,
+                            Throwable cause,
+                            SubErrorCode subErrorCode) {
+        this(message, cause);
+        this.subErrorCode = subErrorCode;
+    }
+
+    public ServiceException(SubErrorCode subErrorCode, ErrorPayloadDTO errorPayload) {
+        this(subErrorCode);
         this.errorPayload = errorPayload;
-        return this;
     }
 
-    public BkErrorCodeEnum getErrorCode() {
-        return errorCode;
+    public ServiceException(String message, SubErrorCode subErrorCode, ErrorPayloadDTO errorPayload) {
+        this(message, subErrorCode);
+        this.errorPayload = errorPayload;
     }
+
+    public ServiceException(String message,
+                            Throwable cause,
+                            SubErrorCode subErrorCode,
+                            ErrorPayloadDTO errorPayload) {
+        this(message, cause, subErrorCode);
+        this.errorPayload = errorPayload;
+    }
+
 
     public SubErrorCode getSubErrorCode() {
         return subErrorCode;
@@ -75,5 +107,13 @@ public class ServiceException extends RuntimeException {
 
     public ErrorPayloadDTO getErrorPayload() {
         return errorPayload;
+    }
+
+    public void setErrorCode(BkErrorCodeEnum errorCode) {
+        this.errorCode = errorCode;
+    }
+
+    public BkErrorCodeEnum getErrorCode() {
+        return errorCode;
     }
 }

@@ -24,8 +24,7 @@
 
 package com.tencent.bk.job.common.iam.service;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeEnum;
 import com.tencent.bk.job.common.iam.util.IamUtil;
 import com.tencent.bk.job.common.model.dto.ResourceScope;
@@ -92,7 +91,7 @@ public abstract class BaseIamCallbackService {
         if (resourceScope == null) {
             FormattingTuple msg = MessageFormatter.format("Cannot find scope by appId {}", appId);
             log.warn(msg.getMessage());
-            throw new InternalException(msg.getMessage(), ErrorCode.INTERNAL_ERROR);
+            throw new InternalException(msg.getMessage());
         }
         PathInfoDTO rootNode = new PathInfoDTO();
         rootNode.setType(IamUtil.getIamResourceTypeIdForResourceScope(resourceScope));

@@ -24,8 +24,7 @@
 
 package com.tencent.bk.job.manage.model.web.vo.task;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.model.vo.TaskTargetVO;
 import com.tencent.bk.job.common.util.FilePathValidateUtil;
 import io.swagger.annotations.ApiModel;
@@ -74,24 +73,24 @@ public class TaskFileSourceInfoVO {
     public void validate(boolean isCreate) throws InvalidParamException {
         if (fileType == null || fileType <= 0 || fileType > 3) {
             log.warn("Invalid file type!");
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         switch (fileType) {
             case 1:
                 if (CollectionUtils.isEmpty(fileLocation)) {
                     log.warn("Empty file location!");
-                    throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+                    throw new InvalidParamException();
                 }
                 for (String file : fileLocation) {
                     if (!FilePathValidateUtil.validateFileSystemAbsolutePath(file)) {
                         log.warn("fileLocation is illegal!");
-                        throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+                        throw new InvalidParamException();
                     }
                 }
                 host.validate();
                 if (account == null || account <= 0) {
                     log.warn("Invalid host account!");
-                    throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+                    throw new InvalidParamException();
                 }
                 break;
             case 2:
@@ -99,18 +98,18 @@ public class TaskFileSourceInfoVO {
                     Long.valueOf(fileSize);
                 } catch (NumberFormatException e) {
                     log.warn("Invalid file size!");
-                    throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+                    throw new InvalidParamException();
                 }
                 break;
             case 3:
                 if (fileSourceId == null || fileSourceId <= 0) {
                     log.warn("Invalid fileSourceId!");
-                    throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+                    throw new InvalidParamException();
                 }
                 break;
             default:
                 log.warn("Invalid file type!");
-                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+                throw new InvalidParamException();
         }
     }
 }

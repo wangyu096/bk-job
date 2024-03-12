@@ -52,8 +52,8 @@ public class AppStatisticService extends CommonStatisticService {
 
     @Autowired
     public AppStatisticService(StatisticsDAO statisticsDAO, StatisticConfig statisticConfig,
-                               MetricResourceReslover metricResourceReslover, AppService appService) {
-        super(statisticsDAO, statisticConfig, metricResourceReslover, appService);
+                               MetricResourceResolver metricResourceResolver, AppService appService) {
+        super(statisticsDAO, statisticConfig, metricResourceResolver, appService);
     }
 
     /**

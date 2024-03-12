@@ -3,11 +3,15 @@ package com.tencent.bk.job.file_gateway.api.esb;
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.FailedPreconditionException;
-import com.tencent.bk.job.common.exception.InvalidParamException;
-import com.tencent.bk.job.common.exception.MissingParameterException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.error.payload.ResourceInfoPayloadDTO;
+import com.tencent.bk.job.common.exception.base.AlreadyExistsException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
+import com.tencent.bk.job.common.iam.constant.ResourceTypeEnum;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
+import com.tencent.bk.job.common.util.MessageFormatUtil;
 import com.tencent.bk.job.file_gateway.consts.WorkerSelectModeEnum;
 import com.tencent.bk.job.file_gateway.consts.WorkerSelectScopeEnum;
 import com.tencent.bk.job.file_gateway.model.dto.FileSourceDTO;
@@ -62,31 +66,30 @@ public class EsbFileSourceV3ResourceImpl implements EsbFileSourceV3Resource {
 
     private void checkCommonParam(EsbCreateOrUpdateFileSourceV3Req req) {
         if (StringUtils.isBlank(req.getAlias())) {
-            throw new InvalidParamException(ErrorCode.MISSING_PARAM_WITH_PARAM_NAME, new String[]{"alias"});
+            throw InvalidParamException.withInvalidField("alias", "File source alias is empty");
         }
         if (StringUtils.isBlank(req.getType())) {
-            throw new InvalidParamException(ErrorCode.MISSING_PARAM_WITH_PARAM_NAME, new String[]{"type"});
+            throw InvalidParamException.withInvalidField("type", "File source type is empty");
         }
         if (StringUtils.isBlank(req.getCredentialId())) {
-            throw new InvalidParamException(ErrorCode.MISSING_PARAM_WITH_PARAM_NAME, new String[]{"credential_id"});
+            throw InvalidParamException.withInvalidField("credential_id",
+                "File source credential_id is empty");
         }
     }
 
     private void checkCreateParam(EsbCreateOrUpdateFileSourceV3Req req) {
         String code = req.getCode();
         if (StringUtils.isBlank(code)) {
-            throw new InvalidParamException(ErrorCode.MISSING_PARAM_WITH_PARAM_NAME,
-                new String[]{"code"});
+            throw InvalidParamException.withInvalidField("code", "File source code is empty");
         }
         FileSourceTypeDTO fileSourceTypeDTO = fileSourceService.getFileSourceTypeByCode(
             req.getType()
         );
         if (fileSourceTypeDTO == null) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME,
-                new String[]{"type"});
+            throw InvalidParamException.withInvalidField("type", "File source type is empty");
         }
         if (fileSourceService.existsCode(req.getAppId(), code)) {
-            throw new FailedPreconditionException(ErrorCode.FILE_SOURCE_CODE_ALREADY_EXISTS, new String[]{code});
+            throw new AlreadyExistsException(SubErrorCode.of(ErrorCode.FILE_SOURCE_CODE_ALREADY_EXISTS, code));
         }
         checkCommonParam(req);
     }
@@ -95,22 +98,29 @@ public class EsbFileSourceV3ResourceImpl implements EsbFileSourceV3Resource {
         Long appId = req.getAppId();
         String code = req.getCode();
         if (StringUtils.isBlank(code)) {
-            throw new MissingParameterException(ErrorCode.FILE_SOURCE_CODE_CAN_NOT_BE_EMPTY);
+            throw InvalidParamException.withInvalidField("code", "File source code is empty");
         }
         Integer id = fileSourceService.getFileSourceIdByCode(appId, code);
         if (id == null) {
-            throw new FailedPreconditionException(ErrorCode.FAIL_TO_FIND_FILE_SOURCE_BY_CODE, new String[]{code});
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.FILE_SOURCE_NOT_EXIST),
+                new ResourceInfoPayloadDTO(
+                    ResourceTypeEnum.FILE_SOURCE.getId(),
+                    "FileSourceCode:" + code,
+                    MessageFormatUtil.format("File source with code : {} not found")));
         }
         if (!fileSourceService.existsFileSource(appId, id)) {
-            throw new FailedPreconditionException(ErrorCode.FILE_SOURCE_ID_NOT_IN_BIZ, new String[]{id.toString()});
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.FILE_SOURCE_ID_NOT_IN_BIZ),
+                new ResourceInfoPayloadDTO(
+                    ResourceTypeEnum.FILE_SOURCE.getId(),
+                    "FileSourceCode:" + code,
+                    MessageFormatUtil.format("File source with code : {} not found")));
         }
         if (StringUtils.isNotBlank(req.getType())) {
             FileSourceTypeDTO fileSourceTypeDTO = fileSourceService.getFileSourceTypeByCode(
                 req.getType()
             );
             if (fileSourceTypeDTO == null) {
-                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME,
-                    new String[]{"type"});
+                throw InvalidParamException.withInvalidField("type");
             }
         }
         return id;

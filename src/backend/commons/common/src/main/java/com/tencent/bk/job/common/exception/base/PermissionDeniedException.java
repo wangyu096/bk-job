@@ -22,26 +22,21 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.exception;
+package com.tencent.bk.job.common.exception.base;
 
 import com.tencent.bk.job.common.error.BkErrorCodeEnum;
 import lombok.Getter;
 import lombok.ToString;
 
 /**
- * 请求参数非法异常
+ * 权限不足异常(非 IAM）
  */
 @Getter
 @ToString
-public class InvalidParamException extends ServiceException {
+public class PermissionDeniedException extends ServiceException {
 
-    public InvalidParamException(String internalErrorMessage, Throwable cause) {
-        super(internalErrorMessage, cause);
-        setErrorCode(BkErrorCodeEnum.INVALID_ARGUMENT);
-    }
-
-    public InvalidParamException(String internalErrorMessage) {
-        super(internalErrorMessage);
-        setErrorCode(BkErrorCodeEnum.INVALID_ARGUMENT);
+    public PermissionDeniedException() {
+        super();
+        setErrorCode(BkErrorCodeEnum.NO_PERMISSION);
     }
 }

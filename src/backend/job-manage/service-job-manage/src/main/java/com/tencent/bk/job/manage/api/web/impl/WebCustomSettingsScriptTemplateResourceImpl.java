@@ -24,10 +24,9 @@
 
 package com.tencent.bk.job.manage.api.web.impl;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.model.Response;
-import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
 import com.tencent.bk.job.common.service.AppScopeMappingService;
 import com.tencent.bk.job.common.util.Base64Util;
@@ -125,10 +124,8 @@ public class WebCustomSettingsScriptTemplateResourceImpl implements WebCustomSet
 
     @Override
     public Response saveScriptTemplate(String username, ScriptTemplateCreateUpdateReq req) {
-        ValidateResult validateResult = checkScriptTemplateCreateUpdateReq(req);
-        if (!validateResult.isPass()) {
-            return Response.buildCommonFailResp(validateResult.getErrorCode(), validateResult.getErrorParams());
-        }
+        checkScriptTemplateCreateUpdateReq(req);
+
         String scriptContent = req.getScriptContent();
         if (StringUtils.isNotEmpty(scriptContent)) {
             scriptContent = Base64Util.decodeContentToStr(scriptContent);
@@ -138,14 +135,13 @@ public class WebCustomSettingsScriptTemplateResourceImpl implements WebCustomSet
         return Response.buildSuccessResp(null);
     }
 
-    private ValidateResult checkScriptTemplateCreateUpdateReq(ScriptTemplateCreateUpdateReq req) {
+    private void checkScriptTemplateCreateUpdateReq(ScriptTemplateCreateUpdateReq req) {
         if (req.getScriptLanguage() == null || ScriptTypeEnum.valOf(req.getScriptLanguage()) == null) {
-            return ValidateResult.fail(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         if (req.getScriptContent() == null) {
             req.setScriptContent("");
         }
-        return ValidateResult.pass();
     }
 
     @Override

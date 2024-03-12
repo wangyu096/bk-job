@@ -26,7 +26,7 @@ package com.tencent.bk.job.execute.engine.listener;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.RollingModeEnum;
-import com.tencent.bk.job.common.exception.NotImplementedException;
+import com.tencent.bk.job.common.exception.base.NotImplementedException;
 import com.tencent.bk.job.common.util.date.DateUtils;
 import com.tencent.bk.job.execute.common.constants.RunStatusEnum;
 import com.tencent.bk.job.execute.common.util.TaskCostCalculator;

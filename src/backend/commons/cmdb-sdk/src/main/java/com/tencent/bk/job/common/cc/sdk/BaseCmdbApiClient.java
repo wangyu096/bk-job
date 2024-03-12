@@ -28,11 +28,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.tencent.bk.job.common.bkapigw.config.BkApiGatewayProperties;
 import com.tencent.bk.job.common.cc.config.CmdbConfig;
 import com.tencent.bk.job.common.cc.constants.CmdbMetricNames;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.HttpMethodEnum;
 import com.tencent.bk.job.common.esb.config.EsbProperties;
 import com.tencent.bk.job.common.exception.InternalCmdbException;
-import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.openapi.config.AppProperties;
 import com.tencent.bk.job.common.openapi.constants.ApiGwType;
@@ -104,6 +102,8 @@ public class BaseCmdbApiClient {
      */
     protected BkApiClient apiGwCmdbApiClient;
 
+    protected static final String CLIENT_NAME = "bk_cmdb";
+
     static {
         interfaceNameMap.put(SEARCH_BIZ_INST_TOPO, "search_biz_inst_topo");
         interfaceNameMap.put(GET_BIZ_INTERNAL_MODULE, "get_biz_internal_module");
@@ -137,14 +137,16 @@ public class BaseCmdbApiClient {
             CmdbMetricNames.CMDB_API_PREFIX,
             esbProperties.getService().getUrl(),
             httpHelper,
-            lang
+            lang,
+            CLIENT_NAME
         );
         this.esbCmdbApiClient.setLogger(LoggerFactory.getLogger(this.getClass()));
         this.apiGwCmdbApiClient = new BkApiClient(meterRegistry,
             CmdbMetricNames.CMDB_API_PREFIX,
             bkApiGatewayProperties.getCmdb().getUrl(),
             httpHelper,
-            lang
+            lang,
+            CLIENT_NAME
         );
         this.apiGwCmdbApiClient.setLogger(LoggerFactory.getLogger(this.getClass()));
         this.globalFlowController = flowController;
@@ -209,7 +211,7 @@ public class BaseCmdbApiClient {
                 + queryParams + "|body="
                 + JsonUtils.toJsonWithoutSkippedFields(JsonUtils.toJsonWithoutSkippedFields(reqBody));
             log.error(errorMsg, e);
-            throw new InternalCmdbException(e.getMessage(), e, ErrorCode.CMDB_API_DATA_ERROR);
+            throw new InternalCmdbException(e.getMessage(), e);
         } finally {
             HttpMetricUtil.clearHttpMetric();
         }
@@ -222,8 +224,9 @@ public class BaseCmdbApiClient {
             case BK_APIGW:
                 return apiGwCmdbApiClient;
             default:
-                log.error("BkApiClient for type: {} not found", apiGwType.name());
-                throw new InternalException(ErrorCode.INTERNAL_ERROR);
+                String errorMsg = "BkApiClient for type:" + apiGwType.name() + " not found";
+                log.error(errorMsg);
+                throw new InternalCmdbException(errorMsg);
         }
     }
 }

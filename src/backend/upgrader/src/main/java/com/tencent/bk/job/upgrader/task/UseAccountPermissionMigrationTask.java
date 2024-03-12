@@ -24,8 +24,7 @@
 
 package com.tencent.bk.job.upgrader.task;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.common.iam.client.EsbIamClient;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeEnum;
@@ -113,7 +112,7 @@ public class UseAccountPermissionMigrationTask extends BaseUpgradeTask {
         } catch (Exception e) {
             String msg = "Fail to generate jwt auth token";
             log.error(msg, e);
-            throw new InternalException(msg, e, ErrorCode.INTERNAL_ERROR);
+            throw new InternalException(msg, e);
         }
         String jobAuthToken = jwtManager.generateToken(60 * 60 * 1000);
         jobManageClient = new JobClient(

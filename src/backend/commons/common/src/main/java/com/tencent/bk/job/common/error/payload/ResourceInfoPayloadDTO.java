@@ -58,4 +58,10 @@ public class ResourceInfoPayloadDTO extends ErrorPayloadDTO {
      * 描述处理该资源的错误信息
      */
     private String description;
+
+    public ResourceInfoPayloadDTO(String resourceType, String resourceName, String description) {
+        this.resourceType = resourceType;
+        this.resourceName = resourceName;
+        this.description = description;
+    }
 }

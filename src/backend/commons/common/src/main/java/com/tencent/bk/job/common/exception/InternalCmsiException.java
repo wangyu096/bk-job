@@ -1,5 +1,8 @@
 package com.tencent.bk.job.common.exception;
 
+import com.tencent.bk.job.common.error.ErrorReason;
+import com.tencent.bk.job.common.error.payload.ErrorInfoPayloadDTO;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -10,11 +13,12 @@ import lombok.ToString;
 @ToString
 public class InternalCmsiException extends InternalException {
 
-    public InternalCmsiException(String internalErrorMessage, Throwable cause) {
-        super(internalErrorMessage, cause);
+    public InternalCmsiException(String message,
+                                 Throwable cause) {
+        super(message, cause, new ErrorInfoPayloadDTO("bk_cmsi", ErrorReason.REQUEST_THIRD_API_ERROR));
     }
 
-    public InternalCmsiException(String internalErrorMessage) {
-        super(internalErrorMessage);
+    public InternalCmsiException(String message) {
+        super(message, new ErrorInfoPayloadDTO("bk_cmsi", ErrorReason.REQUEST_THIRD_API_ERROR));
     }
 }

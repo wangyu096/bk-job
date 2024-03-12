@@ -28,8 +28,9 @@ import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobResourceTypeEnum;
-import com.tencent.bk.job.common.exception.InvalidParamException;
-import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.model.AuthResult;
@@ -112,7 +113,7 @@ public class WebPublicScriptResourceImpl extends BaseWebScriptResource implement
 
         List<ScriptDTO> scriptVersions = publicScriptService.listScriptVersion(scriptId);
         if (CollectionUtils.isEmpty(scriptVersions)) {
-            throw new NotFoundException(ErrorCode.SCRIPT_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.SCRIPT_NOT_EXIST));
         }
 
         List<ScriptVO> scriptVersionVOS = convertToScriptVOList(scriptVersions);
@@ -201,7 +202,7 @@ public class WebPublicScriptResourceImpl extends BaseWebScriptResource implement
         boolean isUpdateTags = "scriptTags".equals(updateField);
 
         if (StringUtils.isBlank(updateField) || !(isUpdateDesc || isUpdateName || isUpdateTags)) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
 
         ScriptDTO updateScript;

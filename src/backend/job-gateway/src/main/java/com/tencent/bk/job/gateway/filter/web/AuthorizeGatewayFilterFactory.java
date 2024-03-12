@@ -25,6 +25,7 @@
 package com.tencent.bk.job.gateway.filter.web;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.error.SubErrorCode;
 import com.tencent.bk.job.common.exception.InternalUserManageException;
 import com.tencent.bk.job.common.i18n.locale.LocaleUtils;
 import com.tencent.bk.job.common.model.Response;
@@ -131,7 +132,8 @@ public class AuthorizeGatewayFilterFactory extends AbstractGatewayFilterFactory<
     }
 
     private Mono<Void> getUserAccessAppForbiddenResp(ServerHttpResponse response, String data) {
-        Response<?> resp = new Response<>(ErrorCode.USER_ACCESS_APP_FORBIDDEN, data);
+        Response<String> resp = Response.buildCommonFailResp(null, SubErrorCode.of(ErrorCode.USER_ACCESS_APP_FORBIDDEN));
+        resp.setData(data);
         response.setStatusCode(HttpStatus.FORBIDDEN);
         String body = JsonUtils.toJson(resp);
         byte[] bodyBytes = body.getBytes(StandardCharsets.UTF_8);

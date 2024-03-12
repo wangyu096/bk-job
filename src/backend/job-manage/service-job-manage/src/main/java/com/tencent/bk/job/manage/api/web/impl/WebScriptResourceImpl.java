@@ -28,10 +28,11 @@ import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobResourceTypeEnum;
-import com.tencent.bk.job.common.exception.FailedPreconditionException;
-import com.tencent.bk.job.common.exception.InternalException;
-import com.tencent.bk.job.common.exception.InvalidParamException;
-import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.FailedPreconditionException;
+import com.tencent.bk.job.common.exception.base.InternalException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.model.AuthResult;
@@ -250,7 +251,7 @@ public class WebScriptResourceImpl extends BaseWebScriptResource implements WebS
         boolean isUpdateTags = "scriptTags".equals(updateField);
 
         if (StringUtils.isBlank(updateField) || !(isUpdateDesc || isUpdateName || isUpdateTags)) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
 
         ScriptDTO updateScript;
@@ -308,7 +309,7 @@ public class WebScriptResourceImpl extends BaseWebScriptResource implements WebS
         long appId = appResourceScope.getAppId();
         ScriptDTO script = scriptService.getScriptByScriptId(scriptId);
         if (script == null) {
-            throw new NotFoundException(ErrorCode.SCRIPT_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.SCRIPT_NOT_EXIST));
         }
 
         // 鉴权
@@ -514,7 +515,7 @@ public class WebScriptResourceImpl extends BaseWebScriptResource implements WebS
     public Response<List<ScriptCheckResultItemVO>> checkScript(String username, ScriptCheckReq scriptCheckReq) {
         if (scriptCheckReq.getScriptType() == null || StringUtils.isBlank(scriptCheckReq.getContent())) {
             log.warn("Check script, request is illegal! req={}", scriptCheckReq);
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
 
         String content = new String(Base64.decodeBase64(scriptCheckReq.getContent()), StandardCharsets.UTF_8);
@@ -552,12 +553,12 @@ public class WebScriptResourceImpl extends BaseWebScriptResource implements WebS
         String uploadFileName = scriptFile.getOriginalFilename();
         if (StringUtils.isBlank(uploadFileName)) {
             log.warn("Script file name is empty!");
-            throw new InvalidParamException(ErrorCode.UPLOAD_SCRIPT_FILE_NAME_EMPTY);
+            throw InvalidParamException.withInvalidField("origin_file_name", "Upload step file empty");
         }
         String ext = uploadFileName.substring(uploadFileName.lastIndexOf("."));
         ScriptTypeEnum type = ScriptTypeEnum.getTypeByExt(ext);
         if (type == null) {
-            throw new InvalidParamException(ErrorCode.UPLOAD_SCRIPT_EXT_TYPE_ILLEGAL);
+            throw InvalidParamException.withInvalidField("origin_file_name", "Script ext type illegal");
         }
 
         String fileContent;
@@ -570,11 +571,11 @@ public class WebScriptResourceImpl extends BaseWebScriptResource implements WebS
                 script.setTypeName(type.getName());
                 return Response.buildSuccessResp(script);
             } else {
-                throw new FailedPreconditionException(ErrorCode.UPLOAD_SCRIPT_CONTENT_ILLEGAL);
+                throw new FailedPreconditionException(SubErrorCode.of(ErrorCode.UPLOAD_SCRIPT_CONTENT_ILLEGAL));
             }
         } catch (Exception e) {
             log.error("Fail to parse script content", e);
-            throw new InternalException(ErrorCode.UPLOAD_SCRIPT_CONTENT_ILLEGAL);
+            throw new InternalException(e);
         }
     }
 

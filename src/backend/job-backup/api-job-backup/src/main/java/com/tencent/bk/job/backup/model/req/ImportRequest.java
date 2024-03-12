@@ -25,7 +25,7 @@
 package com.tencent.bk.job.backup.model.req;
 
 import com.tencent.bk.job.backup.model.web.BackupTemplateInfoVO;
-import com.tencent.bk.job.common.util.JobContextUtil;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -49,8 +49,6 @@ public class ImportRequest {
 
     /**
      * ID 冲突时的处理方式
-     *
-     * @see com.tencent.bk.job.backup.constant.DuplicateIdHandlerEnum
      */
     @ApiModelProperty(value = "冲突 ID 处理，0-不保留，自增 1-保留，冲突时自增 2-保留，冲突时不导入", required = true)
     private Integer duplicateIdHandler;
@@ -63,25 +61,24 @@ public class ImportRequest {
     @ApiModelProperty(value = "需要导入的模版信息", required = true)
     private List<BackupTemplateInfoVO> templateInfo;
 
-    public boolean validate() {
+    public void validate() throws InvalidParamException {
         if (StringUtils.isBlank(duplicateSuffix)) {
-            JobContextUtil.addDebugMessage("Duplicate suffix cannot be empty");
-            return false;
+            throw InvalidParamException.withInvalidField(
+                "duplicateSuffix", "Duplicate suffix cannot be empty");
         }
         if (duplicateIdHandler == null || duplicateIdHandler < 0 || duplicateIdHandler > 2) {
-            JobContextUtil.addDebugMessage("Invalid duplicate handler");
-            return false;
+            throw InvalidParamException.withInvalidField(
+                "duplicateIdHandler", "Invalid duplicate handler");
         }
         if (CollectionUtils.isEmpty(templateInfo)) {
-            JobContextUtil.addDebugMessage("Template info cannot be empty");
-            return false;
+            throw InvalidParamException.withInvalidField(
+                "templateInfo", "Template info cannot be empty");
         }
         for (BackupTemplateInfoVO backupTemplateInfoVO : templateInfo) {
             if (!backupTemplateInfoVO.validate()) {
-                JobContextUtil.addDebugMessage("Template info invalid");
-                return false;
+                throw InvalidParamException.withInvalidField(
+                    "templateInfo", "Template info invalid");
             }
         }
-        return true;
     }
 }

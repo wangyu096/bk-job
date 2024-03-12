@@ -24,8 +24,6 @@
 
 package com.tencent.bk.job.manage.common.consts.task;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -46,13 +44,13 @@ public enum TaskPlanTypeEnum {
 
     private int type;
 
-    public TaskPlanTypeEnum valueOf(int type) throws InvalidParamException {
+    public TaskPlanTypeEnum valueOf(int type) {
         for (TaskPlanTypeEnum planType : values()) {
             if (planType.type == type) {
                 return planType;
             }
         }
-        throw new InvalidParamException(ErrorCode.INTERNAL_ERROR);
+        throw new IllegalArgumentException("Invalid job plan type");
     }
 
     public int getValue() {

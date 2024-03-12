@@ -22,19 +22,11 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.paas.exception;
+package com.tencent.bk.job.common.error;
 
-import com.tencent.bk.job.common.exception.ServiceException;
-import com.tencent.bk.job.common.model.error.ErrorType;
-
-public class PaasException extends ServiceException {
-
-    public PaasException(ErrorType errorType, Integer errorCode, Object[] errorParams) {
-        super(errorType, errorCode, errorParams);
-    }
-
-    public PaasException(Throwable cause, ErrorType errorType, Integer errorCode, Object[] errorParams) {
-        super(cause, errorType, errorCode, errorParams);
-    }
-
+/**
+ * 错误原因
+ */
+public class ErrorReason {
+    public static final String REQUEST_THIRD_API_ERROR = "REQUEST_THIRD_API_ERROR";
 }

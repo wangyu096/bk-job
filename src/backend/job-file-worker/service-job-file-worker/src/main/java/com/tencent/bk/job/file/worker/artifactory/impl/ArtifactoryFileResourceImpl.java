@@ -27,8 +27,9 @@ package com.tencent.bk.job.file.worker.artifactory.impl;
 import com.tencent.bk.job.common.artifactory.model.dto.NodeDTO;
 import com.tencent.bk.job.common.artifactory.model.dto.ProjectDTO;
 import com.tencent.bk.job.common.artifactory.model.dto.RepoDTO;
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.error.payload.BadRequestPayloadDTO;
+import com.tencent.bk.job.common.error.payload.FieldViolationDTO;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.util.CompareUtil;
@@ -144,14 +145,10 @@ public class ArtifactoryFileResourceImpl implements IFileResource {
         String path = req.getPath();
         path = StringUtil.removePrefixAndSuffix(path, "/");
         if (path.contains("/")) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON, new String[]{"path",
-                "Parent path of repo must only contains projectName"});
+            throw InvalidParamException.withInvalidField("path", "Parent path of repo must only contains projectName");
         }
         if (StringUtils.isBlank(path)) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON, new String[]{
-                "path",
-                "path cannot be blank"
-            });
+            throw InvalidParamException.withInvalidField("path", "path cannot be blank");
         }
         String projectId = path;
         com.tencent.bk.job.common.artifactory.model.dto.PageData<RepoDTO> pageData;
@@ -203,10 +200,7 @@ public class ArtifactoryFileResourceImpl implements IFileResource {
         path = StringUtil.removePrefixAndSuffix(path, "/");
         String[] pathArr = path.split("/");
         if (pathArr.length < 2) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON, new String[]{
-                "path",
-                "path must contain projectId and repoName"
-            });
+            throw InvalidParamException.withInvalidField("path", "path must contain projectId and repoName");
         }
         String projectId = pathArr[0];
         String repoName = pathArr[1];
@@ -302,7 +296,7 @@ public class ArtifactoryFileResourceImpl implements IFileResource {
             fillNodeFileNodesDTO(fileNodesDTO, req);
             return InternalResponse.buildSuccessResp(fileNodesDTO);
         } else {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, new String[]{"nodeType"});
+            throw InvalidParamException.withInvalidField("nodeType");
         }
     }
 
@@ -335,7 +329,7 @@ public class ArtifactoryFileResourceImpl implements IFileResource {
                 boolean result = deleteProject(projectId, req);
                 log.info("delete project {}:{}", projectId, result);
             } else {
-                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, new String[]{"projectId"});
+                throw InvalidParamException.withInvalidField("projectId");
             }
         } else if (ArtifactoryActionCodeEnum.DELETE_REPO.name().equals(actionCode)) {
             String projectId = null;
@@ -346,9 +340,9 @@ public class ArtifactoryFileResourceImpl implements IFileResource {
                 repoName = (String) params.get("name");
             }
             if (StringUtils.isBlank(projectId)) {
-                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, new String[]{"projectId"});
+                throw InvalidParamException.withInvalidField("projectId");
             } else if (StringUtils.isBlank(repoName)) {
-                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, new String[]{"name"});
+                throw InvalidParamException.withInvalidField("name");
             } else {
                 boolean result = deleteRepo(projectId, repoName, req);
                 log.info("delete repo {}/{}:{}", projectId, repoName, result);
@@ -364,11 +358,14 @@ public class ArtifactoryFileResourceImpl implements IFileResource {
                 fullPath = (String) params.get("fullPath");
             }
             if (StringUtils.isBlank(projectId)) {
-                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, new String[]{"projectId"});
+                throw InvalidParamException.withInvalidField("projectId");
             } else if (StringUtils.isBlank(repoName)) {
-                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, new String[]{"repoName"});
+                throw InvalidParamException.withInvalidField("repoName");
             } else if (StringUtils.isBlank(fullPath)) {
-                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, new String[]{"fullPath"});
+                throw new InvalidParamException(
+                    BadRequestPayloadDTO.instance()
+                        .addFieldViolation(
+                            new FieldViolationDTO("fullPath", "")));
             } else {
                 boolean result = deleteNode(projectId, repoName, fullPath, req);
                 log.info("delete node {}/{},{}:{}", projectId, repoName, fullPath, result);

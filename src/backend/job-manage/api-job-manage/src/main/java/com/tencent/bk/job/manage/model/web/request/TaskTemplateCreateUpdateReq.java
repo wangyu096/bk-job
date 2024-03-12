@@ -24,8 +24,7 @@
 
 package com.tencent.bk.job.manage.model.web.request;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.util.check.IlegalCharChecker;
 import com.tencent.bk.job.common.util.check.MaxLengthChecker;
 import com.tencent.bk.job.common.util.check.NotEmptyChecker;
@@ -72,7 +71,7 @@ public class TaskTemplateCreateUpdateReq extends TemplateBasicInfoUpdateReq {
             this.setName(stringCheckHelper.checkAndGetResult(this.getName()));
         } catch (StringCheckException e) {
             log.warn("Template name is invalid, name: {}", getName());
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         if (this.getDescription() == null) {
             this.setDescription("");
@@ -84,7 +83,7 @@ public class TaskTemplateCreateUpdateReq extends TemplateBasicInfoUpdateReq {
         if (isCreate) {
             if (CollectionUtils.isEmpty(steps)) {
                 log.warn("Empty template step!");
-                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+                throw new InvalidParamException();
             }
         }
         if (CollectionUtils.isNotEmpty(steps)) {
@@ -98,7 +97,7 @@ public class TaskTemplateCreateUpdateReq extends TemplateBasicInfoUpdateReq {
                 variable.validate(isCreate);
                 if (variableNameList.contains(variable.getName())) {
                     log.warn("Variable name duplicated!");
-                    throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+                    throw new InvalidParamException();
                 }
                 if (variable.getDelete() != 1) {
                     variableNameList.add(variable.getName());

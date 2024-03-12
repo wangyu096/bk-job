@@ -24,8 +24,7 @@
 
 package com.tencent.bk.job.manage.service.template.impl;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.mysql.JobTransactional;
 import com.tencent.bk.job.manage.common.consts.JobResourceStatusEnum;
 import com.tencent.bk.job.manage.dao.template.TaskTemplateDAO;
@@ -146,7 +145,7 @@ public class TemplateStatusUpdateService {
             }
         } else {
             log.error("Error while process template status!|Param error!|{}", scriptStatusUpdateMessage);
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
     }
 

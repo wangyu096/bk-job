@@ -24,13 +24,11 @@
 
 package com.tencent.bk.job.manage.api.esb.impl;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobConstants;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
-import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.openapi.job.v2.EsbPageData;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
@@ -67,11 +65,7 @@ public class EsbGetPublicScriptListResourceImpl implements EsbGetPublicScriptLis
     public EsbResp<EsbPageData<EsbScriptDTO>> getPublicScriptList(String username,
                                                                   String appCode,
                                                                   OpenApiGetPublicScriptListRequest request) {
-        ValidateResult checkResult = checkRequest(request);
-        if (!checkResult.isPass()) {
-            log.warn("Get public script list, request is illegal!");
-            throw new InvalidParamException(checkResult);
-        }
+        checkRequest(request);
 
         boolean returnScriptContent = (request.getReturnScriptContent() != null && request.getReturnScriptContent());
 
@@ -132,10 +126,10 @@ public class EsbGetPublicScriptListResourceImpl implements EsbGetPublicScriptLis
         return esbPageData;
     }
 
-    private ValidateResult checkRequest(OpenApiGetPublicScriptListRequest request) {
+    private void checkRequest(OpenApiGetPublicScriptListRequest request) {
         if (request.getScriptType() != null && ScriptTypeEnum.valOf(request.getScriptType()) == null) {
             log.warn("ScriptType:{} is illegal!", request.getScriptType());
-            return ValidateResult.fail(ErrorCode.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME, "script_type");
+            throw InvalidParamException.withInvalidField("script_type");
         }
         if (request.getStart() == null || request.getStart() < 0) {
             request.setStart(0);
@@ -143,7 +137,6 @@ public class EsbGetPublicScriptListResourceImpl implements EsbGetPublicScriptLis
         if (request.getLength() == null || request.getLength() == 0) {
             request.setLength(Integer.MAX_VALUE);
         }
-        return ValidateResult.pass();
     }
 
 }

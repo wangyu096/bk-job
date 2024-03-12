@@ -31,7 +31,6 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.tencent.bk.job.common.bkapigw.config.BkApiGatewayProperties;
 import com.tencent.bk.job.common.cc.config.CmdbConfig;
-import com.tencent.bk.job.common.cc.exception.CmdbException;
 import com.tencent.bk.job.common.cc.model.AppRoleDTO;
 import com.tencent.bk.job.common.cc.model.BaseRuleDTO;
 import com.tencent.bk.job.common.cc.model.BriefTopologyDTO;
@@ -88,18 +87,18 @@ import com.tencent.bk.job.common.cc.model.result.SearchAppResult;
 import com.tencent.bk.job.common.cc.model.result.SearchCloudAreaResult;
 import com.tencent.bk.job.common.cc.model.result.SearchDynamicGroupResult;
 import com.tencent.bk.job.common.cc.util.TopologyUtil;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.HttpMethodEnum;
 import com.tencent.bk.job.common.constant.ResourceScopeTypeEnum;
+import com.tencent.bk.job.common.error.ErrorReason;
+import com.tencent.bk.job.common.error.payload.ErrorInfoPayloadDTO;
 import com.tencent.bk.job.common.esb.config.EsbProperties;
 import com.tencent.bk.job.common.exception.InternalCmdbException;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.model.dto.ApplicationDTO;
 import com.tencent.bk.job.common.model.dto.ApplicationHostDTO;
 import com.tencent.bk.job.common.model.dto.HostDTO;
 import com.tencent.bk.job.common.model.dto.ResourceScope;
-import com.tencent.bk.job.common.model.error.ErrorType;
 import com.tencent.bk.job.common.openapi.config.AppProperties;
 import com.tencent.bk.job.common.openapi.constants.ApiGwType;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
@@ -209,7 +208,8 @@ public class BizCmdbClient extends BaseCmdbApiClient implements IBizCmdbClient {
             if (cause instanceof RuntimeException) {
                 throw (RuntimeException) cause;
             } else {
-                throw new InternalException(e, ErrorCode.INTERNAL_ERROR, null);
+                throw new InternalException(e.getMessage(), e,
+                    new ErrorInfoPayloadDTO(CLIENT_NAME, ErrorReason.REQUEST_THIRD_API_ERROR));
             }
         }
     }
@@ -665,7 +665,7 @@ public class BizCmdbClient extends BaseCmdbApiClient implements IBizCmdbClient {
             SearchAppResult data = esbResp.getData();
             if (data == null) {
                 appList.clear();
-                throw new InternalCmdbException("Data is null", ErrorCode.CMDB_API_DATA_ERROR);
+                throw new InternalCmdbException("Response data is null");
             }
             List<BusinessInfoDTO> businessInfos = data.getInfo();
             if (businessInfos != null && !businessInfos.isEmpty()) {
@@ -710,11 +710,11 @@ public class BizCmdbClient extends BaseCmdbApiClient implements IBizCmdbClient {
             });
         SearchAppResult data = esbResp.getData();
         if (data == null) {
-            throw new InternalCmdbException("data is null", ErrorCode.CMDB_API_DATA_ERROR);
+            throw new InternalCmdbException("Response data is null");
         }
         List<BusinessInfoDTO> businessInfos = data.getInfo();
         if (businessInfos == null || businessInfos.isEmpty()) {
-            throw new InternalCmdbException("data is null", ErrorCode.CMDB_API_DATA_ERROR);
+            throw new InternalCmdbException("Response data is null");
         }
         return convertToAppInfo(businessInfos.get(0));
     }
@@ -742,10 +742,9 @@ public class BizCmdbClient extends BaseCmdbApiClient implements IBizCmdbClient {
                 });
             if (!esbResp.getResult()) {
                 // 由于参数问题导致的CMDB返回数据异常
-                throw new CmdbException(
-                    ErrorType.FAILED_PRECONDITION,
-                    ErrorCode.FAIL_TO_FIND_DYNAMIC_GROUP_BY_BIZ,
-                    new Object[]{bizId, esbResp.getMessage()}
+                throw new InternalCmdbException(
+                    "Request cmdb api : search_dynamic_group, response result error. errorMsg: "
+                        + esbResp.getMessage()
                 );
             }
             SearchDynamicGroupResult ccRespData = esbResp.getData();
@@ -804,10 +803,9 @@ public class BizCmdbClient extends BaseCmdbApiClient implements IBizCmdbClient {
             ExecuteDynamicGroupHostResult ccRespData = esbResp.getData();
             if (!esbResp.getResult()) {
                 // 由于参数问题导致的CMDB返回数据异常
-                throw new CmdbException(
-                    ErrorType.FAILED_PRECONDITION,
-                    ErrorCode.FAIL_TO_FIND_HOST_BY_DYNAMIC_GROUP,
-                    new String[]{groupId, esbResp.getMessage()}
+                throw new InternalCmdbException(
+                    "Request cmdb api : execute_dynamic_group, response result error. errorMsg: "
+                        + esbResp.getMessage()
                 );
             }
             if (ccRespData != null) {

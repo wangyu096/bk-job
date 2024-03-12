@@ -25,20 +25,21 @@
 package com.tencent.bk.job.common.web.exception.handler;
 
 import com.tencent.bk.job.common.annotation.WebAPI;
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.AlreadyExistsException;
-import com.tencent.bk.job.common.exception.FailedPreconditionException;
-import com.tencent.bk.job.common.exception.InternalException;
-import com.tencent.bk.job.common.exception.InvalidParamException;
-import com.tencent.bk.job.common.exception.NotFoundException;
-import com.tencent.bk.job.common.exception.ResourceExhaustedException;
-import com.tencent.bk.job.common.exception.ServiceException;
-import com.tencent.bk.job.common.exception.UnauthenticatedException;
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.error.ApiError;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.error.payload.BadRequestPayloadDTO;
+import com.tencent.bk.job.common.exception.base.AlreadyExistsException;
+import com.tencent.bk.job.common.exception.base.FailedPreconditionException;
+import com.tencent.bk.job.common.exception.base.InternalException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
+import com.tencent.bk.job.common.exception.base.ResourceExhaustedException;
+import com.tencent.bk.job.common.exception.base.ServiceException;
+import com.tencent.bk.job.common.exception.base.UnauthenticatedException;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.iam.service.WebAuthService;
 import com.tencent.bk.job.common.model.Response;
-import com.tencent.bk.job.common.model.error.ErrorDetailDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,14 +72,15 @@ public class WebExceptionControllerAdvice extends ExceptionControllerAdviceBase 
     Response<?> handleException(HttpServletRequest request, Throwable ex) {
         String errorMsg = "Handle Exception, uri: " + request.getRequestURI();
         log.error(errorMsg, ex);
-        return Response.buildCommonFailResp(ErrorCode.INTERNAL_ERROR);
+
+        return Response.buildCommonFailResp(ApiError.internalError(), SubErrorCode.INTERNAL_ERROR);
     }
 
-    @ExceptionHandler(PermissionDeniedException.class)
+    @ExceptionHandler(IamPermissionDeniedException.class)
     @ResponseBody
     @ResponseStatus(HttpStatus.FORBIDDEN)
     Response<?> handlePermissionDeniedException(HttpServletRequest request,
-                                                PermissionDeniedException ex) {
+                                                IamPermissionDeniedException ex) {
         AuthResult authResult = ex.getAuthResult();
         log.info("Handle PermissionDeniedException, uri: {}, authResult: {}",
             request.getRequestURI(), authResult);
@@ -93,7 +95,7 @@ public class WebExceptionControllerAdvice extends ExceptionControllerAdviceBase 
     ResponseEntity<?> handleServiceException(HttpServletRequest request, ServiceException ex) {
         String errorMsg = "Handle ServiceException, uri: " + request.getRequestURI();
         log.error(errorMsg, ex);
-        return new ResponseEntity<>(Response.buildCommonFailResp(ex), HttpStatus.OK);
+        return new ResponseEntity<>(Response.buildCommonFailResp(ex), getHttpStatusByServiceException(ex));
     }
 
     @ExceptionHandler(InternalException.class)
@@ -155,9 +157,10 @@ public class WebExceptionControllerAdvice extends ExceptionControllerAdviceBase 
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
                                                                   HttpHeaders headers, HttpStatus status,
                                                                   WebRequest request) {
-        ErrorDetailDTO errorDetail = buildErrorDetail(ex);
-        log.warn("HandleMethodArgumentNotValid - errorDetail: {}", errorDetail);
-        Response<?> resp = Response.buildValidateFailResp(errorDetail);
+        BadRequestPayloadDTO errorPayload = buildBadRequestPayloadDTO(ex);
+        log.warn("HandleMethodArgumentNotValid", ex);
+        ApiError apiError = ApiError.invalidArgument(errorPayload);
+        Response<?> resp = Response.buildCommonFailResp(apiError, SubErrorCode.ILLEGAL_PARAM);
         return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
     }
 
@@ -165,9 +168,10 @@ public class WebExceptionControllerAdvice extends ExceptionControllerAdviceBase 
     @ResponseBody
     ResponseEntity<?> handleConstraintViolationException(HttpServletRequest request,
                                                          ConstraintViolationException ex) {
-        ErrorDetailDTO errorDetail = buildErrorDetail(ex);
-        log.warn("handleConstraintViolationException - errorDetail: {}", errorDetail);
-        Response<?> resp = Response.buildValidateFailResp(errorDetail);
+        BadRequestPayloadDTO errorPayload = buildBadRequestPayloadDTO(ex);
+        log.warn("HandleConstraintViolationException", ex);
+        ApiError apiError = ApiError.invalidArgument(errorPayload);
+        Response<?> resp = Response.buildCommonFailResp(apiError, SubErrorCode.ILLEGAL_PARAM);
         return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
     }
 

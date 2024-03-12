@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.logsvr.service;
 
-import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.exception.base.ServiceException;
 import com.tencent.bk.job.common.model.dto.HostDTO;
 import com.tencent.bk.job.logsvr.consts.LogTypeEnum;
 import com.tencent.bk.job.logsvr.model.FileLogQuery;

@@ -25,7 +25,7 @@
 package com.tencent.bk.job.common.util.http;
 
 import com.tencent.bk.job.common.error.SubErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -114,7 +114,7 @@ public class HttpConPoolUtil {
             return new String(resp, charset);
         } catch (IOException e) {
             log.error("Post request fail", e);
-            throw new InternalException(e, SubErrorCode.API_ERROR);
+            throw new InternalException("Post request fail", e, SubErrorCode.API_ERROR);
         }
     }
 
@@ -159,7 +159,7 @@ public class HttpConPoolUtil {
             return new String(resp, charset);
         } catch (IOException e) {
             log.error("Post request fail", e);
-            throw new InternalException(e, SubErrorCode.API_ERROR);
+            throw new InternalException("Post request fail", e, SubErrorCode.API_ERROR);
         }
     }
 
@@ -207,7 +207,7 @@ public class HttpConPoolUtil {
             return EntityUtils.toByteArray(entity);
         } catch (IOException e) {
             log.error("Post request fail", e);
-            throw new InternalException(e, SubErrorCode.API_ERROR);
+            throw new InternalException("Post request fail", e, SubErrorCode.API_ERROR);
         }
     }
 
@@ -242,7 +242,7 @@ public class HttpConPoolUtil {
             return EntityUtils.toString(entity, CHARSET);
         } catch (IOException e) {
             log.error("Get request fail", e);
-            throw new InternalException(e, SubErrorCode.API_ERROR);
+            throw new InternalException("Post request fail", e, SubErrorCode.API_ERROR);
         }
     }
 
@@ -267,7 +267,7 @@ public class HttpConPoolUtil {
             return new String(EntityUtils.toByteArray(entity), CHARSET);
         } catch (IOException e) {
             log.error("Delete request fail", e);
-            throw new InternalException(e, SubErrorCode.API_ERROR);
+            throw new InternalException("Delete request fail", e, SubErrorCode.API_ERROR);
         }
     }
 

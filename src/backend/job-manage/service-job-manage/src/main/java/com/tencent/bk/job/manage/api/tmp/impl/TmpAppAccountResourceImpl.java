@@ -26,8 +26,9 @@ package com.tencent.bk.job.manage.api.tmp.impl;
 
 import com.tencent.bk.job.common.constant.AccountCategoryEnum;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.AlreadyExistsException;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.AlreadyExistsException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.common.util.Utils;
 import com.tencent.bk.job.common.util.json.JsonUtils;
@@ -105,7 +106,7 @@ public class TmpAppAccountResourceImpl implements TmpAppAccountResource {
             }
         }
         if (!accountService.checkCreateParam(accountCreateUpdateReq, false, false)) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         Long accountId = accountCreateUpdateReq.getId();
         if (accountId != null) {
@@ -119,7 +120,7 @@ public class TmpAppAccountResourceImpl implements TmpAppAccountResource {
                     return Response.buildSuccessResp(accountId);
                 } else {
                     // 报错，相同ID账号已存在
-                    throw new AlreadyExistsException(ErrorCode.ACCOUNT_ALIAS_EXIST);
+                    throw new AlreadyExistsException(SubErrorCode.of(ErrorCode.ACCOUNT_ALIAS_EXIST));
                 }
             }
         }
@@ -137,7 +138,7 @@ public class TmpAppAccountResourceImpl implements TmpAppAccountResource {
                         accountCreateUpdateReq.getAlias());
                     break;
                 default:
-                    throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+                    throw new InvalidParamException();
             }
             if (account != null) {
                 if (account.getAccount().equals(accountCreateUpdateReq.getAccount())) {

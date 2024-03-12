@@ -24,15 +24,13 @@
 
 package com.tencent.bk.job.manage.api.esb.impl;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobConstants;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeEnum;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
-import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.openapi.job.v2.EsbPageData;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.common.openapi.job.v3.utils.EsbDTOAppScopeMappingHelper;
@@ -77,11 +75,7 @@ public class EsbGetScriptListResourceImpl implements EsbGetScriptListResource {
     public EsbResp<EsbPageData<EsbScriptDTO>> getScriptList(String username,
                                                             String appCode,
                                                             EsbGetScriptListRequest request) {
-        ValidateResult checkResult = checkRequest(request);
-        if (!checkResult.isPass()) {
-            log.warn("Get script list, request is illegal!");
-            throw new InvalidParamException(checkResult);
-        }
+        checkRequest(request);
 
         boolean isQueryPublicScript = (request.getPublicScript() != null && request.getPublicScript());
         boolean returnScriptContent = (request.getReturnScriptContent() != null && request.getReturnScriptContent());
@@ -170,14 +164,14 @@ public class EsbGetScriptListResourceImpl implements EsbGetScriptListResource {
         return esbPageData;
     }
 
-    private ValidateResult checkRequest(EsbGetScriptListRequest request) {
+    private void checkRequest(EsbGetScriptListRequest request) {
         boolean queryPublicScript = false;
         if (request.getPublicScript() != null && request.getPublicScript()) {
             queryPublicScript = true;
         }
         if (!queryPublicScript && (request.getAppId() == null || request.getAppId() < 1)) {
             log.warn("AppId is empty or illegal!");
-            return ValidateResult.fail(ErrorCode.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME, "bk_biz_id");
+            throw InvalidParamException.withInvalidField("bk_biz_id");
         }
         if (request.getStart() == null || request.getStart() < 0) {
             request.setStart(0);
@@ -186,12 +180,11 @@ public class EsbGetScriptListResourceImpl implements EsbGetScriptListResource {
         if (request.getScriptType() != null && request.getScriptType() > 0
             && ScriptTypeEnum.valOf(request.getScriptType()) == null) {
             log.warn("ScriptType:{} is illegal!", request.getScriptType());
-            return ValidateResult.fail(ErrorCode.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME, "script_type");
+            throw InvalidParamException.withInvalidField("script_type");
         }
         if (request.getLength() == null || request.getLength() == 0) {
             request.setLength(Integer.MAX_VALUE);
         }
-        return ValidateResult.pass();
     }
 
 }

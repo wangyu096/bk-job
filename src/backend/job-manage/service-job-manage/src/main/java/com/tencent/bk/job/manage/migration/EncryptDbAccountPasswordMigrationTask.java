@@ -27,8 +27,8 @@ package com.tencent.bk.job.manage.migration;
 import com.tencent.bk.job.common.constant.AccountCategoryEnum;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.crypto.util.AESUtils;
-import com.tencent.bk.job.common.exception.InternalException;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InternalException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.manage.config.JobManageConfig;
 import com.tencent.bk.job.manage.dao.AccountDAO;
@@ -66,7 +66,7 @@ public class EncryptDbAccountPasswordMigrationTask {
         log.info("Encrypt db account password start...");
         if (StringUtils.isBlank(jobManageConfig.getEncryptPassword())) {
             log.error("Encrypt password is blank");
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
 
         List<AccountDTO> dbAccounts = accountDAO.listAccountByAccountCategory(AccountCategoryEnum.DB);

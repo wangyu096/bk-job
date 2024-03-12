@@ -30,14 +30,14 @@ import com.tencent.bk.audit.annotations.AuditInstanceRecord;
 import com.tencent.bk.audit.context.ActionAuditContext;
 import com.tencent.bk.job.common.audit.constants.EventContentConstants;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
-import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
-import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.common.openapi.job.v3.utils.EsbDTOAppScopeMappingHelper;
 import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
@@ -79,19 +79,14 @@ public class EsbGetScriptDetailResourceImpl implements EsbGetScriptDetailResourc
     public EsbResp<EsbScriptDTO> getScriptDetail(String username,
                                                  String appCode,
                                                  EsbGetScriptDetailRequest request) {
-        ValidateResult checkResult = checkRequest(request);
-        if (!checkResult.isPass()) {
-            log.warn("Get script detail, request is illegal!");
-            throw new InvalidParamException(checkResult);
-        }
-
+        checkRequest(request);
 
         Long appId = request.getAppId();
         ScriptDTO scriptVersion = scriptManager.getScriptVersion(request.getAppId(),
             request.getScriptVersionId());
         if (scriptVersion == null) {
             log.warn("Cannot find scriptVersion by id {}", request.getScriptVersionId());
-            throw new NotFoundException(ErrorCode.SCRIPT_VERSION_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.SCRIPT_VERSION_NOT_EXIST));
         }
         String scriptId = scriptVersion.getId();
 
@@ -103,17 +98,17 @@ public class EsbGetScriptDetailResourceImpl implements EsbGetScriptDetailResourc
             AuthResult authResult =
                 scriptAuthService.authViewScript(username, request.getAppResourceScope(), scriptId, null);
             if (!authResult.isPass()) {
-                throw new PermissionDeniedException(authResult);
+                throw new IamPermissionDeniedException(authResult);
             }
         }
         if (!scriptVersion.isPublicScript()) {
             if (appId == null || appId < 1) {
                 log.warn("AppId:{} is empty or illegal", request.getAppId());
-                throw new InvalidParamException(ErrorCode.MISSING_OR_ILLEGAL_PARAM);
+                throw new InvalidParamException();
             } else {
                 if (!scriptVersion.getAppId().equals(appId)) {
                     log.warn("Script:{} is not in app:{}", request.getScriptVersionId(), request.getAppId());
-                    throw new NotFoundException(ErrorCode.SCRIPT_NOT_IN_APP);
+                    throw new NotFoundException(SubErrorCode.of(ErrorCode.SCRIPT_NOT_IN_APP));
                 }
             }
         }
@@ -141,11 +136,10 @@ public class EsbGetScriptDetailResourceImpl implements EsbGetScriptDetailResourc
         return esbScript;
     }
 
-    private ValidateResult checkRequest(EsbGetScriptDetailRequest request) {
+    private void checkRequest(EsbGetScriptDetailRequest request) {
         if (request.getScriptVersionId() == null || request.getScriptVersionId() < 1) {
             log.warn("ScriptVersionId:{} is empty or illegal!", request.getScriptVersionId());
-            return ValidateResult.fail(ErrorCode.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME, "id");
+            throw InvalidParamException.withInvalidField("id", "Script version id invalid");
         }
-        return ValidateResult.pass();
     }
 }

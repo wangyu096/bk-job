@@ -26,15 +26,14 @@ package com.tencent.bk.job.manage.api.web.impl;
 
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobResourceTypeEnum;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.model.Response;
-import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
 import com.tencent.bk.job.manage.api.web.WebTagResource;
 import com.tencent.bk.job.manage.auth.NoResourceScopeAuthService;
@@ -228,10 +227,7 @@ public class WebTagResourceImpl implements WebTagResource {
                                                String scopeId,
                                                Long tagId,
                                                BatchPatchResourceTagReq tagBatchUpdateReq) {
-        ValidateResult validateResult = checkBatchPatchResourceTagReq(tagId, tagBatchUpdateReq);
-        if (!validateResult.isPass()) {
-            return Response.buildValidateFailResp(validateResult);
-        }
+        checkBatchPatchResourceTagReq(tagId, tagBatchUpdateReq);
 
         List<ResourceTagDTO> resourceTags = tagService.listResourceTagsByTagId(appResourceScope.getAppId(), tagId);
         Map<JobResourceTypeEnum, Set<String>> resourceGroups = filterAndClassifyResources(
@@ -242,7 +238,7 @@ public class WebTagResourceImpl implements WebTagResource {
 
         AuthResult authResult = checkTagRelatedResourcesUpdatePermission(username, appResourceScope, resourceGroups);
         if (!authResult.isPass()) {
-            throw new PermissionDeniedException(authResult);
+            throw new IamPermissionDeniedException(authResult);
         }
 
         List<ResourceTagDTO> addResourceTags = new ArrayList<>();
@@ -299,10 +295,10 @@ public class WebTagResourceImpl implements WebTagResource {
         return authResult;
     }
 
-    private ValidateResult checkBatchPatchResourceTagReq(Long baseTagId, BatchPatchResourceTagReq req) {
+    private void checkBatchPatchResourceTagReq(Long baseTagId, BatchPatchResourceTagReq req) {
         if (CollectionUtils.isEmpty(req.getResourceTypeList())) {
             log.warn("BatchPatchResourceTagReq->resourceTypeList is empty");
-            return ValidateResult.fail(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, "resourceTypeList");
+            throw InvalidParamException.withInvalidField("resourceTypeList");
         }
         if (CollectionUtils.isNotEmpty(req.getAddTagIdList())) {
             req.getAddTagIdList().remove(baseTagId);
@@ -310,15 +306,13 @@ public class WebTagResourceImpl implements WebTagResource {
         for (Integer resourceType : req.getResourceTypeList()) {
             if (!isSupportResourceType(resourceType)) {
                 log.warn("BatchPatchResourceTagReq->resourceType is invalid. resourceType: {}", resourceType);
-                return ValidateResult.fail(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, "resourceTypeList");
+                throw InvalidParamException.withInvalidField("resourceTypeList");
             }
         }
         if (CollectionUtils.isEmpty(req.getAddTagIdList()) && CollectionUtils.isEmpty(req.getDeleteTagIdList())) {
             log.warn("BatchPatchResourceTagReq->No tags changed!");
-            return ValidateResult.fail(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME,
-                "addTagIdList|deleteTagIdList");
+            throw InvalidParamException.withInvalidField("addTagIdList|deleteTagIdList");
         }
-        return ValidateResult.pass();
     }
 
     private boolean isSupportResourceType(Integer resourceType) {

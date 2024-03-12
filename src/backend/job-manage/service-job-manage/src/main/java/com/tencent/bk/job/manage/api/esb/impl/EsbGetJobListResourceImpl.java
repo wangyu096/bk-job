@@ -24,12 +24,10 @@
 
 package com.tencent.bk.job.manage.api.esb.impl;
 
-import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.iam.service.BusinessAuthService;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
-import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.common.openapi.job.v3.utils.EsbDTOAppScopeMappingHelper;
 import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
@@ -68,11 +66,6 @@ public class EsbGetJobListResourceImpl implements EsbGetJobListResource {
     public EsbResp<List<EsbJobBasicInfoDTO>> getJobList(String username,
                                                         String appCode,
                                                         EsbGetJobListRequest request) {
-        ValidateResult checkResult = checkRequest(request);
-        if (!checkResult.isPass()) {
-            log.warn("Get job list, request is illegal!");
-            throw new InvalidParamException(checkResult);
-        }
         long appId = request.getAppId();
 
         TaskPlanQueryDTO taskPlanQueryDTO = new TaskPlanQueryDTO();
@@ -121,11 +114,6 @@ public class EsbGetJobListResourceImpl implements EsbGetJobListResource {
             return EsbResp.buildSuccessResp(Collections.emptyList());
         }
         return EsbResp.buildSuccessResp(convertToEsbJobBasicInfoDTO(pageTaskPlans.getData()));
-    }
-
-    private ValidateResult checkRequest(EsbGetJobListRequest request) {
-        // TODO 暂不校验，后面补上
-        return ValidateResult.pass();
     }
 
     private List<EsbJobBasicInfoDTO> convertToEsbJobBasicInfoDTO(List<TaskPlanInfoDTO> taskPlans) {

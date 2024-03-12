@@ -26,9 +26,8 @@ package com.tencent.bk.job.execute.api.web.impl;
 
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
@@ -116,9 +115,8 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
                                                @AuditRequestBody WebTaskExecuteRequest request) {
         log.info("Execute task, request={}", request);
 
-        if (!checkExecuteTaskRequest(request)) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
-        }
+        checkExecuteTaskRequest(request);
+
         List<TaskVariableDTO> executeVariableValues = buildExecuteVariables(request.getTaskVariables());
 
         TaskInstanceDTO taskInstanceDTO = taskExecuteService.executeJobPlan(
@@ -132,25 +130,24 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
         return Response.buildSuccessResp(result);
     }
 
-    private boolean checkExecuteTaskRequest(WebTaskExecuteRequest request) {
+    private void checkExecuteTaskRequest(WebTaskExecuteRequest request) {
         if (request.getTaskId() == null || request.getTaskId() <= 0) {
             log.warn("Execute task, taskId is empty!");
-            return false;
+            throw InvalidParamException.withInvalidField("taskId");
         }
         if (request.getTaskVariables() != null) {
             for (ExecuteVariableVO webTaskVariable : request.getTaskVariables()) {
                 if (webTaskVariable.getId() == null || webTaskVariable.getId() <= 0) {
                     log.warn("Execute task, variable id is invalid");
-                    return false;
+                    throw InvalidParamException.withInvalidField("taskVariables.id");
                 }
                 if (webTaskVariable.getType() == null
                     || TaskVariableTypeEnum.valOf(webTaskVariable.getType()) == null) {
                     log.warn("Execute task, variable type is invalid");
-                    return false;
+                    throw InvalidParamException.withInvalidField("taskVariables.type");
                 }
             }
         }
-        return true;
     }
 
     @Override
@@ -161,9 +158,7 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
                                             RedoTaskRequest request) {
         log.info("Redo task, request={}", request);
 
-        if (!checkRedoTaskRequest(request)) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
-        }
+        checkRedoTaskRequest(request);
 
         List<TaskVariableDTO> executeVariableValues = buildExecuteVariables(request.getTaskVariables());
         TaskInstanceDTO taskInstanceDTO = taskExecuteService.createTaskInstanceForRedo(appResourceScope.getAppId(),
@@ -203,20 +198,19 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
         return executeVariableValues;
     }
 
-    private boolean checkRedoTaskRequest(RedoTaskRequest request) {
+    private void checkRedoTaskRequest(RedoTaskRequest request) {
         if (request.getTaskInstanceId() == null || request.getTaskInstanceId() <= 0) {
             log.warn("Redo task, taskInstanceId is empty!");
-            return false;
+            throw InvalidParamException.withInvalidField("taskInstanceId");
         }
         if (request.getTaskVariables() != null) {
             for (ExecuteVariableVO webTaskVariable : request.getTaskVariables()) {
                 if (webTaskVariable.getId() == null || webTaskVariable.getId() <= 0) {
                     log.warn("Redo task, variable id is empty");
-                    return false;
+                    throw new InvalidParamException();
                 }
             }
         }
-        return true;
     }
 
     @Override
@@ -235,10 +229,7 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
             log.debug("Fast execute script, scope={}, operator={}, request={}", appResourceScope, username, request);
         }
 
-        if (!checkFastExecuteScriptRequest(request)) {
-            log.warn("Fast execute script request is illegal!");
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
-        }
+        checkFastExecuteScriptRequest(request);
 
         TaskInstanceDTO taskInstance = buildFastScriptTaskInstance(username, appResourceScope.getAppId(), request);
         StepInstanceDTO stepInstance = buildFastScriptStepInstance(username, appResourceScope.getAppId(), request);
@@ -252,7 +243,7 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
         return createAndStartFastTask(request.isRedoTask(), taskInstance, stepInstance, rollingConfig);
     }
 
-    private boolean checkFastExecuteScriptRequest(WebFastExecuteScriptRequest request) {
+    private void checkFastExecuteScriptRequest(WebFastExecuteScriptRequest request) {
         try {
             StringCheckHelper stringCheckHelper = new StringCheckHelper(
                 new TrimChecker(),
@@ -263,29 +254,29 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
             request.setName(stringCheckHelper.checkAndGetResult(request.getName()));
         } catch (StringCheckException e) {
             log.warn("Fast execute script, taskName is invalid:", e);
-            return false;
+            throw InvalidParamException.withInvalidField("name", "Task name is invalid");
         }
         if (request.getScriptVersionId() == null && StringUtils.isBlank(request.getContent())) {
             log.warn("Fast execute script, script info is empty!");
-            return false;
+            throw InvalidParamException.withInvalidField("scriptVersionId/content",
+                "Both scriptVersionId and content are empty");
         }
         if (!ScriptTypeEnum.isValid(request.getScriptLanguage())) {
             log.warn("Fast execute script, script type is invalid! scriptType={}", request.getScriptLanguage());
-            return false;
+            throw InvalidParamException.withInvalidField("scriptLanguage", "Script language is invalid");
         }
 
         TaskTargetVO taskTarget = request.getTaskTarget();
         if (taskTarget == null) {
             log.warn("Fast execute script, target is null!");
-            return false;
+            throw InvalidParamException.withInvalidField("taskTarget", "Task target is empty");
         }
         taskTarget.validate();
 
         if (request.getAccount() == null || request.getAccount() < 1) {
             log.warn("Fast execute script, accountId is invalid! accountId={}", request.getAccount());
-            return false;
+            throw InvalidParamException.withInvalidField("account", "Account is empty");
         }
-        return true;
     }
 
     private TaskInstanceDTO buildFastScriptTaskInstance(String username, Long appId,
@@ -351,10 +342,7 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
                                                 String scopeId,
                                                 @AuditRequestBody WebFastPushFileRequest request) {
         log.debug("Fast send file, scope={}, operator={}, request={}", appResourceScope, username, request);
-        if (!checkFastPushFileRequest(request)) {
-            log.warn("Fast send file request is illegal!");
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
-        }
+        checkFastPushFileRequest(request);
 
         TaskInstanceDTO taskInstance = buildFastFileTaskInstance(username, appResourceScope.getAppId(), request);
         StepInstanceDTO stepInstance = buildFastFileStepInstance(username, appResourceScope.getAppId(), request);
@@ -385,7 +373,7 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
         return Response.buildSuccessResp(stepExecuteVO);
     }
 
-    private boolean checkFastPushFileRequest(WebFastPushFileRequest request) {
+    private void checkFastPushFileRequest(WebFastPushFileRequest request) {
         try {
             StringCheckHelper stringCheckHelper = new StringCheckHelper(
                 new TrimChecker(),
@@ -396,52 +384,56 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
             request.setName(stringCheckHelper.checkAndGetResult(request.getName()));
         } catch (StringCheckException e) {
             log.warn("Fast execute script, taskName is invalid:", e);
-            return false;
+            throw InvalidParamException.withInvalidField("name", "Task name is invalid");
         }
         ExecuteFileDestinationInfoVO fileDestination = request.getFileDestination();
         if (fileDestination == null) {
             log.warn("Fast send file, fileDestination is null!");
-            return false;
+            throw InvalidParamException.withInvalidField("fileDestination", "File destination is empty");
         }
         TaskTargetVO targetServers = fileDestination.getServer();
         if (targetServers == null) {
-            return false;
+            throw InvalidParamException.withInvalidField("fileDestination.server",
+                "File destination server is empty");
         }
         targetServers.validate();
 
         if (fileDestination.getAccountId() == null || fileDestination.getAccountId() < 1) {
             log.warn("Fast send file, accountId is invalid! accountId={}", fileDestination.getAccountId());
-            return false;
+            throw InvalidParamException.withInvalidField("fileDestination.accountId",
+                "File destination accountId is empty");
         }
         if (request.getFileSourceList() == null || request.getFileSourceList().isEmpty()) {
             log.warn("Fast send file, fileSources are empty!");
-            return false;
+            throw InvalidParamException.withInvalidField("fileSourceList",
+                "File source is empty");
         }
         for (ExecuteFileSourceInfoVO fileSource : request.getFileSourceList()) {
             if (CollectionUtils.isEmpty(fileSource.getFileLocation())) {
                 log.warn("Fast send file ,files are empty");
-                return false;
+                throw InvalidParamException.withInvalidField("fileSourceList.fileLocation",
+                    "File source location is empty");
             }
             if (fileSource.getFileType() == TaskFileTypeEnum.SERVER.getType()) {
                 if (fileSource.getAccountId() == null || fileSource.getAccountId() < 1) {
                     log.warn("Fast send file, account is empty!");
-                    return false;
+                    throw InvalidParamException.withInvalidField("fileSourceList.accountId",
+                        "File source accountId is empty");
                 }
                 for (String file : fileSource.getFileLocation()) {
                     if (!FilePathValidateUtil.validateFileSystemAbsolutePath(file)) {
                         log.warn("Fast send file, fileLocation is null or illegal!");
-                        return false;
+                        throw InvalidParamException.withInvalidField("fileSourceList.fileLocation",
+                            "File source file path is invalid");
                     }
                 }
             }
         }
         if (!FilePathValidateUtil.validateFileSystemAbsolutePath(fileDestination.getPath())) {
             log.warn("Fast send file, fileDestinationPath is null or illegal!");
-            return false;
+            throw InvalidParamException.withInvalidField("fileDestination.path",
+                "File destination file path is invalid");
         }
-
-        return true;
-
     }
 
     private TaskInstanceDTO buildFastFileTaskInstance(String username, Long appId, WebFastPushFileRequest request) {
@@ -491,7 +483,6 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
     }
 
 
-
     private List<FileSourceDTO> convertFileSource(List<ExecuteFileSourceInfoVO> fileSources) {
         if (fileSources == null) {
             return null;
@@ -535,7 +526,7 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
                                                      WebStepOperation operation) {
         StepOperationEnum stepOperationEnum = StepOperationEnum.getStepOperation(operation.getOperationCode());
         if (stepOperationEnum == null) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         StepOperationDTO stepOperation = new StepOperationDTO();
         stepOperation.setStepInstanceId(stepInstanceId);
@@ -553,7 +544,7 @@ public class WebExecuteTaskResourceImpl implements WebExecuteTaskResource {
                                  String scopeId,
                                  Long taskInstanceId) {
         if (taskInstanceId == null) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         taskExecuteService.terminateJob(username, appResourceScope.getAppId(), taskInstanceId);
         return Response.buildSuccessResp(null);

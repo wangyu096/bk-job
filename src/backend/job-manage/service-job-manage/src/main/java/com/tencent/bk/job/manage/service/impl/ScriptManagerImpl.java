@@ -27,13 +27,13 @@ package com.tencent.bk.job.manage.service.impl;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobConstants;
 import com.tencent.bk.job.common.constant.JobResourceTypeEnum;
-import com.tencent.bk.job.common.exception.AlreadyExistsException;
-import com.tencent.bk.job.common.exception.FailedPreconditionException;
-import com.tencent.bk.job.common.exception.InvalidParamException;
-import com.tencent.bk.job.common.exception.NotFoundException;
-import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.exception.base.AlreadyExistsException;
+import com.tencent.bk.job.common.exception.base.FailedPreconditionException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
+import com.tencent.bk.job.common.exception.base.ServiceException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
@@ -757,9 +757,9 @@ public class ScriptManagerImpl implements ScriptManager {
     public List<SyncScriptResultDTO> syncScriptToTaskTemplate(String username, Long appId, String scriptId,
                                                               Long syncScriptVersionId,
                                                               List<TemplateStepIDDTO> templateStepIDs)
-        throws PermissionDeniedException {
+        throws IamPermissionDeniedException {
         if (CollectionUtils.isEmpty(templateStepIDs)) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
 
         ScriptDTO syncScript = scriptDAO.getScriptVersionById(syncScriptVersionId);
@@ -790,7 +790,7 @@ public class ScriptManagerImpl implements ScriptManager {
         if (!authResult.isPass()) {
             log.info("Sync script to template auth fail, scriptId: {}, syncScriptVersionId: {}, template steps: {}",
                 scriptId, syncScriptVersionId, templateStepIDs);
-            throw new PermissionDeniedException(authResult);
+            throw new IamPermissionDeniedException(authResult);
         }
 
         List<SyncScriptResultDTO> syncResults = new ArrayList<>();

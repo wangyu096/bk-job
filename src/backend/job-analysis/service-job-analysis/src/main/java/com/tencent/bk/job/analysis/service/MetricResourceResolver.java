@@ -22,15 +22,33 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.cc.exception;
+package com.tencent.bk.job.analysis.service;
 
-import com.tencent.bk.job.common.exception.ServiceException;
-import com.tencent.bk.job.common.model.error.ErrorType;
+import com.tencent.bk.job.analysis.api.consts.StatisticsConstants;
+import com.tencent.bk.job.analysis.consts.DistributionMetricEnum;
+import org.springframework.stereotype.Service;
 
-public class CmdbException extends ServiceException {
-
-    public CmdbException(ErrorType errorType, Integer errorCode, Object[] errorParams) {
-        super(errorType, errorCode, errorParams);
+@Service
+public class MetricResourceResolver {
+    public String resolveResource(DistributionMetricEnum metric) {
+        if (DistributionMetricEnum.HOST_SYSTEM_TYPE == metric) {
+            return StatisticsConstants.RESOURCE_HOST_OF_ALL_APP;
+        } else if (DistributionMetricEnum.STEP_TYPE == metric) {
+            return StatisticsConstants.RESOURCE_TASK_TEMPLATE_STEP;
+        } else if (DistributionMetricEnum.SCRIPT_TYPE == metric) {
+            return StatisticsConstants.RESOURCE_SCRIPT;
+        } else if (DistributionMetricEnum.SCRIPT_VERSION_STATUS == metric) {
+            return StatisticsConstants.RESOURCE_SCRIPT_VERSION;
+        } else if (DistributionMetricEnum.CRON_STATUS == metric) {
+            return StatisticsConstants.RESOURCE_CRON;
+        } else if (DistributionMetricEnum.CRON_TYPE == metric) {
+            return StatisticsConstants.RESOURCE_CRON;
+        } else if (DistributionMetricEnum.TAG == metric) {
+            return StatisticsConstants.RESOURCE_TAG;
+        } else if (DistributionMetricEnum.ACCOUNT_TYPE == metric) {
+            return StatisticsConstants.RESOURCE_ACCOUNT_OF_ALL_APP;
+        } else {
+            throw new IllegalArgumentException("metric");
+        }
     }
-
 }

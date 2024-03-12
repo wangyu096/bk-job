@@ -25,12 +25,10 @@
 package com.tencent.bk.job.common.paas.cmsi;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.HttpMethodEnum;
 import com.tencent.bk.job.common.esb.config.EsbProperties;
 import com.tencent.bk.job.common.exception.InternalCmsiException;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
-import com.tencent.bk.job.common.model.error.ErrorType;
 import com.tencent.bk.job.common.openapi.config.AppProperties;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.common.openapi.metrics.OpenApiMetricTags;
@@ -38,7 +36,6 @@ import com.tencent.bk.job.common.openapi.model.BkApiAuthorization;
 import com.tencent.bk.job.common.openapi.model.OpenApiReq;
 import com.tencent.bk.job.common.openapi.model.OpenApiRequestInfo;
 import com.tencent.bk.job.common.openapi.sdk.BkApiClient;
-import com.tencent.bk.job.common.paas.exception.PaasException;
 import com.tencent.bk.job.common.paas.model.EsbNotifyChannelDTO;
 import com.tencent.bk.job.common.paas.model.PostSendMsgReq;
 import com.tencent.bk.job.common.util.http.HttpHelperFactory;
@@ -64,11 +61,13 @@ public class CmsiApiClient extends BkApiClient {
 
     private final BkApiAuthorization authorization;
 
+    private static final String CLIENT_NAME = "bk-notice";
+
     public CmsiApiClient(EsbProperties esbProperties,
                          AppProperties appProperties,
                          MeterRegistry meterRegistry) {
         super(meterRegistry, ESB_CMSI_API, esbProperties.getService().getUrl(),
-            HttpHelperFactory.getDefaultHttpHelper());
+            HttpHelperFactory.getDefaultHttpHelper(), CLIENT_NAME);
         this.authorization = BkApiAuthorization.appAuthorization(appProperties.getCode(),
             appProperties.getSecret(), "admin");
     }
@@ -92,7 +91,7 @@ public class CmsiApiClient extends BkApiClient {
         } catch (Exception e) {
             String errorMsg = "Get " + API_GET_NOTIFY_CHANNEL_LIST + " error";
             log.error(errorMsg, e);
-            throw new InternalCmsiException(errorMsg, e, ErrorCode.CMSI_MSG_CHANNEL_DATA_ERROR);
+            throw new InternalCmsiException(errorMsg, e);
         } finally {
             HttpMetricUtil.clearHttpMetric();
         }
@@ -120,23 +119,15 @@ public class CmsiApiClient extends BkApiClient {
             );
 
             if (esbResp.getResult() == null || !esbResp.getResult() || esbResp.getCode() != 0) {
-                throw new PaasException(
-                    ErrorType.INTERNAL,
-                    ErrorCode.CMSI_FAIL_TO_SEND_MSG,
-                    new Object[]{
-                        esbResp.getCode().toString(),
-                        esbResp.getMessage()
-                    });
+                throw new InternalCmsiException("CMSI fail to send message, reason: " + esbResp.getMessage());
             }
-        } catch (PaasException e) {
-            throw e;
         } catch (Exception e) {
             String msg = MessageFormatter.format(
                 "Fail to request {}",
                 uri
             ).getMessage();
             log.error(msg, e);
-            throw new PaasException(e, ErrorType.INTERNAL, ErrorCode.CMSI_API_ACCESS_ERROR, new Object[]{});
+            throw new InternalCmsiException(msg, e);
         } finally {
             HttpMetricUtil.clearHttpMetric();
         }

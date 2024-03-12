@@ -24,10 +24,9 @@
 
 package com.tencent.bk.job.execute.api.inner;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
-import com.tencent.bk.job.common.exception.InvalidParamException;
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.iam.service.WebAuthService;
 import com.tencent.bk.job.common.model.InternalResponse;
@@ -80,7 +79,7 @@ public class ServiceExecuteTaskResourceImpl implements ServiceExecuteTaskResourc
     public InternalResponse<ServiceTaskExecuteResult> executeTask(ServiceTaskExecuteRequest request) {
         log.info("Execute task, request={}", request);
         if (!checkExecuteTaskRequest(request)) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         TaskExecuteParam executeParam = buildExecuteParam(request);
         TaskInstanceDTO taskInstanceDTO = taskExecuteService.executeJobPlan(executeParam);
@@ -182,14 +181,14 @@ public class ServiceExecuteTaskResourceImpl implements ServiceExecuteTaskResourc
     public InternalResponse<AuthResultDTO> authExecuteTask(ServiceTaskExecuteRequest request) {
         log.info("Auth execute task, request={}", request);
         if (!checkExecuteTaskRequest(request)) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         TaskExecuteParam executeParam = buildExecuteParam(request);
 
         AuthResultDTO authResult = null;
         try {
             taskExecuteService.authExecuteJobPlan(executeParam);
-        } catch (PermissionDeniedException e) {
+        } catch (IamPermissionDeniedException e) {
             authResult = AuthResult.toAuthResultDTO(e.getAuthResult());
             log.debug("Insufficient permission, authResult: {}", authResult);
             if (StringUtils.isEmpty(authResult.getApplyUrl())) {

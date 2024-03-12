@@ -25,7 +25,7 @@
 package com.tencent.bk.job.execute.common.exception;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.FailedPreconditionException;
+import com.tencent.bk.job.common.exception.base.FailedPreconditionException;
 
 /**
  * 滚动执行策略表达式解析异常

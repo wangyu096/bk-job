@@ -1,6 +1,8 @@
 package com.tencent.bk.job.common.notice.exception;
 
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.error.payload.ErrorPayloadDTO;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -11,15 +13,11 @@ import lombok.ToString;
 @ToString
 public class BkNoticeException extends InternalException {
 
-    public BkNoticeException(Throwable cause, Integer errorCode, Object[] errorParams) {
-        super(cause, errorCode, errorParams);
+    public BkNoticeException(String message, SubErrorCode subErrorCode) {
+        super(message, subErrorCode);
     }
 
-    public BkNoticeException(String message, Integer errorCode) {
-        super(message, errorCode);
-    }
-
-    public BkNoticeException(String message, Throwable cause, Integer errorCode) {
-        super(message, cause, errorCode);
+    public BkNoticeException(String message, Throwable cause, ErrorPayloadDTO payload) {
+        super(message, cause, payload);
     }
 }

@@ -26,7 +26,7 @@ package com.tencent.bk.job.file.worker.artifactory.service;
 
 import com.tencent.bk.job.common.artifactory.model.dto.NodeDTO;
 import com.tencent.bk.job.common.artifactory.sdk.ArtifactoryClient;
-import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.exception.base.ServiceException;
 import com.tencent.bk.job.file.worker.model.FileMetaData;
 import com.tencent.bk.job.file.worker.service.RemoteClient;
 import io.micrometer.core.instrument.MeterRegistry;

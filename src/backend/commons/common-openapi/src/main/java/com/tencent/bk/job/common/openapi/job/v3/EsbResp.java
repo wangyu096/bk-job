@@ -28,16 +28,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.ServiceException;
-import com.tencent.bk.job.common.model.ValidateResult;
-import com.tencent.bk.job.common.model.error.ErrorDetailDTO;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.ServiceException;
 import com.tencent.bk.job.common.openapi.model.iam.OpenApiApplyPermissionDTO;
 import com.tencent.bk.job.common.util.I18nUtil;
 import com.tencent.bk.job.common.util.JobContextUtil;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.function.Function;
 
@@ -98,18 +96,18 @@ public class EsbResp<T> {
     }
 
     public static <T> EsbResp<T> buildCommonFailResp(ServiceException e) {
-        return buildCommonFailResp(e.getErrorCode(), e.getErrorParams(), null);
+        SubErrorCode subErrorCode = e.getSubErrorCode();
+        if (subErrorCode == null) {
+            return EsbResp.buildCommonFailResp(ErrorCode.INTERNAL_ERROR);
+        }
+        return buildCommonFailResp(subErrorCode.getCode(), subErrorCode.getParams(), null);
     }
 
     public static <T> EsbResp<T> buildAuthFailResult(OpenApiApplyPermissionDTO permission) {
-        EsbResp<T> esbResp = buildCommonFailResp(ErrorCode.BK_PERMISSION_DENIED,
+        EsbResp<T> esbResp = buildCommonFailResp(ErrorCode.IAM_PERMISSION_DENIED,
             new String[]{JobContextUtil.getUsername()}, null);
         esbResp.setPermission(permission);
         return esbResp;
-    }
-
-    public static <T> EsbResp<T> buildCommonFailResp(ValidateResult validateResult) {
-        return buildCommonFailResp(validateResult.getErrorCode(), validateResult.getErrorParams(), null);
     }
 
     public static <T, R> EsbResp<R> convertData(EsbResp<T> esbResp, Function<T, R> converter) {
@@ -121,18 +119,6 @@ public class EsbResp<T> {
         newEsbResp.setResult(esbResp.getResult());
         newEsbResp.setData(converter.apply(esbResp.getData()));
         return newEsbResp;
-    }
-
-    public static <T> EsbResp<T> buildValidateFailResp(ErrorDetailDTO errorDetail) {
-        EsbResp<T> resp = buildCommonFailResp(ErrorCode.BAD_REQUEST);
-        if (errorDetail != null && errorDetail.getBadRequestDetail() != null) {
-            String errorMsg = errorDetail.getBadRequestDetail().findFirstFieldErrorDesc();
-            if (StringUtils.isNotBlank(errorMsg)) {
-                // set validation detailed message instead of common error message
-                resp.setMessage(errorMsg);
-            }
-        }
-        return resp;
     }
 
     @JsonIgnore

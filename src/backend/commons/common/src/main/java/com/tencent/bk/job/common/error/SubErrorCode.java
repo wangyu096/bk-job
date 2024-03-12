@@ -52,6 +52,7 @@ public class SubErrorCode {
     public static final SubErrorCode INTERNAL_ERROR = SubErrorCode.of(ErrorCode.INTERNAL_ERROR);
     public static final SubErrorCode ILLEGAL_PARAM = SubErrorCode.of(ErrorCode.ILLEGAL_PARAM);
     public static final SubErrorCode API_ERROR = SubErrorCode.of(ErrorCode.API_ERROR);
+    public static final SubErrorCode IAM_PERMISSION_DELY = SubErrorCode.of(ErrorCode.IAM_PERMISSION_DENIED);
 
     private SubErrorCode() {
     }

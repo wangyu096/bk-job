@@ -26,7 +26,6 @@ package com.tencent.bk.job.manage.api.web.impl;
 
 import com.tencent.bk.job.common.cc.model.InstanceTopologyDTO;
 import com.tencent.bk.job.common.cc.sdk.BkNetClient;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.ResourceScopeTypeEnum;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.model.Response;
@@ -72,6 +71,7 @@ import com.tencent.bk.job.manage.service.impl.ScopeDynamicGroupService;
 import com.tencent.bk.job.manage.service.impl.agent.AgentStatusService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -249,7 +249,7 @@ public class WebHostResourceImpl implements WebHostResource {
                                                                               String scopeId,
                                                                               GetHostAgentStatisticsByNodesReq req) {
         if (ResourceScopeTypeEnum.BIZ_SET.getValue().equals(scopeType)) {
-            return Response.buildCommonFailResp(ErrorCode.NOT_SUPPORT_FEATURE_FOR_BIZ_SET);
+            throw new NotImplementedException("Not support for biz set");
         }
         List<TargetNodeVO> nodeList = req.getNodeList();
         if (CollectionUtils.isEmpty(nodeList)) {
@@ -298,7 +298,7 @@ public class WebHostResourceImpl implements WebHostResource {
         GetHostAgentStatisticsByDynamicGroupsReq req
     ) {
         if (ResourceScopeTypeEnum.BIZ_SET.getValue().equals(scopeType)) {
-            return Response.buildCommonFailResp(ErrorCode.NOT_SUPPORT_FEATURE_FOR_BIZ_SET);
+            throw new NotImplementedException("Not support for biz set");
         }
         List<DynamicGroupIdWithMeta> idWithMetaList = req.getDynamicGroupList();
         if (CollectionUtils.isEmpty(idWithMetaList)) {

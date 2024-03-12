@@ -25,10 +25,9 @@
 package com.tencent.bk.job.manage.model.dto.task;
 
 import com.tencent.bk.job.common.constant.DuplicateHandlerEnum;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobConstants;
 import com.tencent.bk.job.common.constant.NotExistPathHandlerEnum;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.openapi.job.v3.EsbAccountV3BasicDTO;
 import com.tencent.bk.job.common.openapi.job.v3.EsbFileDestinationV3DTO;
 import com.tencent.bk.job.common.openapi.job.v3.EsbFileStepV3DTO;
@@ -203,7 +202,7 @@ public class TaskFileStepDTO {
             case SAFETY_DATE_PREFIX:
                 return DuplicateHandlerEnum.GROUP_BY_DATE_AND_IP;
             default:
-                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+                throw new InvalidParamException();
         }
     }
 

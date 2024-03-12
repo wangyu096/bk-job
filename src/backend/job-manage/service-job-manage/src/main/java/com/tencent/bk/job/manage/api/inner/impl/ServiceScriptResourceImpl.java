@@ -25,12 +25,12 @@
 package com.tencent.bk.job.manage.api.inner.impl;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
-import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.common.mysql.JobTransactional;
-import com.tencent.bk.job.common.util.ArrayUtil;
 import com.tencent.bk.job.manage.api.common.ScriptDTOBuilder;
 import com.tencent.bk.job.manage.api.inner.ServiceScriptResource;
 import com.tencent.bk.job.manage.model.dto.ScriptDTO;
@@ -66,16 +66,16 @@ public class ServiceScriptResourceImpl implements ServiceScriptResource {
 
         if (appId == null || appId < 0) {
             log.warn("Get script version by id, appId is empty");
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         if (scriptVersionId <= 0) {
             log.warn("Get script version by id, param scriptVersionId is empty");
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         ScriptDTO script = scriptManager.getScriptVersion(appId, scriptVersionId);
         if (script == null) {
             log.warn("Get script version by id:{}, the script is not exist", scriptVersionId);
-            throw new NotFoundException(ErrorCode.SCRIPT_NOT_EXIST, ArrayUtil.toArray(scriptVersionId));
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.SCRIPT_NOT_EXIST, scriptVersionId));
         }
         ServiceScriptDTO scriptVersion = ScriptConverter.convertToServiceScriptDTO(script);
         return InternalResponse.buildSuccessResp(scriptVersion);
@@ -85,13 +85,13 @@ public class ServiceScriptResourceImpl implements ServiceScriptResource {
     public InternalResponse<ServiceScriptDTO> getScriptByScriptVersionId(Long scriptVersionId) {
         if (scriptVersionId == null || scriptVersionId <= 0) {
             log.warn("Get script version by id, param scriptVersionId is empty");
-            throw new InvalidParamException(ErrorCode.MISSING_PARAM);
+            throw new InvalidParamException();
         }
 
         ScriptDTO script = scriptManager.getScriptVersion(scriptVersionId);
         if (script == null) {
             log.warn("Get script version by id:{}, the script is not exist", scriptVersionId);
-            throw new NotFoundException(ErrorCode.SCRIPT_NOT_EXIST, ArrayUtil.toArray(scriptVersionId));
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.SCRIPT_NOT_EXIST, scriptVersionId));
         }
 
         ServiceScriptDTO scriptVersion = ScriptConverter.convertToServiceScriptDTO(script);
@@ -127,13 +127,13 @@ public class ServiceScriptResourceImpl implements ServiceScriptResource {
     public InternalResponse<ServiceScriptDTO> getBasicScriptInfo(String scriptId) {
         if (StringUtils.isEmpty(scriptId)) {
             log.warn("Get script by id, param scriptId is empty");
-            throw new InvalidParamException(ErrorCode.MISSING_PARAM);
+            throw new InvalidParamException();
         }
 
         ScriptDTO script = scriptManager.getScriptWithoutTagByScriptId(scriptId);
         if (script == null) {
             log.warn("Get script by id:{}, the script is not exist", scriptId);
-            throw new NotFoundException(ErrorCode.SCRIPT_NOT_EXIST, ArrayUtil.toArray(scriptId));
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.SCRIPT_NOT_EXIST, scriptId));
         }
         ServiceScriptDTO serviceScript = ScriptConverter.convertToServiceScriptDTO(script);
         return InternalResponse.buildSuccessResp(serviceScript);
@@ -143,7 +143,7 @@ public class ServiceScriptResourceImpl implements ServiceScriptResource {
     public InternalResponse<ServiceScriptDTO> getOnlineScriptVersion(String scriptId) {
         if (StringUtils.isEmpty(scriptId)) {
             log.warn("Get online script by scriptId, param scriptId is empty");
-            throw new InvalidParamException(ErrorCode.MISSING_PARAM);
+            throw new InvalidParamException();
         }
 
         ScriptDTO script = scriptManager.getOnlineScriptVersionByScriptId(scriptId);

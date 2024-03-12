@@ -28,10 +28,9 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.UncheckedExecutionException;
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
-import com.tencent.bk.job.common.exception.NotFoundException;
-import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.exception.base.InternalException;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
+import com.tencent.bk.job.common.exception.base.ServiceException;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
 import com.tencent.bk.job.common.model.dto.ResourceScope;
 import com.tencent.bk.job.common.service.AppScopeMappingService;
@@ -88,7 +87,7 @@ public abstract class AbstractLocalCacheAppScopeMappingService implements AppSco
         } catch (ExecutionException e) {
             // 处理被CacheLoader包装的原始异常
             log.error("Get appId from cache error", e);
-            throw new InternalException("Get appId from cache error", e, ErrorCode.INTERNAL_ERROR);
+            throw new InternalException("Get appId from cache error", e);
         } catch (UncheckedExecutionException e) {
             // 处理被CacheLoader包装的原始异常
             Throwable t = e.getCause();
@@ -96,7 +95,7 @@ public abstract class AbstractLocalCacheAppScopeMappingService implements AppSco
                 throw (ServiceException) e.getCause();
             } else {
                 log.error("Get appId from cache error", e);
-                throw new InternalException("Get appId from cache error", e, ErrorCode.INTERNAL_ERROR);
+                throw new InternalException("Get appId from cache error", e);
             }
         }
     }
@@ -112,7 +111,7 @@ public abstract class AbstractLocalCacheAppScopeMappingService implements AppSco
         } catch (ExecutionException e) {
             // 处理被CacheLoader包装的原始异常
             log.error("Get scope from cache error", e);
-            throw new InternalException("Get scope from cache error", e, ErrorCode.INTERNAL_ERROR);
+            throw new InternalException("Get scope from cache error", e);
         } catch (UncheckedExecutionException e) {
             // 处理被CacheLoader包装的原始异常
             Throwable t = e.getCause();
@@ -120,7 +119,7 @@ public abstract class AbstractLocalCacheAppScopeMappingService implements AppSco
                 throw (ServiceException) e.getCause();
             } else {
                 log.error("Get scope from cache error", e);
-                throw new InternalException("Get scope from cache error", e, ErrorCode.INTERNAL_ERROR);
+                throw new InternalException("Get scope from cache error", e);
             }
         }
     }

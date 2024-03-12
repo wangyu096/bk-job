@@ -29,10 +29,11 @@ import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.audit.context.AuditContext;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
-import com.tencent.bk.job.common.exception.InternalException;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.InternalException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
@@ -49,7 +50,7 @@ import com.tencent.bk.job.crontab.api.common.CronCheckUtil;
 import com.tencent.bk.job.crontab.api.esb.v3.EsbCronJobV3Resource;
 import com.tencent.bk.job.crontab.auth.CronAuthService;
 import com.tencent.bk.job.crontab.common.constants.CronStatusEnum;
-import com.tencent.bk.job.crontab.exception.TaskExecuteAuthFailedException;
+import com.tencent.bk.job.crontab.exception.TaskExecuteAuthFailedExceptionIam;
 import com.tencent.bk.job.crontab.model.dto.CronJobInfoDTO;
 import com.tencent.bk.job.crontab.model.dto.CronJobVariableDTO;
 import com.tencent.bk.job.crontab.model.esb.v3.request.EsbDeleteCronV3Request;
@@ -222,22 +223,22 @@ public class EsbCronJobV3ResourceImpl implements EsbCronJobV3Resource {
             null
         );
         if (!authResult.isPass()) {
-            throw new PermissionDeniedException(authResult);
+            throw new IamPermissionDeniedException(authResult);
         }
 
         Boolean updateResult;
         try {
             updateResult = cronJobService.changeCronJobEnableStatus(username, appId, request.getId(),
                 CronStatusEnum.RUNNING.getStatus().equals(request.getStatus()));
-        } catch (TaskExecuteAuthFailedException e) {
-            throw new PermissionDeniedException(e.getAuthResult());
+        } catch (TaskExecuteAuthFailedExceptionIam e) {
+            throw new IamPermissionDeniedException(e.getAuthResult());
         }
         if (updateResult) {
             EsbCronInfoV3DTO esbCronInfoV3DTO = new EsbCronInfoV3DTO();
             esbCronInfoV3DTO.setId(request.getId());
             return EsbResp.buildSuccessResp(esbCronInfoV3DTO);
         }
-        throw new InternalException(ErrorCode.UPDATE_CRON_JOB_FAILED);
+        throw new InternalException(SubErrorCode.of(ErrorCode.UPDATE_CRON_JOB_FAILED));
     }
 
     private void checkAndFillGlobalVar(Long planId,
@@ -248,8 +249,8 @@ public class EsbCronJobV3ResourceImpl implements EsbCronJobV3Resource {
             Long id = esbGlobalVarV3DTO.getId();
             String name = esbGlobalVarV3DTO.getName();
             if (id == null && StringUtils.isBlank(name)) {
-                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_REASON,
-                    new String[]{"id/name of globalVar cannot be null/blank at the same time"});
+                throw InvalidParamException.withInvalidField("id/name",
+                    "id/name of globalVar cannot be null/blank at the same time");
             }
             ServiceTaskVariableDTO taskVariableDTO;
             if (id == null) {
@@ -257,7 +258,7 @@ public class EsbCronJobV3ResourceImpl implements EsbCronJobV3Resource {
                 InternalResponse<ServiceTaskVariableDTO> resp = taskPlanResource
                     .getGlobalVarByName(planId, name);
                 if (!resp.isSuccess()) {
-                    throw new InternalException(resp.getCode());
+                    throw new InternalException();
                 }
                 taskVariableDTO = resp.getData();
             } else {
@@ -265,7 +266,7 @@ public class EsbCronJobV3ResourceImpl implements EsbCronJobV3Resource {
                 InternalResponse<ServiceTaskVariableDTO> resp = taskPlanResource
                     .getGlobalVarById(planId, id);
                 if (!resp.isSuccess()) {
-                    throw new InternalException(resp.getCode());
+                    throw new InternalException();
                 }
                 taskVariableDTO = resp.getData();
                 if (!StringUtils.isBlank(name) && !name.equals(resp.getData().getName())) {
@@ -331,7 +332,7 @@ public class EsbCronJobV3ResourceImpl implements EsbCronJobV3Resource {
                 CronJobInfoDTO.toEsbCronInfoV3Response(cronJobService.getCronJobInfoById(result.getId()));
             return EsbResp.buildSuccessResp(esbCronInfoV3DTO);
         } else {
-            throw new InternalException(ErrorCode.UPDATE_CRON_JOB_FAILED);
+            throw new InternalException(SubErrorCode.of(ErrorCode.UPDATE_CRON_JOB_FAILED));
         }
     }
 
@@ -362,7 +363,7 @@ public class EsbCronJobV3ResourceImpl implements EsbCronJobV3Resource {
             CronJobInfoDTO cronJobInfoById = cronJobService.getCronJobInfoById(request.getAppId(), request.getId());
             return EsbResp.buildSuccessResp(CronJobInfoDTO.toEsbCronInfoV3(cronJobInfoById));
         } else {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
     }
 }

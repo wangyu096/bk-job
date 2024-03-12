@@ -60,9 +60,11 @@ public class StandardLoginClient extends BkApiClient implements ILoginClient {
 
     private final AppProperties appProperties;
 
+    private static final String CLIENT_NAME = "bk_login";
+
     public StandardLoginClient(EsbProperties esbProperties, AppProperties appProperties, MeterRegistry meterRegistry) {
         super(meterRegistry, ESB_BK_LOGIN_API, esbProperties.getService().getUrl(),
-            HttpHelperFactory.getDefaultHttpHelper());
+            HttpHelperFactory.getDefaultHttpHelper(), CLIENT_NAME);
         this.appProperties = appProperties;
     }
 
@@ -100,7 +102,7 @@ public class StandardLoginClient extends BkApiClient implements ILoginClient {
         } catch (Exception e) {
             String errorMsg = "Get " + API_GET_USER_INFO + " error";
             log.error(errorMsg, e);
-            throw new InternalUserManageException(errorMsg, e, ErrorCode.USER_MANAGE_API_ACCESS_ERROR);
+            throw new InternalUserManageException(errorMsg, e);
         } finally {
             HttpMetricUtil.clearHttpMetric();
         }

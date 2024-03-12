@@ -2,7 +2,7 @@ package com.tencent.bk.job.common.web.exception.handler;
 
 import com.tencent.bk.job.common.annotation.IamCallbackAPI;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.common.util.I18nUtil;
 import com.tencent.bk.sdk.iam.constants.CommonResponseCode;
@@ -35,11 +35,11 @@ public class IamCallbackExceptionControllerAdvice extends ExceptionControllerAdv
 
     @ExceptionHandler(InvalidParamException.class)
     @ResponseBody
-    ResponseEntity<?> handleServiceException(HttpServletRequest request, InvalidParamException ex) {
+    ResponseEntity<?> handleInvalidParamException(HttpServletRequest request, InvalidParamException ex) {
         log.info("Handle InvalidParamException", ex);
         CallbackBaseResponseDTO responseDTO = new CallbackBaseResponseDTO();
         responseDTO.setCode(CommonResponseCode.PARAMS_INVALID);
-        responseDTO.setMessage(ex.getI18nMessage());
+        responseDTO.setMessage(ex.getSubErrorCode().getI18nMessage());
         return new ResponseEntity<>(EsbResp.buildCommonFailResp(ex), HttpStatus.BAD_REQUEST);
     }
 

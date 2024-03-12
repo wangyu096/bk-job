@@ -24,8 +24,9 @@
 
 package com.tencent.bk.job.file.worker.api;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.error.payload.BadRequestPayloadDTO;
+import com.tencent.bk.job.common.error.payload.FieldViolationDTO;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.file.worker.consts.FileSourceTypeEnum;
 import com.tencent.bk.job.file.worker.model.req.BaseReq;
@@ -61,9 +62,9 @@ public class FileResourceProxy implements IFileResource {
             return artifactoryFileResource;
         } else {
             throw new InvalidParamException(
-                ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME,
-                new String[]{"fileSourceTypeCode"}
-            );
+                BadRequestPayloadDTO.instance()
+                    .addFieldViolation(
+                        new FieldViolationDTO("fileSourceTypeCode", "")));
         }
     }
 

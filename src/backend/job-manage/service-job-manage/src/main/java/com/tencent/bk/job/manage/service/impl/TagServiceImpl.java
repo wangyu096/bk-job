@@ -30,9 +30,9 @@ import com.tencent.bk.audit.context.ActionAuditContext;
 import com.tencent.bk.job.common.audit.constants.EventContentConstants;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobConstants;
-import com.tencent.bk.job.common.exception.AlreadyExistsException;
-import com.tencent.bk.job.common.exception.InternalException;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.AlreadyExistsException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
@@ -86,7 +86,7 @@ public class TagServiceImpl implements TagService {
     @Override
     public TagDTO getTagInfoById(Long tagId) {
         if (tagId == null || tagId <= 0) {
-            throw new InternalException(ErrorCode.ILLEGAL_PARAM);
+            throw new IllegalArgumentException("Wrong tag id");
         }
         return tagDAO.getTagById(tagId);
     }
@@ -98,17 +98,11 @@ public class TagServiceImpl implements TagService {
 
     @Override
     public TagDTO getTagInfoById(Long appId, Long tagId) {
-        if (appId == null || appId < 0 || tagId == null || tagId <= 0) {
-            throw new InternalException(ErrorCode.ILLEGAL_PARAM);
-        }
         return tagDAO.getTagById(appId, tagId);
     }
 
     @Override
     public List<TagDTO> listTagsByAppId(Long appId) {
-        if (appId == null || appId < 0) {
-            throw new InternalException(ErrorCode.WRONG_APP_ID);
-        }
         return tagDAO.listTagsByAppId(appId);
     }
 
@@ -136,7 +130,7 @@ public class TagServiceImpl implements TagService {
 
         boolean isTagExist = tagDAO.isExistDuplicateName(tag.getAppId(), tag.getName());
         if (isTagExist) {
-            throw new AlreadyExistsException(ErrorCode.TAG_ALREADY_EXIST);
+            throw new AlreadyExistsException(SubErrorCode.of(ErrorCode.TAG_ALREADY_EXIST));
         }
         tag.setId(tagDAO.insertTag(tag));
 
@@ -165,7 +159,7 @@ public class TagServiceImpl implements TagService {
 
         boolean isTagNameValid = checkTagName(tag.getAppId(), tag.getId(), tag.getName());
         if (!isTagNameValid) {
-            throw new AlreadyExistsException(ErrorCode.TAG_ALREADY_EXIST);
+            throw new AlreadyExistsException(SubErrorCode.of(ErrorCode.TAG_ALREADY_EXIST));
         }
 
         boolean result = tagDAO.updateTagById(tag);
@@ -189,7 +183,7 @@ public class TagServiceImpl implements TagService {
 
     private void checkRequiredParam(TagDTO tag) {
         if (tag.getAppId() == null || tag.getAppId() <= 0) {
-            throw new InvalidParamException(ErrorCode.WRONG_APP_ID);
+            throw new InvalidParamException();
         }
         try {
             StringCheckHelper stringCheckHelper = new StringCheckHelper(
@@ -201,10 +195,10 @@ public class TagServiceImpl implements TagService {
             tag.setName(stringCheckHelper.checkAndGetResult(tag.getName()));
         } catch (StringCheckException e) {
             log.warn("Tag name is invalid:", e);
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         if (StringUtils.isAllBlank(tag.getCreator(), tag.getLastModifyUser())) {
-            throw new InvalidParamException(ErrorCode.MISSING_PARAM);
+            throw new InvalidParamException();
         }
     }
 
@@ -230,8 +224,8 @@ public class TagServiceImpl implements TagService {
             } else {
                 TagDTO existTag = getTagInfoById(appId, tag.getId());
                 if (existTag == null) {
-                    throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                        new String[]{"tagId", String.format("tag (id=%s, app_id=%s) not exist", tag.getId(), appId)});
+                    throw InvalidParamException.withInvalidField("tagId",
+                        String.format("tag (id=%s, app_id=%s) not exist", tag.getId(), appId));
                 }
                 tagIdList.add(tag.getId());
             }

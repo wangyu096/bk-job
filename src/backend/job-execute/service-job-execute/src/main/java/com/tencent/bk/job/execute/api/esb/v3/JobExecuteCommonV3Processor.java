@@ -24,8 +24,7 @@
 
 package com.tencent.bk.job.execute.api.esb.v3;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.model.ValidateResult;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.model.dto.HostDTO;
 import com.tencent.bk.job.common.openapi.job.v3.EsbServerV3DTO;
 import com.tencent.bk.job.execute.model.DynamicServerGroupDTO;
@@ -44,15 +43,14 @@ import java.util.stream.Collectors;
 @Slf4j
 public class JobExecuteCommonV3Processor {
 
-    protected ValidateResult checkServer(EsbServerV3DTO server) {
+    protected void checkServer(EsbServerV3DTO server) {
         if (server == null) {
-            return ValidateResult.fail(ErrorCode.MISSING_PARAM_WITH_PARAM_NAME, "target_server");
+            throw InvalidParamException.withInvalidField("target_server");
         }
 
         if (!server.checkHostParamsNonEmpty()) {
-            return ValidateResult.fail(ErrorCode.SERVER_EMPTY);
+            throw InvalidParamException.withInvalidField("target_server", "Target is empty");
         }
-        return ValidateResult.pass();
     }
 
     protected ExecuteObjectsDTO convertToServersDTO(EsbServerV3DTO server) {

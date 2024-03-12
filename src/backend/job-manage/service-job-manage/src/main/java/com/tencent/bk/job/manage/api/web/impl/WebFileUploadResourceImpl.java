@@ -29,10 +29,9 @@ import com.tencent.bk.job.common.artifactory.config.ArtifactoryConfig;
 import com.tencent.bk.job.common.artifactory.model.dto.NodeDTO;
 import com.tencent.bk.job.common.artifactory.model.dto.TempUrlInfo;
 import com.tencent.bk.job.common.artifactory.sdk.ArtifactoryClient;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobConstants;
-import com.tencent.bk.job.common.exception.InternalException;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InternalException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.common.util.FilePathUtils;
 import com.tencent.bk.job.common.util.Utils;
@@ -199,7 +198,7 @@ public class WebFileUploadResourceImpl implements WebFileUploadResource {
                 );
                 fileResultVO.setStatus(-1);
                 log.error(errMsg.getMessage(), e);
-                throw new InternalException(errMsg.getMessage(), ErrorCode.ARTIFACTORY_API_DATA_ERROR);
+                throw new InternalException(errMsg.getMessage());
             } finally {
                 fileUploadResults.add(fileResultVO);
             }
@@ -261,7 +260,7 @@ public class WebFileUploadResourceImpl implements WebFileUploadResource {
         for (MultipartFile multipartFile : uploadFiles) {
             if (StringUtils.isBlank(multipartFile.getOriginalFilename())) {
                 log.warn("upload file ,fileName are empty");
-                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+                throw new InvalidParamException();
             }
             String fileName = multipartFile.getOriginalFilename();
             if (restrictMode == RestrictModeEnum.ALLOW.getType()) {
@@ -283,7 +282,7 @@ public class WebFileUploadResourceImpl implements WebFileUploadResource {
                 restrictMode,
                 suffixList
             );
-            throw new InvalidParamException(ErrorCode.UPLOAD_FILE_SUFFIX_NOT_ALLOW);
+            throw InvalidParamException.withInvalidField("fileName");
         }
     }
 

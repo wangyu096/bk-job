@@ -25,6 +25,7 @@
 package com.tencent.bk.job.gateway.config;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.error.SubErrorCode;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.common.model.dto.BkUserDTO;
@@ -115,7 +116,9 @@ public class RouteConfig {
                 }
             }
             if (user == null) {
-                Response<?> resp = Response.buildCommonFailResp(ErrorCode.USER_NOT_EXIST_OR_NOT_LOGIN_IN);
+                Response<?> resp =
+                    Response.buildCommonFailResp(null,
+                        SubErrorCode.of(ErrorCode.USER_NOT_EXIST_OR_NOT_LOGIN_IN));
                 return ServerResponse.ok().body(Mono.just(resp), Response.class);
             }
             Response<BkUserDTO> resp = Response.buildSuccessResp(user);

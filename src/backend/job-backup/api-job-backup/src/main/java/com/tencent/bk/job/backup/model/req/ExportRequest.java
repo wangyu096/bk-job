@@ -25,7 +25,7 @@
 package com.tencent.bk.job.backup.model.req;
 
 import com.tencent.bk.job.backup.model.web.BackupTemplateInfoVO;
-import com.tencent.bk.job.common.util.JobContextUtil;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -49,8 +49,6 @@ public class ExportRequest {
 
     /**
      * 密文变量处理方式
-     *
-     * @see com.tencent.bk.job.backup.constant.SecretHandlerEnum
      */
     @ApiModelProperty(value = "密文变量处理方式 1-保存为空值 2-保存真实值", required = true)
     private Integer secretHandler;
@@ -77,33 +75,32 @@ public class ExportRequest {
     @ApiModelProperty(value = "需要导出的模版信息", required = true)
     private List<BackupTemplateInfoVO> templateInfo;
 
-    public boolean validate() {
+    public void validate() throws InvalidParamException {
         if (StringUtils.isBlank(packageName)) {
-            JobContextUtil.addDebugMessage("Package name cannot be null");
-            return false;
+            throw InvalidParamException.withInvalidField(
+                "packageName", "Package name cannot be null");
         }
         if (secretHandler < 1 || secretHandler > 2) {
-            JobContextUtil.addDebugMessage("Invalid secret handler");
-            return false;
+            throw InvalidParamException.withInvalidField(
+                "secretHandler", "Invalid secret handler");
         }
         if (StringUtils.isNotBlank(password) && password.length() > 32) {
-            JobContextUtil.addDebugMessage("Password too long");
-            return false;
+            throw InvalidParamException.withInvalidField(
+                "password", "Password too long");
         }
         if (expireTime < 0) {
-            JobContextUtil.addDebugMessage("Expire time invalid");
-            return false;
+            throw InvalidParamException.withInvalidField(
+                "expireTime", "Expire time invalid");
         }
         if (CollectionUtils.isEmpty(templateInfo)) {
-            JobContextUtil.addDebugMessage("Template info cannot be empty");
-            return false;
+            throw InvalidParamException.withInvalidField(
+                "templateInfo", "Template info cannot be empty");
         }
         for (BackupTemplateInfoVO backupTemplateInfoVO : templateInfo) {
             if (!backupTemplateInfoVO.validate()) {
-                JobContextUtil.addDebugMessage("Template info invalid");
-                return false;
+                throw InvalidParamException.withInvalidField(
+                    "templateInfo", "Template info invalid");
             }
         }
-        return true;
     }
 }

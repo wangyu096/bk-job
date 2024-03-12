@@ -26,8 +26,7 @@ package com.tencent.bk.job.common.openapi.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.common.util.http.BasicHttpReq;
 import lombok.Getter;
 import lombok.Setter;
@@ -64,7 +63,7 @@ public class OpenApiReq extends BasicHttpReq {
                 req.setBkSupplierAccount(bkSupplierAccount);
             }
         } catch (InstantiationException | IllegalAccessException e) {
-            throw new InternalException(e, ErrorCode.INTERNAL_ERROR);
+            throw new InternalException(e);
         }
         return req;
     }

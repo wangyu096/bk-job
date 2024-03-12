@@ -28,8 +28,11 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.tencent.bk.job.common.bkapigw.config.BkApiGatewayProperties;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.HttpMethodEnum;
+import com.tencent.bk.job.common.error.ErrorReason;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.error.payload.ErrorInfoPayloadDTO;
 import com.tencent.bk.job.common.exception.HttpStatusException;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.notice.IBkNoticeClient;
 import com.tencent.bk.job.common.notice.exception.BkNoticeException;
@@ -59,6 +62,8 @@ public class BkNoticeClient extends BkApiClient implements IBkNoticeClient {
     private final AppProperties appProperties;
     private final BkApiAuthorization authorization;
 
+    private static final String CLIENT_NAME = "bk_notice";
+
     public BkNoticeClient(MeterRegistry meterRegistry,
                           AppProperties appProperties,
                           BkApiGatewayProperties bkApiGatewayProperties) {
@@ -66,7 +71,8 @@ public class BkNoticeClient extends BkApiClient implements IBkNoticeClient {
             meterRegistry,
             CommonMetricNames.BK_NOTICE_API,
             getBkNoticeUrlSafely(bkApiGatewayProperties),
-            HttpHelperFactory.getDefaultHttpHelper()
+            HttpHelperFactory.getDefaultHttpHelper(),
+            CLIENT_NAME
         );
         this.appProperties = appProperties;
         authorization = BkApiAuthorization.appAuthorization(appProperties.getCode(), appProperties.getSecret());
@@ -157,12 +163,15 @@ public class BkNoticeClient extends BkApiClient implements IBkNoticeClient {
             if (e.getCause() instanceof HttpStatusException) {
                 HttpStatusException httpStatusException = (HttpStatusException) e.getCause();
                 if (httpStatusException.getHttpStatus() == HttpStatus.SC_NOT_FOUND) {
-                    throw new BkNoticeException(e, ErrorCode.BK_NOTICE_API_NOT_FOUND, new String[]{uri});
+                    String errorMsg = "Bk-Notice API : " + uri + " not found";
+                    throw new BkNoticeException(errorMsg, SubErrorCode.of(ErrorCode.BK_NOTICE_API_NOT_FOUND));
                 }
             }
-            throw new BkNoticeException(e, ErrorCode.BK_NOTICE_API_DATA_ERROR, null);
+            throw new BkNoticeException("Request bk-notice api error", e,
+                new ErrorInfoPayloadDTO(CLIENT_NAME, ErrorReason.REQUEST_THIRD_API_ERROR));
         } catch (Exception e) {
-            throw new BkNoticeException(e, ErrorCode.BK_NOTICE_API_DATA_ERROR, null);
+            throw new BkNoticeException("Request bk-notice api error", e,
+                new ErrorInfoPayloadDTO(CLIENT_NAME, ErrorReason.REQUEST_THIRD_API_ERROR));
         } finally {
             HttpMetricUtil.clearHttpMetric();
         }

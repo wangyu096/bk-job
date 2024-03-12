@@ -25,14 +25,15 @@
 package com.tencent.bk.job.common.web.exception;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.InternalException;
 
 /**
  * 服务拒绝访问
  */
 public class ServiceNoAuthException extends InternalException {
     public ServiceNoAuthException() {
-        super(ErrorCode.SERVICE_AUTH_FAIL);
+        super(SubErrorCode.of(ErrorCode.SERVICE_AUTH_FAIL));
     }
 
 }

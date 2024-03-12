@@ -25,7 +25,7 @@
 package com.tencent.bk.job.execute.engine.evict;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.execute.model.inner.AppCodeTaskEvictPolicyDTO;
 import com.tencent.bk.job.execute.model.inner.AppIdTaskEvictPolicyDTO;
 import com.tencent.bk.job.execute.model.inner.ComposedTaskEvictPolicyDTO;

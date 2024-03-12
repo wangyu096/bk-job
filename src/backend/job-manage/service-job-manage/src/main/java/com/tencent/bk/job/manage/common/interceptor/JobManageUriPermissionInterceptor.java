@@ -27,7 +27,7 @@ package com.tencent.bk.job.manage.common.interceptor;
 import com.tencent.bk.job.common.annotation.JobInterceptor;
 import com.tencent.bk.job.common.constant.InterceptorOrder;
 import com.tencent.bk.job.common.iam.constant.ActionId;
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.iam.service.AuthService;
 import com.tencent.bk.job.common.util.JobContextUtil;
@@ -81,22 +81,22 @@ public class JobManageUriPermissionInterceptor implements AsyncHandlerIntercepto
         if (pathMatcher.match(URI_PATTERN_NOTIFY_BLACKLIST, uri)) {
             AuthResult authResult = authService.auth(username, ActionId.GLOBAL_SETTINGS);
             if (!authResult.isPass()) {
-                throw new PermissionDeniedException(authResult);
+                throw new IamPermissionDeniedException(authResult);
             }
         } else if (pathMatcher.match(URI_PATTERN_GLOBAL_SETTINGS, uri)) {
             AuthResult authResult = authService.auth(username, ActionId.GLOBAL_SETTINGS);
             if (!authResult.isPass()) {
-                throw new PermissionDeniedException(authResult);
+                throw new IamPermissionDeniedException(authResult);
             }
         } else if (pathMatcher.match(URI_PATTERN_SERVICE_INFO, uri)) {
             AuthResult authResult = authService.auth(username, ActionId.SERVICE_STATE_ACCESS);
             if (!authResult.isPass()) {
-                throw new PermissionDeniedException(authResult);
+                throw new IamPermissionDeniedException(authResult);
             }
         } else if (pathMatcher.match(URI_PATTERN_DANGEROUS_RULE, uri)) {
             AuthResult authResult = authService.auth(username, ActionId.HIGH_RISK_DETECT_RULE);
             if (!authResult.isPass()) {
-                throw new PermissionDeniedException(authResult);
+                throw new IamPermissionDeniedException(authResult);
             }
         }
         return true;

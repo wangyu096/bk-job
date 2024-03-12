@@ -29,15 +29,14 @@ import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.AccountCategoryEnum;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobConstants;
-import com.tencent.bk.job.common.exception.InvalidParamException;
-import com.tencent.bk.job.common.exception.NotFoundException;
-import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
+import com.tencent.bk.job.common.exception.base.ServiceException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
-import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
-import com.tencent.bk.job.common.util.ArrayUtil;
 import com.tencent.bk.job.common.util.Base64Util;
 import com.tencent.bk.job.common.util.date.DateUtils;
 import com.tencent.bk.job.common.web.metrics.CustomTimed;
@@ -96,11 +95,7 @@ public class EsbFastExecuteScriptResourceImpl
                                                        String appCode,
                                                        @AuditRequestBody EsbFastExecuteScriptRequest request) {
 
-        ValidateResult checkResult = checkFastExecuteScriptRequest(request);
-        if (!checkResult.isPass()) {
-            log.warn("Fast execute script request is illegal!");
-            throw new InvalidParamException(checkResult);
-        }
+        checkFastExecuteScriptRequest(request);
 
         request.trimIps();
 
@@ -123,20 +118,20 @@ public class EsbFastExecuteScriptResourceImpl
             + DateUtils.formatLocalDateTime(LocalDateTime.now(), "yyyyMMddHHmmssSSS");
     }
 
-    private ValidateResult checkFastExecuteScriptRequest(EsbFastExecuteScriptRequest request) {
+    private void checkFastExecuteScriptRequest(EsbFastExecuteScriptRequest request) {
         if (request.getScriptVersionId() != null) {
             if (request.getScriptVersionId() < 1) {
                 log.warn("Fast execute script, scriptId:{} is invalid", request.getScriptVersionId());
-                return ValidateResult.fail(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, "script_id");
+                throw InvalidParamException.withInvalidField("script_id");
             }
         } else {
             if (!ScriptTypeEnum.isValid(request.getScriptType())) {
                 log.warn("Fast execute script, script type is invalid! scriptType={}", request.getScriptType());
-                return ValidateResult.fail(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, "script_type");
+                throw InvalidParamException.withInvalidField("script_type");
             }
             if (StringUtils.isBlank(request.getContent())) {
                 log.warn("Fast execute script, script content is empty!");
-                return ValidateResult.fail(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, "script_content");
+                throw InvalidParamException.withInvalidField("script_content");
             }
         }
 
@@ -144,14 +139,12 @@ public class EsbFastExecuteScriptResourceImpl
             CollectionUtils.isEmpty(request.getDynamicGroupIdList())
             && request.getTargetServer() == null) {
             log.warn("Fast execute script, target server is empty!");
-            return ValidateResult.fail(ErrorCode.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME,
-                "ip_list|custom_query_id|target_server");
+            throw InvalidParamException.withInvalidField("ip_list|custom_query_id|target_server");
         }
         if (StringUtils.isBlank(request.getAccount())) {
             log.warn("Fast execute script, account is empty!");
-            return ValidateResult.fail(ErrorCode.MISSING_PARAM_WITH_PARAM_NAME, "account");
+            throw InvalidParamException.withInvalidField("account");
         }
-        return ValidateResult.pass();
     }
 
 
@@ -216,11 +209,11 @@ public class EsbFastExecuteScriptResourceImpl
         AccountDTO account = accountService.getSystemAccountByAlias(request.getAccount(), request.getAppId());
         if (account == null) {
             log.info("Account:{} is not exist in app:{}", request.getAccount(), request.getAppId());
-            throw new NotFoundException(ErrorCode.ACCOUNT_NOT_EXIST, ArrayUtil.toArray(request.getAccount()));
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.ACCOUNT_NOT_EXIST, request.getAccount()));
         }
         if (AccountCategoryEnum.SYSTEM != account.getCategory()) {
             log.info("Account:{} is not os account in app:{}", request.getAccount(), request.getAppId());
-            throw new NotFoundException(ErrorCode.ACCOUNT_NOT_EXIST, ArrayUtil.toArray(request.getAccount()));
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.ACCOUNT_NOT_EXIST, request.getAccount()));
         }
         stepInstance.setAccountId(account.getId());
         stepInstance.setOperator(username);

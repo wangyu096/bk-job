@@ -33,8 +33,9 @@ import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.ExecuteObjectTypeEnum;
 import com.tencent.bk.job.common.constant.Order;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
-import com.tencent.bk.job.common.exception.FailedPreconditionException;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.FailedPreconditionException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.gse.constants.FileDistModeEnum;
 import com.tencent.bk.job.common.gse.util.AgentUtils;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
@@ -309,11 +310,12 @@ public class WebTaskExecutionResultResourceImpl implements WebTaskExecutionResul
         if (timeRange != null) {
             if (timeRange < 1) {
                 log.warn("Param timeRange should greater than 0");
-                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+                throw new InvalidParamException();
             }
             if (timeRange > 30) {
                 log.warn("Param timeRange should less then 30");
-                throw new FailedPreconditionException(ErrorCode.TASK_INSTANCE_QUERY_TIME_SPAN_MORE_THAN_30_DAYS);
+                throw new FailedPreconditionException(
+                    SubErrorCode.of(ErrorCode.TASK_INSTANCE_QUERY_TIME_SPAN_MORE_THAN_30_DAYS));
             }
             // 当天结束时间 - 往前的天数
             start = DateUtils.getUTCCurrentDayEndTimestamp() - timeRange * 24 * 3600 * 1000L;
@@ -329,7 +331,7 @@ public class WebTaskExecutionResultResourceImpl implements WebTaskExecutionResul
 
             if (start == null) {
                 log.info("StartTime should not be empty!");
-                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+                throw new InvalidParamException();
             }
             if (end == null) {
                 end = System.currentTimeMillis();

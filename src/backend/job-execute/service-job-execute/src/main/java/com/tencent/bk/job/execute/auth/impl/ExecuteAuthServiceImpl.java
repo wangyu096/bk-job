@@ -25,13 +25,11 @@
 package com.tencent.bk.job.execute.auth.impl;
 
 import com.tencent.bk.job.common.constant.CcNodeTypeEnum;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.FeatureToggleModeEnum;
-import com.tencent.bk.job.common.exception.NotImplementedException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeEnum;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.iam.model.PermissionResource;
 import com.tencent.bk.job.common.iam.service.AppAuthService;
@@ -367,9 +365,8 @@ public class ExecuteAuthServiceImpl implements ExecuteAuthService {
                     hostInstanceList.add(hostInstance);
                     break;
                 default:
-                    throw new NotImplementedException(
-                        "Unsupported appScopeType:" + appResourceScope.getType().getValue(),
-                        ErrorCode.NOT_SUPPORT_FEATURE);
+                    throw new IllegalArgumentException(
+                        "Invalid appScopeType:" + appResourceScope.getType().getValue());
             }
         }
         // 动态topo节点
@@ -503,9 +500,8 @@ public class ExecuteAuthServiceImpl implements ExecuteAuthService {
                         convertBizSetStaticIpToPermissionResourceList(appResourceScope));
                     break;
                 default:
-                    throw new NotImplementedException(
-                        "Unsupported appScopeType:" + appResourceScope.getType().getValue(),
-                        ErrorCode.NOT_SUPPORT_FEATURE);
+                    throw new IllegalArgumentException(
+                        "Unsupported appScopeType:" + appResourceScope.getType().getValue());
             }
         }
         if (!CollectionUtils.isEmpty(servers.getTopoNodes())) {
@@ -541,7 +537,7 @@ public class ExecuteAuthServiceImpl implements ExecuteAuthService {
     @Override
     public void authViewTaskInstance(String username,
                                      AppResourceScope appResourceScope,
-                                     TaskInstanceDTO taskInstance) throws PermissionDeniedException {
+                                     TaskInstanceDTO taskInstance) throws IamPermissionDeniedException {
         if (username.equals(taskInstance.getOperator())) {
             return;
         }

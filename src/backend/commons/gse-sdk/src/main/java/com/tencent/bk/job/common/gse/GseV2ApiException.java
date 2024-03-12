@@ -22,26 +22,23 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.exception;
+package com.tencent.bk.job.common.gse;
 
-import com.tencent.bk.job.common.error.BkErrorCodeEnum;
-import lombok.Getter;
-import lombok.ToString;
+import com.tencent.bk.job.common.error.ErrorReason;
+import com.tencent.bk.job.common.error.payload.ErrorInfoPayloadDTO;
+import com.tencent.bk.job.common.exception.base.InternalException;
 
-/**
- * 资源配额不足或达到速率限制
- */
-@Getter
-@ToString
-public class ResourceExhaustedException extends ServiceException {
+public class GseV2ApiException extends InternalException {
 
-    public ResourceExhaustedException(String internalErrorMessage, Throwable cause) {
-        super(internalErrorMessage, cause);
-        setErrorCode(BkErrorCodeEnum.RESOURCE_EXHAUSTED);
+    public GseV2ApiException(String message, Throwable cause) {
+        super(message, cause, new ErrorInfoPayloadDTO("bk_gse_v2", ErrorReason.REQUEST_THIRD_API_ERROR));
     }
 
-    public ResourceExhaustedException(String internalErrorMessage) {
-        super(internalErrorMessage);
-        setErrorCode(BkErrorCodeEnum.RESOURCE_EXHAUSTED);
+    public GseV2ApiException(Throwable cause) {
+        super(cause, new ErrorInfoPayloadDTO("bk_gse_v2", ErrorReason.REQUEST_THIRD_API_ERROR));
+    }
+
+    public GseV2ApiException(String message) {
+        super(message, new ErrorInfoPayloadDTO("bk_gse_v2", ErrorReason.REQUEST_THIRD_API_ERROR));
     }
 }

@@ -27,11 +27,12 @@ package com.tencent.bk.job.manage.api.web.impl;
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
-import com.tencent.bk.job.common.exception.InvalidParamException;
-import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.InternalException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
@@ -222,7 +223,7 @@ public class WebTaskPlanResourceImpl implements WebTaskPlanResource {
         Long appId = appResourceScope.getAppId();
         TaskTemplateInfoDTO taskTemplateBasicInfo = templateService.getTaskTemplateBasicInfoById(appId, templateId);
         if (taskTemplateBasicInfo == null) {
-            throw new NotFoundException(ErrorCode.TEMPLATE_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.TEMPLATE_NOT_EXIST));
         }
 
         List<TaskPlanInfoDTO> taskPlanInfoList = planService.listTaskPlansBasicInfo(appId, templateId);
@@ -271,7 +272,7 @@ public class WebTaskPlanResourceImpl implements WebTaskPlanResource {
                                                     String templateIds) {
         if (StringUtils.isEmpty(templateIds)) {
             log.warn("TemplateIds is empty!");
-            return Response.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM);
+            throw InvalidParamException.withInvalidField("templateIds");
         }
 
         String[] templateIdArray = templateIds.split(",");
@@ -281,7 +282,7 @@ public class WebTaskPlanResourceImpl implements WebTaskPlanResource {
         }
         if (CollectionUtils.isEmpty(templateIdList)) {
             log.warn("TemplateIdList is empty!");
-            return Response.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM);
+            throw InvalidParamException.withInvalidField("templateIds");
         }
 
         List<TaskPlanVO> planList = new ArrayList<>();
@@ -309,7 +310,7 @@ public class WebTaskPlanResourceImpl implements WebTaskPlanResource {
         TaskTemplateInfoDTO taskTemplateBasicInfo =
             templateService.getTaskTemplateBasicInfoById(appResourceScope.getAppId(), templateId);
         if (taskTemplateBasicInfo == null) {
-            throw new NotFoundException(ErrorCode.TASK_PLAN_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.TASK_PLAN_NOT_EXIST));
         }
 
         TaskPlanInfoDTO taskPlan = planService.getTaskPlan(username, appResourceScope.getAppId(), templateId, planId);
@@ -342,12 +343,12 @@ public class WebTaskPlanResourceImpl implements WebTaskPlanResource {
                                              Long templateId) {
         AuthResult authResult = templateAuthService.authViewJobTemplate(username, appResourceScope, templateId);
         if (!authResult.isPass()) {
-            throw new PermissionDeniedException(authResult);
+            throw new IamPermissionDeniedException(authResult);
         }
         TaskTemplateInfoDTO taskTemplateBasicInfo =
             templateService.getTaskTemplateBasicInfoById(appResourceScope.getAppId(), templateId);
         if (taskTemplateBasicInfo == null) {
-            throw new NotFoundException(ErrorCode.TASK_PLAN_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.TASK_PLAN_NOT_EXIST));
         }
         TaskPlanInfoDTO taskPlan = planService.getDebugTaskPlan(username, appResourceScope.getAppId(), templateId);
         TaskPlanVO taskPlanVO = null;
@@ -409,7 +410,7 @@ public class WebTaskPlanResourceImpl implements WebTaskPlanResource {
             taskPlanCreateUpdateReq.setName(stringCheckHelper.checkAndGetResult(taskPlanCreateUpdateReq.getName()));
         } catch (StringCheckException e) {
             log.warn("TaskPlan name is invalid:", e);
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
     }
 
@@ -481,7 +482,7 @@ public class WebTaskPlanResourceImpl implements WebTaskPlanResource {
         AuthResult authResult = templateAuthService.authViewJobTemplate(username, appResourceScope,
             templateId);
         if (!authResult.isPass()) {
-            throw new PermissionDeniedException(authResult);
+            throw new IamPermissionDeniedException(authResult);
         }
         return Response.buildSuccessResp(planService.checkPlanName(appResourceScope.getAppId(), templateId, planId,
             name));
@@ -496,14 +497,14 @@ public class WebTaskPlanResourceImpl implements WebTaskPlanResource {
                                                  Long planId) {
         AuthResult authResult = planAuthService.authSyncJobPlan(username, appResourceScope, templateId, planId, null);
         if (!authResult.isPass()) {
-            throw new PermissionDeniedException(authResult);
+            throw new IamPermissionDeniedException(authResult);
         }
         TaskPlanInfoDTO taskPlan = planService.getTaskPlanById(appResourceScope.getAppId(), templateId, planId);
         if (taskPlan != null) {
             TaskTemplateInfoDTO taskTemplate = templateService.getTaskTemplateById(appResourceScope.getAppId(),
                 templateId);
             if (taskTemplate == null) {
-                throw new InternalException(ErrorCode.INTERNAL_ERROR);
+                throw new InternalException();
             }
             TaskPlanSyncInfoVO taskPlanSyncInfoVO = new TaskPlanSyncInfoVO();
             taskPlanSyncInfoVO.setPlanInfo(TaskPlanInfoDTO.toVO(taskPlan));
@@ -512,7 +513,7 @@ public class WebTaskPlanResourceImpl implements WebTaskPlanResource {
             return Response.buildSuccessResp(taskPlanSyncInfoVO);
         } else {
             log.debug("Cannot find plan {} for template {}", planId, templateId);
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
     }
 
@@ -530,7 +531,7 @@ public class WebTaskPlanResourceImpl implements WebTaskPlanResource {
         AuthResult authResult = planAuthService.authSyncJobPlan(username, appResourceScope, templateId,
             planId, null);
         if (!authResult.isPass()) {
-            throw new PermissionDeniedException(authResult);
+            throw new IamPermissionDeniedException(authResult);
         }
         return Response.buildSuccessResp(planService.sync(appResourceScope.getAppId(), templateId, planId,
             templateVersion));

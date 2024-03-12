@@ -25,8 +25,8 @@
 package com.tencent.bk.job.common.util.http;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.ServiceException;
-import com.tencent.bk.job.common.model.error.ErrorType;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.common.model.http.HttpReq;
 import com.tencent.bk.job.common.util.json.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -86,12 +86,9 @@ public class JobHttpClientImpl implements JobHttpClient {
 
     private void logAndThrow(ResponseEntity<String> respEntity) {
         log.error("Fail to request, status={}, msg={}", respEntity.getStatusCode(), respEntity.getBody());
-        throw new ServiceException(
-            ErrorType.INTERNAL,
-            ErrorCode.FAIL_TO_REQUEST_FILE_WORKER_WITH_REASON,
-            new Object[]{
-                "status=" + respEntity.getStatusCode() + ", msg=" + respEntity.getBody()
-            }
+        throw new InternalException(
+            SubErrorCode.of(ErrorCode.FAIL_TO_REQUEST_FILE_WORKER_WITH_REASON,
+                "status=" + respEntity.getStatusCode() + ", msg=" + respEntity.getBody())
         );
     }
 }

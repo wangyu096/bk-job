@@ -28,7 +28,7 @@ import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.common.model.iam.AuthResultDTO;
 import com.tencent.bk.job.common.util.json.JsonUtils;
-import com.tencent.bk.job.crontab.exception.TaskExecuteAuthFailedException;
+import com.tencent.bk.job.crontab.exception.TaskExecuteAuthFailedExceptionIam;
 import com.tencent.bk.job.crontab.service.ExecuteTaskService;
 import com.tencent.bk.job.execute.api.inner.ServiceExecuteTaskResource;
 import com.tencent.bk.job.execute.model.inner.ServiceTaskExecuteResult;
@@ -110,7 +110,7 @@ public class ExecuteTaskServiceImpl implements ExecuteTaskService {
         String cronName,
         List<ServiceTaskVariable> variableList,
         String operator
-    ) throws TaskExecuteAuthFailedException {
+    ) throws TaskExecuteAuthFailedExceptionIam {
         ServiceTaskExecuteRequest request = new ServiceTaskExecuteRequest();
         request.setAppId(appId);
         request.setOperator(operator);
@@ -129,7 +129,7 @@ public class ExecuteTaskServiceImpl implements ExecuteTaskService {
         if (authExecuteResult != null) {
             AuthResultDTO authResult = authExecuteResult.getData();
             if (authResult != null && !authResult.isPass()) {
-                throw new TaskExecuteAuthFailedException(AuthResult.fromAuthResultDTO(authResult), null);
+                throw new TaskExecuteAuthFailedExceptionIam(AuthResult.fromAuthResultDTO(authResult), null);
             }
         }
     }

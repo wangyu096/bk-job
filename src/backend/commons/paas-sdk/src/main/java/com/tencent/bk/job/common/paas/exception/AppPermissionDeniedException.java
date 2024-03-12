@@ -25,8 +25,8 @@
 package com.tencent.bk.job.common.paas.exception;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.ServiceException;
-import com.tencent.bk.job.common.model.error.ErrorType;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.ServiceException;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -41,7 +41,7 @@ public class AppPermissionDeniedException extends ServiceException {
     private final String message;
 
     public AppPermissionDeniedException(String message) {
-        super(ErrorType.PERMISSION_DENIED, ErrorCode.USER_ACCESS_APP_FORBIDDEN);
+        super(SubErrorCode.of(ErrorCode.USER_ACCESS_APP_FORBIDDEN));
         this.message = message;
     }
 

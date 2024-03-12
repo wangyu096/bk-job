@@ -31,10 +31,10 @@ import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.error.BkErrorCodeEnum;
 import com.tencent.bk.job.common.error.SubErrorCode;
 import com.tencent.bk.job.common.error.internal.InternalApiError;
-import com.tencent.bk.job.common.error.payload.ErrorPayloadDTO;
-import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.exception.base.ServiceException;
 import com.tencent.bk.job.common.model.error.ErrorType;
 import com.tencent.bk.job.common.model.iam.AuthResultDTO;
+import com.tencent.bk.job.common.util.I18nUtil;
 import com.tencent.bk.job.common.util.JobContextUtil;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -83,33 +83,21 @@ public class InternalResponse<T> {
     private InternalApiError error;
 
     public InternalResponse() {
-
-    }
-
-    private InternalResponse(BkErrorCodeEnum errorCode,
-                             SubErrorCode subErrorCode) {
-        this(errorCode, subErrorCode, null);
-    }
-
-    private InternalResponse(BkErrorCodeEnum errorCode,
-                             SubErrorCode subErrorCode,
-                             ErrorPayloadDTO errorPayload) {
-        // 兼容处理
-        this.code = subErrorCode.getCode();
-        this.success = false;
-        this.errorMsg = subErrorCode.getI18nMessage();
-        this.errorType = convertToErrorType(errorCode);
         this.requestId = JobContextUtil.getRequestId();
-
-        // 标准错误处理
-        InternalApiError error = new InternalApiError();
-        error.setCode(errorCode.getErrorCode());
-        error.setMessage(subErrorCode.getI18nMessage());
-        error.setSubCode(subErrorCode.getCode());
-        error.setData(errorPayload);
-        this.error = error;
     }
 
+    private InternalResponse(InternalApiError apiError,
+                             SubErrorCode subErrorCode) {
+        InternalResponse<T> response = new InternalResponse<>();
+        // 标准错误处理
+        response.setError(apiError);
+
+        // 兼容处理
+        response.setSuccess(false);
+        response.setCode(subErrorCode.getCode());
+        response.setErrorType(convertToErrorType(BkErrorCodeEnum.valOf(apiError.getCode())));
+        response.setErrorMsg(subErrorCode.getI18nMessage());
+    }
 
     @CompatibleImplementation(name = "openapi", type = CompatibleType.DEPLOY, explain = "发布完成后可删除")
     private Integer convertToErrorType(BkErrorCodeEnum errorCode) {
@@ -151,17 +139,40 @@ public class InternalResponse<T> {
         response.success = true;
         response.data = data;
         response.errorType = ErrorType.OK.getType();
-        response.requestId = JobContextUtil.getRequestId();
         return response;
     }
 
-    public static <T> InternalResponse<T> buildCommonFailResp(BkErrorCodeEnum errorCode,
-                                                              SubErrorCode subErrorCode) {
-        return new InternalResponse<>(errorCode, subErrorCode);
+    public static <T> InternalResponse<T> buildCommonFailResp(InternalApiError apiError, SubErrorCode subErrorCode) {
+        return new InternalResponse<>(apiError, subErrorCode);
     }
 
     public static <T> InternalResponse<T> buildCommonFailResp(ServiceException e) {
-        return new InternalResponse<>(e.getErrorCode(), e.getSubErrorCode(), e.getErrorPayload());
+        InternalApiError apiError = new InternalApiError();
+        apiError.setCode(e.getErrorCode().getErrorCode());
+        SubErrorCode subErrorCode = e.getSubErrorCode();
+        if (subErrorCode != null) {
+            apiError.setMessage(subErrorCode.getI18nMessage());
+            apiError.setSubCode(subErrorCode.getCode());
+        } else {
+            apiError.setSubCode(ErrorCode.INTERNAL_ERROR);
+            apiError.setMessage("Unknown error");
+        }
+        apiError.setData(e.getErrorPayload());
+        return buildCommonFailResp(apiError, e.getSubErrorCode());
+    }
+
+    public static <T> InternalResponse<T> buildAuthFailResp(AuthResultDTO authResult) {
+        InternalApiError apiError = new InternalApiError();
+        apiError.setCode(BkErrorCodeEnum.IAM_NO_PERMISSION.getErrorCode());
+        apiError.setMessage(I18nUtil.getI18nMessage(String.valueOf(ErrorCode.IAM_PERMISSION_DENIED)));
+        apiError.setData(authResult);
+
+        SubErrorCode subErrorCode = SubErrorCode.of(ErrorCode.IAM_PERMISSION_DENIED);
+
+        InternalResponse<T> response = new InternalResponse<>(apiError, subErrorCode);
+        response.setAuthResult(authResult);
+
+        return response;
     }
 
 }

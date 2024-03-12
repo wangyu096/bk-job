@@ -25,7 +25,8 @@
 package com.tencent.bk.job.manage.service.impl;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
 import com.tencent.bk.job.common.model.dto.ResourceScope;
 import com.tencent.bk.job.manage.AbstractLocalCacheAppScopeMappingService;
 import com.tencent.bk.job.manage.GlobalAppScopeMappingService;
@@ -51,7 +52,7 @@ public class AppScopeMappingServiceImpl extends AbstractLocalCacheAppScopeMappin
         Long appId = applicationService.getAppIdByScope(resourceScope);
         if (appId == null) {
             log.error("App not exist, resourceScope: {}", resourceScope);
-            throw new NotFoundException(ErrorCode.APP_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.APP_NOT_EXIST));
         }
         return appId;
     }
@@ -61,7 +62,7 @@ public class AppScopeMappingServiceImpl extends AbstractLocalCacheAppScopeMappin
         ResourceScope resourceScope = applicationService.getScopeByAppId(appId);
         if (resourceScope == null) {
             log.error("App not exist, appId: {}", appId);
-            throw new NotFoundException(ErrorCode.APP_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.APP_NOT_EXIST));
         }
         return resourceScope;
     }

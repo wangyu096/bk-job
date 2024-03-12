@@ -1,6 +1,5 @@
 package com.tencent.bk.job.file.worker.service;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobConstants;
 import com.tencent.bk.job.common.exception.IncorrectConfigException;
 import com.tencent.bk.job.common.util.ip.IpUtils;
@@ -43,20 +42,12 @@ public class EnvironmentService implements ApplicationContextAware {
         String podName = System.getenv("BK_JOB_FILE_WORKER_POD_NAME");
         if (StringUtils.isBlank(podName)) {
             String message = "ENV BK_JOB_FILE_WORKER_POD_NAME cannot be blank!";
-            throw new IncorrectConfigException(
-                message,
-                ErrorCode.INVALID_CONFIG,
-                new String[]{"ENV:BK_JOB_FILE_WORKER_POD_NAME"}
-            );
+            throw new IncorrectConfigException(message);
         }
         String fileWorkerServiceName = System.getenv("BK_JOB_FILE_WORKER_SERVICE_NAME");
         if (StringUtils.isBlank(fileWorkerServiceName)) {
             String message = "ENV BK_JOB_FILE_WORKER_SERVICE_NAME cannot be blank!";
-            throw new IncorrectConfigException(
-                message,
-                ErrorCode.INVALID_CONFIG,
-                new String[]{"ENV:BK_JOB_FILE_WORKER_SERVICE_NAME"}
-            );
+            throw new IncorrectConfigException(message);
         }
         String accessHost = podName + "." + fileWorkerServiceName;
         log.debug("accessHost={}", accessHost);

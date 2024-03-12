@@ -26,12 +26,10 @@ package com.tencent.bk.job.execute.api.esb.v3;
 
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
-import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
 import com.tencent.bk.job.common.service.AppScopeMappingService;
@@ -75,11 +73,8 @@ public class EsbGetJobInstanceGlobalVarValueV3ResourceImpl
         String username,
         String appCode,
         @AuditRequestBody EsbGetJobInstanceGlobalVarValueV3Request request) {
-        ValidateResult checkResult = checkRequest(request);
-        if (!checkResult.isPass()) {
-            log.warn("Get job instance global var value, request is illegal!");
-            throw new InvalidParamException(checkResult);
-        }
+
+        checkRequest(request);
 
         long taskInstanceId = request.getTaskInstanceId();
         taskInstanceAccessProcessor.processBeforeAccess(username,
@@ -115,12 +110,11 @@ public class EsbGetJobInstanceGlobalVarValueV3ResourceImpl
         return EsbResp.buildSuccessResp(result);
     }
 
-    private ValidateResult checkRequest(EsbGetJobInstanceGlobalVarValueV3Request request) {
+    private void checkRequest(EsbGetJobInstanceGlobalVarValueV3Request request) {
         if (request.getTaskInstanceId() == null || request.getTaskInstanceId() < 1) {
             log.warn("TaskInstanceId is empty or illegal, taskInstanceId={}", request.getTaskInstanceId());
-            return ValidateResult.fail(ErrorCode.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME, "job_instance_id");
+            throw InvalidParamException.withInvalidField("job_instance_id");
         }
-        return ValidateResult.pass();
     }
 
     @Override

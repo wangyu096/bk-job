@@ -30,17 +30,16 @@ import com.tencent.bk.job.common.constant.AccountCategoryEnum;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobConstants;
 import com.tencent.bk.job.common.constant.NotExistPathHandlerEnum;
-import com.tencent.bk.job.common.exception.InvalidParamException;
-import com.tencent.bk.job.common.exception.NotFoundException;
-import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
+import com.tencent.bk.job.common.exception.base.ServiceException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
-import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.openapi.job.v2.EsbFileSourceDTO;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
-import com.tencent.bk.job.common.util.ArrayUtil;
 import com.tencent.bk.job.common.util.DataSizeConverter;
 import com.tencent.bk.job.common.util.FilePathValidateUtil;
 import com.tencent.bk.job.common.util.date.DateUtils;
@@ -101,11 +100,7 @@ public class EsbFastPushFileResourceImpl extends JobExecuteCommonProcessor imple
     public EsbResp<EsbJobExecuteDTO> fastPushFile(String username,
                                                   String appCode,
                                                   @AuditRequestBody EsbFastPushFileRequest request) {
-        ValidateResult checkResult = checkFastPushFileRequest(request);
-        if (!checkResult.isPass()) {
-            log.warn("Fast transfer file request is illegal!");
-            throw new InvalidParamException(checkResult);
-        }
+        checkFastPushFileRequest(request);
 
         if (StringUtils.isEmpty(request.getName())) {
             request.setName(generateDefaultFastTaskName());
@@ -123,64 +118,58 @@ public class EsbFastPushFileResourceImpl extends JobExecuteCommonProcessor imple
         return EsbResp.buildSuccessResp(jobExecuteInfo);
     }
 
-    private ValidateResult checkFastPushFileRequest(EsbFastPushFileRequest request) {
+    private void checkFastPushFileRequest(EsbFastPushFileRequest request) {
         if (!FilePathValidateUtil.validateFileSystemAbsolutePath(request.getTargetPath())) {
             log.warn("Fast transfer file, target path is invalid!path={}", request.getTargetPath());
-            return ValidateResult.fail(ErrorCode.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME, "file_target_path");
+            throw InvalidParamException.withInvalidField("file_target_path");
         }
         if (StringUtils.isBlank(request.getAccount())) {
             log.warn("Fast transfer file, account is empty!");
-            return ValidateResult.fail(ErrorCode.MISSING_PARAM_WITH_PARAM_NAME, "account");
+            throw InvalidParamException.withInvalidField("account");
         }
 
-        ValidateResult fileSourceValidateResult = validateFileSource(request);
-        if (!fileSourceValidateResult.isPass()) {
-            return fileSourceValidateResult;
-        }
+        validateFileSource(request);
 
         if (CollectionUtils.isEmpty(request.getIpList()) &&
             CollectionUtils.isEmpty(request.getDynamicGroupIdList())
             && request.getTargetServer() == null) {
             log.warn("Fast transfer file, target server is empty!");
-            return ValidateResult.fail(ErrorCode.MISSING_PARAM_WITH_PARAM_NAME,
-                "ip_list|custom_query_id|target_servers");
+            throw InvalidParamException.withInvalidField("ip_list|custom_query_id|target_servers");
         }
-
-        return ValidateResult.pass();
     }
 
-    private ValidateResult validateFileSource(EsbFastPushFileRequest request) {
+    private void validateFileSource(EsbFastPushFileRequest request) {
         if (request.getFileSources() == null || request.getFileSources().isEmpty()) {
             log.warn("Fast transfer file, file source list is null or empty!");
-            return ValidateResult.fail(ErrorCode.MISSING_PARAM_WITH_PARAM_NAME, "file_source");
+
+            throw InvalidParamException.withInvalidField("file_source");
         }
         List<EsbFileSourceDTO> fileSources = request.getFileSources();
         for (EsbFileSourceDTO fileSource : fileSources) {
             List<String> files = fileSource.getFiles();
             if (files == null || files.isEmpty()) {
                 log.warn("File source contains empty file list");
-                return ValidateResult.fail(ErrorCode.MISSING_PARAM_WITH_PARAM_NAME, "file_source.files");
+                throw InvalidParamException.withInvalidField("file_source.files");
             }
             for (String file : files) {
                 if (!FilePathValidateUtil.validateFileSystemAbsolutePath(file)) {
                     log.warn("Invalid path:{}", file);
-                    return ValidateResult.fail(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, "file_source.files");
+                    throw InvalidParamException.withInvalidField("file_source.files");
                 }
             }
             String account = fileSource.getAccount();
             if (StringUtils.isEmpty(account)) {
                 log.warn("File source account is null!");
-                return ValidateResult.fail(ErrorCode.MISSING_PARAM_WITH_PARAM_NAME, "file_source.account");
+                throw InvalidParamException.withInvalidField("file_source.account");
             }
             if (CollectionUtils.isEmpty(fileSource.getIpList()) &&
                 CollectionUtils.isEmpty(fileSource.getDynamicGroupIdList())
                 && fileSource.getTargetServer() == null) {
                 log.warn("File source, target server is empty!");
-                return ValidateResult.fail(ErrorCode.MISSING_PARAM_WITH_PARAM_NAME,
+                throw InvalidParamException.withInvalidField(
                     "file_source.ip_list|file_source.custom_query_id|file_source.target_servers");
             }
         }
-        return ValidateResult.pass();
     }
 
     private TaskInstanceDTO buildFastFileTaskInstance(String username, String appCode, EsbFastPushFileRequest request) {
@@ -240,11 +229,11 @@ public class EsbFastPushFileResourceImpl extends JobExecuteCommonProcessor imple
         AccountDTO account = accountService.getSystemAccountByAlias(accountAlias, appId);
         if (account == null) {
             log.info("Account:{} is not exist in app:{}", accountAlias, appId);
-            throw new NotFoundException(ErrorCode.ACCOUNT_NOT_EXIST, ArrayUtil.toArray(accountAlias));
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.ACCOUNT_NOT_EXIST, accountAlias));
         }
         if (AccountCategoryEnum.SYSTEM != account.getCategory()) {
             log.info("Account:{} is not os account in app:{}", accountAlias, appId);
-            throw new NotFoundException(ErrorCode.ACCOUNT_NOT_EXIST, ArrayUtil.toArray(accountAlias));
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.ACCOUNT_NOT_EXIST, accountAlias));
         }
         return account;
     }

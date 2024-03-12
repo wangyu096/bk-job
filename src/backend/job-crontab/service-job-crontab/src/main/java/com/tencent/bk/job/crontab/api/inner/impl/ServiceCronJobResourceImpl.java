@@ -24,8 +24,7 @@
 
 package com.tencent.bk.job.crontab.api.inner.impl;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.common.mysql.JobTransactional;
@@ -143,7 +142,7 @@ public class ServiceCronJobResourceImpl implements ServiceCronJobResource {
             return InternalResponse.buildSuccessResp(cronJobService.insertCronJobInfoWithId(cronJobInfoDTO));
         } else {
             log.warn("Error while saving cron job!|{}", JobContextUtil.getDebugMessage());
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
     }
 }

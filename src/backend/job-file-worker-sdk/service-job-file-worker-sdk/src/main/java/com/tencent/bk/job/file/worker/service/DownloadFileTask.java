@@ -24,9 +24,8 @@
 
 package com.tencent.bk.job.file.worker.service;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
-import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.exception.base.InternalException;
+import com.tencent.bk.job.common.exception.base.ServiceException;
 import com.tencent.bk.job.common.util.file.FileUtil;
 import com.tencent.bk.job.common.util.file.PathUtil;
 import com.tencent.bk.job.file.worker.model.FileMetaData;
@@ -134,7 +133,7 @@ class DownloadFileTask extends Thread {
             } while (!downloadSuccess && count < 10);
             if (!downloadSuccess) {
                 throw new InternalException(String.format("Fail to download %s because md5 not match 10 times, " +
-                    "filePath=%s", targetPath, filePath), ErrorCode.INTERNAL_ERROR);
+                    "filePath=%s", targetPath, filePath));
             }
         } catch (InterruptedException e) {
             // 停止下载任务时，线程被主动中断，删除下一半的文件
@@ -191,8 +190,10 @@ class DownloadFileTask extends Thread {
                 }
             } else {
                 if (t instanceof ServiceException) {
+                    ServiceException ex = (ServiceException) t;
+                    String errorMsg = ex.getSubErrorCode() == null ? "" : ex.getSubErrorCode().getI18nMessage();
                     taskReporter.reportFileDownloadProgressWithContent(taskId, filePath, downloadPath, fileSize.get(),
-                        speed.get(), process.get(), ((ServiceException) t).getI18nMessage());
+                        speed.get(), process.get(), errorMsg);
                 }
                 log.error("Fail to download file:filePath={},downloadPath={}", filePath, downloadPath, t);
                 taskReporter.reportFileDownloadFailure(taskId, filePath, downloadPath);

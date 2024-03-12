@@ -47,8 +47,7 @@ import com.tencent.bk.job.analysis.service.FastScriptStatisticService;
 import com.tencent.bk.job.analysis.service.RollingTaskStatisticService;
 import com.tencent.bk.job.analysis.service.TagStatisticService;
 import com.tencent.bk.job.common.audit.constants.EventContentConstants;
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.common.model.dto.ResourceScope;
@@ -324,8 +323,8 @@ public class WebStatisticsResourceImpl implements WebStatisticsResource {
         } else if (ResourceEnum.EXECUTED_FAST_FILE == resource && DimensionEnum.FILE_TRANSFER_MODE == dimension) {
             dayDistributionElementVOList = fastFileByTransferModeDayDetail(username, appIdList, startDate, endDate);
         } else {
-            throw new InvalidParamException(String.format("dimension %s of " +
-                "resource %s not supported", dimension.name(), resource.name()), ErrorCode.ILLEGAL_PARAM);
+            throw InvalidParamException.withInvalidField("resource/dimension", String.format("dimension %s of " +
+                "resource %s not supported", dimension.name(), resource.name()));
         }
         return Response.buildSuccessResp(dayDistributionElementVOList);
     }

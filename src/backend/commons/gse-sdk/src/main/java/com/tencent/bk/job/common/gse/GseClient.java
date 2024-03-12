@@ -24,8 +24,6 @@
 
 package com.tencent.bk.job.common.gse;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.gse.util.AgentUtils;
 import com.tencent.bk.job.common.gse.v1.GseV1ApiClient;
 import com.tencent.bk.job.common.gse.v2.GseV2ApiClient;
@@ -110,7 +108,7 @@ public class GseClient implements IGseClient {
     private IGseClient chooseGseApiClientByAgentId(String agentId) {
         if (StringUtils.isEmpty(agentId)) {
             log.error("Empty agentId!");
-            throw new InternalException("AgentId is empty", ErrorCode.INTERNAL_ERROR);
+            throw new IllegalArgumentException("AgentId is empty");
         }
         if (AgentUtils.isGseV1AgentId(agentId)) {
             log.debug("Choose GseV1ApiClient, agentId: {}", agentId);

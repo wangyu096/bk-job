@@ -24,9 +24,8 @@
 
 package com.tencent.bk.job.manage.model.web.vo.task;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobConstants;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.model.vo.TaskTargetVO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -84,7 +83,7 @@ public class TaskScriptStepVO {
     public void validate(boolean isCreate) throws InvalidParamException {
         if (scriptSource == null || scriptSource <= 0) {
             log.warn("Invalid script source : {}", scriptSource);
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         if (status == null || status > 0b11 || status < 0) {
             status = 0;
@@ -93,7 +92,7 @@ public class TaskScriptStepVO {
             case 1:
                 if (StringUtils.isBlank(content)) {
                     log.warn("Local step missing content!");
-                    throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+                    throw new InvalidParamException();
                 }
                 scriptId = null;
                 scriptVersionId = null;
@@ -102,17 +101,17 @@ public class TaskScriptStepVO {
             case 3:
                 if (StringUtils.isBlank(scriptId) || scriptVersionId == null || scriptVersionId <= 0) {
                     log.warn("Link script missing script id or script version id!");
-                    throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+                    throw new InvalidParamException();
                 }
                 content = null;
                 break;
             default:
                 log.warn("Unknown script type!");
-                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+                throw new InvalidParamException();
         }
         if (account == null || account <= 0) {
             log.warn("Missing execute account!");
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         if (StringUtils.isNotBlank(scriptParam) && scriptParam.length() > 5000) {
             scriptParam = scriptParam.substring(0, 5000);

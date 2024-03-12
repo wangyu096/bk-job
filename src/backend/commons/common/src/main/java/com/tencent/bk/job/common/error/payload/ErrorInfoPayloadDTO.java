@@ -43,13 +43,19 @@ import lombok.NoArgsConstructor;
 public class ErrorInfoPayloadDTO extends ErrorPayloadDTO {
 
     /**
-     * 错误原因的简要描述
-     */
-    private String reason;
-
-    /**
-     * 错误所属范围（比如微服务名、应用名)
+     * 错误所属范围（比如微服务名、应用名、模块名)
      */
     private String domain;
 
+    /**
+     * 错误原因的简要描述
+     *
+     * @see com.tencent.bk.job.common.error.ErrorReason
+     */
+    private String reason;
+
+    public ErrorInfoPayloadDTO(String domain, String reason) {
+        this.domain = domain;
+        this.reason = reason;
+    }
 }

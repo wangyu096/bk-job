@@ -29,16 +29,17 @@ import com.tencent.bk.job.common.constant.CompatibleType;
 import com.tencent.bk.job.common.error.BkErrorCodeEnum;
 import com.tencent.bk.job.common.error.SubErrorCode;
 import com.tencent.bk.job.common.error.internal.InternalApiError;
-import com.tencent.bk.job.common.error.internal.InternalApiErrorDetail;
-import com.tencent.bk.job.common.exception.AlreadyExistsException;
-import com.tencent.bk.job.common.exception.FailedPreconditionException;
-import com.tencent.bk.job.common.exception.InternalException;
-import com.tencent.bk.job.common.exception.NotFoundException;
-import com.tencent.bk.job.common.exception.ServiceException;
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.error.payload.ErrorPayloadDTO;
+import com.tencent.bk.job.common.error.payload.ResourceInfoPayloadDTO;
+import com.tencent.bk.job.common.exception.base.AlreadyExistsException;
+import com.tencent.bk.job.common.exception.base.FailedPreconditionException;
+import com.tencent.bk.job.common.exception.base.InternalException;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.common.model.error.ErrorType;
+import com.tencent.bk.job.common.model.iam.AuthResultDTO;
 import com.tencent.bk.job.common.util.json.JsonUtils;
 import feign.FeignException;
 import feign.Response;
@@ -67,9 +68,10 @@ public class FeignErrorDecoder extends ErrorDecoder.Default {
                 if (StringUtils.isNotEmpty(responseBody)) {
                     InternalResponse<?> internalResponse = JsonUtils.fromJson(responseBody, InternalResponse.class);
                     if (internalResponse.getError() != null) {
-                        return decodeErrorCode(feignException, internalResponse);
+                        return decodeByErrorEntity(feignException, internalResponse);
                     } else {
-                        // 解析 errorCode
+                        // 兼容：解析 errorCode
+                        return decodeErrorCodeCompatibly(feignException, internalResponse);
                     }
                 }
             }
@@ -79,7 +81,7 @@ public class FeignErrorDecoder extends ErrorDecoder.Default {
         return exception;
     }
 
-    private Exception decodeErrorCode(FeignException exception, InternalResponse<?> response) {
+    private Exception decodeByErrorEntity(FeignException exception, InternalResponse<?> response) {
         InternalApiError error = response.getError();
 
         if (log.isDebugEnabled()) {
@@ -88,7 +90,7 @@ public class FeignErrorDecoder extends ErrorDecoder.Default {
 
         BkErrorCodeEnum type =
             BkErrorCodeEnum.valOf(error.getCode());
-        InternalApiErrorDetail errorDetail = error.getDetails().get(0);
+        ErrorPayloadDTO errorPayload = error.getData();
         switch (type) {
             case INVALID_ARGUMENT:
             case INVALID_REQUEST:
@@ -102,19 +104,21 @@ public class FeignErrorDecoder extends ErrorDecoder.Default {
             case INTERNAL:
             case UNKNOWN:
                 // 微服务内部调用错误，应该转换为外部的错误;例如，从另一个服务接收 INVALID_ARGUMENT 错误,应该将 INTERNAL_ERROR 传播给它自己的调用者。
-                return new InternalException(exception, new SubErrorCode(error.getSubCode(), error.getMessage()));
+                return new InternalException(exception, new SubErrorCode(error.getSubCode(), error.getMessage()), null);
             case IAM_NO_PERMISSION:
-                return new PermissionDeniedException(AuthResult.fromAuthResultDTO(response.getAuthResult()));
+                return new IamPermissionDeniedException(AuthResult.fromAuthResultDTO((AuthResultDTO) error.getData()));
             case NOT_FOUND:
-                return new NotFoundException(exception, new SubErrorCode(error.getSubCode(), error.getMessage()));
+                return new NotFoundException(exception, new SubErrorCode(error.getSubCode(), error.getMessage()),
+                    errorPayload == null ? null : (ResourceInfoPayloadDTO) errorPayload);
             case ALREADY_EXISTS:
-                return new AlreadyExistsException(exception, new SubErrorCode(error.getSubCode(), error.getMessage()));
+                return new AlreadyExistsException(exception, new SubErrorCode(error.getSubCode(), error.getMessage()),
+                    errorPayload == null ? null : (ResourceInfoPayloadDTO) errorPayload);
             case FAILED_PRECONDITION:
                 return new FailedPreconditionException(exception, new SubErrorCode(error.getSubCode(),
                     error.getMessage()));
             default:
                 // 无法识别的错误，统一转换为系统内部异常
-                return new InternalException(exception, SubErrorCode.INTERNAL_ERROR);
+                return new InternalException(exception);
         }
 
     }
@@ -150,15 +154,16 @@ public class FeignErrorDecoder extends ErrorDecoder.Default {
                 // 微服务内部调用错误，应该转换为外部的错误;例如，从另一个服务接收 INVALID_PARAM 错误,应该将 INTERNAL_ERROR 传播给它自己的调用者。
                 return new InternalException(errorMsg, exception);
             case PERMISSION_DENIED:
-                return new PermissionDeniedException(AuthResult.fromAuthResultDTO(response.getAuthResult()));
+                return new IamPermissionDeniedException(AuthResult.fromAuthResultDTO(response.getAuthResult()));
             case NOT_FOUND:
-                return new NotFoundException(errorMsg, exception, errorCode);
+                return new NotFoundException(exception, new SubErrorCode(errorCode, errorMsg), null);
             case ALREADY_EXISTS:
-                return new AlreadyExistsException(errorMsg, exception, errorCode);
+                return new AlreadyExistsException(exception, new SubErrorCode(errorCode, errorMsg), null);
             case FAILED_PRECONDITION:
-                return new FailedPreconditionException(errorMsg, errorCode);
+                return new FailedPreconditionException(exception, new SubErrorCode(errorCode, errorMsg));
             default:
-                return new ServiceException(errorMsg, type, errorCode);
+                // 无法识别的错误，统一转换为系统内部异常
+                return new InternalException(exception);
         }
 
     }

@@ -22,26 +22,44 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.exception;
+package com.tencent.bk.job.common.exception.base;
 
+import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.error.BkErrorCodeEnum;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.error.payload.BadRequestPayloadDTO;
+import com.tencent.bk.job.common.error.payload.FieldViolationDTO;
 import lombok.Getter;
 import lombok.ToString;
 
 /**
- * 请求无法在当前系统状态下执行
+ * 请求参数非法异常
  */
 @Getter
 @ToString
-public class FailedPreconditionException extends ServiceException {
+public class InvalidParamException extends ServiceException {
 
-    public FailedPreconditionException(String internalErrorMessage, Throwable cause) {
-        super(internalErrorMessage, cause);
-        setErrorCode(BkErrorCodeEnum.FAILED_PRECONDITION);
+    public InvalidParamException() {
+        super(SubErrorCode.of(ErrorCode.ILLEGAL_PARAM));
+        setErrorCode(BkErrorCodeEnum.INVALID_ARGUMENT);
     }
 
-    public FailedPreconditionException(String internalErrorMessage) {
-        super(internalErrorMessage);
-        setErrorCode(BkErrorCodeEnum.FAILED_PRECONDITION);
+    public InvalidParamException(BadRequestPayloadDTO payload) {
+        super(SubErrorCode.of(ErrorCode.ILLEGAL_PARAM), payload);
+        setErrorCode(BkErrorCodeEnum.INVALID_ARGUMENT);
     }
+
+    public static InvalidParamException withInvalidField(String filed, String description) {
+        BadRequestPayloadDTO payload = BadRequestPayloadDTO.instance()
+            .addFieldViolation(new FieldViolationDTO(filed, description));
+        return new InvalidParamException(payload);
+    }
+
+    public static InvalidParamException withInvalidField(String filed) {
+        BadRequestPayloadDTO payload = BadRequestPayloadDTO.instance()
+            .addFieldViolation(new FieldViolationDTO(filed, ""));
+        return new InvalidParamException(payload);
+    }
+
+
 }

@@ -24,8 +24,8 @@
 
 package com.tencent.bk.job.file_gateway.api.web;
 
-import com.tencent.bk.job.common.exception.ServiceException;
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.exception.base.ServiceException;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
@@ -68,7 +68,7 @@ public class WebFileResourceImpl implements WebFileResource {
             AuthResult viewFileSourceAuthResult = webFileSourceResource.checkViewFileSourcePermission(username,
                 appResourceScope, fileSourceId);
             if (!viewFileSourceAuthResult.isPass()) {
-                throw new PermissionDeniedException(viewFileSourceAuthResult);
+                throw new IamPermissionDeniedException(viewFileSourceAuthResult);
             }
             AuthResult manageFileSourceAuthResult =
                 webFileSourceResource.checkManageFileSourcePermission(username, appResourceScope, fileSourceId);
@@ -95,7 +95,7 @@ public class WebFileResourceImpl implements WebFileResource {
             AuthResult authResult = webFileSourceResource.checkManageFileSourcePermission(username, appResourceScope,
                 fileSourceId);
             if (!authResult.isPass()) {
-                throw new PermissionDeniedException(authResult);
+                throw new IamPermissionDeniedException(authResult);
             }
             return Response.buildSuccessResp(fileService.executeAction(username, appId, fileSourceId, req));
         } catch (ServiceException e) {

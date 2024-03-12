@@ -26,12 +26,10 @@ package com.tencent.bk.job.manage.api.esb.impl;
 
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
-import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.model.dto.ApplicationHostDTO;
 import com.tencent.bk.job.common.openapi.job.v2.EsbFileSourceDTO;
 import com.tencent.bk.job.common.openapi.job.v2.EsbIpDTO;
@@ -98,11 +96,8 @@ public class EsbGetJobDetailResourceImpl implements EsbGetJobDetailResource {
     public EsbResp<EsbJobDetailDTO> getJobDetail(String username,
                                                  String appCode,
                                                  @AuditRequestBody EsbGetJobDetailRequest request) {
-        ValidateResult checkResult = checkRequest(request);
-        if (!checkResult.isPass()) {
-            log.warn("Get job detail, request is illegal!");
-            throw new InvalidParamException(checkResult);
-        }
+        checkRequest(request);
+
         Long appId = request.getAppId();
         Long jobId = request.getPlanId();
 
@@ -130,11 +125,10 @@ public class EsbGetJobDetailResourceImpl implements EsbGetJobDetailResource {
         return job;
     }
 
-    private ValidateResult checkRequest(EsbGetJobDetailRequest request) {
+    private void checkRequest(EsbGetJobDetailRequest request) {
         if (request.getPlanId() == null || request.getPlanId() < 1) {
-            return ValidateResult.fail(ErrorCode.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME, "bk_job_id");
+            throw InvalidParamException.withInvalidField("bk_job_id");
         }
-        return ValidateResult.pass();
     }
 
     private List<EsbStepDTO> buildSteps(TaskPlanInfoDTO plan) {

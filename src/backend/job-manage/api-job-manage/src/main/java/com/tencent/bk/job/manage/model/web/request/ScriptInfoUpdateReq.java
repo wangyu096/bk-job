@@ -24,8 +24,9 @@
 
 package com.tencent.bk.job.manage.model.web.request;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.error.payload.BadRequestPayloadDTO;
+import com.tencent.bk.job.common.error.payload.FieldViolationDTO;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.util.check.IlegalCharChecker;
 import com.tencent.bk.job.common.util.check.MaxLengthChecker;
 import com.tencent.bk.job.common.util.check.NotEmptyChecker;
@@ -67,7 +68,10 @@ public class ScriptInfoUpdateReq {
             this.scriptName = stringCheckHelper.checkAndGetResult(scriptName);
         } catch (StringCheckException e) {
             log.warn("scriptName is invalid:", e);
-            throw new InvalidParamException(ErrorCode.SCRIPT_NAME_INVALID);
+            throw new InvalidParamException(
+                BadRequestPayloadDTO.instance()
+                    .addFieldViolation(
+                        new FieldViolationDTO("scriptName", "Script name is invalid")));
         }
     }
 }

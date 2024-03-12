@@ -24,8 +24,7 @@
 
 package com.tencent.bk.job.manage.api.inner.impl;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.common.model.dto.ApplicationDTO;
 import com.tencent.bk.job.common.model.dto.ApplicationHostDTO;
@@ -91,7 +90,7 @@ public class ServiceSyncResourceImpl implements ServiceSyncResource {
             return InternalResponse.buildSuccessResp(serviceHosts);
         } catch (Exception e) {
             log.warn("Get host by appId exception", e);
-            throw new InternalException(e, ErrorCode.INTERNAL_ERROR);
+            throw new InternalException(e);
         }
     }
 

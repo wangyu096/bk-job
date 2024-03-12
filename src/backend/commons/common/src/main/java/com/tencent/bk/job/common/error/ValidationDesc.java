@@ -22,48 +22,8 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.openapi.model;
+package com.tencent.bk.job.common.error;
 
-import com.tencent.bk.job.common.error.BkErrorCodeEnum;
-import com.tencent.bk.job.common.openapi.model.iam.OpenApiApplyPermissionDTO;
-import com.tencent.bk.job.common.util.I18nUtil;
-import lombok.Data;
-
-/**
- * 蓝鲸 Open API 错误统一模型
- */
-@Data
-public class OpenApiError {
-    /**
-     * 蓝鲸错误码
-     * <p>
-     * 作用: 上游编码基于这个做代码层面的逻辑判断(所以必须是确定的枚举)不允许各系统自定义。
-     */
-    private String code;
-
-    /**
-     * 提供给用户的错误信息。需要支持国际化
-     */
-    private String message;
-
-    /**
-     * 无权限返回数据。当 http status = 403 且 code = IAM_NO_PERMISSION 时，该字段有效
-     */
-    private OpenApiApplyPermissionDTO permission;
-
-
-
-    public static OpenApiError internalError() {
-        OpenApiError error = new OpenApiError();
-        error.setCode(BkErrorCodeEnum.INTERNAL.getErrorCode());
-        error.setMessage(I18nUtil.getI18nMessage(""));
-        return error;
-    }
-
-    public static OpenApiError badRequest() {
-        OpenApiError error = new OpenApiError();
-        error.setCode(BkErrorCodeEnum.INVALID_ARGUMENT.getErrorCode());
-        error.setMessage(I18nUtil.getI18nMessage(""));
-        return error;
-    }
+public class ValidationDesc {
+    public static final String AT_LEAST_ONE_PARAM_REQUIRED = "At least one parameter is required";
 }

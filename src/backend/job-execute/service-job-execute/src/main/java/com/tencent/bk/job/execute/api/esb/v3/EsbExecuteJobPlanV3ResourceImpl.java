@@ -26,11 +26,9 @@ package com.tencent.bk.job.execute.api.esb.v3;
 
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
-import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.openapi.job.v3.EsbGlobalVarV3DTO;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.common.openapi.job.v3.EsbServerV3DTO;
@@ -78,12 +76,8 @@ public class EsbExecuteJobPlanV3ResourceImpl
     public EsbResp<EsbJobExecuteV3DTO> executeJobPlan(String username,
                                                       String appCode,
                                                       @AuditRequestBody EsbExecuteJobV3Request request) {
-        ValidateResult checkResult = checkExecuteTaskRequest(request);
         log.info("Execute task, request={}", JsonUtils.toJson(request));
-        if (!checkResult.isPass()) {
-            log.warn("Execute job request is illegal!");
-            throw new InvalidParamException(checkResult);
-        }
+        checkExecuteTaskRequest(request);
 
         request.trimIps();
 
@@ -121,20 +115,18 @@ public class EsbExecuteJobPlanV3ResourceImpl
         return EsbResp.buildSuccessResp(result);
     }
 
-    private ValidateResult checkExecuteTaskRequest(EsbExecuteJobV3Request request) {
+    private void checkExecuteTaskRequest(EsbExecuteJobV3Request request) {
         if (request.getTaskId() == null || request.getTaskId() <= 0) {
             log.warn("Execute task, taskId is empty!");
-            return ValidateResult.fail(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, "job_plan_id");
+            throw InvalidParamException.withInvalidField("job_plan_id");
         }
         if (request.getGlobalVars() != null) {
             for (EsbGlobalVarV3DTO globalVar : request.getGlobalVars()) {
                 if ((globalVar.getId() == null || globalVar.getId() <= 0) && StringUtils.isBlank(globalVar.getName())) {
                     log.warn("Execute task, both variable id and name are empty");
-                    return ValidateResult.fail(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME,
-                        "global_var.id|global_var.name");
+                    throw InvalidParamException.withInvalidField("global_var.id|global_var.name");
                 }
             }
         }
-        return ValidateResult.pass();
     }
 }

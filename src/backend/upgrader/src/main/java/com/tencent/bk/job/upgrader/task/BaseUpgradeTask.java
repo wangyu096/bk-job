@@ -25,10 +25,8 @@
 package com.tencent.bk.job.upgrader.task;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.HttpMethodEnum;
-import com.tencent.bk.job.common.exception.InternalException;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.common.util.Base64Util;
 import com.tencent.bk.job.common.util.http.BaseHttpHelper;
@@ -88,9 +86,7 @@ public abstract class BaseUpgradeTask implements IUpgradeTask {
         );
         if (StringUtils.isBlank(jobAuthToken)) {
             log.error("{} is not configured", ParamNameConsts.CONFIG_PROPERTY_JOB_SECURITY_PUBLIC_KEY_BASE64);
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, new String[]{
-                ParamNameConsts.CONFIG_PROPERTY_JOB_SECURITY_PUBLIC_KEY_BASE64
-            });
+            throw new IllegalArgumentException();
         }
         jobAuthToken = Base64Util.decodeContentToStr(jobAuthToken);
 
@@ -107,7 +103,7 @@ public abstract class BaseUpgradeTask implements IUpgradeTask {
                 String errorMsg =
                     MessageFormatter.format("Fail: response is blank|url={}", url).getMessage();
                 log.error(errorMsg);
-                throw new InternalException(errorMsg, ErrorCode.INTERNAL_ERROR);
+                throw new InternalException(errorMsg);
             }
             Response<T> resp = JsonUtils.fromJson(respStr,
                 new TypeReference<Response<T>>() {
@@ -115,12 +111,12 @@ public abstract class BaseUpgradeTask implements IUpgradeTask {
             if (resp == null) {
                 String errorMsg =
                     MessageFormatter.format("Fail: parse response|url={}", url).getMessage();
-                throw new InternalException(errorMsg, ErrorCode.INTERNAL_ERROR);
+                throw new InternalException(errorMsg);
             }
             return resp;
         } catch (Exception e) {
             log.error("Fail: caught exception", e);
-            throw new InternalException(e, ErrorCode.INTERNAL_ERROR);
+            throw new InternalException(e);
         }
     }
 

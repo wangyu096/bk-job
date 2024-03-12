@@ -26,6 +26,7 @@ package com.tencent.bk.job.common.error.payload;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.tencent.bk.job.common.error.ValidationDesc;
 import lombok.Data;
 
 /**
@@ -34,18 +35,29 @@ import lombok.Data;
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FieldViolationDTO {
+    /**
+     * 错误参数名
+     */
     @JsonProperty("field")
     private String field;
 
-    @JsonProperty("rejected_value")
-    private Object rejectedValue;
-
+    /**
+     * 描述参数不合法的原因，需要支持国际化
+     */
     @JsonProperty("description")
     private String description;
 
-    public FieldViolationDTO(String field, Object rejectedValue, String description) {
+    public FieldViolationDTO(String field, String description) {
         this.field = field;
-        this.rejectedValue = rejectedValue;
         this.description = description;
+    }
+
+    public static FieldViolationDTO atLeastOneParamRequired(String param1, String param2) {
+        return new FieldViolationDTO(param1 + "/" + param2, ValidationDesc.AT_LEAST_ONE_PARAM_REQUIRED);
+    }
+
+    public static FieldViolationDTO atLeastOneParamRequired(String param1, String param2, String param3) {
+        return new FieldViolationDTO(param1 + "/" + param2 + "/" + param3,
+            ValidationDesc.AT_LEAST_ONE_PARAM_REQUIRED);
     }
 }

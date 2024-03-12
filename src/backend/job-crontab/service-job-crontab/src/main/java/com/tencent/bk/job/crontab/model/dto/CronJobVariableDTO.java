@@ -25,9 +25,7 @@
 package com.tencent.bk.job.crontab.model.dto;
 
 import com.tencent.bk.job.common.annotation.PersistenceObject;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
-import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.openapi.job.v3.EsbGlobalVarV3DTO;
 import com.tencent.bk.job.crontab.model.CronJobVariableVO;
 import com.tencent.bk.job.crontab.model.inner.ServerDTO;
@@ -97,7 +95,7 @@ public class CronJobVariableDTO implements Cloneable {
         variableInfo.setName(variableVO.getName());
         variableInfo.setType(TaskVariableTypeEnum.valOf(variableVO.getType()));
         if (variableInfo.getType() == null) {
-            throw new InvalidParamException(ErrorCode.WRONG_VARIABLE_TYPE);
+            throw new IllegalArgumentException("Wrong variable type");
         }
         if (TaskVariableTypeEnum.HOST_LIST == variableInfo.getType()) {
             variableInfo.setServer(ServerDTO.fromTargetVO(variableVO.getTargetValue()));

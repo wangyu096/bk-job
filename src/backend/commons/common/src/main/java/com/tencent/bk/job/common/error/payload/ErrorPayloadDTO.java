@@ -27,8 +27,10 @@ package com.tencent.bk.job.common.error.payload;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.tencent.bk.job.common.model.iam.AuthResultDTO;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -39,21 +41,23 @@ import java.util.Map;
     @JsonSubTypes.Type(value = AuthResultDTO.class, name = "IAM_NO_PERMISSION"),
     @JsonSubTypes.Type(value = BadRequestPayloadDTO.class, name = "INVALID_ARGUMENT")
 })
+@Getter
+@Setter
 public class ErrorPayloadDTO {
     /**
      * 其他错误信息
      */
     protected Map<String, String> metadata;
 
-    protected List<String> links;
+    /**
+     * 帮助信息
+     */
+    protected HelpInfoDTO help;
 
-    protected List<String> docs;
-
-    public Map<String, String> getMetadata() {
-        return metadata;
-    }
-
-    public void setMetadata(Map<String, String> metadata) {
-        this.metadata = metadata;
+    public void addMetadata(String key, String value) {
+        if (metadata == null) {
+            metadata = new HashMap<>();
+        }
+        metadata.put(key, value);
     }
 }

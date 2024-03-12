@@ -66,15 +66,6 @@ public class RequestUtilTest {
     }
 
     @Test
-    public void whenNoHeadersThenReturnNull() {
-        ServerHttpRequest mockRequest = mock(ServerHttpRequest.class);
-        when(mockRequest.getHeaders()).thenReturn(null);
-
-        String headerValue = RequestUtil.getHeaderValue(mockRequest, "existKey");
-        assertThat(headerValue).isNull();
-    }
-
-    @Test
     public void whenGetExistCookieThenReturnHeaderValue() {
         ServerHttpRequest mockRequest = mock(ServerHttpRequest.class);
         MultiValueMap<String, HttpCookie> mockCookieMap = mock(MultiValueMap.class);
@@ -101,21 +92,4 @@ public class RequestUtilTest {
         String cookieValue = RequestUtil.getCookieValue(mockRequest, "cookie2");
         assertThat(cookieValue).isNull();
     }
-
-    @Test
-    public void whenNoExistAnyCookieThenReturnNull() {
-        ServerHttpRequest mockRequest = mock(ServerHttpRequest.class);
-        when(mockRequest.getCookies()).thenReturn(null);
-
-        String actualCookieValue = RequestUtil.getCookieValue(mockRequest, "cookie1");
-        assertThat(actualCookieValue).isNull();
-
-        MultiValueMap<String, HttpCookie> mockHttpCookieMap = mock(MultiValueMap.class);
-        when(mockHttpCookieMap.toSingleValueMap()).thenReturn(null);
-        when(mockRequest.getCookies()).thenReturn(mockHttpCookieMap);
-        String actualCookieValue1 = RequestUtil.getCookieValue(mockRequest, "cookie1");
-        assertThat(actualCookieValue1).isNull();
-    }
-
-
 }

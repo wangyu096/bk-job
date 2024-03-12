@@ -25,20 +25,13 @@
 package com.tencent.bk.job.common.web.exception.handler;
 
 import com.tencent.bk.job.common.annotation.InternalAPI;
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.AlreadyExistsException;
-import com.tencent.bk.job.common.exception.FailedPreconditionException;
-import com.tencent.bk.job.common.exception.InternalException;
-import com.tencent.bk.job.common.exception.InvalidParamException;
-import com.tencent.bk.job.common.exception.NotFoundException;
-import com.tencent.bk.job.common.exception.ResourceExhaustedException;
-import com.tencent.bk.job.common.exception.ServiceException;
-import com.tencent.bk.job.common.exception.UnauthenticatedException;
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.error.internal.InternalApiError;
+import com.tencent.bk.job.common.error.payload.BadRequestPayloadDTO;
+import com.tencent.bk.job.common.exception.base.ServiceException;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.InternalResponse;
-import com.tencent.bk.job.common.model.error.ErrorDetailDTO;
-import com.tencent.bk.job.common.model.error.ErrorType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -61,9 +54,10 @@ public class ServiceExceptionControllerAdvice extends ExceptionControllerAdviceB
     @ResponseBody
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     InternalResponse<?> handleException(HttpServletRequest request, Throwable ex) {
-        String exceptionInfo = "Handle Exception, uri: " + request.getRequestURI();
-        log.error(exceptionInfo, ex);
-        return InternalResponse.buildCommonFailResp(ErrorType.INTERNAL, ErrorCode.INTERNAL_ERROR);
+        String errorMsg = "Handle Exception, uri: " + request.getRequestURI();
+        log.error(errorMsg, ex);
+
+        return InternalResponse.buildCommonFailResp(InternalApiError.internalError(), SubErrorCode.INTERNAL_ERROR);
     }
 
     @ExceptionHandler(ServiceException.class)
@@ -71,82 +65,29 @@ public class ServiceExceptionControllerAdvice extends ExceptionControllerAdviceB
     ResponseEntity<?> handleServiceException(HttpServletRequest request, ServiceException ex) {
         String exceptionInfo = "Handle ServiceException, uri: " + request.getRequestURI();
         log.warn(exceptionInfo, ex);
-        return new ResponseEntity<>(InternalResponse.buildCommonFailResp(ex), HttpStatus.OK);
+        return new ResponseEntity<>(InternalResponse.buildCommonFailResp(ex), getHttpStatusByServiceException(ex));
     }
 
-    @ExceptionHandler(PermissionDeniedException.class)
+    @ExceptionHandler(IamPermissionDeniedException.class)
     @ResponseBody
     @ResponseStatus(HttpStatus.FORBIDDEN)
     InternalResponse<?> handlePermissionDeniedException(HttpServletRequest request,
-                                                        PermissionDeniedException ex) {
+                                                        IamPermissionDeniedException ex) {
         log.info("Handle PermissionDeniedException, uri: {}, authResult: {}",
             request.getRequestURI(), ex.getAuthResult());
-        return InternalResponse.buildCommonFailResp(AuthResult.toAuthResultDTO(ex.getAuthResult()));
-    }
-
-    @ExceptionHandler(InternalException.class)
-    @ResponseBody
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    InternalResponse<?> handleInternalException(HttpServletRequest request, InternalException ex) {
-        String errorMsg = "Handle InternalException, uri: " + request.getRequestURI();
-        log.error(errorMsg, ex);
-        return InternalResponse.buildCommonFailResp(ex);
-    }
-
-    @ExceptionHandler({InvalidParamException.class})
-    @ResponseBody
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    InternalResponse<?> handleInvalidParamException(HttpServletRequest request, InvalidParamException ex) {
-        String errorMsg = "Handle InvalidParamException, uri: " + request.getRequestURI();
-        log.warn(errorMsg, ex);
-        return InternalResponse.buildCommonFailResp(ex);
-    }
-
-    @ExceptionHandler(FailedPreconditionException.class)
-    @ResponseBody
-    @ResponseStatus(HttpStatus.OK)
-    InternalResponse<?> handleBusinessException(HttpServletRequest request, FailedPreconditionException ex) {
-        String errorMsg = "Handle FailedPreconditionException, uri: " + request.getRequestURI();
-        log.info(errorMsg, ex);
-        return InternalResponse.buildCommonFailResp(ex);
-    }
-
-    @ExceptionHandler(NotFoundException.class)
-    @ResponseBody
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    InternalResponse<?> handleNotFoundException(HttpServletRequest request, NotFoundException ex) {
-        String errorMsg = "Handle NotFoundException, uri: " + request.getRequestURI();
-        log.info(errorMsg, ex);
-        return InternalResponse.buildCommonFailResp(ex);
-    }
-
-    @ExceptionHandler(AlreadyExistsException.class)
-    @ResponseBody
-    @ResponseStatus(HttpStatus.CONFLICT)
-    InternalResponse<?> handleAlreadyExistsException(HttpServletRequest request, AlreadyExistsException ex) {
-        String errorMsg = "Handle AlreadyExistsException, uri: " + request.getRequestURI();
-        log.info(errorMsg, ex);
-        return InternalResponse.buildCommonFailResp(ex);
-    }
-
-    @ExceptionHandler(UnauthenticatedException.class)
-    @ResponseBody
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    InternalResponse<?> handleUnauthenticatedException(HttpServletRequest request, UnauthenticatedException ex) {
-        String errorMsg = "Handle UnauthenticatedException, uri: " + request.getRequestURI();
-        log.error(errorMsg, ex);
-        return InternalResponse.buildCommonFailResp(ex);
+        return InternalResponse.buildAuthFailResp(AuthResult.toAuthResultDTO(ex.getAuthResult()));
     }
 
     @SuppressWarnings("all")
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
-                                                                  HttpHeaders headers, HttpStatus status,
+                                                                  HttpHeaders headers,
+                                                                  HttpStatus status,
                                                                   WebRequest request) {
-        ErrorDetailDTO errorDetail = buildErrorDetail(ex);
-        log.warn("HandleMethodArgumentNotValid - errorDetail: {}", errorDetail);
-        InternalResponse<?> resp = InternalResponse.buildCommonFailResp(ErrorType.INVALID_PARAM,
-            ErrorCode.ILLEGAL_PARAM, errorDetail);
+        log.warn("HandleMethodArgumentNotValid", ex);
+        BadRequestPayloadDTO errorPayload = buildBadRequestPayloadDTO(ex);
+        InternalApiError apiError = InternalApiError.invalidArgument(errorPayload);
+        InternalResponse<?> resp = InternalResponse.buildCommonFailResp(apiError, SubErrorCode.ILLEGAL_PARAM);
         return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
     }
 
@@ -154,23 +95,11 @@ public class ServiceExceptionControllerAdvice extends ExceptionControllerAdviceB
     @ResponseBody
     ResponseEntity<?> handleConstraintViolationException(HttpServletRequest request,
                                                          ConstraintViolationException ex) {
-        ErrorDetailDTO errorDetail = buildErrorDetail(ex);
-        log.warn("handleConstraintViolationException - errorDetail: {}", errorDetail);
-        InternalResponse<?> resp = InternalResponse.buildCommonFailResp(ErrorType.INVALID_PARAM,
-            ErrorCode.ILLEGAL_PARAM, errorDetail);
+        log.warn("HandleConstraintViolationException", ex);
+        BadRequestPayloadDTO errorPayload = buildBadRequestPayloadDTO(ex);
+        InternalApiError apiError = InternalApiError.invalidArgument(errorPayload);
+        InternalResponse<?> resp = InternalResponse.buildCommonFailResp(apiError, SubErrorCode.ILLEGAL_PARAM);
         return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler({ResourceExhaustedException.class})
-    @ResponseBody
-    ResponseEntity<?> handleResourceExhaustedException(HttpServletRequest request, ResourceExhaustedException ex) {
-        String errorMsg = "Handle ResourceExhaustedException, uri: " + request.getRequestURI();
-        if (log.isDebugEnabled()) {
-            log.debug(errorMsg, ex);
-        } else {
-            log.info(errorMsg);
-        }
-        return new ResponseEntity<>(InternalResponse.buildCommonFailResp(ex), HttpStatus.TOO_MANY_REQUESTS);
     }
 
 }

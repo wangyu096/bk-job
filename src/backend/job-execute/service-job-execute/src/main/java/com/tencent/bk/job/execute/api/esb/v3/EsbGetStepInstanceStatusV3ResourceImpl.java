@@ -26,12 +26,11 @@ package com.tencent.bk.job.execute.api.esb.v3;
 
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
-import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
-import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.model.dto.HostDTO;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
@@ -144,15 +143,11 @@ public class EsbGetStepInstanceStatusV3ResourceImpl implements EsbGetStepInstanc
                                                                      String tag) {
         long appId = appScopeMappingService.getAppIdByScope(scopeType, scopeId);
 
-        ValidateResult checkResult = stepInstanceValidateService.checkStepInstance(
+        stepInstanceValidateService.checkStepInstance(
             appId,
             taskInstanceId,
             stepInstanceId
         );
-        if (!checkResult.isPass()) {
-            log.warn("Get step instance status request is illegal!");
-            throw new InvalidParamException(checkResult);
-        }
 
         StepExecutionResultQuery query = StepExecutionResultQuery.builder()
             .stepInstanceId(stepInstanceId)
@@ -169,7 +164,7 @@ public class EsbGetStepInstanceStatusV3ResourceImpl implements EsbGetStepInstanc
 
         StepExecutionDetailDTO executionResult = taskResultService.getStepExecutionResult(username, appId, query);
         if (executionResult == null) {
-            throw new NotFoundException(ErrorCode.STEP_INSTANCE_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.STEP_INSTANCE_NOT_EXIST));
         }
         EsbStepInstanceStatusV3DTO jobInstanceStatus = buildEsbStepInstanceStatusV3DTO(executionResult);
 

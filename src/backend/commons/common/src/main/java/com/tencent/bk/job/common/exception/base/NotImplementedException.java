@@ -22,32 +22,23 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.iam.exception;
+package com.tencent.bk.job.common.exception.base;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.error.BkErrorCodeEnum;
 import com.tencent.bk.job.common.error.SubErrorCode;
-import com.tencent.bk.job.common.exception.ServiceException;
-import com.tencent.bk.job.common.iam.model.AuthResult;
 import lombok.Getter;
 import lombok.ToString;
 
 /**
- * 权限不足异常
+ * 方法/特性/功能未实现
  */
 @Getter
 @ToString
-public class PermissionDeniedException extends ServiceException {
-    private final AuthResult authResult;
+public class NotImplementedException extends ServiceException {
 
-    public PermissionDeniedException(AuthResult authResult) {
-        super();
-        this.authResult = authResult;
-        setErrorCode(BkErrorCodeEnum.IAM_NO_PERMISSION);
-        setSubErrorCode(SubErrorCode.of(ErrorCode.BK_PERMISSION_DENIED));
-    }
-
-    public AuthResult getAuthResult() {
-        return authResult;
+    public NotImplementedException(String message) {
+        super(message, SubErrorCode.of(ErrorCode.NOT_SUPPORT_FEATURE));
+        setErrorCode(BkErrorCodeEnum.NOT_IMPLEMENTED);
     }
 }

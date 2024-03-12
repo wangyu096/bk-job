@@ -25,7 +25,6 @@
 package com.tencent.bk.job.common.paas.user;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.HttpMethodEnum;
 import com.tencent.bk.job.common.esb.config.EsbProperties;
 import com.tencent.bk.job.common.esb.constants.EsbLang;
@@ -64,6 +63,8 @@ public class UserMgrApiClient extends BkApiClient {
 
     private final BkApiAuthorization authorization;
 
+    private static final String CLIENT_NAME = "bk_user_management";
+
     public UserMgrApiClient(EsbProperties esbProperties,
                             AppProperties appProperties,
                             MeterRegistry meterRegistry) {
@@ -71,7 +72,8 @@ public class UserMgrApiClient extends BkApiClient {
             ESB_USER_MANAGE_API,
             esbProperties.getService().getUrl(),
             HttpHelperFactory.getRetryableHttpHelper(),
-            EsbLang.EN
+            EsbLang.EN,
+            CLIENT_NAME
         );
         this.authorization = BkApiAuthorization.appAuthorization(appProperties.getCode(),
             appProperties.getSecret(), "admin");
@@ -101,7 +103,7 @@ public class UserMgrApiClient extends BkApiClient {
         } catch (Exception e) {
             String errorMsg = "Get " + API_GET_USER_LIST + " error";
             log.error(errorMsg, e);
-            throw new InternalUserManageException(errorMsg, e, ErrorCode.USER_MANAGE_API_ACCESS_ERROR);
+            throw new InternalUserManageException(errorMsg, e);
         } finally {
             HttpMetricUtil.clearHttpMetric();
         }

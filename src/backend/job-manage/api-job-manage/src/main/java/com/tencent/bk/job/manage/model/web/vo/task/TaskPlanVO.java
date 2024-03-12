@@ -26,8 +26,7 @@ package com.tencent.bk.job.manage.model.web.vo.task;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.util.JobContextUtil;
 import com.tencent.bk.job.common.util.check.IlegalCharChecker;
 import com.tencent.bk.job.common.util.check.MaxLengthChecker;
@@ -197,7 +196,7 @@ public class TaskPlanVO {
             this.setName(stringCheckHelper.checkAndGetResult(this.getName()));
         } catch (StringCheckException e) {
             log.warn("Template name is invalid:", e);
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         boolean isCreate = false;
         if (CollectionUtils.isNotEmpty(stepList)) {
@@ -211,7 +210,7 @@ public class TaskPlanVO {
                 variable.validate(isCreate);
                 if (variableNameList.contains(variable.getName())) {
                     log.warn("Variable name duplicated! name: {}", variable.getName());
-                    throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+                    throw new InvalidParamException();
                 }
                 if (variable.getDelete() != null && variable.getDelete() != 1) {
                     variableNameList.add(variable.getName());

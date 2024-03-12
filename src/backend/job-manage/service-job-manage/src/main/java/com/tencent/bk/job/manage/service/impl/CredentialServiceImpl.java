@@ -29,8 +29,9 @@ import com.tencent.bk.audit.annotations.AuditInstanceRecord;
 import com.tencent.bk.audit.context.ActionAuditContext;
 import com.tencent.bk.job.common.audit.constants.EventContentConstants;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.FailedPreconditionException;
-import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.FailedPreconditionException;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
@@ -43,7 +44,7 @@ import com.tencent.bk.job.manage.model.dto.CredentialDTO;
 import com.tencent.bk.job.manage.model.inner.resp.ServiceCredentialDisplayDTO;
 import com.tencent.bk.job.manage.model.web.request.CredentialCreateUpdateReq;
 import com.tencent.bk.job.manage.service.CredentialService;
-import org.slf4j.helpers.MessageFormatter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -51,6 +52,7 @@ import java.util.Collection;
 import java.util.List;
 
 @Service
+@Slf4j
 public class CredentialServiceImpl implements CredentialService {
 
     private final CredentialDAO credentialDAO;
@@ -126,7 +128,7 @@ public class CredentialServiceImpl implements CredentialService {
         CredentialDTO credentialDTO = buildCredentialDTO(username, appId, createUpdateReq);
         CredentialDTO originCredentialDTO = credentialDAO.getCredentialById(id);
         if (originCredentialDTO == null) {
-            throw new NotFoundException(ErrorCode.CREDENTIAL_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.CREDENTIAL_NOT_EXIST));
         }
 
         String value1 = createUpdateReq.getValue1();
@@ -167,7 +169,7 @@ public class CredentialServiceImpl implements CredentialService {
 
         CredentialDTO credential = getCredentialById(id);
         if (credential == null) {
-            throw new NotFoundException(ErrorCode.CREDENTIAL_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.CREDENTIAL_NOT_EXIST));
         }
 
         // 审计
@@ -176,12 +178,8 @@ public class CredentialServiceImpl implements CredentialService {
         // 检查是否被引用
         Boolean isCredentialReferenced = fileSourceService.existsFileSourceUsingCredential(appId, id).getData();
         if (isCredentialReferenced) {
-            String msg = MessageFormatter.format(
-                "Credential ({},{}) is referenced, cannot delete",
-                appId,
-                id
-            ).getMessage();
-            throw new FailedPreconditionException(msg, ErrorCode.DELETE_REF_CREDENTIAL_FAIL);
+            log.warn("Credential ({},{}) is referenced, cannot delete", appId, id);
+            throw new FailedPreconditionException(SubErrorCode.of(ErrorCode.DELETE_REF_CREDENTIAL_FAIL));
         }
 
         return credentialDAO.deleteCredentialById(id);

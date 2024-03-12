@@ -86,7 +86,8 @@ public class GseV2ApiClient extends BkApiClient implements IGseClient {
                 60,
                 true,
                 new JobHttpRequestRetryHandler()
-            )
+            ),
+            "bk_gse_v2"
         );
         gseBkApiAuthorization = BkApiAuthorization.appAuthorization(appProperties.getCode(), appProperties.getSecret());
         log.info("Init GseV2ApiClient, bkGseApiGatewayUrl: {}, appCode: {}",

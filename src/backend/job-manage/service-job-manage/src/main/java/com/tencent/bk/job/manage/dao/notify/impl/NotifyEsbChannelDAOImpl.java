@@ -28,8 +28,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.UncheckedExecutionException;
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.common.paas.cmsi.CmsiApiClient;
 import com.tencent.bk.job.common.util.JobContextUtil;
 import com.tencent.bk.job.manage.dao.notify.NotifyEsbChannelDAO;
@@ -89,7 +88,7 @@ public class NotifyEsbChannelDAOImpl implements NotifyEsbChannelDAO {
             if (cause instanceof RuntimeException) {
                 throw (RuntimeException) cause;
             } else {
-                throw new InternalException(errorMsg, e, ErrorCode.INTERNAL_ERROR);
+                throw new InternalException(errorMsg, e);
             }
         }
     }

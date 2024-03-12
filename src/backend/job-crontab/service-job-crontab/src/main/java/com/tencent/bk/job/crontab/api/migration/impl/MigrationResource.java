@@ -25,6 +25,8 @@
 package com.tencent.bk.job.crontab.api.migration.impl;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.error.ApiError;
+import com.tencent.bk.job.common.error.SubErrorCode;
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.common.model.dto.ResourceScope;
 import com.tencent.bk.job.common.service.AppScopeMappingService;
@@ -74,17 +76,14 @@ public class MigrationResource {
                 appIdList = new ArrayList<>(scopeAppIdMap.values());
             } else {
                 scopeList.removeIf(scopeAppIdMap::containsKey);
-                return Response.buildCommonFailResp(ErrorCode.MIGRATION_FAIL, new String[]{
-                        "AddHostIdMigrationTask",
-                        "Cannot find appId by scope:" + scopeList
-                    }
-                );
+                return Response.buildCommonFailResp(ApiError.internalError(), SubErrorCode.of(ErrorCode.MIGRATION_FAIL,
+                    "AddHostIdMigrationTask", "Cannot find appId by scope:" + scopeList));
             }
         }
         results.add(addHostIdForCronVariableMigrationTask.execute(appIdList, req.isDryRun()));
         boolean success = results.stream().allMatch(AddHostIdResult::isSuccess);
         return success ? Response.buildSuccessResp(JsonUtils.toJson(results)) :
-            Response.buildCommonFailResp(ErrorCode.MIGRATION_FAIL, new String[]{"AddHostIdMigrationTask",
-                JsonUtils.toJson(results)});
+            Response.buildCommonFailResp(ApiError.internalError(), SubErrorCode.of(ErrorCode.MIGRATION_FAIL,
+                "AddHostIdMigrationTask", JsonUtils.toJson(results)));
     }
 }

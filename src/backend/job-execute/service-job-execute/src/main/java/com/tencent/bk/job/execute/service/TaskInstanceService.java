@@ -24,8 +24,8 @@
 
 package com.tencent.bk.job.execute.service;
 
-import com.tencent.bk.job.common.exception.NotFoundException;
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.model.dto.HostDTO;
 import com.tencent.bk.job.execute.common.constants.RunStatusEnum;
 import com.tencent.bk.job.execute.model.TaskInstanceDTO;
@@ -45,7 +45,7 @@ public interface TaskInstanceService {
     TaskInstanceDTO getTaskInstance(long taskInstanceId) throws NotFoundException;
 
     TaskInstanceDTO getTaskInstance(String username, long appId, long taskInstanceId)
-        throws NotFoundException, PermissionDeniedException;
+        throws NotFoundException, IamPermissionDeniedException;
 
     /**
      * 获取作业实例详情-包含步骤信息和全局变量信息
@@ -64,7 +64,7 @@ public interface TaskInstanceService {
      * @return 作业实例
      */
     TaskInstanceDTO getTaskInstanceDetail(String username, long appId, long taskInstanceId)
-        throws NotFoundException, PermissionDeniedException;
+        throws NotFoundException, IamPermissionDeniedException;
 
     void updateTaskStatus(long taskInstanceId, int status);
 

@@ -26,9 +26,8 @@ package com.tencent.bk.job.manage.api.esb.impl.v3;
 
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobCommonHeaders;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
@@ -345,7 +344,7 @@ public class EsbPublicScriptResourceV3Impl implements EsbPublicScriptV3Resource 
             && request.getScriptLanguage() > 0
             && ScriptTypeEnum.valOf(request.getScriptLanguage()) == null) {
             log.warn("Param [type]:[{}] is illegal!", request.getScriptLanguage());
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, "type");
+            throw InvalidParamException.withInvalidField("type");
         }
     }
 
@@ -371,7 +370,7 @@ public class EsbPublicScriptResourceV3Impl implements EsbPublicScriptV3Resource 
     private void checkEsbGetPublicScriptVersionListV3Req(EsbGetPublicScriptVersionListV3Request request) {
         if (StringUtils.isBlank(request.getScriptId())) {
             log.warn("Param [script_id] is empty!");
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, "script_id");
+            throw InvalidParamException.withInvalidField("script_id");
         }
     }
 
@@ -383,12 +382,12 @@ public class EsbPublicScriptResourceV3Impl implements EsbPublicScriptV3Resource 
 
         if (StringUtils.isBlank(request.getScriptId())) {
             log.warn("Param [script_id] is empty!");
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, "script_id");
+            throw InvalidParamException.withInvalidField("script_id");
         }
 
         if (StringUtils.isBlank(request.getVersion())) {
             log.warn("Param [version] is empty!");
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, "version");
+            throw InvalidParamException.withInvalidField("version");
         }
     }
 

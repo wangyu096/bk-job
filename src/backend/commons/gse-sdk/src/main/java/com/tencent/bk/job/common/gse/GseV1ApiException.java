@@ -22,26 +22,23 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.exception;
+package com.tencent.bk.job.common.gse;
 
-import com.tencent.bk.job.common.error.BkErrorCodeEnum;
-import lombok.Getter;
-import lombok.ToString;
+import com.tencent.bk.job.common.error.ErrorReason;
+import com.tencent.bk.job.common.error.payload.ErrorInfoPayloadDTO;
+import com.tencent.bk.job.common.exception.base.InternalException;
 
-/**
- * 方法/特性/功能未实现
- */
-@Getter
-@ToString
-public class NotImplementedException extends ServiceException {
+public class GseV1ApiException extends InternalException {
 
-    public NotImplementedException(String internalErrorMessage, Throwable cause) {
-        super(internalErrorMessage, cause);
-        setErrorCode(BkErrorCodeEnum.NOT_IMPLEMENTED);
+    public GseV1ApiException(String message, Throwable cause) {
+        super(message, cause, new ErrorInfoPayloadDTO("bk_gse_v1", ErrorReason.REQUEST_THIRD_API_ERROR));
     }
 
-    public NotImplementedException(String internalErrorMessage) {
-        super(internalErrorMessage);
-        setErrorCode(BkErrorCodeEnum.NOT_IMPLEMENTED);
+    public GseV1ApiException(Throwable cause) {
+        super(cause, new ErrorInfoPayloadDTO("bk_gse_v1", ErrorReason.REQUEST_THIRD_API_ERROR));
+    }
+
+    public GseV1ApiException(String message) {
+        super(message, new ErrorInfoPayloadDTO("bk_gse_v1", ErrorReason.REQUEST_THIRD_API_ERROR));
     }
 }

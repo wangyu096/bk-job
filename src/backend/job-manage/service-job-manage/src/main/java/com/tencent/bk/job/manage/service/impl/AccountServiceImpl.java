@@ -31,18 +31,18 @@ import com.tencent.bk.job.common.audit.constants.EventContentConstants;
 import com.tencent.bk.job.common.constant.AccountCategoryEnum;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.crypto.Encryptor;
-import com.tencent.bk.job.common.exception.AlreadyExistsException;
-import com.tencent.bk.job.common.exception.FailedPreconditionException;
-import com.tencent.bk.job.common.exception.InvalidParamException;
-import com.tencent.bk.job.common.exception.NotFoundException;
-import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.AlreadyExistsException;
+import com.tencent.bk.job.common.exception.base.FailedPreconditionException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
+import com.tencent.bk.job.common.exception.base.ServiceException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
-import com.tencent.bk.job.common.util.ArrayUtil;
 import com.tencent.bk.job.common.util.Utils;
 import com.tencent.bk.job.common.util.check.IlegalCharChecker;
 import com.tencent.bk.job.common.util.check.MaxLengthChecker;
@@ -102,7 +102,7 @@ public class AccountServiceImpl implements AccountService {
         if (existAccount != null) {
             log.info("Account is exist, appId={}, category={}, alias={}", account.getAppId(), account.getCategory(),
                 account.getAlias());
-            throw new AlreadyExistsException(ErrorCode.ACCOUNT_ALIAS_EXIST);
+            throw new AlreadyExistsException(SubErrorCode.of(ErrorCode.ACCOUNT_ALIAS_EXIST));
         }
         if (StringUtils.isNotEmpty(account.getPassword())) {
             account.setPassword(encryptor.encrypt(account.getPassword()));
@@ -112,13 +112,13 @@ public class AccountServiceImpl implements AccountService {
             AccountDTO dbSystemAccount = accountDAO.getAccountById(account.getDbSystemAccountId());
             if (dbSystemAccount == null) {
                 log.info("DB related system account is not exist, systemAccountId={}", account.getDbSystemAccountId());
-                throw new NotFoundException(ErrorCode.DB_SYSTEM_ACCOUNT_IS_INVALID);
+                throw new NotFoundException(SubErrorCode.of(ErrorCode.DB_SYSTEM_ACCOUNT_IS_INVALID));
             }
             if (!dbSystemAccount.getAppId().equals(account.getAppId())) {
                 log.warn("DB related system account is not in current app, systemAccountId={}, " +
                         "systemAccountAppId={}"
                     , account.getDbSystemAccountId(), dbSystemAccount.getAppId());
-                throw new NotFoundException(ErrorCode.DB_SYSTEM_ACCOUNT_IS_INVALID);
+                throw new NotFoundException(SubErrorCode.of(ErrorCode.DB_SYSTEM_ACCOUNT_IS_INVALID));
             }
         }
 
@@ -153,16 +153,16 @@ public class AccountServiceImpl implements AccountService {
         return createdAccount;
     }
 
-    private void authCreateAccount(String username, long appId) throws PermissionDeniedException {
+    private void authCreateAccount(String username, long appId) throws IamPermissionDeniedException {
         accountAuthService.authCreateAccount(username, new AppResourceScope(appId)).denyIfNoPermission();
     }
 
-    private void authUseAccount(String username, long appId, long accountId) throws PermissionDeniedException {
+    private void authUseAccount(String username, long appId, long accountId) throws IamPermissionDeniedException {
         accountAuthService.authUseAccount(username, new AppResourceScope(appId), accountId, null)
             .denyIfNoPermission();
     }
 
-    private void authManageAccount(String username, long appId, long accountId) throws PermissionDeniedException {
+    private void authManageAccount(String username, long appId, long accountId) throws IamPermissionDeniedException {
         accountAuthService.authManageAccount(username, new AppResourceScope(appId), accountId, null)
             .denyIfNoPermission();
     }
@@ -192,11 +192,11 @@ public class AccountServiceImpl implements AccountService {
         AccountDTO account = getAccountById(accountId);
         if (account == null) {
             log.info("Account is not exist, accountId={}", accountId);
-            throw new NotFoundException(ErrorCode.ACCOUNT_NOT_EXIST, ArrayUtil.toArray(accountId));
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.ACCOUNT_NOT_EXIST, accountId));
         }
         if (!account.getAppId().equals(appId)) {
             log.info("Account is not in app, appId={}, accountId={}", appId, accountId);
-            throw new NotFoundException(ErrorCode.ACCOUNT_NOT_EXIST, ArrayUtil.toArray(accountId));
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.ACCOUNT_NOT_EXIST, accountId));
         }
         return account;
     }
@@ -268,7 +268,7 @@ public class AccountServiceImpl implements AccountService {
                 existAccount.getCategory(),
                 existAccount.getAlias()
             );
-            throw new AlreadyExistsException(ErrorCode.ACCOUNT_ALIAS_EXIST);
+            throw new AlreadyExistsException(SubErrorCode.of(ErrorCode.ACCOUNT_ALIAS_EXIST));
         }
     }
 
@@ -286,18 +286,18 @@ public class AccountServiceImpl implements AccountService {
         AccountDTO account = getAccountById(accountId);
         if (account == null) {
             log.info("Account is not exist, accountId={}", accountId);
-            throw new NotFoundException(ErrorCode.ACCOUNT_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.ACCOUNT_NOT_EXIST));
         }
 
         authManageAccount(username, account.getAppId(), accountId);
 
         if (isAccountRefByAnyStep(accountId)) {
             log.info("Account:{} is ref by step, should not delete!", accountId);
-            throw new FailedPreconditionException(ErrorCode.DELETE_REF_ACCOUNT_FORBIDDEN);
+            throw new FailedPreconditionException(SubErrorCode.of(ErrorCode.DELETE_REF_ACCOUNT_FORBIDDEN));
         }
         if (account.getCategory() == AccountCategoryEnum.SYSTEM && isSystemAccountRefByDbAccount(accountId)) {
             log.info("Account:{} is ref by db account, should not delete!", accountId);
-            throw new FailedPreconditionException(ErrorCode.DELETE_REF_ACCOUNT_FORBIDDEN);
+            throw new FailedPreconditionException(SubErrorCode.of(ErrorCode.DELETE_REF_ACCOUNT_FORBIDDEN));
         }
 
         log.info("Delete account, accountId={}", accountId);
@@ -367,26 +367,26 @@ public class AccountServiceImpl implements AccountService {
                 req.setAlias(stringCheckHelper.checkAndGetResult(req.getAlias()));
             } catch (StringCheckException e) {
                 log.warn("Account alias is invalid:", e);
-                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                    new String[]{"alias", "Account alias is invalid:" + e.getMessage()});
+                throw InvalidParamException.withInvalidField("alias",
+                    "Account alias is invalid");
             }
         }
         if (req.getCategory() == null || AccountCategoryEnum.valOf(req.getCategory()) == null) {
             log.warn("Category is invalid, category={}", req.getCategory());
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                new String[]{"category", "Account category is invalid, not in [1,2]"});
+            throw InvalidParamException.withInvalidField("category",
+                "Account category is invalid, not in [1,2]");
         }
         AccountTypeEnum accountType = AccountTypeEnum.valueOf(req.getType());
         if (accountType == null) {
             log.warn("Type is invalid, type={}", req.getType());
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                new String[]{"type", "Account type is invalid, not in [1,2,9,10,11]"});
+            throw InvalidParamException.withInvalidField("type",
+                "Account type is invalid, not in [1,2,9,10,11]");
         }
         // 检查账号命名规则
         String account = req.getAccount();
         if (StringUtils.isBlank(account)) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                new String[]{"account", "Parameter account cannot be blank"});
+            throw InvalidParamException.withInvalidField("account",
+                "Parameter account cannot be blank");
         }
         if (checkAccountName) {
             OSTypeEnum osType = accountType.getOsType();
@@ -397,11 +397,11 @@ public class AccountServiceImpl implements AccountService {
                 Pattern pattern = Pattern.compile(expression);
                 Matcher m = pattern.matcher(req.getAccount());
                 if (!m.matches()) {
-                    throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                        new String[]{"account", "Parameter account invalid, expression:"
+                    throw InvalidParamException.withInvalidField("account",
+                        "Parameter account invalid, expression:"
                             + expression
                             + ", rule:"
-                            + accountNameRule.getDescription()});
+                            + accountNameRule.getDescription());
                 }
             } else {
                 log.warn("Cannot find accountNameRule of osType:{}", osType.name());
@@ -409,12 +409,12 @@ public class AccountServiceImpl implements AccountService {
         }
         if (req.getCategory().equals(AccountCategoryEnum.DB.getValue())) {
             if (req.getDbPort() == null) {
-                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                    new String[]{"dbPort", "dbPort cannot be null or empty"});
+                throw InvalidParamException.withInvalidField("dbPort",
+                    "dbPort cannot be null or empty");
             }
             if (req.getDbSystemAccountId() == null) {
-                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                    new String[]{"dbSystemAccountId", "dbSystemAccountId cannot be null or empty"});
+                throw InvalidParamException.withInvalidField("dbSystemAccountId",
+                    "dbSystemAccountId cannot be null or empty");
             }
         }
         return true;

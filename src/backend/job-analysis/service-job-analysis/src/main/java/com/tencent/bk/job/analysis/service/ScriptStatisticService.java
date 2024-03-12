@@ -41,8 +41,8 @@ public class ScriptStatisticService extends CommonStatisticService {
 
     @Autowired
     public ScriptStatisticService(StatisticsDAO statisticsDAO, StatisticConfig statisticConfig,
-                                  MetricResourceReslover metricResourceReslover, AppService appService) {
-        super(statisticsDAO, statisticConfig, metricResourceReslover, appService);
+                                  MetricResourceResolver metricResourceResolver, AppService appService) {
+        super(statisticsDAO, statisticConfig, metricResourceResolver, appService);
     }
 
     private ScriptCiteStatisticVO getGlobalScriptCiteInfo(String date) {

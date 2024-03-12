@@ -24,9 +24,7 @@
 
 package com.tencent.bk.job.common.iam.util;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.ResourceScopeTypeEnum;
-import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeEnum;
 import com.tencent.bk.job.common.model.dto.ResourceScope;
 import com.tencent.bk.sdk.iam.dto.PathInfoDTO;
@@ -59,7 +57,7 @@ public class IamUtil {
             case BIZ_SET:
                 return ResourceTypeEnum.BUSINESS_SET;
             default:
-                throw new InternalException(ErrorCode.INTERNAL_ERROR);
+                throw new IllegalArgumentException("Invalid resourceScope");
         }
     }
 
@@ -78,7 +76,7 @@ public class IamUtil {
             resourceScopeType = ResourceScopeTypeEnum.BIZ_SET;
         } else {
             log.error("Invalid iam resource type: {}", resourceType);
-            throw new InternalException(ErrorCode.INTERNAL_ERROR);
+            throw new IllegalArgumentException("Invalid resourceScope");
         }
         return new ResourceScope(resourceScopeType, resourceId);
     }

@@ -24,6 +24,7 @@
 
 package com.tencent.bk.job.common.exception;
 
+import com.tencent.bk.job.common.exception.base.InternalException;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -34,11 +35,12 @@ import lombok.ToString;
 @ToString
 public class SubThreadException extends InternalException {
 
-    public SubThreadException(String internalErrorMessage, Throwable cause) {
-        super(internalErrorMessage, cause);
+    public SubThreadException(String message) {
+        super(message);
     }
 
-    public SubThreadException(String internalErrorMessage) {
-        super(internalErrorMessage);
+    public SubThreadException(String message,
+                              Throwable cause) {
+        super(message, cause);
     }
 }

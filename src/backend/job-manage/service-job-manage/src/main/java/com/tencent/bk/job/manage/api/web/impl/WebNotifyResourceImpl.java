@@ -25,8 +25,9 @@
 package com.tencent.bk.job.manage.api.web.impl;
 
 import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.job.common.exception.base.PermissionDeniedException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
@@ -46,8 +47,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-
-import static com.tencent.bk.job.common.constant.ErrorCode.PERMISSION_DENIED;
 
 @RestController
 @Slf4j
@@ -87,7 +86,7 @@ public class WebNotifyResourceImpl implements WebNotifyResource {
                                                        NotifyPoliciesCreateUpdateReq createUpdateReq) {
         AuthResult authResult = notificationAuthService.authNotificationSetting(username, appResourceScope);
         if (!authResult.isPass()) {
-            throw new PermissionDeniedException(authResult);
+            throw new IamPermissionDeniedException(authResult);
         }
         return Response.buildSuccessResp(notifyService.saveAppDefaultNotifyPolicies(
             username, appResourceScope.getAppId(), createUpdateReq));
@@ -116,7 +115,7 @@ public class WebNotifyResourceImpl implements WebNotifyResource {
         if (localPermissionService.isAdmin(username)) {
             return Response.buildSuccessResp(notifyService.sendSimpleNotification(notification));
         } else {
-            return Response.buildCommonFailResp(PERMISSION_DENIED);
+            throw new PermissionDeniedException();
         }
     }
 }

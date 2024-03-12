@@ -27,11 +27,10 @@ package com.tencent.bk.job.crontab.api.esb.impl;
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.audit.context.AuditContext;
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InternalException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
@@ -42,7 +41,7 @@ import com.tencent.bk.job.common.util.date.DateUtils;
 import com.tencent.bk.job.crontab.api.common.CronCheckUtil;
 import com.tencent.bk.job.crontab.api.esb.EsbCronJobResource;
 import com.tencent.bk.job.crontab.auth.CronAuthService;
-import com.tencent.bk.job.crontab.exception.TaskExecuteAuthFailedException;
+import com.tencent.bk.job.crontab.exception.TaskExecuteAuthFailedExceptionIam;
 import com.tencent.bk.job.crontab.model.dto.CronJobInfoDTO;
 import com.tencent.bk.job.crontab.model.esb.request.EsbGetCronListRequest;
 import com.tencent.bk.job.crontab.model.esb.request.EsbSaveCronRequest;
@@ -141,15 +140,15 @@ public class EsbCronJobResourceImpl implements EsbCronJobResource {
                 username, request.getAppResourceScope(), request.getId(), null
             );
             if (!authResult.isPass()) {
-                throw new PermissionDeniedException(authResult);
+                throw new IamPermissionDeniedException(authResult);
             }
 
             Boolean updateResult;
             try {
                 updateResult = cronJobService.changeCronJobEnableStatus(username, appId, request.getId(),
                     request.getStatus() == 1);
-            } catch (TaskExecuteAuthFailedException e) {
-                throw new PermissionDeniedException(e.getAuthResult());
+            } catch (TaskExecuteAuthFailedExceptionIam e) {
+                throw new IamPermissionDeniedException(e.getAuthResult());
             }
             if (updateResult) {
                 EsbCronInfoResponse esbCronInfoResponse = new EsbCronInfoResponse();
@@ -157,19 +156,12 @@ public class EsbCronJobResourceImpl implements EsbCronJobResource {
                 return EsbResp.buildSuccessResp(esbCronInfoResponse);
             }
         } else {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
-        throw new InternalException(ErrorCode.UPDATE_CRON_JOB_FAILED);
+        throw new InternalException("Update cron job failed");
     }
 
     private void checkRequest(EsbSaveCronRequest request) {
-        if (request == null) {
-            throw new InvalidParamException(
-                ErrorCode.ILLEGAL_PARAM_WITH_REASON,
-                new Object[]{
-                    "Request body cannot be null"
-                });
-        }
         request.validate();
         if (StringUtils.isNotBlank(request.getCronExpression())) {
             CronCheckUtil.checkCronExpression(request.getCronExpression(), "expression");
@@ -214,7 +206,7 @@ public class EsbCronJobResourceImpl implements EsbCronJobResource {
             esbCronInfoResponse = CronJobInfoDTO.toEsbCronInfo(cronJobService.getCronJobInfoById(result.getId()));
             return EsbResp.buildSuccessResp(esbCronInfoResponse);
         } else {
-            throw new InternalException(ErrorCode.UPDATE_CRON_JOB_FAILED);
+            throw new InternalException("Update cron job failed");
         }
     }
 }

@@ -28,8 +28,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.tencent.bk.job.analysis.model.dto.SimpleAppInfoDTO;
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.manage.api.inner.ServiceApplicationResource;
 import com.tencent.bk.job.manage.model.inner.resp.ServiceApplicationDTO;
 import lombok.extern.slf4j.Slf4j;
@@ -106,7 +105,7 @@ public class AppService {
         List<ServiceApplicationDTO> serviceApplicationDTOList = listLocalDBAppsFromCache();
         if (serviceApplicationDTOList == null) {
             log.error("Fail to listLocalDBAppsFromCache, serviceApplicationDTOList is null");
-            throw new InternalException(ErrorCode.INTERNAL_ERROR);
+            throw new InternalException();
         }
         Map<Long, SimpleAppInfoDTO> map = new HashMap<>();
         for (ServiceApplicationDTO serviceApplicationDTO : serviceApplicationDTOList) {

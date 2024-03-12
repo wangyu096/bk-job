@@ -24,8 +24,8 @@
 
 package com.tencent.bk.job.execute.service.impl;
 
-import com.tencent.bk.job.common.exception.InternalException;
-import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.exception.base.InternalException;
+import com.tencent.bk.job.common.exception.base.ServiceException;
 import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.execute.service.ScriptService;
 import com.tencent.bk.job.manage.api.inner.ServiceScriptResource;

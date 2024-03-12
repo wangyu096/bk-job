@@ -27,8 +27,7 @@ package com.tencent.bk.job.upgrader.task;
 import com.tencent.bk.job.common.artifactory.model.dto.NodeDTO;
 import com.tencent.bk.job.common.artifactory.sdk.ArtifactoryClient;
 import com.tencent.bk.job.common.artifactory.sdk.ArtifactoryHelper;
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.common.util.StringUtil;
 import com.tencent.bk.job.common.util.ThreadUtils;
 import com.tencent.bk.job.common.util.file.PathUtil;
@@ -326,7 +325,7 @@ public class LocalUploadFileToBkRepoMigrationTask extends BaseUpgradeTask {
                 );
                 failedFilePathList.add(filePath);
                 log.warn(msg.getMessage(), e);
-                throw new InternalException(e, ErrorCode.INTERNAL_ERROR);
+                throw new InternalException(e);
             }
             if (existsFileInRepo(repo, relativePath, md5)) {
                 log.info("File {} already in repo {}, skip", relativePath, repo);

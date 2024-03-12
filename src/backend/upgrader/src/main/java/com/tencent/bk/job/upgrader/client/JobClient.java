@@ -25,8 +25,7 @@
 package com.tencent.bk.job.upgrader.client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.common.util.StringUtil;
 import com.tencent.bk.job.common.util.http.BasicHttpReq;
@@ -91,7 +90,7 @@ public class JobClient extends AbstractJobClient {
             }
             if (StringUtils.isBlank(respStr)) {
                 log.error("fail:response is blank|method={}|uri={}|reqStr={}", method, uri, reqStr);
-                throw new InternalException("response is blank", ErrorCode.API_ERROR);
+                throw new InternalException("response is blank");
             } else {
                 log.debug("success|method={}|uri={}|reqStr={}|respStr={}", method, uri, reqStr, respStr);
             }
@@ -101,7 +100,7 @@ public class JobClient extends AbstractJobClient {
             if (jobResp == null) {
                 log.error("fail:jobResp is null after parse|method={}|uri={}|reqStr={}|respStr={}", method, uri,
                     reqStr, respStr);
-                throw new InternalException("jobResp is null after parse", ErrorCode.API_ERROR);
+                throw new InternalException("jobResp is null after parse");
             } else if (jobResp.getCode() != RESULT_OK) {
                 log.error(
                     "fail:jobResp code!=0|jobResp.code={}|jobResp" +
@@ -113,7 +112,7 @@ public class JobClient extends AbstractJobClient {
                     reqStr,
                     respStr
                 );
-                throw new InternalException("jobResp code!=0", ErrorCode.API_ERROR);
+                throw new InternalException("jobResp code!=0");
             }
             if (jobResp.getData() == null) {
                 log.warn(
@@ -131,7 +130,7 @@ public class JobClient extends AbstractJobClient {
         } catch (Exception e) {
             String errorMsg = "Fail to request JOB data|method=" + method + "|uri=" + uri + "|reqStr=" + reqStr;
             log.error(errorMsg, e);
-            throw new InternalException("Fail to request JOB data", ErrorCode.API_ERROR);
+            throw new InternalException("Fail to request JOB data", e);
         }
     }
 

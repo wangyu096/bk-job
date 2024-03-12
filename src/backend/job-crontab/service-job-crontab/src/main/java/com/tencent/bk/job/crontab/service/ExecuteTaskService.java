@@ -25,7 +25,7 @@
 package com.tencent.bk.job.crontab.service;
 
 import com.tencent.bk.job.common.model.InternalResponse;
-import com.tencent.bk.job.crontab.exception.TaskExecuteAuthFailedException;
+import com.tencent.bk.job.crontab.exception.TaskExecuteAuthFailedExceptionIam;
 import com.tencent.bk.job.execute.model.inner.ServiceTaskExecuteResult;
 import com.tencent.bk.job.execute.model.inner.ServiceTaskVariable;
 
@@ -63,10 +63,10 @@ public interface ExecuteTaskService {
      * @param cronName     定时任务名称
      * @param variableList 变量信息列表
      * @param operator     执行人
-     * @throws TaskExecuteAuthFailedException 鉴权失败抛出异常
+     * @throws TaskExecuteAuthFailedExceptionIam 鉴权失败抛出异常
      */
     void authExecuteTask(
         long appId, long taskId, long cronTaskId, String cronName,
         List<ServiceTaskVariable> variableList, String operator
-    ) throws TaskExecuteAuthFailedException;
+    ) throws TaskExecuteAuthFailedExceptionIam;
 }

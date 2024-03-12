@@ -25,10 +25,11 @@
 package com.tencent.bk.job.common.openapi.sdk;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.HttpMethodEnum;
+import com.tencent.bk.job.common.error.ErrorReason;
+import com.tencent.bk.job.common.error.payload.ErrorInfoPayloadDTO;
 import com.tencent.bk.job.common.esb.constants.EsbLang;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.common.openapi.metrics.OpenApiMetricTags;
 import com.tencent.bk.job.common.openapi.model.BkApiAuthorization;
@@ -72,6 +73,7 @@ public class BkApiClient {
      */
     private final String metricName;
     private JsonMapper jsonMapper = JsonMapper.nonNullMapper();
+    private final String clientName;
 
     /**
      * @param meterRegistry     MeterRegistry
@@ -82,19 +84,22 @@ public class BkApiClient {
     public BkApiClient(MeterRegistry meterRegistry,
                        String metricName,
                        String baseAccessUrl,
-                       HttpHelper defaultHttpHelper) {
+                       HttpHelper defaultHttpHelper,
+                       String clientName) {
         this.meterRegistry = meterRegistry;
         this.metricName = metricName;
         this.baseAccessUrl = baseAccessUrl;
         this.defaultHttpHelper = defaultHttpHelper;
+        this.clientName = clientName;
     }
 
     public BkApiClient(MeterRegistry meterRegistry,
                        String metricName,
                        String baseAccessUrl,
                        HttpHelper defaultHttpHelper,
-                       String lang) {
-        this(meterRegistry, metricName, baseAccessUrl, defaultHttpHelper);
+                       String lang,
+                       String clientName) {
+        this(meterRegistry, metricName, baseAccessUrl, defaultHttpHelper, clientName);
         this.lang = lang;
     }
 
@@ -179,7 +184,8 @@ public class BkApiClient {
                     + uri + ", error: " + "Response is blank";
                 log.error(errorMsg);
                 status = OpenApiMetricTags.VALUE_STATUS_ERROR;
-                throw new InternalException(errorMsg, ErrorCode.API_ERROR);
+                throw new InternalException(errorMsg,
+                    new ErrorInfoPayloadDTO(clientName, ErrorReason.REQUEST_THIRD_API_ERROR));
             }
 
             esbResp = jsonMapper.fromJson(respStr, typeReference);
@@ -219,7 +225,8 @@ public class BkApiClient {
             log.error(errorMsg, e);
             apiContext.setSuccess(false);
             status = OpenApiMetricTags.VALUE_STATUS_ERROR;
-            throw new InternalException("Fail to request bk api", e, ErrorCode.API_ERROR);
+            throw new InternalException("Fail to request bk api", e,
+                new ErrorInfoPayloadDTO(clientName, ErrorReason.REQUEST_THIRD_API_ERROR));
         } finally {
             long cost = System.currentTimeMillis() - start;
             apiContext.setCostTime(cost);

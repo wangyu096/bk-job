@@ -27,7 +27,7 @@ package com.tencent.bk.job.execute.common.interceptor;
 import com.tencent.bk.job.common.annotation.JobInterceptor;
 import com.tencent.bk.job.common.constant.InterceptorOrder;
 import com.tencent.bk.job.common.iam.constant.ActionId;
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.iam.service.AuthService;
 import com.tencent.bk.job.common.util.JobContextUtil;
@@ -59,7 +59,7 @@ public class JobExecuteUriPermissionInterceptor implements AsyncHandlerIntercept
         String username = JobContextUtil.getUsername();
         AuthResult authResult = authService.auth(username, ActionId.HIGH_RISK_DETECT_RECORD);
         if (!authResult.isPass()) {
-            throw new PermissionDeniedException(authResult);
+            throw new IamPermissionDeniedException(authResult);
         }
         return true;
     }

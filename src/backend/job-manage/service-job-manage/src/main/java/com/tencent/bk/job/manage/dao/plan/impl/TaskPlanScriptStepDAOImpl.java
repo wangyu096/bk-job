@@ -24,9 +24,8 @@
 
 package com.tencent.bk.job.manage.dao.plan.impl;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.crypto.scenario.SensitiveParamCryptoService;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.manage.common.consts.script.ScriptTypeEnum;
 import com.tencent.bk.job.manage.common.consts.task.TaskScriptSourceEnum;
 import com.tencent.bk.job.manage.common.util.JooqDataTypeUtil;
@@ -247,7 +246,8 @@ public class TaskPlanScriptStepDAOImpl implements TaskScriptStepDAO {
                 scriptStep.getScriptVersionId() == null ? null : ULong.valueOf(scriptStep.getScriptVersionId()),
                 scriptStep.getContent(),
                 UByte.valueOf(scriptStep.getLanguage().getValue()),
-                sensitiveParamCryptoService.encryptParamIfNeeded(scriptStep.getSecureParam(), scriptStep.getScriptParam()),
+                sensitiveParamCryptoService.encryptParamIfNeeded(scriptStep.getSecureParam(),
+                    scriptStep.getScriptParam()),
                 ULong.valueOf(scriptStep.getTimeout()),
                 ULong.valueOf(scriptStep.getAccount()),
                 scriptStep.getExecuteTarget().toJsonString(),
@@ -261,7 +261,7 @@ public class TaskPlanScriptStepDAOImpl implements TaskScriptStepDAO {
 
     @Override
     public boolean updateScriptStepById(TaskScriptStepDTO scriptStep) {
-        throw new InternalException(ErrorCode.UNSUPPORTED_OPERATION);
+        throw new InternalException("Not support method");
     }
 
     @Override
@@ -273,7 +273,7 @@ public class TaskPlanScriptStepDAOImpl implements TaskScriptStepDAO {
 
     @Override
     public List<TaskScriptStepDTO> batchListScriptStepIdByParentIds(List<Long> templateIdList) {
-        throw new InternalException(ErrorCode.UNSUPPORTED_OPERATION);
+        throw new InternalException("Not support method");
     }
 
     @Override

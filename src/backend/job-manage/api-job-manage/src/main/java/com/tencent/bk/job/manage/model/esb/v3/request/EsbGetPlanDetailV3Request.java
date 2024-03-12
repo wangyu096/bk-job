@@ -25,8 +25,9 @@
 package com.tencent.bk.job.manage.model.esb.v3.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.error.payload.BadRequestPayloadDTO;
+import com.tencent.bk.job.common.error.payload.FieldViolationDTO;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.openapi.job.v3.EsbAppScopeReq;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -51,7 +52,10 @@ public class EsbGetPlanDetailV3Request extends EsbAppScopeReq {
     public void validate() {
         if (this.getPlanId() == null || this.getPlanId() <= 0) {
             log.warn("Plan Id is empty or illegal!|{}", this.getPlanId());
-            throw new InvalidParamException(ErrorCode.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME, "job_plan_id");
+            throw new InvalidParamException(
+                BadRequestPayloadDTO.instance()
+                    .addFieldViolation(
+                        new FieldViolationDTO("job_plan_id", "Plan Id is empty or illegal")));
         }
     }
 }

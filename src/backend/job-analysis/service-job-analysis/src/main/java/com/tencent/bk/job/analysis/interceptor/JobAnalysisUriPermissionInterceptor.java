@@ -29,7 +29,7 @@ import com.tencent.bk.job.common.annotation.JobInterceptor;
 import com.tencent.bk.job.common.constant.InterceptorOrder;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeEnum;
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.iam.service.AuthService;
 import com.tencent.bk.job.common.util.JobContextUtil;
@@ -74,7 +74,7 @@ public class JobAnalysisUriPermissionInterceptor implements AsyncHandlerIntercep
                 null
             );
             if (!authResult.isPass()) {
-                throw new PermissionDeniedException(authResult);
+                throw new IamPermissionDeniedException(authResult);
             }
         }
         return true;

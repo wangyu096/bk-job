@@ -30,7 +30,6 @@ import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
-import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.openapi.job.v3.EsbPageDataV3;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.common.openapi.job.v3.utils.EsbDTOAppScopeMappingHelper;
@@ -123,12 +122,6 @@ public class EsbPlanV3ResourceImpl implements EsbPlanV3Resource {
     public EsbResp<EsbPageDataV3<EsbPlanBasicInfoV3DTO>> getPlanListUsingPost(String username,
                                                                               String appCode,
                                                                               EsbGetPlanListV3Request request) {
-        ValidateResult checkResult = checkRequest(request);
-        if (!checkResult.isPass()) {
-            log.warn("Get plan list, request is illegal!");
-            return EsbResp.buildCommonFailResp(checkResult);
-        }
-
         long appId = request.getAppId();
 
         TaskPlanQueryDTO taskPlanQueryDTO = new TaskPlanQueryDTO();
@@ -176,11 +169,6 @@ public class EsbPlanV3ResourceImpl implements EsbPlanV3Resource {
         // 解析步骤引用全局变量的信息
         StepRefVariableParser.parseStepRefVars(taskPlanInfo.getStepList(), taskPlanInfo.getVariableList());
         return EsbResp.buildSuccessResp(TaskPlanInfoDTO.toEsbPlanInfoV3(taskPlanInfo));
-    }
-
-    private ValidateResult checkRequest(EsbGetPlanListV3Request request) {
-        // TODO 暂不校验，后面补上
-        return ValidateResult.pass();
     }
 
     private EsbPlanBasicInfoV3DTO convertToEsbPlanBasicInfo(TaskPlanInfoDTO taskPlan) {

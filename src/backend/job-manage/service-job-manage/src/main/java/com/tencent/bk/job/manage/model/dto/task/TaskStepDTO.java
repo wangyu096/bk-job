@@ -24,8 +24,6 @@
 
 package com.tencent.bk.job.manage.model.dto.task;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.openapi.job.v3.EsbStepV3DTO;
 import com.tencent.bk.job.manage.common.consts.task.TaskStepTypeEnum;
 import com.tencent.bk.job.manage.model.inner.ServiceTaskStepDTO;
@@ -125,7 +123,7 @@ public class TaskStepDTO {
             taskStep.setDelete(0);
         }
         if (taskStep.getType() == null) {
-            throw new InvalidParamException(ErrorCode.WRONG_STEP_TYPE);
+            throw new IllegalArgumentException("Wrong step type");
         }
         switch (taskStep.getType()) {
             case SCRIPT:
@@ -138,7 +136,7 @@ public class TaskStepDTO {
                 taskStep.setApprovalStepInfo(TaskApprovalStepDTO.fromVO(stepVO.getId(), stepVO.getApprovalStepInfo()));
                 break;
             default:
-                throw new InvalidParamException(ErrorCode.WRONG_STEP_TYPE);
+                throw new IllegalArgumentException("Wrong step type");
         }
         return taskStep;
     }

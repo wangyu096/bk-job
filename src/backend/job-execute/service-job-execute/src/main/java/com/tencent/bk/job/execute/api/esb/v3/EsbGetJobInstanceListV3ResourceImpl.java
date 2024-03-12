@@ -24,12 +24,10 @@
 
 package com.tencent.bk.job.execute.api.esb.v3;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
-import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.openapi.job.v3.EsbPageDataV3;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.common.openapi.job.v3.utils.EsbDTOAppScopeMappingHelper;
@@ -60,7 +58,7 @@ public class EsbGetJobInstanceListV3ResourceImpl implements EsbGetJobInstanceLis
     private final AppScopeMappingService appScopeMappingService;
 
     public EsbGetJobInstanceListV3ResourceImpl(TaskResultService taskResultService,
-                                    AppScopeMappingService appScopeMappingService) {
+                                               AppScopeMappingService appScopeMappingService) {
         this.taskResultService = taskResultService;
         this.appScopeMappingService = appScopeMappingService;
     }
@@ -71,11 +69,9 @@ public class EsbGetJobInstanceListV3ResourceImpl implements EsbGetJobInstanceLis
         String username,
         String appCode,
         EsbGetJobInstanceListV3Request request) {
-        ValidateResult checkResult = checkRequest(request);
-        if (!checkResult.isPass()) {
-            log.warn("Get job instance ip log request is illegal!");
-            throw new InvalidParamException(checkResult);
-        }
+
+        checkRequest(request);
+
         TaskInstanceQuery taskQuery = new TaskInstanceQuery();
         taskQuery.setTaskInstanceId(request.getTaskInstanceId());
         taskQuery.setAppId(request.getAppId());
@@ -136,30 +132,28 @@ public class EsbGetJobInstanceListV3ResourceImpl implements EsbGetJobInstanceLis
         return pageDataV3;
     }
 
-    private ValidateResult checkRequest(EsbGetJobInstanceListV3Request request) {
+    private void checkRequest(EsbGetJobInstanceListV3Request request) {
         if (request.getCreateTimeStart() == null || request.getCreateTimeStart() < 1) {
             log.warn("createTimeStart is empty or illegal, createTimeStart={}", request.getCreateTimeStart());
-            return ValidateResult.fail(ErrorCode.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME, "create_time_start");
+            throw InvalidParamException.withInvalidField("create_time_start");
         }
         if (request.getCreateTimeEnd() == null || request.getCreateTimeEnd() < 1) {
             log.warn("createTimeEnd is empty or illegal, createTimeEnd={}", request.getCreateTimeEnd());
-            return ValidateResult.fail(ErrorCode.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME, "create_time_end");
+            throw InvalidParamException.withInvalidField("create_time_end");
         }
         long period = request.getCreateTimeEnd() - request.getCreateTimeStart();
         if (period <= 0) {
             log.warn("CreateStartTime is greater or equal to createTimeEnd, getCreateTimeStart={}, createTimeEnd={}",
                 request.getCreateTimeStart(), request.getCreateTimeEnd());
-            return ValidateResult.fail(ErrorCode.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME,
-                "create_time_start|create_time_end");
+            throw InvalidParamException.withInvalidField("create_time_start|create_time_end");
         } else if (period > Consts.MAX_SEARCH_TASK_HISTORY_RANGE_MILLS) {
             log.warn("Search time range greater than {} days!", Consts.MAX_SEARCH_TASK_HISTORY_RANGE_MILLS);
-            return ValidateResult.fail(ErrorCode.ILLEGAL_PARAM, "create_time_start|create_time_end");
+            throw InvalidParamException.withInvalidField("create_time_start|create_time_end");
         }
         if (request.getTaskType() != null && TaskTypeEnum.valueOf(request.getTaskType()) == null) {
             log.warn("Param type is illegal!");
-            return ValidateResult.fail(ErrorCode.ILLEGAL_PARAM, "type");
+            throw InvalidParamException.withInvalidField("type");
         }
-        return ValidateResult.pass();
     }
 
     @Override

@@ -25,8 +25,7 @@
 package com.tencent.bk.job.backup.service.impl;
 
 import com.tencent.bk.job.backup.service.AccountService;
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.manage.api.inner.ServiceAccountResource;
@@ -73,7 +72,7 @@ public class AccountServiceImpl implements AccountService {
         } else {
             log.error("Get account failed! Empty response!|{}", id);
         }
-        throw new InternalException("Error while getting account info!", ErrorCode.INTERNAL_ERROR);
+        throw new InternalException("Error while getting account info!");
     }
 
     @Override
@@ -117,7 +116,6 @@ public class AccountServiceImpl implements AccountService {
         Response<Long> saveAccountResp = accountResource.saveAccount(username,
             appId, accountCreateUpdateReq);
 
-        Integer errorCode = -1;
         if (saveAccountResp != null) {
             if (0 == saveAccountResp.getCode()) {
                 Long accountId = saveAccountResp.getData();
@@ -129,11 +127,10 @@ public class AccountServiceImpl implements AccountService {
             } else {
                 log.error("Save account failed!|{}|{}|{}|{}|{}", username, account.getAlias(),
                     saveAccountResp.getCode(), saveAccountResp.getErrorMsg(), saveAccountResp);
-                errorCode = saveAccountResp.getCode();
             }
         } else {
             log.error("Save account failed! Empty response!|{}|{}", username, account.getAlias());
         }
-        throw new InternalException("Error while save or get account info!", errorCode);
+        throw new InternalException("Error while save or get account info!");
     }
 }

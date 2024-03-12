@@ -27,9 +27,8 @@ package com.tencent.bk.job.manage.api.web.impl;
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.AccountCategoryEnum;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.FeatureToggleModeEnum;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
@@ -100,7 +99,7 @@ public class WebAppAccountResourceImpl implements WebAppAccountResource {
                                              @AuditRequestBody AccountCreateUpdateReq accountCreateUpdateReq) {
         accountCreateUpdateReq.setId(accountId);
         if (!checkUpdateAccountParam(accountCreateUpdateReq)) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
 
         AccountDTO updateAccount = buildUpdateAccountDTO(username, appResourceScope.getAppId(), accountCreateUpdateReq);
@@ -240,7 +239,7 @@ public class WebAppAccountResourceImpl implements WebAppAccountResource {
                                                   String scopeId,
                                                   Integer category) {
         if (category != null && AccountCategoryEnum.valOf(category) == null) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         List<AccountDTO> accountDTOS =
             accountService.listAppAccount(appResourceScope.getAppId(), AccountCategoryEnum.valOf(category));

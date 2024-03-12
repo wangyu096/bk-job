@@ -29,15 +29,15 @@ import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobResourceTypeEnum;
-import com.tencent.bk.job.common.exception.InvalidParamException;
-import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.model.Response;
-import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
 import com.tencent.bk.job.common.mysql.JobTransactional;
 import com.tencent.bk.job.manage.api.web.WebTaskTemplateResource;
@@ -130,7 +130,7 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
             templateInfoPageData.getData().forEach(templateInfo ->
                 resultTemplates.add(TaskTemplateInfoDTO.toVO(templateInfo)));
         } else {
-            throw new NotFoundException(ErrorCode.TEMPLATE_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.TEMPLATE_NOT_EXIST));
         }
 
         resultTemplates.forEach(taskTemplate ->
@@ -372,10 +372,7 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
                                                     String scopeId,
                                                     TemplateTagBatchPatchReq req) {
 
-        ValidateResult validateResult = checkTemplateTagBatchPatchReq(req);
-        if (!validateResult.isPass()) {
-            throw new InvalidParamException(validateResult);
-        }
+        checkTemplateTagBatchPatchReq(req);
 
         if (CollectionUtils.isEmpty(req.getAddTagIdList()) && CollectionUtils.isEmpty(req.getDeleteTagIdList())) {
             // do nothing
@@ -385,7 +382,7 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
         AuthResult authResult = templateAuthService.batchAuthResultEditJobTemplate(username,
             appResourceScope, req.getIdList());
         if (!authResult.isPass()) {
-            throw new PermissionDeniedException(authResult);
+            throw new IamPermissionDeniedException(authResult);
         }
 
         List<Long> templateIdList = req.getIdList();
@@ -406,12 +403,10 @@ public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
         return Response.buildSuccessResp(null);
     }
 
-    private ValidateResult checkTemplateTagBatchPatchReq(TemplateTagBatchPatchReq req) {
+    private void checkTemplateTagBatchPatchReq(TemplateTagBatchPatchReq req) {
         if (CollectionUtils.isEmpty(req.getIdList())) {
             log.warn("TemplateTagBatchPatchReq->idList is empty");
-            return ValidateResult.fail(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, "idList");
+            throw InvalidParamException.withInvalidField("idList", "idList is empty");
         }
-
-        return ValidateResult.pass();
     }
 }

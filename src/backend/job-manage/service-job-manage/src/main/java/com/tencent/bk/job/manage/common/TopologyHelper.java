@@ -27,8 +27,7 @@ package com.tencent.bk.job.manage.common;
 import com.tencent.bk.job.common.cc.model.InstanceTopologyDTO;
 import com.tencent.bk.job.common.cc.sdk.CmdbClientFactory;
 import com.tencent.bk.job.common.constant.CcNodeTypeEnum;
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.common.model.dto.ApplicationDTO;
 import com.tencent.bk.job.common.util.JobContextUtil;
 import com.tencent.bk.job.manage.dao.ApplicationDAO;
@@ -209,7 +208,7 @@ public class TopologyHelper {
                 appInfo.getId(),
                 appInfo
             );
-            throw new InternalException(msg.getMessage(), ErrorCode.INTERNAL_ERROR);
+            throw new InternalException(msg.getMessage());
         }
     }
 

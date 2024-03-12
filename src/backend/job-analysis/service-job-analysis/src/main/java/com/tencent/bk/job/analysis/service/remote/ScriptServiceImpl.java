@@ -25,7 +25,7 @@
 package com.tencent.bk.job.analysis.service.remote;
 
 import com.tencent.bk.job.analysis.service.ScriptService;
-import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.exception.base.ServiceException;
 import com.tencent.bk.job.manage.api.inner.ServiceScriptResource;
 import com.tencent.bk.job.manage.model.inner.ServiceScriptDTO;
 import lombok.extern.slf4j.Slf4j;

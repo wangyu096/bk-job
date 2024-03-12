@@ -49,9 +49,4 @@ public class QuotaFailurePayloadDTO extends ErrorPayloadDTO {
      * 描述资源配额不足原因
      */
     private String description;
-
-    public QuotaFailurePayloadDTO(String subject, String description) {
-        this.subject = subject;
-        this.description = description;
-    }
 }

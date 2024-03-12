@@ -24,8 +24,7 @@
 
 package com.tencent.bk.job.manage.model.web.vo.task;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.model.vo.TaskTargetVO;
 import com.tencent.bk.job.common.util.JobContextUtil;
 import io.swagger.annotations.ApiModel;
@@ -79,23 +78,23 @@ public class TaskVariableVO {
         if (isCreate && !JobContextUtil.isAllowMigration()) {
             if (id != null && id > 0) {
                 log.warn("Create request has variable id!");
-                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+                throw new InvalidParamException();
             }
         }
         if (StringUtils.isBlank(name)) {
             log.warn("Empty variable name!");
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         if (description == null) {
             description = "";
         }
         if (type <= 0 || type > 6) {
             log.warn("Invalid variable type: {}", type);
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         if (required == null || required > 1) {
             log.warn("Invalid require option : {}", required);
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
     }
 }

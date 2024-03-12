@@ -25,6 +25,7 @@
 package com.tencent.bk.job.manage.api.migration.impl;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.error.SubErrorCode;
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.common.model.dto.ResourceScope;
 import com.tencent.bk.job.common.service.AppScopeMappingService;
@@ -117,8 +118,8 @@ public class MigrationResource {
         results.add(updateAppIdForWhiteIpMigrationTask.execute(req.isDryRun()));
         boolean success = results.stream().allMatch(MigrationRecordsResult::isSuccess);
         return success ? Response.buildSuccessResp(JsonUtils.toJson(results)) :
-            Response.buildCommonFailResp(ErrorCode.MIGRATION_FAIL, new String[]{"UpdateAppIdForWhiteIpMigrationTask",
-                JsonUtils.toJson(results)});
+            Response.buildCommonFailResp(null, SubErrorCode.of(ErrorCode.MIGRATION_FAIL,
+                "UpdateAppIdForWhiteIpMigrationTask", JsonUtils.toJson(results)));
     }
 
     /**
@@ -135,11 +136,11 @@ public class MigrationResource {
                 appIdList = new ArrayList<>(scopeAppIdMap.values());
             } else {
                 scopeList.removeIf(scopeAppIdMap::containsKey);
-                return Response.buildCommonFailResp(ErrorCode.MIGRATION_FAIL, new String[]{
-                        "AddHostIdMigrationTask",
-                        "Cannot find appId by scope:" + scopeList
-                    }
-                );
+                return Response.buildCommonFailResp(null, SubErrorCode.of(
+                    ErrorCode.MIGRATION_FAIL,
+                    "AddHostIdMigrationTask",
+                    "Cannot find appId by scope:" + scopeList
+                ));
             }
         }
         if (appIdList == null) {
@@ -148,7 +149,7 @@ public class MigrationResource {
         results.addAll(addHostIdForTemplateAndPlanMigrationTask.execute(appIdList, req.isDryRun()));
         boolean success = results.stream().allMatch(MigrationRecordsResult::isSuccess);
         return success ? Response.buildSuccessResp(JsonUtils.toJson(results)) :
-            Response.buildCommonFailResp(ErrorCode.MIGRATION_FAIL, new String[]{"AddHostIdMigrationTask",
-                JsonUtils.toJson(results)});
+            Response.buildCommonFailResp(null, SubErrorCode.of(ErrorCode.MIGRATION_FAIL,
+                "AddHostIdMigrationTask", JsonUtils.toJson(results)));
     }
 }

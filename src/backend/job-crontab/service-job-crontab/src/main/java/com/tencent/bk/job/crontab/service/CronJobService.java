@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.crontab.service;
 
-import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.exception.base.ServiceException;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.crontab.model.BatchUpdateCronJobReq;

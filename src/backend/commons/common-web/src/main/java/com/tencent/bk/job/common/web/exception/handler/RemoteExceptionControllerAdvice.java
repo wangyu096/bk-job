@@ -2,7 +2,7 @@ package com.tencent.bk.job.common.web.exception.handler;
 
 import com.tencent.bk.job.common.annotation.RemoteAPI;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.common.util.I18nUtil;
 import com.tencent.bk.sdk.iam.constants.CommonResponseCode;
@@ -39,7 +39,7 @@ public class RemoteExceptionControllerAdvice extends ExceptionControllerAdviceBa
         log.info("Handle InvalidParamException", ex);
         CallbackBaseResponseDTO responseDTO = new CallbackBaseResponseDTO();
         responseDTO.setCode(CommonResponseCode.PARAMS_INVALID);
-        responseDTO.setMessage(ex.getI18nMessage());
+        responseDTO.setMessage(ex.getSubErrorCode().getI18nMessage());
         return new ResponseEntity<>(EsbResp.buildCommonFailResp(ex), HttpStatus.BAD_REQUEST);
     }
 

@@ -24,8 +24,7 @@
 
 package com.tencent.bk.job.crontab.model.dto;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.common.model.dto.ResourceScope;
 import com.tencent.bk.job.common.model.dto.UserRoleInfoDTO;
 import com.tencent.bk.job.common.openapi.job.v3.utils.EsbDTOAppScopeMappingHelper;
@@ -361,7 +360,7 @@ public class CronJobInfoDTO extends EncryptEnableVariables {
         ServiceTaskPlanDTO serviceTaskPlanDTO =
             taskPlanService.getPlanBasicInfoById(cronJobInfo.getAppId(), cronJobInfo.getTaskPlanId());
         if (serviceTaskPlanDTO == null) {
-            throw new InternalException(ErrorCode.INTERNAL_ERROR);
+            throw new InternalException();
         }
         variableMap.put("task.cron.plan_name", serviceTaskPlanDTO.getName());
     }

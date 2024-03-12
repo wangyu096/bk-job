@@ -24,15 +24,13 @@
 
 package com.tencent.bk.job.common.iam.service.impl;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.esb.config.EsbProperties;
-import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.iam.client.EsbIamClient;
 import com.tencent.bk.job.common.iam.constant.ActionInfo;
 import com.tencent.bk.job.common.iam.constant.Actions;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeEnum;
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.iam.model.PermissionActionResource;
 import com.tencent.bk.job.common.iam.model.PermissionResource;
@@ -244,7 +242,7 @@ public class AuthServiceImpl extends BasicAuthService implements AuthService {
             ActionInfo actionInfo = Actions.getActionInfo(actionId);
             if (actionInfo == null) {
                 log.error("Invalid Action, actionId: {}", actionId);
-                throw new InternalException(ErrorCode.INTERNAL_ERROR);
+                throw new IllegalArgumentException("Invalid action id : " + actionId);
             }
 
             List<RelatedResourceTypeDTO> relatedResourceTypes = new ArrayList<>();
@@ -259,7 +257,7 @@ public class AuthServiceImpl extends BasicAuthService implements AuthService {
                 List<PermissionResource> relatedResources = resourceGroups.get(resourceType.getId());
                 if (CollectionUtils.isEmpty(relatedResources)) {
                     log.error("Action related resources is empty");
-                    throw new InternalException(ErrorCode.INTERNAL_ERROR);
+                    throw new IllegalArgumentException("Action related resources is empty");
                 }
                 RelatedResourceTypeDTO relatedResourceType = new RelatedResourceTypeDTO();
                 String systemId = relatedResources.get(0).getSystemId();
@@ -363,7 +361,7 @@ public class AuthServiceImpl extends BasicAuthService implements AuthService {
     }
 
     @Override
-    public <T> EsbResp<T> buildEsbAuthFailResp(PermissionDeniedException exception) {
+    public <T> EsbResp<T> buildEsbAuthFailResp(IamPermissionDeniedException exception) {
         return buildEsbAuthFailResp(exception.getAuthResult().getRequiredActionResources());
     }
 

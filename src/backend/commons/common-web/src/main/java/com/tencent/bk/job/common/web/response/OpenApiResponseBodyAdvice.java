@@ -27,7 +27,7 @@ package com.tencent.bk.job.common.web.response;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tencent.bk.job.common.annotation.OpenAPI;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.common.openapi.model.OpenApiResp;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.MethodParameter;

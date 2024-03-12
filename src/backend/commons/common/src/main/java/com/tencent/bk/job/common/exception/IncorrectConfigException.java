@@ -1,5 +1,6 @@
 package com.tencent.bk.job.common.exception;
 
+import com.tencent.bk.job.common.exception.base.InternalException;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -10,11 +11,7 @@ import lombok.ToString;
 @ToString
 public class IncorrectConfigException extends InternalException {
 
-    public IncorrectConfigException(String internalErrorMessage, Throwable cause) {
-        super(internalErrorMessage, cause);
-    }
-
-    public IncorrectConfigException(String internalErrorMessage) {
-        super(internalErrorMessage);
+    public IncorrectConfigException(String message) {
+        super(message);
     }
 }

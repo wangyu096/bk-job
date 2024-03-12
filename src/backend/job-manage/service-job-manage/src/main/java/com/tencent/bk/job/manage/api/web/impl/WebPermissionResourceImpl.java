@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.manage.api.web.impl;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.iam.service.BusinessAuthService;
 import com.tencent.bk.job.common.iam.service.WebAuthService;
@@ -129,8 +129,8 @@ public class WebPermissionResourceImpl implements WebPermissionResource {
                                                                   String resourceId,
                                                                   boolean isReturnApplyUrl) {
         if (appResourceScope == null) {
-            return Response.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                new String[]{"appId/scopeType,scopeId", "appId/scopeType,scopeId cannot be null or empty"});
+            throw InvalidParamException.withInvalidField("appId/scopeType,scopeId",
+                "appId/scopeType,scopeId cannot be null or empty");
         }
         switch (action) {
             case "create":
@@ -211,8 +211,8 @@ public class WebPermissionResourceImpl implements WebPermissionResource {
         boolean isReturnApplyUrl
     ) {
         if (appResourceScope == null) {
-            return Response.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                new String[]{"appId/scopeType,scopeId", "appId/scopeType,scopeId cannot be null or empty"});
+            throw InvalidParamException.withInvalidField("appId/scopeType,scopeId",
+                "appId/scopeType,scopeId cannot be null or empty");
         }
         long templateId;
         switch (action) {
@@ -272,11 +272,12 @@ public class WebPermissionResourceImpl implements WebPermissionResource {
         boolean isReturnApplyUrl
     ) {
         if (appResourceScope == null) {
-            return Response.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                new String[]{"appId/scopeType,scopeId", "appId/scopeType,scopeId cannot be null or empty"});
+            throw InvalidParamException.withInvalidField("appId/scopeType,scopeId",
+                "appId/scopeType,scopeId cannot be null or empty");
         }
         if (StringUtils.isEmpty(resourceId) || !validateNum(resourceId)) {
-            return Response.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM);
+            throw InvalidParamException.withInvalidField("resourceId",
+                "Invalid resourceId");
         }
         TaskTemplateInfoDTO jobTemplate;
         TaskPlanInfoDTO plan;
@@ -366,8 +367,8 @@ public class WebPermissionResourceImpl implements WebPermissionResource {
         boolean isReturnApplyUrl
     ) {
         if (appResourceScope == null) {
-            return Response.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                new String[]{"appId/scopeType,scopeId", "appId/scopeType,scopeId cannot be null or empty"});
+            throw InvalidParamException.withInvalidField("appId/scopeType,scopeId",
+                "appId/scopeType,scopeId cannot be null or empty");
         }
         long accountId;
         switch (action) {
@@ -409,8 +410,8 @@ public class WebPermissionResourceImpl implements WebPermissionResource {
         boolean isReturnApplyUrl
     ) {
         if (appResourceScope == null) {
-            return Response.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                new String[]{"appId/scopeType,scopeId", "appId/scopeType,scopeId cannot be null or empty"});
+            throw InvalidParamException.withInvalidField("appId/scopeType,scopeId",
+                "appId/scopeType,scopeId cannot be null or empty");
         }
         switch (action) {
             case "create":
@@ -441,8 +442,8 @@ public class WebPermissionResourceImpl implements WebPermissionResource {
         boolean isReturnApplyUrl
     ) {
         if (appResourceScope == null) {
-            return Response.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                new String[]{"appId/scopeType,scopeId", "appId/scopeType,scopeId cannot be null or empty"});
+            throw InvalidParamException.withInvalidField("appId/scopeType,scopeId",
+                "appId/scopeType,scopeId cannot be null or empty");
         }
         switch (action) {
             case "create":
@@ -509,11 +510,11 @@ public class WebPermissionResourceImpl implements WebPermissionResource {
         Boolean returnPermissionDetail
     ) {
         if (StringUtils.isEmpty(operation)) {
-            return Response.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM);
+            throw InvalidParamException.withInvalidField("operation");
         }
         String[] resourceAndAction = operation.split("/");
         if (resourceAndAction.length != 2) {
-            return Response.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM);
+            throw InvalidParamException.withInvalidField("operation");
         }
         String resourceType = resourceAndAction[0];
         String action = resourceAndAction[1];

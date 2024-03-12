@@ -24,8 +24,9 @@
 
 package com.tencent.bk.job.crontab.model.esb.v3.request;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.error.payload.BadRequestPayloadDTO;
+import com.tencent.bk.job.common.error.payload.FieldViolationDTO;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.openapi.job.v3.EsbAppScopeReq;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -51,13 +52,16 @@ public class EsbUpdateCronStatusV3Request extends EsbAppScopeReq {
 
     public boolean validate() {
         if (id == null || id <= 0) {
-
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                new String[]{"id", "id must be a positive integer"});
+            throw new InvalidParamException(
+                BadRequestPayloadDTO.instance()
+                    .addFieldViolation(
+                        new FieldViolationDTO("id", "id must be a positive integer")));
         }
         if (status == null || status < 0) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                new String[]{"status", "status must >= 0"});
+            throw new InvalidParamException(
+                BadRequestPayloadDTO.instance()
+                    .addFieldViolation(
+                        new FieldViolationDTO("status", "status must >= 0")));
         }
         return true;
     }

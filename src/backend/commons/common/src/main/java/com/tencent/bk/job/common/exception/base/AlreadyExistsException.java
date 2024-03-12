@@ -22,26 +22,34 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.exception;
+package com.tencent.bk.job.common.exception.base;
 
 import com.tencent.bk.job.common.error.BkErrorCodeEnum;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.error.payload.ResourceInfoPayloadDTO;
 import lombok.Getter;
 import lombok.ToString;
 
 /**
- * 认证失败
+ * 创建的资源已存在
  */
 @Getter
 @ToString
-public class UnauthenticatedException extends ServiceException {
+public class AlreadyExistsException extends ServiceException {
 
-    public UnauthenticatedException(String internalErrorMessage, Throwable cause) {
-        super(internalErrorMessage, cause);
-        setErrorCode(BkErrorCodeEnum.UNAUTHENTICATED);
+    public AlreadyExistsException(SubErrorCode subErrorCode) {
+        super(subErrorCode, null);
+        setErrorCode(BkErrorCodeEnum.ALREADY_EXISTS);
     }
 
-    public UnauthenticatedException(String internalErrorMessage) {
-        super(internalErrorMessage);
-        setErrorCode(BkErrorCodeEnum.UNAUTHENTICATED);
+    public AlreadyExistsException(SubErrorCode subErrorCode, ResourceInfoPayloadDTO payload) {
+        super(subErrorCode, payload);
+        setErrorCode(BkErrorCodeEnum.ALREADY_EXISTS);
     }
+
+    public AlreadyExistsException(Throwable cause, SubErrorCode subErrorCode, ResourceInfoPayloadDTO payload) {
+        super(null, cause, subErrorCode, payload);
+        setErrorCode(BkErrorCodeEnum.ALREADY_EXISTS);
+    }
+
 }

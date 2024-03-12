@@ -46,9 +46,9 @@ import com.tencent.bk.job.backup.service.TaskTemplateService;
 import com.tencent.bk.job.common.artifactory.sdk.ArtifactoryClient;
 import com.tencent.bk.job.common.constant.AccountCategoryEnum;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
-import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.util.file.FileUtil;
 import com.tencent.bk.job.common.util.file.PathUtil;
 import com.tencent.bk.job.common.util.file.ZipUtil;
@@ -260,12 +260,10 @@ public class ImportJobExecutor {
         } catch (Exception e) {
             log.error("Error while process import job!|{}|{}", importJob.getAppId(),
                 importJob.getId(), e);
-            if (e instanceof ServiceException) {
-                if (ErrorCode.PERMISSION_DENIED == ((ServiceException) e).getErrorCode()) {
-                    logService.addImportLog(importJob.getAppId(), importJob.getId(),
-                        i18nService.getI18n(String.valueOf(((ServiceException) e).getErrorCode())),
-                        LogEntityTypeEnum.ERROR);
-                }
+            if (e instanceof IamPermissionDeniedException) {
+                logService.addImportLog(importJob.getAppId(), importJob.getId(),
+                    i18nService.getI18n(String.valueOf(ErrorCode.PERMISSION_DENIED)),
+                    LogEntityTypeEnum.ERROR);
             }
             importJobService.markJobAllFailed(importJob,
                 i18nService.getI18n(LogMessage.IMPORT_FAILED));
@@ -393,7 +391,7 @@ public class ImportJobExecutor {
                             "Find or create db account " + account.getAlias() +
                                 "|" + account.getDbSystemAccount().getAlias() + " " + "failed!",
                             LogEntityTypeEnum.ERROR);
-                        throw new InternalException("Find or create account failed!", ErrorCode.INTERNAL_ERROR);
+                        throw new InternalException("Find or create account failed!");
                     }
                     account.getDbSystemAccount().setId(finalAccountIdMap.get(account.getDbSystemAccount().getId()));
                 }
@@ -417,7 +415,7 @@ public class ImportJobExecutor {
                 logService.addImportLog(importJob.getAppId(), importJob.getId(),
                     "Find or create account " + account.getAlias() +
                         " " + "failed!", LogEntityTypeEnum.ERROR);
-                throw new InternalException("Find or create account failed!", ErrorCode.INTERNAL_ERROR);
+                throw new InternalException("Find or create account failed!");
             }
         } else {
             log.debug("Already create account|{}|{}", account.getAppId(), account.getAlias());

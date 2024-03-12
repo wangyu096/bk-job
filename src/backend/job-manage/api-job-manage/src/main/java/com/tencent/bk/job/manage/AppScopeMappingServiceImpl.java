@@ -25,8 +25,10 @@
 package com.tencent.bk.job.manage;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
-import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.error.payload.ResourceInfoPayloadDTO;
+import com.tencent.bk.job.common.exception.base.InternalException;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
 import com.tencent.bk.job.common.model.dto.ResourceScope;
 import com.tencent.bk.job.manage.api.inner.ServiceApplicationResource;
 import com.tencent.bk.job.manage.model.inner.resp.ServiceApplicationDTO;
@@ -52,12 +54,14 @@ public class AppScopeMappingServiceImpl extends AbstractLocalCacheAppScopeMappin
             resourceScope.getType().getValue(), resourceScope.getId());
         if (app == null) {
             log.error("App not found, query scope: {}", resourceScope);
-            throw new NotFoundException(ErrorCode.APP_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.APP_NOT_EXIST),
+                new ResourceInfoPayloadDTO("resource_scope", resourceScope.getId(),
+                    "Resource scope is not exist"));
         }
         if (app.getId() == null) {
             // 如果查询到的业务缺少ID参数，抛出异常避免缓存非法数据
             log.error("Empty appId for application, reject cache! query scope: {}", resourceScope);
-            throw new InternalException("Empty appId for application", ErrorCode.INTERNAL_ERROR);
+            throw new InternalException("Empty appId for application");
         }
         return app.getId();
     }
@@ -67,12 +71,14 @@ public class AppScopeMappingServiceImpl extends AbstractLocalCacheAppScopeMappin
         ServiceApplicationDTO app = applicationResource.queryAppById(appId);
         if (app == null) {
             log.error("App not found, query appId: {}", appId);
-            throw new NotFoundException(ErrorCode.APP_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.APP_NOT_EXIST),
+                new ResourceInfoPayloadDTO("resource_scope", null,
+                    "Resource scope is not exist"));
         }
         if (StringUtils.isEmpty(app.getScopeType()) || StringUtils.isEmpty(app.getScopeId())) {
             // 如果查询到的业务缺少scopeType|scopeId参数，抛出异常避免缓存非法数据
             log.error("Empty scopeType|scopeId for application, reject cache! query appId: {}", appId);
-            throw new InternalException("Empty scopeType|scopeId for application", ErrorCode.INTERNAL_ERROR);
+            throw new InternalException("Empty scopeType|scopeId for application");
         }
         return new ResourceScope(app.getScopeType(), app.getScopeId());
     }

@@ -26,15 +26,13 @@ package com.tencent.bk.job.common.openapi.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.tencent.bk.job.common.exception.ServiceException;
-import com.tencent.bk.job.common.util.I18nUtil;
+import com.tencent.bk.job.common.error.ApiError;
+import com.tencent.bk.job.common.exception.base.ServiceException;
 import com.tencent.bk.job.common.util.JobContextUtil;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Data
-@NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Slf4j
 public class OpenApiResp<T> {
@@ -47,14 +45,18 @@ public class OpenApiResp<T> {
     /**
      * 错误信息
      */
-    private OpenApiError error;
+    private ApiError error;
+
+    public OpenApiResp() {
+        this.requestId = JobContextUtil.getRequestId();
+    }
 
     private OpenApiResp(T data) {
         this.data = data;
         this.requestId = JobContextUtil.getRequestId();
     }
 
-    private OpenApiResp(OpenApiError error) {
+    private OpenApiResp(ApiError error) {
         this.error = error;
         this.requestId = JobContextUtil.getRequestId();
     }
@@ -68,17 +70,14 @@ public class OpenApiResp<T> {
         return new OpenApiResp<>(null);
     }
 
-    public static <T> OpenApiResp<T> fail(OpenApiError error) {
+    public static <T> OpenApiResp<T> fail(ApiError error) {
         return new OpenApiResp<>(error);
     }
 
     public static <T> OpenApiResp<T> fail(ServiceException e) {
-        return fail(e.getErrorCode(), e.getErrorParams(), null);
-    }
-
-    public static <T> OpenApiResp<T> fail(Integer errorCode, Object[] errorParams, T data) {
-
-        String message = I18nUtil.getI18nMessage(String.valueOf(errorCode), errorParams);
-        return new OpenApiResp<>(errorCode, message, data);
+        OpenApiResp<T> resp = new OpenApiResp<>();
+        ApiError error = new ApiError(e);
+        resp.setError(error);
+        return resp;
     }
 }

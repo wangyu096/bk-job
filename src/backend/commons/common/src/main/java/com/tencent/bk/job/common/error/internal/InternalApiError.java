@@ -24,34 +24,61 @@
 
 package com.tencent.bk.job.common.error.internal;
 
-import com.tencent.bk.job.common.error.payload.ErrorPayloadDTO;
+import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.error.ApiError;
+import com.tencent.bk.job.common.error.payload.BadRequestPayloadDTO;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  * Job 内部 API 错误统一模型
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class InternalApiError {
-    /**
-     * 蓝鲸错误码
-     * <p>
-     * 作用: 上游编码基于这个做代码层面的逻辑判断(所以必须是确定的枚举)不允许各系统自定义。
-     */
-    private String code;
+public class InternalApiError extends ApiError {
 
     /**
      * Job 自定义的子错误码
      */
     private Integer subCode;
 
-    /**
-     * 提供给用户的错误信息。需要支持国际化
-     */
-    private String message;
+    public InternalApiError() {
+        super();
+    }
 
-    /**
-     * 错误 Payload。根据 code 字段值不同对应不同的 schema
-     */
-    private ErrorPayloadDTO data;
+    public InternalApiError(ApiError apiError) {
+        super();
+        setCode(apiError.getCode());
+        setMessage(apiError.getMessage());
+        setData(apiError.getData());
+    }
 
+    public Integer getSubCode() {
+        return subCode;
+    }
+
+    public void setSubCode(Integer subCode) {
+        this.subCode = subCode;
+    }
+
+    public static InternalApiError internalError() {
+        ApiError error = ApiError.internalError();
+        InternalApiError internalApiError = new InternalApiError(error);
+        internalApiError.setSubCode(ErrorCode.INTERNAL_ERROR);
+        return internalApiError;
+    }
+
+    public static InternalApiError invalidArgument(BadRequestPayloadDTO errorPayload) {
+        ApiError error = ApiError.invalidArgument(errorPayload);
+        InternalApiError internalApiError = new InternalApiError(error);
+        internalApiError.setSubCode(ErrorCode.BAD_REQUEST);
+        return internalApiError;
+    }
+
+    public static InternalApiError invalidRequest() {
+        ApiError error = ApiError.invalidRequest();
+        InternalApiError internalApiError = new InternalApiError(error);
+        internalApiError.setSubCode(ErrorCode.BAD_REQUEST);
+        return internalApiError;
+    }
 }

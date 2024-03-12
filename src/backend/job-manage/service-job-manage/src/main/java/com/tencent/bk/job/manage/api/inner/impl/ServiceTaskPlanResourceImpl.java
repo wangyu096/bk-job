@@ -27,8 +27,9 @@ package com.tencent.bk.job.manage.api.inner.impl;
 import com.tencent.bk.job.common.constant.AccountCategoryEnum;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
-import com.tencent.bk.job.common.exception.InvalidParamException;
-import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
 import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.common.mysql.JobTransactional;
 import com.tencent.bk.job.common.util.json.JsonUtils;
@@ -106,7 +107,7 @@ public class ServiceTaskPlanResourceImpl implements ServiceTaskPlanResource {
     @Override
     public InternalResponse<ServiceTaskPlanDTO> getPlanBasicInfoById(Long appId, Long planId) {
         if (appId == null || appId <= 0 || planId == null || planId <= 0) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         List<TaskPlanInfoDTO> planList =
             taskPlanService.listPlanBasicInfoByIds(appId, Collections.singletonList(planId));
@@ -120,14 +121,14 @@ public class ServiceTaskPlanResourceImpl implements ServiceTaskPlanResource {
             planDTO.setDebugTask(plan.getDebug());
             return InternalResponse.buildSuccessResp(planDTO);
         } else {
-            throw new NotFoundException(ErrorCode.TASK_PLAN_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.TASK_PLAN_NOT_EXIST));
         }
     }
 
     @Override
     public InternalResponse<String> getPlanName(Long planId) {
         if (planId == null) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         return InternalResponse.buildSuccessResp(taskPlanService.getPlanName(planId));
     }
@@ -136,7 +137,8 @@ public class ServiceTaskPlanResourceImpl implements ServiceTaskPlanResource {
     public InternalResponse<Long> getGlobalVarIdByName(Long planId, String globalVarName) {
         TaskVariableDTO taskVariableDTO = taskVariableService.getVariableByName(planId, globalVarName);
         if (taskVariableDTO == null) {
-            throw new InvalidParamException("Cannot find globalVar by name " + globalVarName, ErrorCode.ILLEGAL_PARAM);
+            throw InvalidParamException.withInvalidField("globalVarName",
+                "Cannot find globalVar by name " + globalVarName);
         }
         return InternalResponse.buildSuccessResp(taskVariableDTO.getId());
     }
@@ -145,7 +147,8 @@ public class ServiceTaskPlanResourceImpl implements ServiceTaskPlanResource {
     public InternalResponse<ServiceTaskVariableDTO> getGlobalVarByName(Long planId, String globalVarName) {
         TaskVariableDTO taskVariableDTO = taskVariableService.getVariableByName(planId, globalVarName);
         if (taskVariableDTO == null) {
-            throw new InvalidParamException("Cannot find globalVar by name " + globalVarName, ErrorCode.ILLEGAL_PARAM);
+            throw InvalidParamException.withInvalidField("globalVarName",
+                "Cannot find globalVar by name " + globalVarName);
         }
         return InternalResponse.buildSuccessResp(TaskVariableDTO.toServiceDTO(taskVariableDTO));
     }
@@ -154,7 +157,8 @@ public class ServiceTaskPlanResourceImpl implements ServiceTaskPlanResource {
     public InternalResponse<String> getGlobalVarNameById(Long planId, Long globalVarId) {
         TaskVariableDTO taskVariableDTO = taskVariableService.getVariableById(planId, globalVarId);
         if (taskVariableDTO == null) {
-            throw new InvalidParamException("Cannot find globalVar by id " + globalVarId, ErrorCode.ILLEGAL_PARAM);
+            throw InvalidParamException.withInvalidField("globalVarId",
+                "Cannot find globalVar by id " + globalVarId);
         }
         return InternalResponse.buildSuccessResp(taskVariableDTO.getName());
     }
@@ -163,7 +167,8 @@ public class ServiceTaskPlanResourceImpl implements ServiceTaskPlanResource {
     public InternalResponse<ServiceTaskVariableDTO> getGlobalVarById(Long planId, Long globalVarId) {
         TaskVariableDTO taskVariableDTO = taskVariableService.getVariableById(planId, globalVarId);
         if (taskVariableDTO == null) {
-            throw new InvalidParamException("Cannot find globalVar by id " + globalVarId, ErrorCode.ILLEGAL_PARAM);
+            throw InvalidParamException.withInvalidField("globalVarId",
+                "Cannot find globalVar by id " + globalVarId);
         }
         return InternalResponse.buildSuccessResp(TaskVariableDTO.toServiceDTO(taskVariableDTO));
     }
@@ -171,12 +176,12 @@ public class ServiceTaskPlanResourceImpl implements ServiceTaskPlanResource {
     @Override
     public InternalResponse<Long> getPlanAppId(Long planId) {
         if (planId == null) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         TaskPlanInfoDTO taskPlanInfoDTO = taskPlanService.getTaskPlanById(planId);
         if (taskPlanInfoDTO == null) {
             log.warn("Cannot find taskPlanInfoDTO by id {}", planId);
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
+            throw new InvalidParamException();
         }
         return InternalResponse.buildSuccessResp(taskPlanInfoDTO.getAppId());
     }
@@ -188,8 +193,8 @@ public class ServiceTaskPlanResourceImpl implements ServiceTaskPlanResource {
             log.debug("Get plan by planId, planId={}, plan={}", planId, JsonUtils.toJson(plan));
         }
         if (plan == null) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                new String[]{"planId", "Cannot find plan by id " + planId});
+            throw InvalidParamException.withInvalidField("planId",
+                "Cannot find plan by id " + planId);
         }
         ServiceTaskPlanDTO planDTO = new ServiceTaskPlanDTO();
         planDTO.setId(plan.getId());

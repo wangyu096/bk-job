@@ -24,9 +24,8 @@
 
 package com.tencent.bk.job.manage.migration;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.common.model.dto.ApplicationHostDTO;
 import com.tencent.bk.job.common.mysql.JobTransactional;
 import com.tencent.bk.job.common.util.json.JsonUtils;
@@ -209,7 +208,7 @@ public class AddHostIdForTemplateAndPlanMigrationTask {
         String json = JsonUtils.toJson(target);
         if (StringUtils.isBlank(json)) {
             // 可能是解析出现异常，需要抛出异常终止
-            throw new InternalException(ErrorCode.INTERNAL_ERROR);
+            throw new InternalException();
         }
         return json;
     }

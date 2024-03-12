@@ -24,7 +24,7 @@
 
 package com.tencent.bk.job.execute.auth;
 
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
 import com.tencent.bk.job.execute.model.ExecuteObjectsDTO;
@@ -113,10 +113,10 @@ public interface ExecuteAuthService {
      * @param username         用户名
      * @param appResourceScope 业务范围
      * @param taskInstance     作业实例
-     * @throws PermissionDeniedException 用户无权限
+     * @throws IamPermissionDeniedException 用户无权限
      */
     void authViewTaskInstance(String username, AppResourceScope appResourceScope, TaskInstanceDTO taskInstance)
-        throws PermissionDeniedException;
+        throws IamPermissionDeniedException;
 
     /**
      * 检查是否拥有作业执行实例查看权限

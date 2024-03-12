@@ -27,9 +27,7 @@ package com.tencent.bk.job.manage.api.esb.impl.v3;
 import com.tencent.bk.job.common.artifactory.config.ArtifactoryConfig;
 import com.tencent.bk.job.common.artifactory.model.dto.TempUrlInfo;
 import com.tencent.bk.job.common.artifactory.sdk.ArtifactoryClient;
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.error.SubErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.common.util.StringUtil;
 import com.tencent.bk.job.common.util.Utils;
@@ -76,8 +74,7 @@ public class EsbLocalFileResourceV3Impl implements EsbLocalFileV3Resource {
         List<String> fileNameList = req.getFileNameList();
         String fileNameDesc = "fileName in file_name_list";
         if (fileNameList == null) {
-            throw new InvalidParamException(SubErrorCode.of(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                "file_name_list", fileNameDesc + " cannot be null"));
+            throw InvalidParamException.withInvalidField("file_name_list", fileNameDesc + " cannot be null");
         }
         fileNameList.forEach(fileName -> checkLocalUploadFileName(fileName, fileNameDesc));
         // 权限校验：在切面层已实现
@@ -129,12 +126,11 @@ public class EsbLocalFileResourceV3Impl implements EsbLocalFileV3Resource {
 
     private void checkLocalUploadFileName(String fileName, String paramName) {
         if (StringUtils.isBlank(fileName)) {
-            throw new InvalidParamException(SubErrorCode.of(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                paramName, paramName + " cannot be null or blank"));
+            throw InvalidParamException.withInvalidField(paramName, paramName + " cannot be null or blank");
         }
         if (fileName.length() > 1024) {
-            throw new InvalidParamException(SubErrorCode.of(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
-                paramName, paramName + " length cannot be longer than 1024"));
+            throw InvalidParamException.withInvalidField(paramName,
+                paramName + " length cannot be longer than 1024");
         }
     }
 }

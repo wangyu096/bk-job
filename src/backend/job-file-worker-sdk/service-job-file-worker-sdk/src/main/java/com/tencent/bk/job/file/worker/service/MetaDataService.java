@@ -26,8 +26,6 @@ package com.tencent.bk.job.file.worker.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Sets;
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.util.Base64Util;
 import com.tencent.bk.job.common.util.json.JsonUtils;
 import com.tencent.bk.job.file.worker.config.WorkerConfig;
@@ -165,8 +163,7 @@ public class MetaDataService {
      */
     public FileTreeNodeDef getChildFileNodeMetaDataByParent(String fileSourceTypeCode, String parentNodeType) {
         if (StringUtils.isBlank(fileSourceTypeCode)) {
-            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME,
-                new String[]{"fileSourceTypeCode"});
+            throw new IllegalArgumentException("Invalid param fileSourceTypeCode");
         }
         FileWorkerConfig fileWorkerConfig = getFileWorkerConfig();
         List<FileSourceMetaData> fileSourceMetaDataList = fileWorkerConfig.getFileSourceMetaDataList();

@@ -26,7 +26,8 @@ package com.tencent.bk.job.manage.api.inner.impl;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.ResourceScopeTypeEnum;
-import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
 import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.common.model.dto.ApplicationDTO;
 import com.tencent.bk.job.common.model.dto.ResourceScope;
@@ -77,7 +78,7 @@ public class ServiceApplicationResourceImpl implements ServiceApplicationResourc
     public ServiceApplicationDTO queryAppById(Long appId) {
         ApplicationDTO appInfo = applicationService.getAppByAppId(appId);
         if (appInfo == null) {
-            throw new NotFoundException(ErrorCode.APP_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.APP_NOT_EXIST));
         }
         return convertToServiceApp(appInfo);
     }
@@ -116,7 +117,7 @@ public class ServiceApplicationResourceImpl implements ServiceApplicationResourc
     public ServiceApplicationDTO queryAppByScope(String scopeType, String scopeId) {
         ApplicationDTO appInfo = applicationService.getAppByScope(new ResourceScope(scopeType, scopeId));
         if (appInfo == null) {
-            throw new NotFoundException(ErrorCode.APP_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.APP_NOT_EXIST));
         }
         return convertToServiceApp(appInfo);
     }
@@ -127,7 +128,7 @@ public class ServiceApplicationResourceImpl implements ServiceApplicationResourc
             .map(Long::parseLong).collect(Collectors.toSet());
         List<ApplicationDTO> applications = applicationService.listAppsByAppIds(appIdList);
         if (CollectionUtils.isEmpty(applications)) {
-            throw new NotFoundException(ErrorCode.APP_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.APP_NOT_EXIST));
         }
         return applications.stream().map(this::convertToServiceApp).collect(Collectors.toList());
     }

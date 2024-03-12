@@ -41,7 +41,6 @@ import com.tencent.bk.job.common.cc.model.req.ResourceWatchReq;
 import com.tencent.bk.job.common.cc.model.result.BizSetEventDetail;
 import com.tencent.bk.job.common.cc.model.result.BizSetRelationEventDetail;
 import com.tencent.bk.job.common.cc.model.result.ResourceWatchResult;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.HttpMethodEnum;
 import com.tencent.bk.job.common.esb.config.EsbProperties;
 import com.tencent.bk.job.common.exception.InternalCmdbException;
@@ -103,11 +102,11 @@ public class BizSetCmdbClient extends BaseCmdbApiClient implements IBizSetCmdbCl
                 new TypeReference<EsbResp<SearchBizSetResp>>() {
                 });
             if (!resp.getResult()) {
-                throw new InternalCmdbException(ErrorCode.CMDB_API_DATA_ERROR, null);
+                throw new InternalCmdbException("Cmdb response result error");
             }
             return resp.getData().getCount();
         } catch (Exception e) {
-            throw new InternalCmdbException(e, ErrorCode.CMDB_API_DATA_ERROR, null);
+            throw new InternalCmdbException("Request cmdb error", e);
         }
     }
 
@@ -156,11 +155,11 @@ public class BizSetCmdbClient extends BaseCmdbApiClient implements IBizSetCmdbCl
                 new TypeReference<EsbResp<SearchBizSetResp>>() {
                 });
             if (!resp.getResult() || resp.getData() == null) {
-                throw new InternalCmdbException(ErrorCode.CMDB_API_DATA_ERROR, null);
+                throw new InternalCmdbException("Cmdb response result error");
             }
             return resp.getData().getBizSetList();
         } catch (Exception e) {
-            throw new InternalCmdbException(e, ErrorCode.CMDB_API_DATA_ERROR, null);
+            throw new InternalCmdbException("Request cmdb error", e);
         }
     }
 
@@ -188,11 +187,11 @@ public class BizSetCmdbClient extends BaseCmdbApiClient implements IBizSetCmdbCl
                 new TypeReference<EsbResp<SearchBizInBusinessSetResp>>() {
                 });
             if (!resp.getResult()) {
-                throw new InternalCmdbException(ErrorCode.CMDB_API_DATA_ERROR, null);
+                throw new InternalCmdbException("Cmdb response result error");
             }
             return resp.getData().getCount();
         } catch (Exception e) {
-            throw new InternalCmdbException(e, ErrorCode.CMDB_API_DATA_ERROR, null);
+            throw new InternalCmdbException("Request cmdb error", e);
         }
     }
 
@@ -233,11 +232,11 @@ public class BizSetCmdbClient extends BaseCmdbApiClient implements IBizSetCmdbCl
                 new TypeReference<EsbResp<SearchBizInBusinessSetResp>>() {
                 });
             if (!resp.getResult() || resp.getData() == null) {
-                throw new InternalCmdbException(ErrorCode.CMDB_API_DATA_ERROR, null);
+                throw new InternalCmdbException("Cmdb response result error");
             }
             return resp.getData().getBizList();
         } catch (Exception e) {
-            throw new InternalCmdbException(e, ErrorCode.CMDB_API_DATA_ERROR, null);
+            throw new InternalCmdbException("Request cmdb error", e);
         }
     }
 
@@ -275,11 +274,11 @@ public class BizSetCmdbClient extends BaseCmdbApiClient implements IBizSetCmdbCl
                 },
                 HttpHelperFactory.getLongRetryableHttpHelper());
             if (!resp.getResult()) {
-                throw new InternalCmdbException(ErrorCode.CMDB_API_DATA_ERROR, null);
+                throw new InternalCmdbException("Cmdb response result error");
             }
             return resp.getData();
         } catch (Exception e) {
-            throw new InternalCmdbException(e, ErrorCode.CMDB_API_DATA_ERROR, null);
+            throw new InternalCmdbException("Request cmdb error", e);
         }
     }
 
@@ -301,11 +300,11 @@ public class BizSetCmdbClient extends BaseCmdbApiClient implements IBizSetCmdbCl
                 },
                 HttpHelperFactory.getLongRetryableHttpHelper());
             if (!resp.getResult()) {
-                throw new InternalCmdbException(ErrorCode.CMDB_API_DATA_ERROR, null);
+                throw new InternalCmdbException("Cmdb response result error");
             }
             return resp.getData();
         } catch (Exception e) {
-            throw new InternalCmdbException(e, ErrorCode.CMDB_API_DATA_ERROR, null);
+            throw new InternalCmdbException("Request cmdb error", e);
         }
     }
 

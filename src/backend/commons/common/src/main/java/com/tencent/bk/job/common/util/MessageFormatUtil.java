@@ -22,25 +22,12 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.exception;
+package com.tencent.bk.job.common.util;
 
-import com.tencent.bk.job.common.error.BkErrorCodeEnum;
-import lombok.Getter;
-import lombok.ToString;
+import org.slf4j.helpers.MessageFormatter;
 
-/**
- * 内部服务异常
- */
-@Getter
-@ToString
-public class InternalException extends ServiceException {
-
-    public InternalException(String internalErrorMessage, Throwable cause) {
-        super(internalErrorMessage, cause);
-        setErrorCode(BkErrorCodeEnum.INTERNAL);
-    }
-
-    public InternalException(String internalErrorMessage) {
-        this(internalErrorMessage, null);
+public class MessageFormatUtil {
+    public static String format(String str, Object... args) {
+        return MessageFormatter.arrayFormat(str, args).getMessage();
     }
 }

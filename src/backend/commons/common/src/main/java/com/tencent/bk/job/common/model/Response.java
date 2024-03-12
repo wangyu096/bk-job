@@ -25,36 +25,43 @@
 package com.tencent.bk.job.common.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.tencent.bk.job.common.annotation.CompatibleImplementation;
+import com.tencent.bk.job.common.constant.CompatibleType;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.ServiceException;
-import com.tencent.bk.job.common.model.error.ErrorDetailDTO;
+import com.tencent.bk.job.common.error.ApiError;
+import com.tencent.bk.job.common.error.BkErrorCodeEnum;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.ServiceException;
 import com.tencent.bk.job.common.model.permission.AuthResultVO;
 import com.tencent.bk.job.common.util.I18nUtil;
 import com.tencent.bk.job.common.util.JobContextUtil;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 
 @ApiModel("服务调用通用返回结构")
 @Slf4j
 @Getter
 @Setter
 @ToString
-@NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Response<T> {
+
+    @Deprecated
+    @CompatibleImplementation(name = "openapi", type = CompatibleType.DEPLOY, explain = "发布完成后可删除")
     @ApiModelProperty("是否成功")
     private boolean success;
 
+    @Deprecated
+    @CompatibleImplementation(name = "openapi", type = CompatibleType.DEPLOY, explain = "发布完成后可删除")
     @ApiModelProperty("返回码")
     private Integer code;
 
+    @Deprecated
+    @CompatibleImplementation(name = "openapi", type = CompatibleType.DEPLOY, explain = "发布完成后可删除")
     @ApiModelProperty("错误信息")
     private String errorMsg;
 
@@ -65,62 +72,70 @@ public class Response<T> {
     private String requestId;
 
     @ApiModelProperty("鉴权结果, 当http code 为 403 的时候，该字段有值")
-    @JsonProperty("authResult")
+    @Deprecated
+    @CompatibleImplementation(name = "openapi", type = CompatibleType.DEPLOY, explain = "发布完成后可删除")
     private AuthResultVO authResult;
 
-    public Response(Integer errorCode, T data) {
-        this.code = errorCode;
-        this.success = errorCode.equals(ErrorCode.RESULT_OK);
-        this.errorMsg = I18nUtil.getI18nMessage(String.valueOf(errorCode));
-        this.data = data;
-        this.requestId = JobContextUtil.getRequestId();
+    /**
+     * API 错误信息
+     */
+    private ApiError error;
+
+    public Response() {
     }
 
-    public Response(Integer errorCode, Object[] errorParams, T data) {
-        this.code = errorCode;
-        this.success = errorCode.equals(ErrorCode.RESULT_OK);
-        this.errorMsg = I18nUtil.getI18nMessage(String.valueOf(errorCode), errorParams);
-        this.data = data;
-        this.requestId = JobContextUtil.getRequestId();
+    private Response(ApiError apiError,
+                     SubErrorCode subErrorCode) {
+        Response<T> response = new Response<>();
+        // 标准错误处理
+        response.setError(apiError);
+        response.setRequestId(JobContextUtil.getRequestId());
+
+        // 兼容处理
+        response.setSuccess(false);
+        response.setCode(subErrorCode.getCode());
+        response.setErrorMsg(subErrorCode.getI18nMessage());
     }
+
 
     public static <T> Response<T> buildSuccessResp(T data) {
-        return new Response<>(ErrorCode.RESULT_OK, data);
+        Response<T> response = new Response<>();
+        response.code = ErrorCode.RESULT_OK;
+        response.success = true;
+        response.data = data;
+        response.requestId = JobContextUtil.getRequestId();
+        return response;
     }
 
-    public static <T> Response<T> buildAuthFailResp(AuthResultVO authResult) {
-        Response<T> resp = new Response<>(ErrorCode.PERMISSION_DENIED
-                                            , new String[]{JobContextUtil.getUsername()}, null);
-        resp.authResult = authResult;
-        return resp;
-    }
-
-    public static <T> Response<T> buildCommonFailResp(Integer errorCode) {
-        return new Response<>(errorCode, null);
-    }
-
-    public static <T> Response<T> buildCommonFailResp(Integer errorCode, Object[] params) {
-        return new Response<>(errorCode, params, null);
+    public static <T> Response<T> buildCommonFailResp(ApiError apiError, SubErrorCode subErrorCode) {
+        return new Response<>(apiError, subErrorCode);
     }
 
     public static <T> Response<T> buildCommonFailResp(ServiceException e) {
-        return new Response<>(e.getErrorCode(), e.getErrorParams(), null);
-    }
-
-    public static <T> Response<T> buildValidateFailResp(ValidateResult validateResult) {
-        return new Response<>(validateResult.getErrorCode(), validateResult.getErrorParams(), null);
-    }
-
-    public static <T> Response<T> buildValidateFailResp(ErrorDetailDTO errorDetail) {
-        Response<T> resp = buildCommonFailResp(ErrorCode.BAD_REQUEST);
-        if (errorDetail != null && errorDetail.getBadRequestDetail() != null) {
-            String errorMsg = errorDetail.getBadRequestDetail().findFirstFieldErrorDesc();
-            if (StringUtils.isNotBlank(errorMsg)) {
-                // set validation detailed message instead of common error message
-                resp.setErrorMsg(errorMsg);
-            }
+        ApiError apiError = new ApiError();
+        apiError.setCode(e.getErrorCode().getErrorCode());
+        SubErrorCode subErrorCode = e.getSubErrorCode();
+        if (subErrorCode != null) {
+            apiError.setMessage(subErrorCode.getI18nMessage());
+        } else {
+            apiError.setMessage("Unknown error");
         }
-        resp.setErrorDetail(errorDetail);
-        return resp;
+        apiError.setData(e.getErrorPayload());
+        return buildCommonFailResp(apiError, e.getSubErrorCode());
     }
+
+    public static <T> Response<T> buildAuthFailResp(AuthResultVO authResult) {
+        ApiError apiError = new ApiError();
+        apiError.setCode(BkErrorCodeEnum.IAM_NO_PERMISSION.getErrorCode());
+        apiError.setMessage(I18nUtil.getI18nMessage(String.valueOf(ErrorCode.IAM_PERMISSION_DENIED)));
+        apiError.setData(authResult);
+
+        SubErrorCode subErrorCode = SubErrorCode.of(ErrorCode.IAM_PERMISSION_DENIED);
+
+        Response<T> response = new Response<>(apiError, subErrorCode);
+        response.setAuthResult(authResult);
+
+        return response;
+    }
+
 }

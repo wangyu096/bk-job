@@ -30,7 +30,8 @@ import com.tencent.bk.audit.annotations.AuditInstanceRecord;
 import com.tencent.bk.audit.context.ActionAuditContext;
 import com.tencent.bk.job.common.audit.constants.EventContentConstants;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
 import com.tencent.bk.job.common.model.PageData;
@@ -130,7 +131,7 @@ public class PublicScriptServiceImpl implements PublicScriptService {
 
         ScriptDTO script = getScript(scriptId);
         if (script == null) {
-            throw new NotFoundException(ErrorCode.SCRIPT_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.SCRIPT_NOT_EXIST));
         }
 
         ActionAuditContext.current().setInstanceName(script.getName());
@@ -179,7 +180,7 @@ public class PublicScriptServiceImpl implements PublicScriptService {
 
         ScriptDTO originScript = getScriptByScriptId(scriptVersion.getId());
         if (originScript == null) {
-            throw new NotFoundException(ErrorCode.SCRIPT_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.SCRIPT_NOT_EXIST));
         }
         ScriptDTO updateScript = scriptManager.updateScriptVersion(scriptVersion);
 
@@ -216,7 +217,7 @@ public class PublicScriptServiceImpl implements PublicScriptService {
     private void preProcessManagePublicScriptVersion(String username, Long scriptVersionId) {
         ScriptDTO script = getScriptVersion(scriptVersionId);
         if (script == null) {
-            throw new NotFoundException(ErrorCode.SCRIPT_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.SCRIPT_NOT_EXIST));
         }
 
         authManagePublicScript(username, script.getId());
@@ -273,7 +274,7 @@ public class PublicScriptServiceImpl implements PublicScriptService {
     public ScriptDTO updateScriptDesc(String operator, String scriptId, String desc) {
         ScriptDTO originScript = getScript(scriptId);
         if (originScript == null) {
-            throw new NotFoundException(ErrorCode.SCRIPT_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.SCRIPT_NOT_EXIST));
         }
 
         authManagePublicScript(operator, scriptId);
@@ -305,7 +306,7 @@ public class PublicScriptServiceImpl implements PublicScriptService {
     public ScriptDTO updateScriptName(String operator, String scriptId, String newName) {
         ScriptDTO originScript = getScript(scriptId);
         if (originScript == null) {
-            throw new NotFoundException(ErrorCode.SCRIPT_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.SCRIPT_NOT_EXIST));
         }
 
         authManagePublicScript(operator, scriptId);

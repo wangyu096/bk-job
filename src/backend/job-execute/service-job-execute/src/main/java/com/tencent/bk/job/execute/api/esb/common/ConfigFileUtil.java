@@ -25,7 +25,7 @@
 package com.tencent.bk.job.execute.api.esb.common;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.common.util.JobUUID;
 import com.tencent.bk.job.common.util.file.FileUtil;
 import com.tencent.bk.job.execute.engine.consts.FileDirTypeConf;

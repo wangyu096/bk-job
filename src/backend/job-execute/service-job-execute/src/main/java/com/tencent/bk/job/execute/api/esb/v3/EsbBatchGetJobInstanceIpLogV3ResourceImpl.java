@@ -27,12 +27,15 @@ package com.tencent.bk.job.execute.api.esb.v3;
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
-import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.error.payload.BadRequestPayloadDTO;
+import com.tencent.bk.job.common.error.payload.FieldViolationDTO;
+import com.tencent.bk.job.common.error.payload.ResourceInfoPayloadDTO;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
 import com.tencent.bk.job.common.gse.constants.FileDistModeEnum;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
-import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.model.dto.HostDTO;
 import com.tencent.bk.job.common.openapi.job.v2.EsbIpDTO;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
@@ -87,11 +90,8 @@ public class EsbBatchGetJobInstanceIpLogV3ResourceImpl implements EsbBatchGetJob
         String username,
         String appCode,
         @AuditRequestBody EsbBatchGetJobInstanceIpLogV3Request request) {
-        ValidateResult checkResult = checkRequest(request);
-        if (!checkResult.isPass()) {
-            log.warn("Batch get job instance ip log request is illegal!");
-            throw new InvalidParamException(checkResult);
-        }
+
+        checkRequest(request);
 
         long taskInstanceId = request.getTaskInstanceId();
         taskInstanceAccessProcessor.processBeforeAccess(username,
@@ -99,7 +99,11 @@ public class EsbBatchGetJobInstanceIpLogV3ResourceImpl implements EsbBatchGetJob
 
         StepInstanceBaseDTO stepInstance = stepInstanceService.getBaseStepInstance(request.getStepInstanceId());
         if (stepInstance == null) {
-            throw new NotFoundException(ErrorCode.TASK_INSTANCE_NOT_EXIST);
+            throw new NotFoundException(
+                SubErrorCode.of(ErrorCode.TASK_INSTANCE_NOT_EXIST),
+                new ResourceInfoPayloadDTO("job_instance", "id:" + taskInstanceId,
+                    "Job instance is not exist")
+            );
         }
 
         EsbIpLogsV3DTO ipLogs = new EsbIpLogsV3DTO();
@@ -117,21 +121,24 @@ public class EsbBatchGetJobInstanceIpLogV3ResourceImpl implements EsbBatchGetJob
         return EsbResp.buildSuccessResp(ipLogs);
     }
 
-    private ValidateResult checkRequest(EsbBatchGetJobInstanceIpLogV3Request request) {
+    private void checkRequest(EsbBatchGetJobInstanceIpLogV3Request request) {
         if (CollectionUtils.isEmpty(request.getHostIdList()) && CollectionUtils.isEmpty(request.getIpList())) {
-            return ValidateResult.fail(ErrorCode.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME,
-                "host_id_list/ip_list");
+            throw new InvalidParamException(
+                BadRequestPayloadDTO.instance()
+                    .addFieldViolation(FieldViolationDTO.atLeastOneParamRequired("host_id_list", "ip_list"))
+            );
         }
 
         int queryHostSize = CollectionUtils.isNotEmpty(request.getHostIdList()) ?
             request.getHostIdList().size() : request.getIpList().size();
         if (queryHostSize > 500) {
             log.warn("Host size is gt 500, stepInstanceId={}, size: {}", request.getStepInstanceId(), queryHostSize);
-            return ValidateResult.fail(ErrorCode.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME,
-                "host_id_list/ip_list");
+            throw new InvalidParamException(
+                BadRequestPayloadDTO.instance()
+                    .addFieldViolation(new FieldViolationDTO("host_id_list/ip_list",
+                        "The number of hosts in a single query must be less than or equal to 500"))
+            );
         }
-
-        return ValidateResult.pass();
     }
 
     private void buildScriptLogs(EsbIpLogsV3DTO ipLogs,

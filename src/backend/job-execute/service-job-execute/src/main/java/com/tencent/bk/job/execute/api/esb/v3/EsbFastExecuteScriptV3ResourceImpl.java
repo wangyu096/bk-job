@@ -28,10 +28,9 @@ import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobConstants;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.i18n.service.MessageI18nService;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
-import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
 import com.tencent.bk.job.common.util.Base64Util;
@@ -86,11 +85,7 @@ public class EsbFastExecuteScriptV3ResourceImpl extends JobExecuteCommonV3Proces
     public EsbResp<EsbJobExecuteV3DTO> fastExecuteScript(String username,
                                                          String appCode,
                                                          @AuditRequestBody EsbFastExecuteScriptV3Request request) {
-        ValidateResult checkResult = checkFastExecuteScriptRequest(request);
-        if (!checkResult.isPass()) {
-            log.warn("Fast execute script request is illegal!");
-            throw new InvalidParamException(checkResult);
-        }
+        checkFastExecuteScriptRequest(request);
 
         request.trimIps();
 
@@ -123,40 +118,34 @@ public class EsbFastExecuteScriptV3ResourceImpl extends JobExecuteCommonV3Proces
             + DateUtils.formatLocalDateTime(LocalDateTime.now(), "yyyyMMddHHmmssSSS");
     }
 
-    private ValidateResult checkFastExecuteScriptRequest(EsbFastExecuteScriptV3Request request) {
+    private void checkFastExecuteScriptRequest(EsbFastExecuteScriptV3Request request) {
         boolean isSpecifiedByScriptVersionId = request.getScriptVersionId() != null;
         boolean isSpecifiedByOnlineScript = StringUtils.isNotEmpty(request.getScriptId());
         boolean isSpecifiedByScriptContent = StringUtils.isNotEmpty(request.getContent());
 
         if (!(isSpecifiedByScriptVersionId || isSpecifiedByOnlineScript || isSpecifiedByScriptContent)) {
             log.warn("Fast execute script, script is not specified!");
-            return ValidateResult.fail(ErrorCode.MISSING_PARAM_WITH_PARAM_NAME,
-                "script_version_id|script_id|script_content");
+            throw InvalidParamException.withInvalidField("script_version_id|script_id|script_content");
         }
         if (isSpecifiedByScriptVersionId) {
             if (request.getScriptVersionId() < 1) {
                 log.warn("Fast execute script, scriptVersionId:{} is invalid", request.getScriptVersionId());
-                return ValidateResult.fail(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, "script_version_id");
+                throw InvalidParamException.withInvalidField("script_version_id");
             }
         }
         if (isSpecifiedByScriptContent) {
             if (!ScriptTypeEnum.isValid(request.getScriptLanguage())) {
                 log.warn("Fast execute script, script language is invalid! scriptLanguage={}",
                     request.getScriptLanguage());
-                return ValidateResult.fail(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, "script_language");
+                throw InvalidParamException.withInvalidField("script_language");
             }
         }
-        ValidateResult serverValidateResult = checkServer(request.getTargetServer());
-        if (!serverValidateResult.isPass()) {
-            log.warn("Fast execute script, target server is empty!");
-            return serverValidateResult;
-        }
+        checkServer(request.getTargetServer());
         if ((request.getAccountId() == null || request.getAccountId() < 1L)
             && StringUtils.isBlank(request.getAccountAlias())) {
             log.warn("Fast execute script, account is empty!");
-            return ValidateResult.fail(ErrorCode.MISSING_PARAM_WITH_PARAM_NAME, "account_id|account_alias");
+            throw InvalidParamException.withInvalidField("account_id|account_alias");
         }
-        return ValidateResult.pass();
     }
 
     private TaskInstanceDTO buildFastScriptTaskInstance(String username,

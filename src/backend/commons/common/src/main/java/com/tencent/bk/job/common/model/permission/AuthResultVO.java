@@ -24,6 +24,7 @@
 
 package com.tencent.bk.job.common.model.permission;
 
+import com.tencent.bk.job.common.error.payload.ErrorPayloadDTO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -39,7 +40,7 @@ import java.util.List;
 @Data
 @ToString
 @ApiModel("鉴权结果-前端")
-public class AuthResultVO {
+public class AuthResultVO extends ErrorPayloadDTO {
     /**
      * 权限是否通过
      */

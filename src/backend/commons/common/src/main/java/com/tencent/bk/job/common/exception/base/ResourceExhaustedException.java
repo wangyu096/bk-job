@@ -22,22 +22,23 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.crontab.exception;
+package com.tencent.bk.job.common.exception.base;
 
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
-import com.tencent.bk.job.common.iam.model.AuthResult;
-import com.tencent.bk.job.common.model.permission.AuthResultVO;
+import com.tencent.bk.job.common.error.BkErrorCodeEnum;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.error.payload.QuotaFailurePayloadDTO;
 import lombok.Getter;
+import lombok.ToString;
 
 /**
- * @since 26/11/2020 21:22
+ * 资源配额不足或达到速率限制
  */
 @Getter
-public class TaskExecuteAuthFailedException extends PermissionDeniedException {
-    private final AuthResultVO authResultVO;
+@ToString
+public class ResourceExhaustedException extends ServiceException {
 
-    public TaskExecuteAuthFailedException(AuthResult authResult, AuthResultVO authResultVO) {
-        super(authResult);
-        this.authResultVO = authResultVO;
+    public ResourceExhaustedException(SubErrorCode subErrorCode, QuotaFailurePayloadDTO payload) {
+        super(subErrorCode, payload);
+        setErrorCode(BkErrorCodeEnum.RESOURCE_EXHAUSTED);
     }
 }

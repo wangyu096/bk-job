@@ -24,10 +24,9 @@
 
 package com.tencent.bk.job.manage.dao.impl;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobConstants;
 import com.tencent.bk.job.common.constant.ResourceScopeTypeEnum;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.model.dto.ApplicationDTO;
@@ -920,7 +919,7 @@ public class ApplicationHostDAOImpl implements ApplicationHostDAO {
                 applicationHostDTO
             );
             log.error(msg.getMessage());
-            throw new InternalException(msg.getMessage(), ErrorCode.INTERNAL_ERROR);
+            throw new InternalException(msg.getMessage());
         }
     }
 

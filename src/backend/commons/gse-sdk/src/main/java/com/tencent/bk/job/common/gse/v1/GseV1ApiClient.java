@@ -45,8 +45,7 @@ import com.tencent.bk.gse.taskapi.api_stop_task_request;
 import com.tencent.bk.gse.taskapi.api_task_detail_result;
 import com.tencent.bk.gse.taskapi.api_task_relation;
 import com.tencent.bk.gse.taskapi.api_task_request;
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.gse.GseV1ApiException;
 import com.tencent.bk.job.common.gse.IGseClient;
 import com.tencent.bk.job.common.gse.constants.AgentStateStatusEnum;
 import com.tencent.bk.job.common.gse.constants.FileDistModeEnum;
@@ -382,8 +381,7 @@ public class GseV1ApiClient implements IGseClient {
         watch.stop();
         if (null == gseClient) {
             log.error("Get GSE cache client connection failed");
-            throw new InternalException(ErrorCode.GSE_API_DATA_ERROR,
-                new String[]{"Get GSE cache client connection failed"});
+            throw new GseV1ApiException("Get GSE cache client connection failed");
         }
 
         long start = System.currentTimeMillis();
@@ -401,7 +399,7 @@ public class GseV1ApiClient implements IGseClient {
         } catch (Throwable e) {
             log.error("QueryAgentStatus error", e);
             status = "error";
-            throw new InternalException(e, ErrorCode.GSE_API_DATA_ERROR);
+            throw new GseV1ApiException(e);
         } finally {
             long end = System.currentTimeMillis();
             log.info("BatchGetAgentStatus {} agentIds, cost: {}ms", agentIds.size(), (end - start));

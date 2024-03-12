@@ -29,7 +29,7 @@ package com.tencent.bk.job.common.iam.interceptor;
 
 import com.tencent.bk.job.common.annotation.JobInterceptor;
 import com.tencent.bk.job.common.constant.InterceptorOrder;
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.iam.service.BusinessAuthService;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
@@ -65,7 +65,7 @@ public class AuthAppInterceptor implements AsyncHandlerInterceptor {
                 log.debug("Auth {} access_business {}", username, appResourceScope);
                 AuthResult authResult = businessAuthService.authAccessBusiness(username, appResourceScope);
                 if (!authResult.isPass()) {
-                    throw new PermissionDeniedException(authResult);
+                    throw new IamPermissionDeniedException(authResult);
                 }
             } else {
                 log.debug("Ignore auth {} access_business public scope", username);

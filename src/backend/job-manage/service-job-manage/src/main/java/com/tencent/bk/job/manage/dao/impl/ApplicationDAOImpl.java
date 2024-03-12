@@ -25,9 +25,8 @@
 package com.tencent.bk.job.manage.dao.impl;
 
 import com.tencent.bk.job.common.constant.Bool;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.ResourceScopeTypeEnum;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.common.model.dto.ApplicationAttrsDO;
 import com.tencent.bk.job.common.model.dto.ApplicationDTO;
 import com.tencent.bk.job.common.model.dto.ResourceScope;
@@ -239,8 +238,7 @@ public class ApplicationDAOImpl implements ApplicationDAO {
                 return record.getAppId().longValue();
             } else {
                 throw new InternalException(
-                    "Get null id after insert, please check db generator",
-                    ErrorCode.INTERNAL_ERROR
+                    "Get null id after insert, please check db generator"
                 );
             }
         } catch (Exception e) {

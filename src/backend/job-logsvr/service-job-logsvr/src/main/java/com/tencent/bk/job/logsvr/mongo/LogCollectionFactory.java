@@ -28,8 +28,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.mongodb.client.MongoCollection;
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
@@ -83,7 +82,7 @@ public class LogCollectionFactory {
         }
         if (collection == null) {
             log.error("Collection {} is not exist!", collectionName);
-            throw new InternalException(ErrorCode.INTERNAL_ERROR);
+            throw new InternalException("Mongodb collection is not exist");
         }
         return collection;
     }

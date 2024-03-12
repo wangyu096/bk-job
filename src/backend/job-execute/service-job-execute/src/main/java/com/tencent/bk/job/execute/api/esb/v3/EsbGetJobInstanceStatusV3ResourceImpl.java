@@ -27,11 +27,11 @@ package com.tencent.bk.job.execute.api.esb.v3;
 import com.tencent.bk.audit.annotations.AuditEntry;
 import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
-import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.error.SubErrorCode;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
+import com.tencent.bk.job.common.exception.base.NotFoundException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.metrics.CommonMetricNames;
-import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.common.openapi.job.v3.EsbResp;
 import com.tencent.bk.job.common.openapi.job.v3.utils.EsbDTOAppScopeMappingHelper;
 import com.tencent.bk.job.common.openapi.metrics.OpenApiTimed;
@@ -85,11 +85,8 @@ public class EsbGetJobInstanceStatusV3ResourceImpl implements EsbGetJobInstanceS
         String username,
         String appCode,
         @AuditRequestBody EsbGetJobInstanceStatusV3Request request) {
-        ValidateResult checkResult = checkRequest(request);
-        if (!checkResult.isPass()) {
-            log.warn("Get job instance status request is illegal!");
-            throw new InvalidParamException(checkResult);
-        }
+
+        checkRequest(request);
 
         long taskInstanceId = request.getTaskInstanceId();
 
@@ -100,7 +97,7 @@ public class EsbGetJobInstanceStatusV3ResourceImpl implements EsbGetJobInstanceS
             stepInstanceService.listBaseStepInstanceByTaskInstanceId(taskInstanceId);
         if (stepInstances == null || stepInstances.isEmpty()) {
             log.warn("Get job instance status by taskInstanceId:{}, stepInstanceList is empty!", taskInstanceId);
-            throw new NotFoundException(ErrorCode.STEP_INSTANCE_NOT_EXIST);
+            throw new NotFoundException(SubErrorCode.of(ErrorCode.STEP_INSTANCE_NOT_EXIST));
         }
 
         boolean isReturnIpResult = request.getReturnIpResult() != null && request.getReturnIpResult();
@@ -110,12 +107,11 @@ public class EsbGetJobInstanceStatusV3ResourceImpl implements EsbGetJobInstanceS
         return EsbResp.buildSuccessResp(jobInstanceStatus);
     }
 
-    private ValidateResult checkRequest(EsbGetJobInstanceStatusV3Request request) {
+    private void checkRequest(EsbGetJobInstanceStatusV3Request request) {
         if (request.getTaskInstanceId() == null || request.getTaskInstanceId() < 1) {
             log.warn("TaskInstanceId is empty or illegal, taskInstanceId={}", request.getTaskInstanceId());
-            return ValidateResult.fail(ErrorCode.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME, "job_instance_id");
+            throw InvalidParamException.withInvalidField("job_instance_id");
         }
-        return ValidateResult.pass();
     }
 
     private EsbJobInstanceStatusV3DTO buildEsbJobInstanceStatusDTO(TaskInstanceDTO taskInstance,

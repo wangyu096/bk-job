@@ -24,8 +24,6 @@
 
 package com.tencent.bk.job.file.worker.cos;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.util.file.PathUtil;
 import com.tencent.bk.job.file.worker.model.FileMetaData;
 import com.tencent.cos.COSClient;
@@ -148,12 +146,7 @@ public class TencentInnerCOSUtil {
         try {
             COSObject cosObject = cosClient.getObject(bucketName, key);
             if (cosObject == null) {
-                throw new InternalException(
-                    ErrorCode.FAIL_TO_REQUEST_THIRD_FILE_SOURCE_DOWNLOAD_GENERIC_FILE,
-                    new String[]{
-                        String.format("Fail to getObject by bucketName %s key %s", bucketName, key)
-                    }
-                );
+                throw new CosApiException(String.format("Fail to getObject by bucketName %s key %s", bucketName, key));
             }
             return Pair.of(cosObject.getObjectContent(), null);
         } finally {
@@ -171,13 +164,12 @@ public class TencentInnerCOSUtil {
         try {
             COSObject cosObject = cosClient.getObject(bucketName, key);
             if (cosObject == null) {
-                throw new InternalException(ErrorCode.FAIL_TO_REQUEST_THIRD_FILE_SOURCE_GET_OBJECT,
-                    new String[]{String.format("Fail to getObject by bucketName %s key %s", bucketName, key)});
+                throw new CosApiException(String.format("Fail to getObject by bucketName %s key %s", bucketName, key));
             }
             ObjectMetadata objectMetadata = cosObject.getObjectMetadata();
             if (objectMetadata == null) {
-                throw new InternalException(ErrorCode.FAIL_TO_REQUEST_THIRD_FILE_SOURCE_GET_OBJECT,
-                    new String[]{String.format("Fail to getObjectMetaData by bucketName %s key %s", bucketName, key)});
+                throw new CosApiException(
+                    String.format("Fail to getObjectMetaData by bucketName %s key %s", bucketName, key));
             }
             long fileSize = objectMetadata.getContentLength();
             String fileMd5 = objectMetadata.getContentMD5();

@@ -24,8 +24,9 @@
 
 package com.tencent.bk.job.upgrader.task;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.error.payload.BadRequestPayloadDTO;
+import com.tencent.bk.job.common.error.payload.FieldViolationDTO;
+import com.tencent.bk.job.common.exception.base.InvalidParamException;
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.common.model.dto.ResourceScope;
 import com.tencent.bk.job.common.util.json.JsonUtils;
@@ -71,11 +72,11 @@ public class AddHostIdMigrationTask extends BaseUpgradeTask {
         for (String scopeStr : scopeStrs) {
             String[] arr = scopeStr.split(":");
             if (arr.length < 2) {
-                throw new InvalidParamException(ErrorCode.INVALID_CMD_ARGS,
-                    new String[]{
-                        scopeListStr + ", must be comma separated scope, example: biz:2,biz:3,biz_set:9991001"
-                    }
-                );
+                throw new InvalidParamException(
+                    BadRequestPayloadDTO.instance()
+                        .addFieldViolation(
+                            new FieldViolationDTO("command args", scopeListStr + ", must be comma separated scope, " +
+                                "example: biz:2,biz:3,biz_set:9991001")));
             }
             ResourceScope scope = new ResourceScope(arr[0].toLowerCase(), arr[1].toLowerCase());
             scopeList.add(scope);

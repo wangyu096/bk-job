@@ -26,7 +26,7 @@ package com.tencent.bk.job.execute.service.impl;
 
 import com.google.common.collect.Lists;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.execute.dao.RollingConfigDAO;
 import com.tencent.bk.job.execute.engine.model.ExecuteObject;
 import com.tencent.bk.job.execute.engine.rolling.RollingBatchExecuteObjectsResolver;

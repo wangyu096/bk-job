@@ -57,15 +57,15 @@ public class CommonStatisticService {
 
     protected final StatisticsDAO statisticsDAO;
     protected final StatisticConfig statisticConfig;
-    protected final MetricResourceReslover metricResourceReslover;
+    protected final MetricResourceResolver metricResourceResolver;
     protected final AppService appService;
 
     @Autowired
     public CommonStatisticService(StatisticsDAO statisticsDAO, StatisticConfig statisticConfig,
-                                  MetricResourceReslover metricResourceReslover, AppService appService) {
+                                  MetricResourceResolver metricResourceResolver, AppService appService) {
         this.statisticsDAO = statisticsDAO;
         this.statisticConfig = statisticConfig;
-        this.metricResourceReslover = metricResourceReslover;
+        this.metricResourceResolver = metricResourceResolver;
         this.appService = appService;
     }
 
@@ -130,7 +130,7 @@ public class CommonStatisticService {
 
     public CommonDistributionVO metricDistributionStatistics(DistributionMetricEnum metric, List<Long> appIdList,
                                                              String date) {
-        String resource = metricResourceReslover.resloveResource(metric);
+        String resource = metricResourceResolver.resolveResource(metric);
         List<StatisticsDTO> statisticsDTOList = statisticsDAO.getStatisticsList(appIdList, resource, metric.name(),
             date);
         if (statisticsDTOList == null || statisticsDTOList.isEmpty()) {

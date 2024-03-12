@@ -26,9 +26,8 @@ package com.tencent.bk.job.manage.service.host.impl;
 
 import com.tencent.bk.job.common.cc.model.DynamicGroupHostPropDTO;
 import com.tencent.bk.job.common.cc.sdk.BizCmdbClient;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.ResourceScopeTypeEnum;
-import com.tencent.bk.job.common.exception.NotImplementedException;
+import com.tencent.bk.job.common.exception.base.NotImplementedException;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
 import com.tencent.bk.job.common.model.dto.ApplicationHostDTO;
@@ -115,7 +114,7 @@ public class BizDynamicGroupHostService {
     private List<Long> listHostIdsByDynamicGroup(AppResourceScope appResourceScope, String id) {
         // 动态分组当前只支持业务，不支持业务集
         if (appResourceScope.getType() != ResourceScopeTypeEnum.BIZ) {
-            throw new NotImplementedException(ErrorCode.NOT_SUPPORT_FEATURE_FOR_BIZ_SET);
+            throw new NotImplementedException("Not support feature for biz set");
         }
         long bizId = Long.parseLong(appResourceScope.getId());
         List<DynamicGroupHostPropDTO> dynamicGroupHostList = bizCmdbClient.getDynamicGroupIp(bizId, id);

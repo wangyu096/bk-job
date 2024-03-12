@@ -27,7 +27,7 @@ package com.tencent.bk.job.crontab.auth.impl;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeEnum;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
-import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.iam.exception.IamPermissionDeniedException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.iam.model.PermissionResource;
 import com.tencent.bk.job.common.iam.service.AppAuthService;
@@ -99,7 +99,7 @@ public class CronAuthServiceImpl implements CronAuthService {
 
     public void batchAuthManageCron(String username,
                                     AppResourceScope appResourceScope,
-                                    List<Long> cronIdList) throws PermissionDeniedException {
+                                    List<Long> cronIdList) throws IamPermissionDeniedException {
 
         List<String> allowedIdList = appAuthService.batchAuth(username, ActionId.MANAGE_CRON,
             appResourceScope, ResourceTypeEnum.CRON,
@@ -118,7 +118,7 @@ public class CronAuthServiceImpl implements CronAuthService {
                 authResult.addRequiredPermission(ActionId.MANAGE_CRON, resource);
             }
         }
-        throw new PermissionDeniedException(authResult);
+        throw new IamPermissionDeniedException(authResult);
     }
 
     @Override

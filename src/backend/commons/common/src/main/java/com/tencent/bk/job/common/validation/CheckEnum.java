@@ -24,8 +24,7 @@
 
 package com.tencent.bk.job.common.validation;
 
-import com.tencent.bk.job.common.error.SubErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 
 import javax.validation.Constraint;
 import javax.validation.ConstraintValidator;
@@ -47,7 +46,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 /**
  * spring validation枚举校验注解
  */
-@Target({ FIELD, METHOD, PARAMETER, ANNOTATION_TYPE, TYPE_USE })
+@Target({FIELD, METHOD, PARAMETER, ANNOTATION_TYPE, TYPE_USE})
 @Constraint(validatedBy = CheckEnum.Validator.class)
 @Documented
 @Retention(RUNTIME)
@@ -96,7 +95,7 @@ public @interface CheckEnum {
                 Boolean result = (Boolean) method.invoke(null, value);
                 return result != null && result;
             } catch (Exception e) {
-                throw new InternalException(e, SubErrorCode.INTERNAL_ERROR);
+                throw new InternalException("CheckEnum Validate error", e);
             }
 
         }

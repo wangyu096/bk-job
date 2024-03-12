@@ -48,9 +48,8 @@ import com.tencent.bk.job.backup.service.LogService;
 import com.tencent.bk.job.backup.service.StorageService;
 import com.tencent.bk.job.common.artifactory.model.dto.NodeDTO;
 import com.tencent.bk.job.common.artifactory.sdk.ArtifactoryClient;
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.JobConstants;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
 import com.tencent.bk.job.common.redis.util.LockUtils;
@@ -114,9 +113,8 @@ public class WebBackupResourceImpl implements WebBackupResource {
                                               String scopeType,
                                               String scopeId,
                                               ExportRequest exportRequest) {
-        if (!exportRequest.validate()) {
-            return Response.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM);
-        }
+        exportRequest.validate();
+
         ExportJobInfoDTO exportJobInfoDTO = new ExportJobInfoDTO();
         exportJobInfoDTO.setAppId(appResourceScope.getAppId());
         exportJobInfoDTO.setCreator(username);
@@ -145,11 +143,11 @@ public class WebBackupResourceImpl implements WebBackupResource {
             try {
                 ExportJobExecutor.startExport(id);
             } catch (Exception e) {
-                throw new InternalException("Start job failed! System busy!", e, ErrorCode.INTERNAL_ERROR);
+                throw new InternalException("Start job failed! System busy!", e);
             }
             return Response.buildSuccessResp(exportInfoVO);
         }
-        throw new InternalException("Start failed!", ErrorCode.INTERNAL_ERROR);
+        throw new InternalException("Start failed!");
     }
 
     @Override
@@ -166,7 +164,7 @@ public class WebBackupResourceImpl implements WebBackupResource {
             exportInfoVO.setLog(exportLog.stream().map(LogEntityDTO::toVO).collect(Collectors.toList()));
             return Response.buildSuccessResp(exportInfoVO);
         }
-        throw new InternalException("Not found", ErrorCode.INTERNAL_ERROR);
+        throw new InternalException("Not found");
     }
 
     private Pair<Long, StreamingResponseBody> getFileSizeAndStreamFromNFS(
@@ -195,7 +193,7 @@ public class WebBackupResourceImpl implements WebBackupResource {
                 fileName
             );
         } catch (Exception e) {
-            throw new InternalException(ErrorCode.FAIL_TO_GET_NODE_INFO_FROM_ARTIFACTORY);
+            throw new InternalException("Fail to get node info from artifactory", e);
         }
         try {
             Pair<InputStream, HttpRequestBase> pair = artifactoryClient.getFileInputStream(
@@ -205,7 +203,7 @@ public class WebBackupResourceImpl implements WebBackupResource {
             );
             ins = pair.getLeft();
         } catch (Exception e) {
-            throw new InternalException(ErrorCode.FAIL_TO_DOWNLOAD_NODE_FROM_ARTIFACTORY);
+            throw new InternalException("Fail to download node from artifactory", e);
         }
         final InputStream finalIns = ins;
         StreamingResponseBody streamingResponseBody =
@@ -265,10 +263,10 @@ public class WebBackupResourceImpl implements WebBackupResource {
                 exportInfo.setFileName(null);
                 return Response.buildSuccessResp(exportJobService.updateExportJob(exportInfo));
             } else {
-                throw new InternalException("Wrong job status", ErrorCode.INTERNAL_ERROR);
+                throw new InternalException("Wrong job status");
             }
         }
-        throw new InternalException("Not found", ErrorCode.INTERNAL_ERROR);
+        throw new InternalException("Not found");
     }
 
     @Override
@@ -283,7 +281,7 @@ public class WebBackupResourceImpl implements WebBackupResource {
             exportInfo.setFileName(null);
             return Response.buildSuccessResp(exportJobService.updateExportJob(exportInfo));
         }
-        throw new InternalException("Not found", ErrorCode.INTERNAL_ERROR);
+        throw new InternalException("Not found");
     }
 
     @Override
@@ -293,7 +291,7 @@ public class WebBackupResourceImpl implements WebBackupResource {
                                                     String scopeId,
                                                     MultipartFile uploadFile) {
         if (uploadFile.isEmpty()) {
-            throw new InternalException("No File", ErrorCode.INTERNAL_ERROR);
+            throw new InternalException("No File");
         }
         Long appId = appResourceScope.getAppId();
         String originalFileName = uploadFile.getOriginalFilename();
@@ -327,7 +325,7 @@ public class WebBackupResourceImpl implements WebBackupResource {
                         log.debug("uploaded to artifactory:{}", filePath);
                     } catch (Exception e) {
                         log.error("Fail to save file to artifactory", e);
-                        return Response.buildCommonFailResp(ErrorCode.INTERNAL_ERROR);
+                        throw new InternalException("Fail to save file to artifactory", e);
                     }
                 }
                 return Response.buildSuccessResp(importInfoVO);
@@ -335,7 +333,7 @@ public class WebBackupResourceImpl implements WebBackupResource {
         } else {
             log.error("Upload unknown type of file!");
         }
-        throw new InternalException("Upload failed! Unknown file type!", ErrorCode.INTERNAL_ERROR);
+        throw new InternalException("Upload failed! Unknown file type!");
     }
 
     @Override
@@ -354,13 +352,13 @@ public class WebBackupResourceImpl implements WebBackupResource {
                     importJobService.checkPassword(username, appId, jobId, passwordRequest.getPassword()));
             } catch (Exception e) {
                 log.error("Error while check password!");
-                return Response.buildCommonFailResp(ErrorCode.SERVICE_UNAVAILABLE);
+                throw new InternalException("Error while check password");
             } finally {
                 LockUtils.releaseDistributedLock(getImportJobLockKey(appId, jobId), JobContextUtil.getRequestId());
             }
         } else {
             log.warn("Acquire import job lock failed!|{}|{}", appId, jobId);
-            return Response.buildCommonFailResp(ErrorCode.SERVICE_UNAVAILABLE);
+            throw new InternalException("Acquire import job lock failed");
         }
     }
 
@@ -371,9 +369,8 @@ public class WebBackupResourceImpl implements WebBackupResource {
                                          String scopeId,
                                          String jobId,
                                          ImportRequest importRequest) {
-        if (!importRequest.validate()) {
-            return Response.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM);
-        }
+        importRequest.validate();
+
         ImportJobInfoDTO importJobInfo = new ImportJobInfoDTO();
         importJobInfo.setId(jobId);
         importJobInfo.setCreator(username);
@@ -382,7 +379,7 @@ public class WebBackupResourceImpl implements WebBackupResource {
             importJobInfo.setTemplateInfo(importRequest.getTemplateInfo().stream().map(BackupTemplateInfoDTO::fromVO)
                 .collect(Collectors.toList()));
         } else {
-            throw new InternalException("No template selected!", ErrorCode.INTERNAL_ERROR);
+            throw new InternalException("No template selected!");
         }
         importJobInfo.setDuplicateSuffix(importRequest.getDuplicateSuffix());
         importJobInfo.setDuplicateIdHandler(DuplicateIdHandlerEnum.valueOf(importRequest.getDuplicateIdHandler()));
@@ -403,7 +400,7 @@ public class WebBackupResourceImpl implements WebBackupResource {
             importInfoVO.setLog(importLog.stream().map(LogEntityDTO::toVO).collect(Collectors.toList()));
             return Response.buildSuccessResp(importInfoVO);
         }
-        throw new InternalException("Not Found", ErrorCode.INTERNAL_ERROR);
+        throw new InternalException("Not Found");
     }
 
     @Override

@@ -22,59 +22,27 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.common.model;
+package com.tencent.bk.job.common.exception.base;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.error.BkErrorCodeEnum;
+import com.tencent.bk.job.common.error.SubErrorCode;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
 
 /**
- * 参数校验结果
+ * 请求无法在当前系统状态下执行
  */
-@Slf4j
 @Getter
-@Setter
 @ToString
-@NoArgsConstructor
-public class ValidateResult {
+public class FailedPreconditionException extends ServiceException {
 
-    /**
-     * 是否通过校验
-     */
-    private boolean pass;
-
-    /**
-     * 错误码
-     */
-    private Integer errorCode;
-
-    /**
-     * 错误信息参数值
-     */
-    private Object[] errorParams;
-
-    public ValidateResult(boolean isPass, Integer errorCode, Object[] errorParams) {
-        this.pass = isPass;
-        this.errorCode = errorCode;
-        this.errorParams = errorParams;
+    public FailedPreconditionException(SubErrorCode subErrorCode) {
+        super(subErrorCode);
+        setErrorCode(BkErrorCodeEnum.FAILED_PRECONDITION);
     }
 
-    public static ValidateResult pass() {
-        return new ValidateResult(true, ErrorCode.RESULT_OK, null);
-    }
-
-    public static ValidateResult fail(Integer errorCode, Object[] errorParams) {
-        return new ValidateResult(false, errorCode, errorParams);
-    }
-
-    public static ValidateResult fail(Integer errorCode) {
-        return new ValidateResult(false, errorCode, null);
-    }
-
-    public static ValidateResult fail(Integer errorCode, Object errorParam1) {
-        return new ValidateResult(false, errorCode, new Object[]{errorParam1});
+    public FailedPreconditionException(Throwable cause, SubErrorCode subErrorCode) {
+        super(null, cause, subErrorCode);
+        setErrorCode(BkErrorCodeEnum.FAILED_PRECONDITION);
     }
 }

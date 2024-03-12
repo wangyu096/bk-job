@@ -26,8 +26,7 @@ package com.tencent.bk.job.manage.service.impl;
 
 import com.tencent.bk.audit.annotations.ActionAuditRecord;
 import com.tencent.bk.job.common.audit.constants.EventContentConstants;
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.base.InternalException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.mysql.JobTransactional;
 import com.tencent.bk.job.manage.common.consts.EnableStatusEnum;
@@ -204,7 +203,7 @@ public class DangerousRuleServiceImpl implements DangerousRuleService {
                 DangerousRuleDTO.decodeScriptType(existDangerousRuleDTO.getScriptType()));
         } catch (Exception e) {
             log.error(String.format("delete dangerous rule fail! id: %s", id), e);
-            throw new InternalException(e, ErrorCode.INTERNAL_ERROR);
+            throw new InternalException(e);
         }
         return id.intValue();
     }
