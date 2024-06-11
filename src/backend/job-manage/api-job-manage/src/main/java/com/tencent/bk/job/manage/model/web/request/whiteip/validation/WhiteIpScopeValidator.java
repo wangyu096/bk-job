@@ -22,57 +22,20 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.backup.model.dto;
+package com.tencent.bk.job.manage.model.web.request.whiteip.validation;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.tencent.bk.job.manage.model.web.request.whiteip.WhiteIPRecordCreateUpdateReq;
+import org.apache.commons.collections.CollectionUtils;
 
-@Data
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-@NoArgsConstructor
-public class ArchiveSummary {
-    private boolean enabled;
-    private String tableName;
-    private String archiveEndDate;
-    private boolean skip;
-    private boolean success;
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
 
-    private String archiveMode;
+public class WhiteIpScopeValidator implements ConstraintValidator<CheckWhiteIpScope, WhiteIPRecordCreateUpdateReq> {
 
-    /**
-     * 备份数据-查询原数据耗时（单位毫秒)
-     */
-    private Long backupReadCost;
-    /**
-     * 备份数据-写入数据到归档 db 耗时（单位毫秒)
-     */
-    private Long backupWriteCost;
-    /**
-     * 删除热数据耗时（单位毫秒)
-     */
-    private Long deleteCost;
-    /**
-     * 归档总耗时（单位毫秒)
-     */
-    private Long archiveCost;
-
-    private Long archiveIdStart;
-    private Long archiveIdEnd;
-    private Long needArchiveRecordSize;
-
-    private Long lastBackupId;
-    private Long backupRecordSize;
-
-    private Long lastDeletedId;
-    private Long deleteRecordSize;
-
-    /**
-     * 归档详细说明信息
-     */
-    private String message;
-
-    public ArchiveSummary(String tableName) {
-        this.tableName = tableName;
+    @Override
+    public boolean isValid(WhiteIPRecordCreateUpdateReq whiteIPRecordCreateUpdateReq,
+                           ConstraintValidatorContext constraintValidatorContext) {
+        return whiteIPRecordCreateUpdateReq.isAllScope()
+            || CollectionUtils.isNotEmpty(whiteIPRecordCreateUpdateReq.getScopeList());
     }
 }
