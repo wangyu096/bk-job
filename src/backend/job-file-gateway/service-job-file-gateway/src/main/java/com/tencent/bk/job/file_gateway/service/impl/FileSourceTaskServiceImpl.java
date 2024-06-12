@@ -163,6 +163,7 @@ public class FileSourceTaskServiceImpl implements FileSourceTaskService {
             fileSourceTaskId,
             fileWorkerDTO.getId()
         );
+        fileSourceTaskId = fileSourceTaskDTO.getId();
         try {
             // 分发文件任务
             HttpReq req = fileSourceTaskReqGenService.genDownloadFilesReq(appId, fileWorkerDTO, fileSourceDTO,
