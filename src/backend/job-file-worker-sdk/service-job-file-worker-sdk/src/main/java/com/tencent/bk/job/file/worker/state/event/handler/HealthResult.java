@@ -22,23 +22,20 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.file_gateway.service;
+package com.tencent.bk.job.file.worker.state.event.handler;
 
+import lombok.Data;
 
 import java.util.List;
 
-/**
- * 文件Worker重调度服务
- */
-public interface ReDispatchService {
-
-    List<String> reDispatchByWorker(
-        String accessHost, Integer accessPort,
-        List<String> taskIdList, Long initDelayMills, Long intervalMills
-    );
-
-    boolean reDispatchByGateway(String fileSourceTaskId, Long initDelayMills, Long intervalMills);
-
-    Integer getReDispatchThreadsNum(String username);
-
+@Data
+public class HealthResult {
+    /**
+     * 健康状态
+     */
+    private String status;
+    /**
+     * 健康指标分组
+     */
+    private List<String> groups;
 }

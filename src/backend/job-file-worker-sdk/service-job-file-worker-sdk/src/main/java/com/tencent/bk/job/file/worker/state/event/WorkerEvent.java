@@ -22,27 +22,48 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.crontab.listener.event;
+package com.tencent.bk.job.file.worker.state.event;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.tencent.bk.job.common.util.date.DateUtils;
-import lombok.Data;
+import com.tencent.bk.job.common.event.Event;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
+@ToString
+@NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Event {
+public class WorkerEvent extends Event {
     /**
-     * 事件发生时间
+     * Worker动作
+     *
+     * @see WorkerActionEnum
      */
-    protected LocalDateTime time;
+    private WorkerActionEnum action;
 
-    public long duration() {
-        if (time != null) {
-            return DateUtils.calculateMillsBetweenDateTime(time, LocalDateTime.now());
-        } else {
-            return 0;
-        }
+    public static WorkerEvent waitAccessReady() {
+        WorkerEvent workerEvent = new WorkerEvent();
+        workerEvent.setAction(WorkerActionEnum.WAIT_ACCESS_READY);
+        workerEvent.setTime(LocalDateTime.now());
+        return workerEvent;
+    }
+
+    public static WorkerEvent heartBeat() {
+        WorkerEvent workerEvent = new WorkerEvent();
+        workerEvent.setAction(WorkerActionEnum.HEART_BEAT);
+        workerEvent.setTime(LocalDateTime.now());
+        return workerEvent;
+    }
+
+    public static WorkerEvent offLine() {
+        WorkerEvent workerEvent = new WorkerEvent();
+        workerEvent.setAction(WorkerActionEnum.OFF_LINE);
+        workerEvent.setTime(LocalDateTime.now());
+        return workerEvent;
     }
 }

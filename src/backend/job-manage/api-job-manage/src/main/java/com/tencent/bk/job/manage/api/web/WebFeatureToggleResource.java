@@ -22,22 +22,39 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.file_gateway.service;
+package com.tencent.bk.job.manage.api.web;
 
-import com.tencent.bk.job.file_gateway.model.dto.FileSourceDTO;
-import com.tencent.bk.job.file_gateway.model.dto.FileWorkerDTO;
+import com.tencent.bk.job.common.annotation.WebAPI;
+import com.tencent.bk.job.common.model.Response;
+import com.tencent.bk.job.manage.model.web.vo.FeatureVO;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import springfox.documentation.annotations.ApiIgnore;
+
+import java.util.List;
 
 /**
- * 调度策略服务：根据文件源信息寻找一个Job插件进行访问
- * 调度依据：能力标签（文件源类型、区域等）、负载
+ * Job 特性开关 Web API
  */
-public interface DispatchService {
+@Api(tags = {"job-manage:web:feature"})
+@RequestMapping("/web/feature/toggle")
+@WebAPI
+public interface WebFeatureToggleResource {
+
+
     /**
-     * 根据文件源找到一个最适合的FileWorker
-     *
-     * @param fileSourceDTO 文件源对象
-     * @param requestSource 请求来源
-     * @return 选中的对接文件源的FileWorker对象
+     * 获取特性开关配置
      */
-    FileWorkerDTO findBestFileWorker(FileSourceDTO fileSourceDTO, String requestSource);
+    @ApiOperation(value = "获取Job功能特性开关配置", produces = "application/json")
+    @GetMapping("/list")
+    Response<List<FeatureVO>> listFeatureToggle(
+        @ApiIgnore
+        @ApiParam(value = "用户名，网关自动传入", required = true)
+        @RequestHeader("username")
+        String username
+    );
 }
