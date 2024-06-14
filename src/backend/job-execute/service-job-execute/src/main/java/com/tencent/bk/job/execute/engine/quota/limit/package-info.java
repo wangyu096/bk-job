@@ -22,27 +22,8 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.crontab;
+package com.tencent.bk.job.execute.engine.quota.limit;
 
-import com.tencent.bk.job.common.service.boot.JobBootApplication;
-import com.tencent.bk.job.common.service.feature.config.FeatureToggleConfig;
-import com.tencent.bk.job.common.service.quota.config.ResourceScopeResourceQuotaConfig;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.availability.ApplicationAvailabilityAutoConfiguration;
-import org.springframework.boot.autoconfigure.jooq.JooqAutoConfiguration;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.cloud.openfeign.EnableFeignClients;
-
-@JobBootApplication(
-    scanBasePackages = {
-        "com.tencent.bk.job.crontab"},
-    exclude = {JooqAutoConfiguration.class, ApplicationAvailabilityAutoConfiguration.class})
-@EnableFeignClients(basePackages = {"com.tencent.bk.job.manage.api", "com.tencent.bk.job.execute.api"})
-@EnableConfigurationProperties({FeatureToggleConfig.class, ResourceScopeResourceQuotaConfig.class})
-public class JobCrontabBootApplication {
-
-    public static void main(String[] args) {
-        SpringApplication.run(JobCrontabBootApplication.class, args);
-    }
-
-}
+/*
+ * 作业配额限制，防止单业务占用所有执行引擎的调度资源
+ */
