@@ -38,12 +38,15 @@ public enum ResourceQuotaCheckResultEnum {
     }
 
     public static ResourceQuotaCheckResultEnum valOf(String value) {
-        if (value == null) return null;
         for (ResourceQuotaCheckResultEnum resultEnum : values()) {
             if (resultEnum.value.equals(value)) {
                 return resultEnum;
             }
         }
         throw new IllegalArgumentException("No ResourceQuotaCheckResultEnum constant: " + value);
+    }
+
+    public boolean isExceedLimit() {
+        return this != NO_LIMIT;
     }
 }

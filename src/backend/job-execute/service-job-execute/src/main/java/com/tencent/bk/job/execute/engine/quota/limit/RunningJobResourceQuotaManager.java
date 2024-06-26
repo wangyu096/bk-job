@@ -25,9 +25,14 @@
 package com.tencent.bk.job.execute.engine.quota.limit;
 
 import com.tencent.bk.job.common.exception.JobMicroServiceBootException;
+import com.tencent.bk.job.common.metrics.CommonMetricTags;
+import com.tencent.bk.job.common.metrics.CommonMetricValues;
 import com.tencent.bk.job.common.model.dto.ResourceScope;
 import com.tencent.bk.job.common.service.quota.RunningJobResourceQuotaStore;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -40,8 +45,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -54,10 +62,12 @@ public class RunningJobResourceQuotaManager {
     private final RedisTemplate<String, String> redisTemplate;
     private final RunningJobResourceQuotaStore runningJobResourceQuotaStore;
 
+    private final MeterRegistry meterRegistry;
+
     private static final String RESOURCE_SCOPE_RUNNING_JOB_COUNT_HASH_KEY =
         "job:execute:running:job:count:resource_scope";
     private static final String APP_RUNNING_JOB_COUNT_HASH_KEY = "job:execute:running:job:count:app";
-    private static final String RUNNING_JOB_HASH_KEY = "job:execute:running:job";
+    private static final String RUNNING_JOB_ZSET_KEY = "job:execute:running:job";
 
     private static final List<String> LUA_SCRIPT_KEYS = new ArrayList<>();
 
@@ -66,8 +76,13 @@ public class RunningJobResourceQuotaManager {
     private static String ADD_JOB_LUA_SCRIPT;
     private static String REMOVE_JOB_LUA_SCRIPT;
 
+    private static final String METRIC_RUNNING_JOB_RESOURCE_QUOTA_LIMIT_EXCEED_TOTAL =
+        "job_running_job_resource_quota_limit_exceed_total";
+
+    private static final long JOB_EXPIRE_TIME = 14 * 86400 * 1000L;
+
     static {
-        LUA_SCRIPT_KEYS.add(RUNNING_JOB_HASH_KEY);
+        LUA_SCRIPT_KEYS.add(RUNNING_JOB_ZSET_KEY);
         LUA_SCRIPT_KEYS.add(RESOURCE_SCOPE_RUNNING_JOB_COUNT_HASH_KEY);
         LUA_SCRIPT_KEYS.add(APP_RUNNING_JOB_COUNT_HASH_KEY);
 
@@ -98,9 +113,11 @@ public class RunningJobResourceQuotaManager {
 
 
     public RunningJobResourceQuotaManager(StringRedisTemplate redisTemplate,
-                                          RunningJobResourceQuotaStore runningJobResourceQuotaStore) {
+                                          RunningJobResourceQuotaStore runningJobResourceQuotaStore,
+                                          MeterRegistry meterRegistry) {
         this.redisTemplate = redisTemplate;
         this.runningJobResourceQuotaStore = runningJobResourceQuotaStore;
+        this.meterRegistry = meterRegistry;
     }
 
     public void addJob(String appCode, ResourceScope resourceScope, long jobInstanceId) {
@@ -176,18 +193,62 @@ public class RunningJobResourceQuotaManager {
         if (log.isDebugEnabled()) {
             log.debug("CheckRunningJobResourceQuotaLimit cost: {} ms", cost);
         }
-        return ResourceQuotaCheckResultEnum.valOf(checkResourceQuotaResult);
+        ResourceQuotaCheckResultEnum checkResult = ResourceQuotaCheckResultEnum.valOf(checkResourceQuotaResult);
+        if (checkResult.isExceedLimit()) {
+            recordExceedQuotaLimitRecord(appCode, resourceScope);
+        }
+
+        return checkResult;
+    }
+
+    private void recordExceedQuotaLimitRecord(String appCode, ResourceScope resourceScope) {
+        meterRegistry.counter(
+                METRIC_RUNNING_JOB_RESOURCE_QUOTA_LIMIT_EXCEED_TOTAL,
+                Tags.of(CommonMetricTags.KEY_RESOURCE_SCOPE, resourceScope.toResourceScopeUniqueId())
+                    .and(CommonMetricTags.KEY_APP_CODE, StringUtils.isNotBlank(appCode) ?
+                        appCode : CommonMetricValues.NONE))
+            .increment();
     }
 
     public long getRunningJobTotal() {
-        return redisTemplate.opsForHash().size(RUNNING_JOB_HASH_KEY);
+        return redisTemplate.opsForZSet().size(RUNNING_JOB_ZSET_KEY);
     }
 
     public Map<String, Long> getAppRunningJobCount() {
-        return redisTemplate.<String, Long>opsForHash().entries(APP_RUNNING_JOB_COUNT_HASH_KEY);
+        Map<String, String> countMap =
+            redisTemplate.<String, String>opsForHash().entries(APP_RUNNING_JOB_COUNT_HASH_KEY);
+        if (countMap.isEmpty()) {
+            return null;
+        }
+        return convertMap(countMap);
     }
 
     public Map<String, Long> getResourceScopeRunningJobCount() {
-        return redisTemplate.<String, Long>opsForHash().entries(RESOURCE_SCOPE_RUNNING_JOB_COUNT_HASH_KEY);
+        Map<String, String> countMap =
+            redisTemplate.<String, String>opsForHash().entries(RESOURCE_SCOPE_RUNNING_JOB_COUNT_HASH_KEY);
+        if (countMap.isEmpty()) {
+            return null;
+        }
+        return convertMap(countMap);
+    }
+
+    private Map<String, Long> convertMap(Map<String, String> map) {
+        Map<String, Long> finalMap = new HashMap<>();
+        map.forEach((k, v) -> finalMap.put(k, Long.parseLong(v)));
+        return finalMap;
+    }
+
+    public Set<Long> getExpiredJobInstanceIds() {
+        try {
+            long EXPIRE_AT = System.currentTimeMillis() - JOB_EXPIRE_TIME;
+            Set<String> expireJobInstanceIds = redisTemplate.opsForZSet().rangeByScore(RUNNING_JOB_ZSET_KEY, -1,
+                EXPIRE_AT);
+            if (CollectionUtils.isEmpty(expireJobInstanceIds)) {
+                return Collections.emptySet();
+            }
+            return expireJobInstanceIds.stream().map(Long::parseLong).collect(Collectors.toSet());
+        } catch (Throwable e) {
+            return Collections.emptySet();
+        }
     }
 }

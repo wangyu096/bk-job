@@ -22,16 +22,14 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.execute.common.exception;
-
-import com.tencent.bk.job.common.exception.ResourceExhaustedException;
+package com.tencent.bk.job.common.metrics;
 
 /**
- * 业务正在执行作业数量超过配额异常
+ * 公共监控指标的值
  */
-public class RunningJobInstanceQuotaExceedException extends ResourceExhaustedException {
-
-    public RunningJobInstanceQuotaExceedException(Integer errorCode) {
-        super(errorCode);
-    }
+public class CommonMetricValues {
+    /**
+     * 标识一个不存在的值
+     */
+    public static final String NONE = "none";
 }
