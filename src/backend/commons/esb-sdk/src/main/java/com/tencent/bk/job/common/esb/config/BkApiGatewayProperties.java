@@ -39,6 +39,8 @@ public class BkApiGatewayProperties {
 
     private ApiGwConfig bkNotice;
 
+    private ApiGwConfig bkAIDev;
+
     private ApiGwConfig cmdb;
 
     @Getter

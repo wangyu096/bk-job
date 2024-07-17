@@ -22,59 +22,45 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.manage.common.util;
+package com.tencent.bk.job.analysis.service.ai;
 
-import org.jooq.types.UByte;
-import org.jooq.types.UInteger;
-import org.jooq.types.ULong;
+import com.tencent.bk.job.analysis.model.dto.AIChatHistoryDTO;
+import com.tencent.bk.job.analysis.model.web.resp.AIAnswer;
 
-public class JooqDataTypeUtil {
-    public static ULong buildULong(Long value) {
-        if (value == null) {
-            return null;
-        }
-        return ULong.valueOf(value);
-    }
+import java.util.List;
 
-    public static UInteger buildUInteger(Integer value) {
-        if (value == null) {
-            return null;
-        }
-        return UInteger.valueOf(value);
-    }
+public interface AIChatHistoryService {
+    /**
+     * 构建AI聊天记录
+     *
+     * @param username  用户名
+     * @param startTime 开始时间
+     * @param userInput 用户输入
+     * @param aiAnswer  AI回答
+     * @return AI聊天记录
+     */
+    AIChatHistoryDTO buildAIChatHistoryDTO(String username,
+                                           Long startTime,
+                                           String userInput,
+                                           String aiInput,
+                                           AIAnswer aiAnswer);
 
-    public static UByte buildUByte(Integer value) {
-        if (value == null) {
-            return null;
-        }
-        return UByte.valueOf(value);
-    }
+    /**
+     * 插入聊天记录
+     *
+     * @param aiChatHistoryDTO AI聊天记录
+     * @return 插入记录的id
+     */
+    Long insertChatHistory(AIChatHistoryDTO aiChatHistoryDTO);
 
-    public static Byte getByteFromInteger(Integer value) {
-        if (value == null) {
-            return null;
-        }
-        return Byte.valueOf(String.valueOf(value));
-    }
 
-    public static Integer getIntegerFromByte(Byte value) {
-        if (value == null) {
-            return null;
-        }
-        return value.intValue();
-    }
-
-    public static Long getLongFromULong(ULong value) {
-        if (value == null) {
-            return null;
-        }
-        return value.longValue();
-    }
-
-    public static Integer getIntegerFromUInteger(UInteger value) {
-        if (value == null) {
-            return null;
-        }
-        return value.intValue();
-    }
+    /**
+     * 获取最近的聊天记录列表
+     *
+     * @param username 用户名
+     * @param start    起始位置
+     * @param length   长度
+     * @return 最近的聊天记录列表
+     */
+    List<AIChatHistoryDTO> getLatestChatHistoryList(String username, Integer start, Integer length);
 }

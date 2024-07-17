@@ -31,6 +31,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.checkerframework.checker.units.qual.A;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -42,7 +43,7 @@ public class AIAnswer {
      * 错误码
      */
     @ApiModelProperty(value = "错误码")
-    private Integer errorCode;
+    private String errorCode;
 
     /**
      * 错误信息
@@ -62,4 +63,12 @@ public class AIAnswer {
     @ApiModelProperty("回答时间")
     @JsonSerialize(using = LongTimestampSerializer.class)
     private Long time;
+
+    public static AIAnswer successAnswer(String content) {
+        AIAnswer aiAnswer = new AIAnswer();
+        aiAnswer.setErrorCode("0");
+        aiAnswer.setTime(System.currentTimeMillis());
+        aiAnswer.setContent(content);
+        return aiAnswer;
+    }
 }

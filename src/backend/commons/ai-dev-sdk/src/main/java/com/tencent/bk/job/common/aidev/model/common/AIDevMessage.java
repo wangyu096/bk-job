@@ -22,8 +22,22 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.file_gateway.dao.filesource.impl;
+package com.tencent.bk.job.common.aidev.model.common;
 
-public interface RecordDTOConverter<RecordClazz, DTOClazz> {
-    DTOClazz convert(RecordClazz record);
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@NoArgsConstructor
+@Data
+public class AIDevMessage {
+
+    public static String ROLE_USER = "user";
+    public static String ROLE_ASSISTANT = "assistant";
+
+    private String role;
+
+    private String content;
+
 }
