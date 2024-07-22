@@ -1,4 +1,4 @@
-<!--
+/*
  * Tencent is pleased to support the open source community by making BK-JOB蓝鲸智云作业平台 available.
  *
  * Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
@@ -7,8 +7,6 @@
  *
  * License for BK-JOB蓝鲸智云作业平台:
  *
- *
- * Terms of the MIT License:
  * ---------------------------------------------------
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
  * documentation files (the "Software"), to deal in the Software without restriction, including without limitation
@@ -18,67 +16,56 @@
  * The above copyright notice and this permission notice shall be included in all copies or substantial portions of
  * the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
  * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
--->
+*/
 
-<template>
-  <component
-    :is="renderCom"
-    v-bind="props"
-    v-on="listeners" />
-</template>
-<script setup>
-  import {
-    computed,
-    useListeners,
-  } from 'vue';
+import Request from '@utils/request';
 
-  import ContainerList from './components/container-list/index.vue';
-  import HostList from './components/host-list/index.vue';
+import ModuleBase from './module-base';
 
-  const props = defineProps({
-    name: {
-      type: [
-        String,
-        Number,
-      ],
-      required: true,
-    },
-    executeObjectType: {
-      type: Number,
-    },
-    data: {
-      type: Array,
-      default: () => [],
-    },
-    listLoading: {
-      type: Boolean,
-      default: false,
-    },
-    total: {
-      type: Number,
-      default: 0,
-    },
-    searchValue: {
-      type: String,
-    },
-    getAllTaskList: {
-      type: Function,
-      required: true,
-    },
-  });
+class Ai extends ModuleBase {
+  constructor() {
+    super();
+    this.module = '/job-analysis/web/ai/';
+  }
 
-  const listeners = useListeners();
+  getAnalyzeError(params) {
+    return Request.post(`${this.path}/analyzeError`, {
+      params,
+    });
+  }
 
-  const comMap = {
-    1: HostList,
-    2: ContainerList,
-  };
+  getCheckScript(params) {
+    return Request.post(`${this.path}/checkScript`, {
+      params,
+    });
+  }
 
-  const renderCom = computed(() => comMap[props.executeObjectType] || HostList);
-</script>
+  getConfig(params) {
+    return Request.get(`${this.path}/config`, {
+      params,
+    });
+  }
 
+  getGeneraChat(params) {
+    return Request.post(`${this.path}/general/chat`, {
+      params,
+    });
+  }
+
+  getLatestChatHistoryList(params) {
+    return Request.get(`${this.path}/latestChatHistoryList`, {
+      params,
+    });
+  }
+
+  deleteChatHistory() {
+    return Request.get(`${this.path}/clearChatHistory`);
+  }
+}
+
+export default new Ai();
