@@ -35,7 +35,11 @@ public enum PromptTemplateCodeEnum {
      */
     CHECK_SCRIPT,
     /**
-     * 分析报错信息
+     * 分析脚本执行任务报错信息
      */
-    ANALYZE_ERROR;
+    ANALYZE_SCRIPT_EXECUTE_TASK_ERROR,
+    /**
+     * 分析文件分发任务报错信息
+     */
+    ANALYZE_FILE_TRANSFER_TASK_ERROR
 }

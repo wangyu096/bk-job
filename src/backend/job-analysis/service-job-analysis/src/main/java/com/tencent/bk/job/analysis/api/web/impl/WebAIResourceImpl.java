@@ -33,32 +33,40 @@ import com.tencent.bk.job.analysis.model.web.resp.AIAnswer;
 import com.tencent.bk.job.analysis.model.web.resp.AIChatRecord;
 import com.tencent.bk.job.analysis.model.web.resp.ClearChatHistoryResp;
 import com.tencent.bk.job.analysis.service.ai.AIAnalyzeErrorService;
+import com.tencent.bk.job.analysis.service.ai.AIChatHistoryService;
 import com.tencent.bk.job.analysis.service.ai.AICheckScriptService;
 import com.tencent.bk.job.analysis.service.ai.ChatService;
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Primary;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-//@RestController("jobAnalysisWebAIResource")
+@Primary
+@RestController("jobAnalysisWebAIResource")
 @Slf4j
 public class WebAIResourceImpl implements WebAIResource {
 
     private final ChatService chatService;
     private final AICheckScriptService aiCheckScriptService;
     private final AIAnalyzeErrorService aiAnalyzeErrorService;
+    private final AIChatHistoryService aiChatHistoryService;
 
-    //    @Autowired
+    @Autowired
     public WebAIResourceImpl(ChatService chatService,
                              AICheckScriptService aiCheckScriptService,
-                             AIAnalyzeErrorService aiAnalyzeErrorService) {
+                             AIAnalyzeErrorService aiAnalyzeErrorService,
+                             AIChatHistoryService aiChatHistoryService) {
         this.chatService = chatService;
         this.aiCheckScriptService = aiCheckScriptService;
         this.aiAnalyzeErrorService = aiAnalyzeErrorService;
+        this.aiChatHistoryService = aiChatHistoryService;
     }
 
     @Override
@@ -110,8 +118,7 @@ public class WebAIResourceImpl implements WebAIResource {
                                            String scopeType,
                                            String scopeId,
                                            AIAnalyzeErrorReq req) {
-
-        AIAnswer aiAnswer = aiAnalyzeErrorService.analyze(username, req.getContent());
+        AIAnswer aiAnswer = aiAnalyzeErrorService.analyze(username, appResourceScope.getAppId(), req);
         return Response.buildSuccessResp(aiAnswer);
     }
 
@@ -120,7 +127,8 @@ public class WebAIResourceImpl implements WebAIResource {
                                                            AppResourceScope appResourceScope,
                                                            String scopeType,
                                                            String scopeId) {
-        return Response.buildSuccessResp(new ClearChatHistoryResp(0));
+        int deletedTotalCount = aiChatHistoryService.softDeleteChatHistory(username);
+        return Response.buildSuccessResp(new ClearChatHistoryResp(deletedTotalCount));
     }
 
 }
