@@ -22,56 +22,46 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.execute.model.web.vo;
+package com.tencent.bk.job.analysis.service.ai.impl;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.tencent.bk.job.common.constant.ExecuteObjectTypeEnum;
-import com.tencent.bk.job.common.model.vo.ContainerVO;
-import com.tencent.bk.job.common.model.vo.HostInfoVO;
-import io.swagger.annotations.ApiModel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import org.springframework.stereotype.Service;
 
 /**
- * 作业执行对象 VO
+ * AI模板变量服务，统一提供模板变量占位符
  */
-@Setter
-@Getter
-@NoArgsConstructor
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@ApiModel("作业执行对象")
-public class ExecuteObjectVO {
+@Service
+public class AITemplateVarService {
 
-    /**
-     * 执行对象类型
-     *
-     * @see ExecuteObjectTypeEnum
-     */
-    private ExecuteObjectTypeEnum type;
-
-    /**
-     * 执行对象资源实例 ID（比如 主机/容器在 cmdb 对应的资源ID)
-     */
-    private Long executeObjectResourceId;
-
-    /**
-     * 容器
-     */
-    private ContainerVO container;
-
-    /**
-     * 主机
-     */
-    private HostInfoVO host;
-
-    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
-    public static ExecuteObjectTypeEnum fromExecuteObjectTypeValue(int type) {
-        return ExecuteObjectTypeEnum.valOf(type);
+    public String getTemplateVarPlaceHolder(String varName) {
+        String TEMPLATE_VAR_PREFIX = "{BK_JOB_AI_TEMPLATE_VAR";
+        return TEMPLATE_VAR_PREFIX + "{" + varName + "}}";
     }
 
-    public static String buildExecuteObjectId(Integer executeObjectType, Long executeObjectResoruceId) {
-        return executeObjectType + ":" + executeObjectResoruceId;
+    public String getScriptTypePlaceHolder() {
+        return getTemplateVarPlaceHolder("script_type");
+    }
+
+    public String getScriptParamsPlaceHolder() {
+        return getTemplateVarPlaceHolder("script_params");
+    }
+
+    public String getScriptContentPlaceHolder() {
+        return getTemplateVarPlaceHolder("script_content");
+    }
+
+    public String getErrorContentPlaceHolder() {
+        return getTemplateVarPlaceHolder("error_content");
+    }
+
+    public String getFileTaskErrorSourcePlaceHolder() {
+        return getTemplateVarPlaceHolder("file_task_error_source");
+    }
+
+    public String getUploadFileErrorDataPlaceHolder() {
+        return getTemplateVarPlaceHolder("upload_file_error_data");
+    }
+
+    public String getDownloadFileErrorDataPlaceHolder() {
+        return getTemplateVarPlaceHolder("download_file_error_data");
     }
 }
