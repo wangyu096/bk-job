@@ -24,21 +24,42 @@
 
 package com.tencent.bk.job.analysis.service.ai.context.constants;
 
+import lombok.Getter;
+
 /**
  * 文件任务失败原因来源枚举
  */
+@Getter
 public enum FileTaskErrorSourceEnum {
-    NO_ERROR("任务成功并未失败"),
-    SOURCE_FILE_UPLOAD_ERROR("源文件上传出错导致的任务失败"),
-    DOWNLOAD_ERROR("目标执行对象下载文件出错导致的任务失败"),
-    UPLOAD_AND_DOWNLOAD_ERROR("源文件上传与目标执行对象下载文件均出错导致的任务失败");
+    NO_ERROR(
+        "job.analysis.ai.fileTaskErrorSource.noError",
+        "任务成功并未失败"
+    ),
+    SOURCE_FILE_UPLOAD_ERROR(
+        "job.analysis.ai.fileTaskErrorSource.sourceFileUploadError",
+        "源文件上传出错导致的任务失败"
+    ),
+    DOWNLOAD_ERROR(
+        "job.analysis.ai.fileTaskErrorSource.downloadError",
+        "目标执行对象下载文件出错导致的任务失败"
+    ),
+    UPLOAD_AND_DOWNLOAD_ERROR(
+        "job.analysis.ai.fileTaskErrorSource.uploadAndDownloadError",
+        "源文件上传与目标执行对象下载文件均出错导致的任务失败"
+    );
+
+    /**
+     * 任务失败原因描述国际化key
+     */
+    private final String i18nKey;
 
     /**
      * 任务失败原因描述
      */
     private final String description;
 
-    FileTaskErrorSourceEnum(String description) {
+    FileTaskErrorSourceEnum(String i18nKey, String description) {
+        this.i18nKey = i18nKey;
         this.description = description;
     }
 }

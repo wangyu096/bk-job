@@ -22,29 +22,15 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.analysis.model.web.req;
+package com.tencent.bk.job.analysis.config;
 
-import com.tencent.bk.job.analysis.model.web.req.validation.MaxLength;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
-import javax.validation.constraints.NotEmpty;
+@Slf4j
+@Configuration(value = "jobAnalysisAIConfig")
+@EnableConfigurationProperties(AIProperties.class)
+public class AIConfig {
 
-@AllArgsConstructor
-@NoArgsConstructor
-@ApiModel("AI通用对话请求体")
-@Data
-public class AIGeneralChatReq {
-
-    /**
-     * 用户输入内容
-     */
-    @ApiModelProperty(value = "用户输入内容")
-    @NotEmpty(message = "{validation.constraints.AIGeneralChat_contentEmpty.message}")
-    @MaxLength(value = 5 * 1024L * 1024L,
-        message = "{validation.constraints.AIGeneralChat_contentExceedMaxLength.message}")
-    private String content;
 }

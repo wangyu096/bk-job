@@ -22,29 +22,42 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.analysis.model.web.req;
+package com.tencent.bk.job.analysis.service.ai.impl;
 
-import com.tencent.bk.job.analysis.model.web.req.validation.MaxLength;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.tencent.bk.job.common.i18n.service.MessageI18nService;
+import org.springframework.stereotype.Service;
 
-import javax.validation.constraints.NotEmpty;
+/**
+ * AI消息国际化服务
+ */
+@Service
+public class AIMessageI18nService {
+    private final MessageI18nService messageI18nService;
 
-@AllArgsConstructor
-@NoArgsConstructor
-@ApiModel("AI通用对话请求体")
-@Data
-public class AIGeneralChatReq {
+    public AIMessageI18nService(MessageI18nService messageI18nService) {
+        this.messageI18nService = messageI18nService;
+    }
+
+    public String getAIGreetingMessage() {
+        return messageI18nService.getI18n("job.analysis.ai.greetingMessage");
+    }
 
     /**
-     * 用户输入内容
+     * 获取非失败状态任务的AI分析结果信息
+     *
+     * @return 国际化的AI分析结果信息
      */
-    @ApiModelProperty(value = "用户输入内容")
-    @NotEmpty(message = "{validation.constraints.AIGeneralChat_contentEmpty.message}")
-    @MaxLength(value = 5 * 1024L * 1024L,
-        message = "{validation.constraints.AIGeneralChat_contentExceedMaxLength.message}")
-    private String content;
+    public String getNotFailTaskAIAnswerMessage() {
+        return messageI18nService.getI18n("job.analysis.ai.notFailTaskAnswerMessage");
+    }
+
+    /**
+     * 根据国际化Key获取国际化信息
+     *
+     * @param i18nKey 国际化Key
+     * @return 国际化信息
+     */
+    public String getI18nMessage(String i18nKey) {
+        return messageI18nService.getI18n(i18nKey);
+    }
 }

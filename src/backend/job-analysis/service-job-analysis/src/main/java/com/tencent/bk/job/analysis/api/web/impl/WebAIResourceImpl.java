@@ -25,6 +25,7 @@
 package com.tencent.bk.job.analysis.api.web.impl;
 
 import com.tencent.bk.job.analysis.api.web.WebAIResource;
+import com.tencent.bk.job.analysis.config.AIProperties;
 import com.tencent.bk.job.analysis.model.dto.AIChatHistoryDTO;
 import com.tencent.bk.job.analysis.model.web.req.AIAnalyzeErrorReq;
 import com.tencent.bk.job.analysis.model.web.req.AICheckScriptReq;
@@ -37,38 +38,50 @@ import com.tencent.bk.job.analysis.service.ai.AIAnalyzeErrorService;
 import com.tencent.bk.job.analysis.service.ai.AIChatHistoryService;
 import com.tencent.bk.job.analysis.service.ai.AICheckScriptService;
 import com.tencent.bk.job.analysis.service.ai.ChatService;
+import com.tencent.bk.job.analysis.service.ai.impl.AIConfigService;
+import com.tencent.bk.job.analysis.service.ai.impl.AIMessageI18nService;
+import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.exception.ServiceException;
 import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
+import com.tencent.bk.job.common.model.error.ErrorType;
+import com.tencent.bk.job.execute.common.constants.StepExecuteTypeEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Primary;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Primary
 @RestController("jobAnalysisWebAIResource")
 @Slf4j
 public class WebAIResourceImpl implements WebAIResource {
 
+    private final AIConfigService aiConfigService;
     private final ChatService chatService;
     private final AICheckScriptService aiCheckScriptService;
     private final AIAnalyzeErrorService aiAnalyzeErrorService;
     private final AIChatHistoryService aiChatHistoryService;
+    private final AIMessageI18nService aiMessageI18nService;
+    private final AIProperties aiProperties;
 
     @Autowired
-    public WebAIResourceImpl(ChatService chatService,
+    public WebAIResourceImpl(AIConfigService aiConfigService,
+                             ChatService chatService,
                              AICheckScriptService aiCheckScriptService,
                              AIAnalyzeErrorService aiAnalyzeErrorService,
-                             AIChatHistoryService aiChatHistoryService) {
+                             AIChatHistoryService aiChatHistoryService,
+                             AIMessageI18nService aiMessageI18nService,
+                             AIProperties aiProperties) {
+        this.aiConfigService = aiConfigService;
         this.chatService = chatService;
         this.aiCheckScriptService = aiCheckScriptService;
         this.aiAnalyzeErrorService = aiAnalyzeErrorService;
         this.aiChatHistoryService = aiChatHistoryService;
+        this.aiMessageI18nService = aiMessageI18nService;
+        this.aiProperties = aiProperties;
     }
 
     @Override
@@ -76,9 +89,7 @@ public class WebAIResourceImpl implements WebAIResource {
                                                      AppResourceScope appResourceScope,
                                                      String scopeType,
                                                      String scopeId) {
-        Map<String, Object> map = new HashMap<>();
-        map.put("analyzeErrorLogMaxLength", 5 * 1024 * 1024L);
-        return Response.buildSuccessResp(map);
+        return Response.buildSuccessResp(aiConfigService.getAIConfig());
     }
 
     @Override
@@ -90,18 +101,27 @@ public class WebAIResourceImpl implements WebAIResource {
                                                                  Integer length) {
         List<AIChatHistoryDTO> chatRecordList = chatService.getLatestChatHistoryList(username, start, length);
         List<AIChatRecord> aiChatRecordList = new ArrayList<>();
-        aiChatRecordList.add(getStartRecord());
+        aiChatRecordList.add(getGreetingRecord());
         aiChatRecordList.addAll(
             chatRecordList.stream().map(AIChatHistoryDTO::toAIChatRecord).collect(Collectors.toList())
         );
         return Response.buildSuccessResp(aiChatRecordList);
     }
 
-    private AIChatRecord getStartRecord() {
-        AIChatRecord startRecord = new AIChatRecord();
-        startRecord.setUserInput(new UserInput("", 0L));
-        startRecord.setAiAnswer(new AIAnswer("0", null, "Hello, I`m BlueKing AI Assistant", 0L));
-        return startRecord;
+    private AIChatRecord getGreetingRecord() {
+        AIChatRecord greetingRecord = new AIChatRecord();
+        greetingRecord.setUserInput(new UserInput("", 0L));
+        greetingRecord.setAiAnswer(getGreetingAIAnswer());
+        return greetingRecord;
+    }
+
+    private AIAnswer getGreetingAIAnswer() {
+        return new AIAnswer(
+            "0",
+            null,
+            aiMessageI18nService.getAIGreetingMessage(),
+            0L
+        );
     }
 
     @Override
@@ -130,8 +150,27 @@ public class WebAIResourceImpl implements WebAIResource {
                                            String scopeType,
                                            String scopeId,
                                            AIAnalyzeErrorReq req) {
+        checkScriptLogContentLength(req);
         AIAnswer aiAnswer = aiAnalyzeErrorService.analyze(username, appResourceScope.getAppId(), req);
         return Response.buildSuccessResp(aiAnswer);
+    }
+
+    /**
+     * 结合动态配置的限制值检查脚本日志内容长度是否超限
+     *
+     * @param req 请求体
+     */
+    private void checkScriptLogContentLength(AIAnalyzeErrorReq req) {
+        if (StepExecuteTypeEnum.EXECUTE_SCRIPT.getValue().equals(req.getStepExecuteType())) {
+            Long logMaxLengthBytes = aiProperties.getAnalyzeErrorLog().getLogMaxLengthBytes();
+            if (req.getContent().length() > logMaxLengthBytes) {
+                throw new ServiceException(
+                    ErrorType.INVALID_PARAM,
+                    ErrorCode.AI_ANALYZE_ERROR_CONTENT_EXCEED_MAX_LENGTH,
+                    new Object[]{aiProperties.getAnalyzeErrorLog().getLogMaxLength()}
+                );
+            }
+        }
     }
 
     @Override

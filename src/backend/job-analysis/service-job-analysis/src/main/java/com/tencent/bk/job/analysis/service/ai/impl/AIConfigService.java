@@ -22,29 +22,31 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.analysis.model.web.req;
+package com.tencent.bk.job.analysis.service.ai.impl;
 
-import com.tencent.bk.job.analysis.model.web.req.validation.MaxLength;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.tencent.bk.job.analysis.config.AIProperties;
+import com.tencent.bk.job.common.util.file.FileSizeUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
-import javax.validation.constraints.NotEmpty;
+import java.util.HashMap;
+import java.util.Map;
 
-@AllArgsConstructor
-@NoArgsConstructor
-@ApiModel("AI通用对话请求体")
-@Data
-public class AIGeneralChatReq {
+@Service
+public class AIConfigService {
+    private final AIProperties aiProperties;
 
-    /**
-     * 用户输入内容
-     */
-    @ApiModelProperty(value = "用户输入内容")
-    @NotEmpty(message = "{validation.constraints.AIGeneralChat_contentEmpty.message}")
-    @MaxLength(value = 5 * 1024L * 1024L,
-        message = "{validation.constraints.AIGeneralChat_contentExceedMaxLength.message}")
-    private String content;
+    @Autowired
+    public AIConfigService(AIProperties aiProperties) {
+        this.aiProperties = aiProperties;
+    }
+
+    public Map<String, Object> getAIConfig() {
+        Map<String, Object> map = new HashMap<>();
+        Long logMaxLengthBytes = aiProperties.getAnalyzeErrorLog().getLogMaxLengthBytes();
+        map.put("enabled", aiProperties.getEnabled());
+        map.put("analyzeErrorLogMaxLength", logMaxLengthBytes);
+        return map;
+    }
+
 }

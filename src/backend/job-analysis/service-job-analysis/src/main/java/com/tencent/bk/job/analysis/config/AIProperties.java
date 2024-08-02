@@ -22,29 +22,41 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.analysis.model.web.req;
+package com.tencent.bk.job.analysis.config;
 
-import com.tencent.bk.job.analysis.model.web.req.validation.MaxLength;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.tencent.bk.job.common.util.file.FileSizeUtil;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import javax.validation.constraints.NotEmpty;
+/**
+ * AI相关配置
+ */
+@Getter
+@Setter
+@ToString
+@ConfigurationProperties(prefix = "ai")
+public class AIProperties {
 
-@AllArgsConstructor
-@NoArgsConstructor
-@ApiModel("AI通用对话请求体")
-@Data
-public class AIGeneralChatReq {
+    private Boolean enabled = false;
 
     /**
-     * 用户输入内容
+     * 错误日志分析相关配置
      */
-    @ApiModelProperty(value = "用户输入内容")
-    @NotEmpty(message = "{validation.constraints.AIGeneralChat_contentEmpty.message}")
-    @MaxLength(value = 5 * 1024L * 1024L,
-        message = "{validation.constraints.AIGeneralChat_contentExceedMaxLength.message}")
-    private String content;
+    private AnalyzeErrorLogConfig analyzeErrorLog;
+
+    @Getter
+    @Setter
+    @ToString
+    public static class AnalyzeErrorLogConfig {
+        /**
+         * 支持分析的错误日志最大长度
+         */
+        private String logMaxLength = "5MB";
+
+        public Long getLogMaxLengthBytes() {
+            return FileSizeUtil.parseFileSizeBytes(logMaxLength);
+        }
+    }
 }
