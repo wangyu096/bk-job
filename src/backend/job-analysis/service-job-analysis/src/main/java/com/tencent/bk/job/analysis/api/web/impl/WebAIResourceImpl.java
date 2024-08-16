@@ -47,13 +47,12 @@ import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
 import com.tencent.bk.job.common.model.error.ErrorType;
 import com.tencent.bk.job.execute.common.constants.StepExecuteTypeEnum;
-import com.tencent.bk.sdk.iam.util.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -130,56 +129,54 @@ public class WebAIResourceImpl implements WebAIResource {
     }
 
     @Override
-    public StreamingResponseBody generalChat(String username,
-                                             AppResourceScope appResourceScope,
-                                             String scopeType,
-                                             String scopeId,
-                                             AIGeneralChatReq req) {
-        AIAnswer aiAnswer = chatService.chatWithAI(username, req.getContent());
-        Response<AIAnswer> response = Response.buildSuccessResp(aiAnswer);
-        return buildStreamingResponseBody(response);
-    }
-
-    @Override
-    public StreamingResponseBody checkScript(String username,
-                                             AppResourceScope appResourceScope,
-                                             String scopeType,
-                                             String scopeId,
-                                             AICheckScriptReq req) {
-        AIAnswer aiAnswer = aiCheckScriptService.check(username, req.getType(), req.getContent());
-        Response<AIAnswer> response = Response.buildSuccessResp(aiAnswer);
-        return buildStreamingResponseBody(response);
-    }
-
-    @Override
-    public StreamingResponseBody analyzeError(String username,
+    public Response<AIChatRecord> generalChat(String username,
                                               AppResourceScope appResourceScope,
                                               String scopeType,
                                               String scopeId,
-                                              AIAnalyzeErrorReq req) {
-        checkScriptLogContentLength(req);
-        AIAnswer aiAnswer = aiAnalyzeErrorService.analyze(username, appResourceScope.getAppId(), req);
-        Response<AIAnswer> response = Response.buildSuccessResp(aiAnswer);
-        return buildStreamingResponseBody(response);
+                                              AIGeneralChatReq req) {
+        AIChatRecord aiChatRecord = chatService.chatWithAI(username, req.getContent());
+        return Response.buildSuccessResp(aiChatRecord);
     }
 
-    private StreamingResponseBody buildStreamingResponseBody(Object response) {
-        return outputStream -> {
-            try {
-                outputStream.write(JsonUtil.toJson(response).getBytes());
-                outputStream.flush();
-            } catch (IOException e) {
-                // 处理写入数据时的异常
-                log.error("Fail to write data", e);
-            } finally {
-                // 确保输出流被关闭
-                try {
-                    outputStream.close();
-                } catch (IOException e) {
-                    log.error("Fail to close output stream", e);
-                }
-            }
-        };
+    @Override
+    public Response<AIChatRecord> checkScript(String username,
+                                              AppResourceScope appResourceScope,
+                                              String scopeType,
+                                              String scopeId,
+                                              AICheckScriptReq req) {
+        AIChatRecord aiChatRecord = aiCheckScriptService.check(username, req.getType(), req.getContent());
+        return Response.buildSuccessResp(aiChatRecord);
+    }
+
+    @Override
+    public Response<AIChatRecord> analyzeError(String username,
+                                               AppResourceScope appResourceScope,
+                                               String scopeType,
+                                               String scopeId,
+                                               AIAnalyzeErrorReq req) {
+        checkScriptLogContentLength(req);
+        AIChatRecord aiChatRecord = aiAnalyzeErrorService.analyze(username, appResourceScope.getAppId(), req);
+        return Response.buildSuccessResp(aiChatRecord);
+    }
+
+    @Override
+    public ResponseEntity<StreamingResponseBody> getChatStream(String username,
+                                                               AppResourceScope appResourceScope,
+                                                               String scopeType,
+                                                               String scopeId,
+                                                               Long recordId) {
+        // TODO
+        return ResponseEntity.ok().body(null);
+    }
+
+    @Override
+    public Response<Boolean> terminateChat(String username,
+                                           AppResourceScope appResourceScope,
+                                           String scopeType,
+                                           String scopeId,
+                                           Long recordId) {
+        // TODO
+        return Response.buildSuccessResp(true);
     }
 
     /**
