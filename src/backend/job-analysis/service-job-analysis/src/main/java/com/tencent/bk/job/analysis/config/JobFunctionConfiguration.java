@@ -22,46 +22,31 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.analysis.consts;
+package com.tencent.bk.job.analysis.config;
+
+import com.tencent.bk.job.analysis.listener.AIChatOperationEventListener;
+import com.tencent.bk.job.analysis.listener.event.AIChatOperationEvent;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import java.util.function.Consumer;
 
 /**
- * AI对话状态
+ * spring cloud function 定义
+ * <p>
+ * 注意：方法名与配置文件中的spring.cloud.stream.function.definition对应，修改需要注意！！！
  */
-public enum AIChatStatusEnum {
-    /**
-     * 初始状态
-     */
-    INIT(0),
-    /**
-     * 正在回答
-     */
-    REPLYING(1),
-    /**
-     * 已完成
-     */
-    FINISHED(2),
-    /**
-     * 已终止
-     */
-    TERMINATED(3);
-
-    private final int status;
-
-    AIChatStatusEnum(int status) {
-        this.status = status;
-    }
-
-    public static AIChatStatusEnum getAIChatStatus(int status) {
-        for (AIChatStatusEnum aiChatStatusEnum : AIChatStatusEnum.values()) {
-            if (aiChatStatusEnum.getStatus() == status) {
-                return aiChatStatusEnum;
-            }
-        }
-        throw new RuntimeException("Unknown AIChat status " + status);
-    }
-
-    public int getStatus() {
-        return status;
+@Configuration(value = "jobAnalysisFunctionConfig")
+@Slf4j
+public class JobFunctionConfiguration {
+    @Bean
+    public Consumer<AIChatOperationEvent> handleAIChatOperationEvent(
+        @Autowired AIChatOperationEventListener aiChatOperationEventListener
+    ) {
+        log.info("Init handleAIChatOperationEvent consumer");
+        return aiChatOperationEventListener::handleEvent;
     }
 
 }

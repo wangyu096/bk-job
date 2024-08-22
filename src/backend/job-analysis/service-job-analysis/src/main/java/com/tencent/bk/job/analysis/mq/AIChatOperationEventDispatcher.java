@@ -22,46 +22,34 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.analysis.consts;
+package com.tencent.bk.job.analysis.mq;
 
-/**
- * AI对话状态
- */
-public enum AIChatStatusEnum {
-    /**
-     * 初始状态
-     */
-    INIT(0),
-    /**
-     * 正在回答
-     */
-    REPLYING(1),
-    /**
-     * 已完成
-     */
-    FINISHED(2),
-    /**
-     * 已终止
-     */
-    TERMINATED(3);
+import com.tencent.bk.job.analysis.listener.event.AIChatOperationEvent;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.stream.function.StreamBridge;
+import org.springframework.stereotype.Component;
 
-    private final int status;
+@Component
+@Slf4j
+public class AIChatOperationEventDispatcher {
 
-    AIChatStatusEnum(int status) {
-        this.status = status;
+    private final StreamBridge streamBridge;
+
+    @Autowired
+    public AIChatOperationEventDispatcher(StreamBridge streamBridge) {
+        this.streamBridge = streamBridge;
     }
 
-    public static AIChatStatusEnum getAIChatStatus(int status) {
-        for (AIChatStatusEnum aiChatStatusEnum : AIChatStatusEnum.values()) {
-            if (aiChatStatusEnum.getStatus() == status) {
-                return aiChatStatusEnum;
-            }
-        }
-        throw new RuntimeException("Unknown AIChat status " + status);
+    /**
+     * 广播AI对话操作事件
+     *
+     * @param event AI对话操作事件
+     */
+    public void broadCastAIChatOperationEvent(AIChatOperationEvent event) {
+        log.info("Begin to broadcast aiChatOperation event: {}", event);
+        String aiChatOperationFanout = "aiChatOperationFanout-out-0";
+        streamBridge.send(aiChatOperationFanout, event);
+        log.info("Broadcast aiChatOperation event successfully, event: {}", event);
     }
-
-    public int getStatus() {
-        return status;
-    }
-
 }

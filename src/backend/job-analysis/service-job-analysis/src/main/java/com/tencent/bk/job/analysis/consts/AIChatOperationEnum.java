@@ -24,44 +24,31 @@
 
 package com.tencent.bk.job.analysis.consts;
 
+import lombok.Getter;
+
 /**
- * AI对话状态
+ * AI对话相关操作
  */
-public enum AIChatStatusEnum {
+@Getter
+public enum AIChatOperationEnum {
     /**
-     * 初始状态
+     * 终止对话
      */
-    INIT(0),
-    /**
-     * 正在回答
-     */
-    REPLYING(1),
-    /**
-     * 已完成
-     */
-    FINISHED(2),
-    /**
-     * 已终止
-     */
-    TERMINATED(3);
+    TERMINATE_CHAT(1);
 
-    private final int status;
+    private final int value;
 
-    AIChatStatusEnum(int status) {
-        this.status = status;
+    AIChatOperationEnum(int val) {
+        this.value = val;
     }
 
-    public static AIChatStatusEnum getAIChatStatus(int status) {
-        for (AIChatStatusEnum aiChatStatusEnum : AIChatStatusEnum.values()) {
-            if (aiChatStatusEnum.getStatus() == status) {
-                return aiChatStatusEnum;
+    public static AIChatOperationEnum valueOf(int value) {
+        for (AIChatOperationEnum aiChatOperationEnum : values()) {
+            if (aiChatOperationEnum.getValue() == value) {
+                return aiChatOperationEnum;
             }
         }
-        throw new RuntimeException("Unknown AIChat status " + status);
-    }
-
-    public int getStatus() {
-        return status;
+        throw new IllegalArgumentException("No AIChatOperationEnum constant: " + value);
     }
 
 }
