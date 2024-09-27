@@ -10,9 +10,7 @@ RUN ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
     chmod +x /data/job/exec/startup.sh && \
     chmod +x /data/job/exec/tini
 
-RUN yum -y update && \
-    yum -y install git && \
-    yum clean all
+RUN yum -y install git
 
 RUN mkdir -p /opt && cd /opt && git clone https://github.com/jemalloc/jemalloc.git \
     && mkdir /tmp/jprof && mkdir /tmp/nmt && mkdir /tmp/pmap \
