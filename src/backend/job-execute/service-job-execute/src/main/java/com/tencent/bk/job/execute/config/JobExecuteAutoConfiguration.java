@@ -22,14 +22,12 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.backup.archive.dao;
+package com.tencent.bk.job.execute.config;
 
-import org.jooq.TableRecord;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
-import java.io.IOException;
-import java.util.List;
-
-public interface ExecuteArchiveDAO {
-    Integer batchInsert(List<? extends TableRecord<?>> recordList, int bulkSize)
-        throws IOException;
+@Configuration(proxyBeanMethods = false)
+@EnableConfigurationProperties({JobInstanceConfigurationProperties.class})
+public class JobExecuteAutoConfiguration {
 }

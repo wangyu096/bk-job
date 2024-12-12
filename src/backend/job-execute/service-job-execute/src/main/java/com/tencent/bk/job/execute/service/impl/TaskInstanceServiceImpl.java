@@ -32,16 +32,21 @@ import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.NotFoundException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.model.BaseSearchCondition;
+import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
 import com.tencent.bk.job.common.model.dto.HostDTO;
+import com.tencent.bk.job.common.sharding.mysql.ShardingFlag;
 import com.tencent.bk.job.execute.auth.ExecuteAuthService;
 import com.tencent.bk.job.execute.common.constants.RunStatusEnum;
 import com.tencent.bk.job.execute.common.context.JobExecuteContext;
 import com.tencent.bk.job.execute.common.context.JobExecuteContextThreadLocalRepo;
 import com.tencent.bk.job.execute.common.context.JobInstanceContext;
+import com.tencent.bk.job.execute.dao.TaskInstanceAppDAO;
 import com.tencent.bk.job.execute.dao.TaskInstanceDAO;
 import com.tencent.bk.job.execute.dao.common.IdGen;
 import com.tencent.bk.job.execute.model.TaskInstanceDTO;
+import com.tencent.bk.job.execute.model.TaskInstanceQuery;
 import com.tencent.bk.job.execute.service.ApplicationService;
 import com.tencent.bk.job.execute.service.StepInstanceService;
 import com.tencent.bk.job.execute.service.TaskInstanceService;
@@ -63,6 +68,8 @@ public class TaskInstanceServiceImpl implements TaskInstanceService {
     private final ExecuteAuthService executeAuthService;
     private final StepInstanceService stepInstanceService;
 
+    private final TaskInstanceAppDAO taskInstanceAppDAO;
+
     private final IdGen idGen;
 
     @Autowired
@@ -71,19 +78,26 @@ public class TaskInstanceServiceImpl implements TaskInstanceService {
                                    TaskInstanceVariableService taskInstanceVariableService,
                                    ExecuteAuthService executeAuthService,
                                    StepInstanceService stepInstanceService,
+                                   TaskInstanceAppDAO taskInstanceAppDAO,
                                    IdGen idGen) {
         this.applicationService = applicationService;
         this.stepInstanceService = stepInstanceService;
         this.taskInstanceDAO = taskInstanceDAO;
         this.taskInstanceVariableService = taskInstanceVariableService;
         this.executeAuthService = executeAuthService;
+        this.taskInstanceAppDAO = taskInstanceAppDAO;
         this.idGen = idGen;
     }
 
     @Override
     public long addTaskInstance(TaskInstanceDTO taskInstance) {
         taskInstance.setId(idGen.genTaskInstanceId());
-        return taskInstanceDAO.addTaskInstance(taskInstance);
+        long id = taskInstanceDAO.addTaskInstance(taskInstance);
+        taskInstance.setId(id);
+        if (ShardingFlag.isShardingEnabled()) {
+            taskInstanceAppDAO.addTaskInstance(taskInstance);
+        }
+        return id;
     }
 
     @Override
@@ -172,55 +186,116 @@ public class TaskInstanceServiceImpl implements TaskInstanceService {
     }
 
     @Override
-    public void updateTaskStatus(long taskInstanceId, int status) {
+    public void updateTaskStatus(long appId, long taskInstanceId, int status) {
         taskInstanceDAO.updateTaskStatus(taskInstanceId, status);
+        if (ShardingFlag.isShardingEnabled()) {
+            taskInstanceAppDAO.updateTaskStatus(appId, taskInstanceId, status);
+        }
     }
 
     @Override
-    public void updateTaskCurrentStepId(long taskInstanceId, Long stepInstanceId) {
+    public void updateTaskCurrentStepId(long appId, long taskInstanceId, Long stepInstanceId) {
         taskInstanceDAO.updateTaskCurrentStepId(taskInstanceId, stepInstanceId);
+        if (ShardingFlag.isShardingEnabled()) {
+            taskInstanceAppDAO.updateTaskCurrentStepId(appId, taskInstanceId, stepInstanceId);
+        }
     }
 
     @Override
-    public void resetTaskStatus(long taskInstanceId) {
+    public void resetTaskStatus(long appId, long taskInstanceId) {
         taskInstanceDAO.resetTaskStatus(taskInstanceId);
+        if (ShardingFlag.isShardingEnabled()) {
+            taskInstanceAppDAO.resetTaskStatus(appId, taskInstanceId);
+        }
     }
 
     @Override
-    public void resetTaskExecuteInfoForRetry(long taskInstanceId) {
+    public void resetTaskExecuteInfoForRetry(long appId, long taskInstanceId) {
         taskInstanceDAO.resetTaskExecuteInfoForRetry(taskInstanceId);
+        if (ShardingFlag.isShardingEnabled()) {
+            taskInstanceAppDAO.resetTaskExecuteInfoForRetry(appId, taskInstanceId);
+        }
     }
 
     @Override
-    public void updateTaskExecutionInfo(long taskInstanceId,
+    public void updateTaskExecutionInfo(long appId,
+                                        long taskInstanceId,
                                         RunStatusEnum status,
                                         Long currentStepId,
                                         Long startTime,
                                         Long endTime,
                                         Long totalTime) {
         taskInstanceDAO.updateTaskExecutionInfo(taskInstanceId, status, currentStepId, startTime, endTime, totalTime);
+        if (ShardingFlag.isShardingEnabled()) {
+            taskInstanceAppDAO.updateTaskExecutionInfo(appId, taskInstanceId, status, currentStepId,
+                startTime, endTime, totalTime);
+        }
     }
 
     @Override
     public List<Long> getJoinedAppIdList() {
         // 加全量appId作为in条件查询以便走索引
-        return taskInstanceDAO.listTaskInstanceAppId(applicationService.listAllAppIds(), null, null);
+        if (ShardingFlag.isShardingEnabled()) {
+            return taskInstanceAppDAO.listTaskInstanceAppId(applicationService.listAllAppIds(), null, null);
+        } else {
+            return taskInstanceDAO.listTaskInstanceAppId(applicationService.listAllAppIds(), null, null);
+        }
     }
 
     @Override
     public boolean hasExecuteHistory(Long appId, Long cronTaskId, Long fromTime, Long toTime) {
-        return taskInstanceDAO.hasExecuteHistory(appId, cronTaskId, fromTime, toTime);
+        if (ShardingFlag.isShardingEnabled()) {
+            return taskInstanceAppDAO.hasExecuteHistory(appId, cronTaskId, fromTime, toTime);
+        } else {
+            return taskInstanceDAO.hasExecuteHistory(appId, cronTaskId, fromTime, toTime);
+        }
     }
 
     @Override
     public List<Long> listTaskInstanceId(Long appId, Long fromTime, Long toTime, int offset, int limit) {
-        return taskInstanceDAO.listTaskInstanceId(appId, fromTime, toTime, offset, limit);
+        if (ShardingFlag.isShardingEnabled()) {
+            return taskInstanceAppDAO.listTaskInstanceId(appId, fromTime, toTime, offset, limit);
+        } else {
+            return taskInstanceDAO.listTaskInstanceId(appId, fromTime, toTime, offset, limit);
+        }
     }
 
     @Override
     public void saveTaskInstanceHosts(long appId,
                                       long taskInstanceId,
                                       Collection<HostDTO> hosts) {
-        taskInstanceDAO.saveTaskInstanceHosts(appId, taskInstanceId, hosts);
+        if (ShardingFlag.isShardingEnabled()) {
+            taskInstanceAppDAO.saveTaskInstanceHosts(appId, taskInstanceId, hosts);
+        } else {
+            taskInstanceDAO.saveTaskInstanceHosts(appId, taskInstanceId, hosts);
+        }
+    }
+
+    @Override
+    public PageData<TaskInstanceDTO> listPageTaskInstance(TaskInstanceQuery taskQuery,
+                                                          BaseSearchCondition baseSearchCondition) {
+        PageData<TaskInstanceDTO> pageData;
+        if (ShardingFlag.isShardingEnabled()) {
+            pageData = taskInstanceAppDAO.listPageTaskInstance(taskQuery, baseSearchCondition);
+        } else {
+            pageData = taskInstanceDAO.listPageTaskInstance(taskQuery, baseSearchCondition);
+        }
+        return pageData;
+    }
+
+    @Override
+    public List<TaskInstanceDTO> listLatestCronTaskInstance(long appId,
+                                                            Long cronTaskId,
+                                                            Long latestTimeInSeconds,
+                                                            RunStatusEnum status,
+                                                            Integer limit) {
+        List<TaskInstanceDTO> result;
+        if (ShardingFlag.isShardingEnabled()) {
+            result = taskInstanceAppDAO.listLatestCronTaskInstance(appId, cronTaskId, latestTimeInSeconds, status,
+                limit);
+        } else {
+            result = taskInstanceDAO.listLatestCronTaskInstance(appId, cronTaskId, latestTimeInSeconds, status, limit);
+        }
+        return result;
     }
 }

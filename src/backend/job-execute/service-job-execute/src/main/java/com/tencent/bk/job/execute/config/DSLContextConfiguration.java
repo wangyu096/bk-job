@@ -29,6 +29,8 @@ import com.tencent.bk.job.common.mysql.dynamic.ds.HorizontalShardingDSLContextPr
 import com.tencent.bk.job.common.mysql.dynamic.ds.MigrateDynamicDSLContextProvider;
 import com.tencent.bk.job.common.mysql.dynamic.ds.StandaloneDSLContextProvider;
 import com.tencent.bk.job.common.mysql.dynamic.ds.VerticalShardingDSLContextProvider;
+import com.tencent.bk.job.common.sharding.mysql.config.ShardingDataSourceFactory;
+import com.tencent.bk.job.common.sharding.mysql.config.ShardingProperties;
 import com.tencent.bk.job.common.util.toggle.prop.PropToggleStore;
 import com.tencent.bk.job.execute.dao.common.DSLContextProviderFactory;
 import com.tencent.bk.job.execute.dao.common.JobExecuteVerticalShardingDSLContextProvider;
@@ -38,6 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jooq.ConnectionProvider;
 import org.jooq.DSLContext;
 import org.jooq.SQLDialect;
+import org.jooq.conf.Settings;
 import org.jooq.impl.DataSourceConnectionProvider;
 import org.jooq.impl.DefaultConfiguration;
 import org.jooq.impl.DefaultDSLContext;
@@ -55,6 +58,7 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
 
 import javax.sql.DataSource;
+import java.sql.SQLException;
 
 @Slf4j
 @Configuration(value = "jobExecuteDSLContextConfiguration")
@@ -94,7 +98,13 @@ public class DSLContextConfiguration {
         @Bean(name = "job-execute-jooq-conf")
         public org.jooq.Configuration jooqConf(
             @Qualifier("job-execute-conn-provider") ConnectionProvider connectionProvider) {
-            return new DefaultConfiguration().derive(connectionProvider).derive(SQLDialect.MYSQL);
+            return new DefaultConfiguration()
+                .derive(connectionProvider)
+                .derive(SQLDialect.MYSQL)
+                .set(new Settings()
+                    .withRenderCatalog(false)
+                    .withRenderSchema(false)
+                );
         }
 
         @Qualifier("job-execute-conn-provider")
@@ -290,6 +300,71 @@ public class DSLContextConfiguration {
         }
     }
 
+    /**
+     * 水平分库分表配置
+     */
+    @ConditionalOnProperty(value = "mysql.sharding.enabled", havingValue = "true")
+    protected static class HorizontalDslContextConfiguration {
+
+        @Bean("jobExecuteShardingDataSource")
+        DataSource jobExecuteShardingDataSource(ShardingProperties shardingProperties) throws SQLException {
+            ShardingProperties.DatabaseProperties databaseProperties =
+                shardingProperties.getDatabases().get("job_execute");
+            log.info("Init jobExecuteShardingDataSource");
+            return ShardingDataSourceFactory.createDataSource(databaseProperties);
+        }
+
+        @Qualifier("jobExecuteShardingTransactionManager")
+        @Bean(name = "jobExecuteShardingTransactionManager")
+        @DependsOn("jobExecuteShardingDataSource")
+        public DataSourceTransactionManager transactionManager(
+            @Qualifier("jobExecuteShardingDataSource") DataSource dataSource) {
+            return new DataSourceTransactionManager(dataSource);
+        }
+
+        @Qualifier("jobExecuteShardingJdbcTemplate")
+        @Bean(name = "jobExecuteShardingJdbcTemplate")
+        public JdbcTemplate jdbcTemplate(@Qualifier("jobExecuteShardingDataSource") DataSource dataSource) {
+            return new JdbcTemplate(dataSource);
+        }
+
+        @Qualifier("jobExecuteShardingDslContext")
+        @Bean(name = "jobExecuteShardingDslContext")
+        public DSLContext dslContext(@Qualifier("jobExecuteShardingJooqConf") org.jooq.Configuration configuration) {
+            return new DefaultDSLContext(configuration);
+        }
+
+        @Qualifier("jobExecuteShardingJooqConf")
+        @Bean(name = "jobExecuteShardingJooqConf")
+        public org.jooq.Configuration jooqConf(
+            @Qualifier("jobExecuteShardingConnProvider") ConnectionProvider connectionProvider) {
+            return new DefaultConfiguration().derive(connectionProvider).derive(SQLDialect.MYSQL);
+        }
+
+        @Qualifier("jobExecuteShardingConnProvider")
+        @Bean(name = "jobExecuteShardingConnProvider")
+        public ConnectionProvider connectionProvider(
+            @Qualifier("jobShardingTransactionAwareDataSource") DataSource dataSource) {
+            return new DataSourceConnectionProvider(dataSource);
+        }
+
+        @Qualifier("jobExecuteShardingTransactionAwareDataSource")
+        @Bean(name = "jobExecuteShardingTransactionAwareDataSource")
+        public TransactionAwareDataSourceProxy
+        transactionAwareDataSourceProxy(@Qualifier("jobExecuteShardingDataSource") DataSource dataSource) {
+            return new TransactionAwareDataSourceProxy(dataSource);
+        }
+
+        @Qualifier("jobExecuteShardingDslContextProvider")
+        @Bean(name = "jobExecuteShardingDslContextProvider")
+        public HorizontalShardingDSLContextProvider shardingDSLContextProvider(
+            @Qualifier("jobExecuteShardingDslContext") DSLContext dslContext
+        ) {
+            log.info("Init HorizontalShardingDSLContextProvider");
+            return new HorizontalShardingDSLContextProvider(dslContext);
+        }
+    }
+
 
     /**
      * Db 迁移配置
@@ -335,6 +410,7 @@ public class DSLContextConfiguration {
         ObjectProvider<MigrateDynamicDSLContextProvider> migrateDynamicDSLContextProviderObjectProvider,
         MySQLProperties mySQLProperties
     ) {
+        log.info("Init JobExecuteDslContextProviderFactory");
         return new DSLContextProviderFactory(
             standaloneDSLContextProviderObjectProvider.getIfAvailable(),
             verticalShardingDSLContextProviderObjectProvider.getIfAvailable(),

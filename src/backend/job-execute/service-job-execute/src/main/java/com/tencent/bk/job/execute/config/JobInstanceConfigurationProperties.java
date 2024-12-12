@@ -22,45 +22,54 @@
  * IN THE SOFTWARE.
  */
 
-package com.tencent.bk.job.backup.archive.dao;
+package com.tencent.bk.job.execute.config;
 
-import org.jooq.Condition;
-import org.jooq.Record;
-import org.jooq.Table;
-
-import java.util.Collection;
-import java.util.List;
+import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * DB 表操作 DAO
- *
- * @param <T> 表记录
+ * 作业执行历史查询、存储配置
  */
-public interface RecordDAO<T extends Record> {
+@ConfigurationProperties(prefix = "job.job-instance")
+@Getter
+@Setter
+@ToString
+public class JobInstanceConfigurationProperties {
 
-    /**
-     * 获取表
-     *
-     * @return 表
-     */
-    Table<T> getTable();
+    private Query query;
+
+    private Store store;
+
+    @Data
+    public static class Query {
+        private Integer maxDays = Integer.MAX_VALUE;
+        private ColdQueryProperties cold;
+    }
 
 
-    /**
-     * 根据条件查询表记录
-     *
-     * @param conditions 查询条件
-     * @param limit          获取的记录数量
-     * @return 表记录
-     */
-    List<T> listRecords(List<Condition> conditions, Long readRowLimit);
+    @Data
+    public static class ColdQueryProperties {
+        private boolean enabled;
+    }
 
-    /**
-     * 根据起始/结束ID删除表记录
-     *
-     * @param jobInstanceIds       作业实例 ID 列表
-     * @param deleteRowLimit 批量删除每批次limit
-     * @return 删除的记录数量
-     */
-    int deleteRecords(Collection<Long> jobInstanceIds, long deleteRowLimit);
+
+    @Data
+    public static class Store {
+        private HotStoreProperties hot;
+        private ColdStoreProperties cold;
+
+    }
+
+    @Data
+    public static class HotStoreProperties {
+        private Integer maxDays = Integer.MAX_VALUE;
+    }
+
+    @Data
+    public static class ColdStoreProperties {
+        private boolean enabled;
+    }
 }
