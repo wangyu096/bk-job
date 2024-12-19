@@ -173,7 +173,8 @@ public class GseStepEventHandler extends AbstractStepEventHandler {
 
             RollingConfigDTO rollingConfig = null;
             if (isRollingStep) {
-                rollingConfig = rollingConfigService.getRollingConfig(stepInstance.getRollingConfigId());
+                rollingConfig = rollingConfigService.getRollingConfig(stepInstance.getTaskInstanceId(),
+                    stepInstance.getRollingConfigId());
                 log.info("Rolling config: {}", rollingConfig);
                 // 更新滚动进度
                 stepInstanceService.updateStepCurrentBatch(taskInstanceId, stepInstanceId, stepInstance.getBatch());
@@ -754,7 +755,8 @@ public class GseStepEventHandler extends AbstractStepEventHandler {
 
         if (stepInstance.isRollingStep()) {
             RollingConfigDTO rollingConfig =
-                rollingConfigService.getRollingConfig(stepInstance.getRollingConfigId());
+                rollingConfigService.getRollingConfig(stepInstance.getTaskInstanceId(),
+                    stepInstance.getRollingConfigId());
             finishRollingTask(taskInstanceId, stepInstanceId, stepInstance.getExecuteCount(), stepInstance.getBatch(),
                 RunStatusEnum.SUCCESS);
             int totalBatch = rollingConfig.getConfigDetail().getTotalBatch();
@@ -795,7 +797,8 @@ public class GseStepEventHandler extends AbstractStepEventHandler {
 
         if (stepInstance.isRollingStep()) {
             RollingConfigDTO rollingConfig =
-                rollingConfigService.getRollingConfig(stepInstance.getRollingConfigId());
+                rollingConfigService.getRollingConfig(stepInstance.getTaskInstanceId(),
+                    stepInstance.getRollingConfigId());
             RollingModeEnum rollingMode = RollingModeEnum.valOf(rollingConfig.getConfigDetail().getMode());
             switch (rollingMode) {
                 case IGNORE_ERROR:
