@@ -27,6 +27,8 @@ package com.tencent.bk.job.backup.archive;
 import com.tencent.bk.job.backup.archive.dao.JobInstanceColdDAO;
 import com.tencent.bk.job.backup.archive.dao.impl.JobInstanceHotRecordDAO;
 import com.tencent.bk.job.backup.archive.model.JobInstanceArchiveTaskInfo;
+import com.tencent.bk.job.backup.archive.model.TablesBackupResult;
+import com.tencent.bk.job.backup.archive.model.TablesDeleteResult;
 import com.tencent.bk.job.backup.archive.service.ArchiveTaskService;
 import com.tencent.bk.job.backup.archive.util.lock.ArchiveTaskExecuteLock;
 import com.tencent.bk.job.backup.config.ArchiveProperties;
@@ -69,7 +71,7 @@ public class JobInstanceAppDataArchiveTask extends AbstractJobInstanceArchiveTas
     }
 
     @Override
-    protected void backupJobInstanceToColdDb(List<TaskInstanceRecord> jobInstanceRecords) {
+    protected TablesBackupResult backupJobInstanceToColdDb(List<TaskInstanceRecord> jobInstanceRecords) {
         List<Long> jobInstanceIds =
             jobInstanceRecords.stream().map(this::extractJobInstanceId).collect(Collectors.toList());
         // 备份主表数据
@@ -78,6 +80,7 @@ public class JobInstanceAppDataArchiveTask extends AbstractJobInstanceArchiveTas
         jobInstanceSubTableArchivers.getAll().forEach(tableArchiver -> {
             tableArchiver.backupRecords(jobInstanceIds);
         });
+        return null;
     }
 
     private void backupPrimaryTableRecord(List<TaskInstanceRecord> jobInstanceRecords) {
@@ -93,7 +96,7 @@ public class JobInstanceAppDataArchiveTask extends AbstractJobInstanceArchiveTas
     }
 
     @Override
-    protected void deleteJobInstanceHotData(List<Long> jobInstanceIds) {
+    protected TablesDeleteResult deleteJobInstanceHotData(List<Long> jobInstanceIds) {
         long startTime = System.currentTimeMillis();
         // 先删除子表数据
         jobInstanceSubTableArchivers.getAll().forEach(tableArchiver -> {
@@ -103,6 +106,7 @@ public class JobInstanceAppDataArchiveTask extends AbstractJobInstanceArchiveTas
         deletePrimaryTableRecord(jobInstanceIds);
         log.info("Delete {}, taskInstanceIdSize: {}, cost: {}ms", "task_instance",
             jobInstanceIds.size(), System.currentTimeMillis() - startTime);
+        return null;
     }
 
     private void deletePrimaryTableRecord(List<Long> jobInstanceIds) {

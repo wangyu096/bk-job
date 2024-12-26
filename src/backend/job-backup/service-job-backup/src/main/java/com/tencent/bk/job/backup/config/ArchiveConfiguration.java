@@ -24,6 +24,7 @@
 
 package com.tencent.bk.job.backup.config;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.tencent.bk.job.backup.archive.AbnormalArchiveTaskReScheduler;
 import com.tencent.bk.job.backup.archive.ArchiveTablePropsStorage;
 import com.tencent.bk.job.backup.archive.JobInstanceArchiveCronJobs;
@@ -31,39 +32,7 @@ import com.tencent.bk.job.backup.archive.JobInstanceArchiveTaskGenerator;
 import com.tencent.bk.job.backup.archive.JobInstanceArchiveTaskScheduler;
 import com.tencent.bk.job.backup.archive.JobInstanceSubTableArchivers;
 import com.tencent.bk.job.backup.archive.dao.JobInstanceColdDAO;
-import com.tencent.bk.job.backup.archive.dao.impl.FileSourceTaskLogRecordDAO;
-import com.tencent.bk.job.backup.archive.dao.impl.GseFileAgentTaskRecordDAO;
-import com.tencent.bk.job.backup.archive.dao.impl.GseFileExecuteObjTaskRecordDAO;
-import com.tencent.bk.job.backup.archive.dao.impl.GseScriptAgentTaskRecordDAO;
-import com.tencent.bk.job.backup.archive.dao.impl.GseScriptExecuteObjTaskRecordDAO;
-import com.tencent.bk.job.backup.archive.dao.impl.GseTaskRecordDAO;
 import com.tencent.bk.job.backup.archive.dao.impl.JobInstanceHotRecordDAO;
-import com.tencent.bk.job.backup.archive.dao.impl.OperationLogRecordDAO;
-import com.tencent.bk.job.backup.archive.dao.impl.RollingConfigRecordDAO;
-import com.tencent.bk.job.backup.archive.dao.impl.StepInstanceConfirmRecordDAO;
-import com.tencent.bk.job.backup.archive.dao.impl.StepInstanceFileRecordDAO;
-import com.tencent.bk.job.backup.archive.dao.impl.StepInstanceRecordDAO;
-import com.tencent.bk.job.backup.archive.dao.impl.StepInstanceRollingTaskRecordDAO;
-import com.tencent.bk.job.backup.archive.dao.impl.StepInstanceScriptRecordDAO;
-import com.tencent.bk.job.backup.archive.dao.impl.StepInstanceVariableRecordDAO;
-import com.tencent.bk.job.backup.archive.dao.impl.TaskInstanceHostRecordDAO;
-import com.tencent.bk.job.backup.archive.dao.impl.TaskInstanceVariableRecordDAO;
-import com.tencent.bk.job.backup.archive.impl.FileSourceTaskLogArchiver;
-import com.tencent.bk.job.backup.archive.impl.GseFileAgentTaskArchiver;
-import com.tencent.bk.job.backup.archive.impl.GseFileExecuteObjTaskArchiver;
-import com.tencent.bk.job.backup.archive.impl.GseScriptAgentTaskArchiver;
-import com.tencent.bk.job.backup.archive.impl.GseScriptExecuteObjTaskArchiver;
-import com.tencent.bk.job.backup.archive.impl.GseTaskArchiver;
-import com.tencent.bk.job.backup.archive.impl.OperationLogArchiver;
-import com.tencent.bk.job.backup.archive.impl.RollingConfigArchiver;
-import com.tencent.bk.job.backup.archive.impl.StepInstanceArchiver;
-import com.tencent.bk.job.backup.archive.impl.StepInstanceConfirmArchiver;
-import com.tencent.bk.job.backup.archive.impl.StepInstanceFileArchiver;
-import com.tencent.bk.job.backup.archive.impl.StepInstanceRollingTaskArchiver;
-import com.tencent.bk.job.backup.archive.impl.StepInstanceScriptArchiver;
-import com.tencent.bk.job.backup.archive.impl.StepInstanceVariableArchiver;
-import com.tencent.bk.job.backup.archive.impl.TaskInstanceHostArchiver;
-import com.tencent.bk.job.backup.archive.impl.TaskInstanceVariableArchiver;
 import com.tencent.bk.job.backup.archive.metrics.ArchiveTasksGauge;
 import com.tencent.bk.job.backup.archive.service.ArchiveTaskService;
 import com.tencent.bk.job.backup.archive.util.lock.ArchiveTaskExecuteLock;
@@ -71,7 +40,7 @@ import com.tencent.bk.job.backup.archive.util.lock.FailedArchiveTaskRescheduleLo
 import com.tencent.bk.job.backup.archive.util.lock.JobInstanceArchiveTaskGenerateLock;
 import com.tencent.bk.job.backup.archive.util.lock.JobInstanceArchiveTaskScheduleLock;
 import com.tencent.bk.job.backup.metrics.ArchiveErrorTaskCounter;
-import com.tencent.bk.job.common.mysql.dynamic.ds.DSLContextProvider;
+import com.tencent.bk.job.common.WatchableThreadPoolExecutor;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
@@ -84,6 +53,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
+
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * job-execute 模块数据归档配置
@@ -130,6 +103,20 @@ public class ArchiveConfiguration {
         );
     }
 
+    @Bean("archiveTaskStopExecutor")
+    public ThreadPoolExecutor archiveTaskStopExecutor(MeterRegistry meterRegistry) {
+        return new WatchableThreadPoolExecutor(
+            meterRegistry,
+            "archiveTaskStopExecutor",
+            5,
+            20,
+            120L,
+            TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>(),
+            new ThreadFactoryBuilder().setNameFormat("archive-task-stop-thread-pool-%d").build()
+        );
+    }
+
     @Bean
     public JobInstanceArchiveTaskScheduler jobInstanceArchiveTaskScheduler(
         ArchiveTaskService archiveTaskService,
@@ -141,7 +128,8 @@ public class ArchiveConfiguration {
         ArchiveTaskExecuteLock archiveTaskExecuteLock,
         ArchiveErrorTaskCounter archiveErrorTaskCounter,
         ArchiveTablePropsStorage archiveTablePropsStorage,
-        Tracer tracer) {
+        Tracer tracer,
+        @Qualifier("archiveTaskStopExecutor") ThreadPoolExecutor archiveTaskStopExecutor) {
 
         log.info("Init JobInstanceArchiveTaskScheduler");
         return new JobInstanceArchiveTaskScheduler(
@@ -154,7 +142,8 @@ public class ArchiveConfiguration {
             archiveTaskExecuteLock,
             archiveErrorTaskCounter,
             archiveTablePropsStorage,
-            tracer
+            tracer,
+            archiveTaskStopExecutor
         );
     }
 

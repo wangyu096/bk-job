@@ -26,18 +26,23 @@ package com.tencent.bk.job.backup.archive.model;
 
 import lombok.Data;
 
+/**
+ * 归档-删除结果
+ */
 @Data
-public class TableReadWriteProps {
+public class DeleteResult {
+
     /**
-     * 从 热 DB 表中读取归档数据，每次读取的记录数量限制
+     * 删除成功的记录数量
      */
-    protected int readRowLimit;
+    private long deletedRows;
     /**
-     * 写入归档数据到冷 DB，单批次最小行数
+     * 删除耗时
      */
-    protected int batchInsertRowSize;
-    /**
-     * 从热 DB 删除数据，每次删除的最大行数
-     */
-    protected int deleteLimitRowCount;
+    private long deleteCost;
+
+    public DeleteResult(long deletedRows, long deleteCost) {
+        this.deletedRows = deletedRows;
+        this.deleteCost = deleteCost;
+    }
 }
