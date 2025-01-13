@@ -332,7 +332,7 @@ label:BEGIN
     WHERE t1.app_id = 0;
 
     COMMIT;
-
+12312312
     SET fromId = endId;
   END WHILE;
   
