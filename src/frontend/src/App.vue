@@ -103,7 +103,9 @@
         theme="light site-header-dropdown"
         :tippy-options="{ hideOnClick: false }">
         <div class="user-flag">
-          <span style="margin-right: 5px;">{{ currentUser.username }}</span>
+          <span style="margin-right: 5px;">
+            <bk-user-display-name :user-id="currentUser.username" />
+          </span>
           <i class="bk-icon icon-down-shape" />
         </div>
         <template slot="content">
@@ -140,6 +142,7 @@
   import I18n, { setLocale } from '@/i18n';
 
   import Layout from './layout-new';
+
 
   export default {
     name: 'App',
@@ -219,7 +222,7 @@
               appLogo: '/static/images/logo.png',
               brandName: '蓝鲸智云',
               brandNameEn: 'Tencent BlueKing',
-              favicon: '/static/images/favicon.icon',
+              favicon: '/static/images/favicon.ico',
               productName: '作业平台', // 产品名称，展示在logo区域 1.0.5版本新增
               productNameEn: 'JOB',
               version: process.env.JOB_VERSION,
@@ -256,7 +259,7 @@
         });
 
         setDocumentTitle(this.$store.state.platformConfig.i18n, routeMatchStack);
-        setShortcutIcon(this.$store.state.platformConfig.favIcon);
+        setShortcutIcon(this.$store.state.platformConfig.favicon);
       },
       /**
        * @desc 切换语言

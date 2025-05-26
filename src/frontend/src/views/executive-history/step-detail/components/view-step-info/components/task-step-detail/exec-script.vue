@@ -59,6 +59,11 @@
           readonly
           :value="stepInfo.scriptParamText || '--'" />
       </detail-item>
+      <detail-item
+        v-if="stepInfo.windowsInterpreter"
+        :label="$t('template.解释器：')">
+        {{ stepInfo.windowsInterpreter }}
+      </detail-item>
       <detail-item :label="$t('template.超时时长：')">
         {{ stepInfo.timeout }}（s）
       </detail-item>
@@ -72,7 +77,7 @@
     <detail-item
       :label="$t('template.执行目标：')"
       layout="vertical">
-      <ip-selector
+      <jb-ip-selector
         :complete-container-list="containerDetail(stepInfo.executeTarget.executeObjectsInfo.containerList)"
         :complete-host-list="hostsDetails(stepInfo.executeTarget.executeObjectsInfo.hostList)"
         readonly

@@ -184,7 +184,6 @@ public class ScriptResultHandleTask extends AbstractResultHandleTask<ScriptTaskR
 
     private ScriptTaskResult pullGseTaskResult(List<ExecuteObjectGseKey> executeObjectGseKeys) {
         GetExecuteScriptResultRequest request = new GetExecuteScriptResultRequest();
-        request.setGseV2Task(gseV2Task);
         request.setTaskId(gseTask.getGseTaskId());
 
         int executeObjectSize = executeObjectGseKeys.size();
@@ -322,7 +321,7 @@ public class ScriptResultHandleTask extends AbstractResultHandleTask<ScriptTaskR
     }
 
     private void saveScriptLogContent(List<ServiceExecuteObjectScriptLogDTO> logs) {
-        logService.batchWriteScriptLog(taskInstance.getCreateTime(), stepInstanceId, stepInstance.getExecuteCount(),
+        logService.batchWriteScriptLog(taskInstance, stepInstanceId, stepInstance.getExecuteCount(),
             stepInstance.getBatch(), logs);
     }
 
@@ -603,7 +602,7 @@ public class ScriptResultHandleTask extends AbstractResultHandleTask<ScriptTaskR
                     return logService.buildSystemScriptLog(stepInstance, executeObject, errorMsg,
                         executeObjectTask.getScriptLogOffset(), endTime);
                 }).collect(Collectors.toList());
-            logService.batchWriteScriptLog(taskInstance.getCreateTime(), stepInstanceId, stepInstance.getExecuteCount(),
+            logService.batchWriteScriptLog(taskInstance, stepInstanceId, stepInstance.getExecuteCount(),
                 stepInstance.getBatch(), scriptLogs);
         }
     }

@@ -86,6 +86,16 @@ public class ScriptGseTaskStartCommand extends AbstractGseTaskStartCommand {
 
     private final String GSE_SCRIPT_FILE_NAME_PREFIX = "bk_gse_script_";
 
+    /**
+     * 脚本默认的解释器声明
+     */
+    private static final String DEFAULT_SHEBANG = "#!/bin/bash";
+
+    /**
+     * 从用户脚本提取的解释器声明
+     */
+    private String extractedShebang;
+
     public ScriptGseTaskStartCommand(EngineDependentServiceHolder engineDependentServiceHolder,
                                      ScriptExecuteObjectTaskService scriptExecuteObjectTaskService,
                                      JobExecuteConfig jobExecuteConfig,
@@ -103,6 +113,18 @@ public class ScriptGseTaskStartCommand extends AbstractGseTaskStartCommand {
         this.scriptExecuteObjectTaskService = scriptExecuteObjectTaskService;
         this.jobBuildInVariableResolver = engineDependentServiceHolder.getJobBuildInVariableResolver();
         this.scriptFileNamePrefix = buildScriptFileNamePrefix(stepInstance);
+        this.extractedShebang = extractShebang(stepInstance.getScriptContent());
+    }
+
+    /**
+     * 提取用户脚本中的解释器申明
+     */
+    private String extractShebang(String scriptContent) {
+        if (StringUtils.isEmpty(scriptContent)) {
+            return DEFAULT_SHEBANG;
+        }
+        String firstLine = scriptContent.split("\\r?\\n", 2)[0].trim();
+        return firstLine.startsWith("#!") ? firstLine : DEFAULT_SHEBANG;
     }
 
     private String buildScriptFileNamePrefix(StepInstanceDTO stepInstance) {
@@ -126,7 +148,6 @@ public class ScriptGseTaskStartCommand extends AbstractGseTaskStartCommand {
         }
     }
 
-
     @Override
     protected GseTaskResponse startGseTask() {
         return gseClient.asyncExecuteScript(buildScriptRequest());
@@ -142,7 +163,6 @@ public class ScriptGseTaskStartCommand extends AbstractGseTaskStartCommand {
         } else {
             request = buildRequestWithoutAnyParam(stepInstance);
         }
-        request.setGseV2Task(gseV2Task);
 
         return request;
     }
@@ -227,6 +247,7 @@ public class ScriptGseTaskStartCommand extends AbstractGseTaskStartCommand {
         List<Agent> agents = buildTargetAgents();
 
         builder.addScriptTask(agents, scriptFilePath, scriptFileName, resolvedScriptParam, timeout);
+        builder.setWindowsInterpreter(stepInstance.getWindowsInterpreter());
         return builder.build();
     }
 
@@ -269,12 +290,13 @@ public class ScriptGseTaskStartCommand extends AbstractGseTaskStartCommand {
         List<Agent> agents = buildTargetAgents();
 
         builder.addScriptTask(agents, scriptFilePath, wrapperScriptFileName, resolvedScriptParam, timeout);
+        builder.setWindowsInterpreter(stepInstance.getWindowsInterpreter());
         return builder.build();
     }
 
     private String buildConstVarDeclareScript(List<TaskVariableDTO> taskVars, List<String> importVariables) {
         StringBuffer sb = new StringBuffer(1024);
-        sb.append("#!/bin/bash\n");
+        sb.append(extractedShebang).append("\n");
         sb.append("set -e\n");
         for (TaskVariableDTO taskVar : taskVars) {
             buildDeclareScript(taskVar, sb);
@@ -360,7 +382,7 @@ public class ScriptGseTaskStartCommand extends AbstractGseTaskStartCommand {
     @SuppressWarnings({"StringBufferReplaceableByString", "StringBufferMayBeStringBuilder"})
     private String buildWrapperScriptWithConstParamOnly(String declareFileName, String userScriptFileName) {
         StringBuffer sb = new StringBuffer(1024);
-        sb.append("#!/bin/bash\n");
+        sb.append(extractedShebang).append("\n");
         sb.append("BASE_PATH=\"\"\n");
         sb.append("OS_TYPE=`uname -s`\n");
         sb.append("if [ \"`echo ${OS_TYPE}|grep -i 'CYGWIN'`\" ];then\n");
@@ -420,6 +442,7 @@ public class ScriptGseTaskStartCommand extends AbstractGseTaskStartCommand {
 
         builder.addScriptTask(agents, scriptFilePath, wrapperScriptFileName, resolvedScriptParam, timeout);
         builder.addScriptTask(agents, scriptFilePath, getJobParamScriptFileName, null, timeout);
+        builder.setWindowsInterpreter(stepInstance.getWindowsInterpreter());
         return builder.build();
     }
 
@@ -434,7 +457,7 @@ public class ScriptGseTaskStartCommand extends AbstractGseTaskStartCommand {
                                                    List<String> importVariables) {
         List<TaskVariableDTO> globalVars = taskVariablesAnalyzeResult.getTaskVars();
         StringBuffer sb = new StringBuffer(1024);
-        sb.append("#!/bin/bash\n");
+        sb.append(extractedShebang).append("\n");
         sb.append("set -e\n");
 
         //从作业参数中初始化输入参数
@@ -501,7 +524,7 @@ public class ScriptGseTaskStartCommand extends AbstractGseTaskStartCommand {
                                                             String allParamsOutputFileName,
                                                             String scriptParam) {
         StringBuilder sb = new StringBuilder(1024);
-        sb.append("#!/bin/bash\n");
+        sb.append(extractedShebang).append("\n");
         sb.append("BASE_PATH=\"\"\n");
         sb.append("OS_TYPE=`uname -s`\n");
         sb.append("if [ \"`echo ${OS_TYPE}|grep -i 'CYGWIN'`\" ];then\n");
@@ -572,7 +595,7 @@ public class ScriptGseTaskStartCommand extends AbstractGseTaskStartCommand {
     @SuppressWarnings("StringBufferReplaceableByString")
     private String buildGetJobParamsScript(String varOutputFileName) {
         StringBuilder sb = new StringBuilder(1024);
-        sb.append("#!/bin/bash\n");
+        sb.append(extractedShebang).append("\n");
         sb.append("BASE_PATH=\"\"\n");
         sb.append("OS_TYPE=`uname -s`\n");
         sb.append("if [ \"`echo ${OS_TYPE}|grep -i 'CYGWIN'`\" ];then\n");
@@ -643,7 +666,7 @@ public class ScriptGseTaskStartCommand extends AbstractGseTaskStartCommand {
             executeObjectTask.setTotalTime(TaskCostCalculator.calculate(gseTask.getStartTime(), now, null));
             executeObjectTask.setStatus(ExecuteObjectTaskStatusEnum.SUBMIT_FAILED);
         }
-        logService.batchWriteScriptLog(taskInstance.getCreateTime(), stepInstanceId, executeCount, batch, scriptLogs);
+        logService.batchWriteScriptLog(taskInstance, stepInstanceId, executeCount, batch, scriptLogs);
         scriptExecuteObjectTaskService.batchUpdateTasks(targetExecuteObjectTaskMap.values());
     }
 

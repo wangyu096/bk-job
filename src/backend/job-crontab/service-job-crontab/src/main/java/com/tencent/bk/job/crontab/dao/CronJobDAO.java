@@ -72,7 +72,7 @@ public interface CronJobDAO {
      * @param cronJobIdList 定时任务 IDs
      * @return 定时任务信息
      */
-    List<CronJobInfoDTO> getCronJobByIds(List<Long> cronJobIdList);
+    List<CronJobInfoDTO> listCronJobByIds(List<Long> cronJobIdList);
 
     /**
      * 根据定时任务 ID 查询定时任务信息
@@ -204,4 +204,13 @@ public interface CronJobDAO {
      * @return 定时任务id列表
      */
     List<Long> listCronJobIds(CronJobInfoDTO cronJobInfoDTO);
+
+    /**
+     * 批量停用定时任务
+     *
+     * @param appId         Job业务ID
+     * @param cronJobIdList 定时任务ID列表
+     * @return 受影响行数
+     */
+    int disableCronJob(long appId, List<Long> cronJobIdList);
 }

@@ -14,6 +14,9 @@ data:
   application.yaml: |-
     spring:
       cloud:
+        loadbalancer:
+          cache:
+            ttl: 20s
         stream:
           defaultBinder: jobCommon
           binders:
@@ -121,6 +124,7 @@ data:
               predicates:
                 - JobEsbV2Path=/api/job/v2/job-manage/{api_name}
               filters:
+                - CheckTenant
                 - CheckOpenApiJwt
                 - SetPath=/esb/api/v2/{api_name}
                 - RecordEsbAccessLog
@@ -131,6 +135,7 @@ data:
               predicates:
                 - Path=/api/job/v3/job-manage/{api_name}
               filters:
+                - CheckTenant
                 - CheckOpenApiJwt
                 - SetPath=/esb/api/v3/{api_name}
                 - RecordEsbAccessLog
@@ -141,6 +146,7 @@ data:
               predicates:
                 - JobEsbV2Path=/api/job/v2/job-crontab/{api_name}
               filters:
+                - CheckTenant
                 - CheckOpenApiJwt
                 - SetPath=/esb/api/v2/{api_name}
                 - RecordEsbAccessLog
@@ -151,6 +157,7 @@ data:
               predicates:
                 - JobEsbV2Path=/api/job/v3/job-crontab/{api_name}
               filters:
+                - CheckTenant
                 - CheckOpenApiJwt
                 - SetPath=/esb/api/v3/{api_name}
                 - RecordEsbAccessLog
@@ -161,6 +168,7 @@ data:
               predicates:
                 - JobEsbV2Path=/api/job/v2/job-execute/{api_name}
               filters:
+                - CheckTenant
                 - CheckOpenApiJwt
                 - SetPath=/esb/api/v2/{api_name}
                 - RecordEsbAccessLog
@@ -171,6 +179,7 @@ data:
               predicates:
                 - JobEsbV2Path=/api/job/v3/job-execute/{api_name}
               filters:
+                - CheckTenant
                 - CheckOpenApiJwt
                 - SetPath=/esb/api/v3/{api_name}
                 - RecordEsbAccessLog
@@ -181,6 +190,7 @@ data:
               predicates:
                 - JobEsbV2Path=/api/job/v3/job-file-gateway/{api_name}
               filters:
+                - CheckTenant
                 - CheckOpenApiJwt
                 - SetPath=/esb/api/v3/{api_name}
                 - RecordEsbAccessLog
@@ -192,6 +202,7 @@ data:
                 - Path=/iam/api/v1/resources/file_source
               filters:
                 - RecordIamAccessLog
+                - CheckTenant
                 - AddEsbLangHeader
 
             - id: job-ticket-iam
@@ -200,6 +211,7 @@ data:
                 - Path=/iam/api/v1/resources/ticket
               filters:
                 - RecordIamAccessLog
+                - CheckTenant
                 - AddEsbLangHeader
 
             - id: job-analysis-iam
@@ -208,6 +220,7 @@ data:
                 - Path=/iam/api/v1/resources/dashboard_view
               filters:
                 - RecordIamAccessLog
+                - CheckTenant
                 - AddEsbLangHeader
 
             - id: job-manage-iam
@@ -216,6 +229,7 @@ data:
                 - Path=/iam/api/v1/resources/script,/iam/api/v1/resources/task/template,/iam/api/v1/resources/task/plan,/iam/api/v1/resources/account,/iam/api/v1/resources/whitelist,/iam/api/v1/resources/script/public,/iam/api/v1/resources/tag
               filters:
                 - RecordIamAccessLog
+                - CheckTenant
                 - AddEsbLangHeader
 
             - id: job-crontab-iam
@@ -224,6 +238,7 @@ data:
                 - Path=/iam/api/v1/resources/cron/job
               filters:
                 - RecordIamAccessLog
+                - CheckTenant
                 - AddEsbLangHeader
 
             - id: job-execute-iam
@@ -232,6 +247,7 @@ data:
                 - Path=/iam/api/v1/resources/execute/record
               filters:
                 - RecordIamAccessLog
+                - CheckTenant
                 - AddEsbLangHeader
             {{- else if eq .Values.deploy.mode "lite" }}
             - id: job-logout
@@ -264,6 +280,7 @@ data:
               predicates:
                 - JobEsbV2Path=/api/job/v2/{module}/{api_name}
               filters:
+                - CheckTenant
                 - CheckOpenApiJwt
                 - SetPath=/esb/api/v2/{api_name}
                 - RecordEsbAccessLog
@@ -274,6 +291,7 @@ data:
               predicates:
                 - Path=/api/job/v3/{module}/{api_name}
               filters:
+                - CheckTenant
                 - CheckOpenApiJwt
                 - SetPath=/esb/api/v3/{api_name}
                 - RecordEsbAccessLog
@@ -285,6 +303,7 @@ data:
                 - Path=/iam/api/v1/resources/**
               filters:
                 - RecordIamAccessLog
+                - CheckTenant
                 - AddEsbLangHeader
             {{- end }}      
     job:

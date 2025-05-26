@@ -25,9 +25,7 @@
 package com.tencent.bk.job.common.iam.service.impl;
 
 import com.tencent.bk.job.common.constant.ResourceScopeTypeEnum;
-import com.tencent.bk.job.common.esb.config.AppProperties;
-import com.tencent.bk.job.common.esb.config.EsbProperties;
-import com.tencent.bk.job.common.iam.client.EsbIamClient;
+import com.tencent.bk.job.common.iam.client.IIamClient;
 import com.tencent.bk.job.common.iam.config.JobIamProperties;
 import com.tencent.bk.job.common.iam.constant.ActionId;
 import com.tencent.bk.job.common.iam.constant.ResourceTypeEnum;
@@ -41,8 +39,6 @@ import com.tencent.bk.job.common.iam.util.BusinessAuthHelper;
 import com.tencent.bk.job.common.iam.util.IamUtil;
 import com.tencent.bk.job.common.model.User;
 import com.tencent.bk.job.common.model.dto.AppResourceScope;
-import com.tencent.bk.job.common.tenant.TenantEnvService;
-import com.tencent.bk.sdk.iam.config.IamConfiguration;
 import com.tencent.bk.sdk.iam.constants.ExpressionOperationEnum;
 import com.tencent.bk.sdk.iam.constants.SystemId;
 import com.tencent.bk.sdk.iam.dto.InstanceDTO;
@@ -52,7 +48,6 @@ import com.tencent.bk.sdk.iam.dto.expression.ExpressionDTO;
 import com.tencent.bk.sdk.iam.dto.resource.RelatedResourceTypeDTO;
 import com.tencent.bk.sdk.iam.helper.AuthHelper;
 import com.tencent.bk.sdk.iam.service.PolicyService;
-import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.helpers.FormattingTuple;
@@ -70,26 +65,19 @@ public class AppAuthServiceImpl extends BasicAuthService implements AppAuthServi
     private final BusinessAuthHelper businessAuthHelper;
     private final PolicyService policyService;
     private final JobIamProperties jobIamProperties;
-    private final EsbIamClient iamClient;
+    private final IIamClient iamClient;
     private ResourceNameQueryService resourceNameQueryService;
 
     public AppAuthServiceImpl(AuthHelper authHelper,
                               BusinessAuthHelper businessAuthHelper,
-                              IamConfiguration iamConfiguration,
                               PolicyService policyService,
                               JobIamProperties jobIamProperties,
-                              EsbProperties esbProperties,
-                              MeterRegistry meterRegistry,
-                              TenantEnvService tenantEnvService) {
+                              IIamClient iamClient) {
         this.authHelper = authHelper;
         this.businessAuthHelper = businessAuthHelper;
         this.policyService = policyService;
         this.jobIamProperties = jobIamProperties;
-        this.iamClient = new EsbIamClient(
-            meterRegistry,
-            new AppProperties(iamConfiguration.getAppCode(), iamConfiguration.getAppSecret()),
-            esbProperties,
-            tenantEnvService);
+        this.iamClient = iamClient;
     }
 
     @Override
@@ -130,6 +118,14 @@ public class AppAuthServiceImpl extends BasicAuthService implements AppAuthServi
             relatedResourceType.setSystemId(ResourceTypeEnum.BUSINESS.getSystemId());
             relatedResourceType.setType(ResourceTypeEnum.BUSINESS.getId());
             relatedResourceType.setInstance(Collections.singletonList(Collections.singletonList(instance)));
+        } else if (appResourceScope.getType() == ResourceScopeTypeEnum.TENANT_SET) {
+            instance.setType(ResourceTypeEnum.TENANT_SET.getId());
+            instance.setId(appResourceScope.getId());
+            instance.setPath(buildResourceScopePath(appResourceScope));
+
+            relatedResourceType.setSystemId(ResourceTypeEnum.BUSINESS.getSystemId());
+            relatedResourceType.setType(ResourceTypeEnum.BUSINESS.getId());
+            relatedResourceType.setInstance(Collections.singletonList(Collections.singletonList(instance)));
         } else {
             FormattingTuple msg = MessageFormatter.format(
                 "not supported resourceType:{}",
@@ -155,6 +151,9 @@ public class AppAuthServiceImpl extends BasicAuthService implements AppAuthServi
             // 层级节点资源类型
             permissionResource.setType(ResourceTypeId.BUSINESS_SET);
             permissionResource.setSubResourceType(resourceType.getId());
+        } else if (appResourceScope.getType() == ResourceScopeTypeEnum.TENANT_SET) {
+            permissionResource.setType(ResourceTypeId.TENANT_SET);
+            permissionResource.setSubResourceType(resourceType.getId());
         }
         permissionResource.setPathInfo(buildResourceScopePath(appResourceScope));
         authResult.addRequiredPermission(actionId, permissionResource);
@@ -175,6 +174,10 @@ public class AppAuthServiceImpl extends BasicAuthService implements AppAuthServi
         } else if (appResourceScope.getType() == ResourceScopeTypeEnum.BIZ_SET) {
             instance.setType(ResourceTypeEnum.BUSINESS.getId());
             instance.setSystem(ResourceTypeEnum.BUSINESS.getSystemId());
+            instance.setPath(buildResourceScopePath(appResourceScope));
+        } else if (appResourceScope.getType() == ResourceScopeTypeEnum.TENANT_SET) {
+            instance.setType(ResourceTypeEnum.TENANT_SET.getId());
+            instance.setSystem(ResourceTypeEnum.TENANT_SET.getSystemId());
             instance.setPath(buildResourceScopePath(appResourceScope));
         } else {
             FormattingTuple msg = MessageFormatter.format(

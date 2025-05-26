@@ -233,7 +233,6 @@ public class FileResultHandleTask extends AbstractResultHandleTask<FileTaskResul
     @Override
     GseLogBatchPullResult<FileTaskResult> pullGseTaskResultInBatches() {
         GetTransferFileResultRequest request = new GetTransferFileResultRequest();
-        request.setGseV2Task(gseV2Task);
         request.setTaskId(gseTask.getGseTaskId());
 
         if (CollectionUtils.isNotEmpty(this.analyseFinishedSourceExecuteObjectGseKeys)
@@ -950,7 +949,7 @@ public class FileResultHandleTask extends AbstractResultHandleTask<FileTaskResul
 
     private void writeFileTaskLogContent(Map<ExecuteObjectCompositeKey, ServiceExecuteObjectLogDTO> executionLogs) {
         if (!executionLogs.isEmpty()) {
-            logService.writeFileLogs(taskInstance.getCreateTime(), new ArrayList<>(executionLogs.values()));
+            logService.writeFileLogs(taskInstance, new ArrayList<>(executionLogs.values()));
         }
     }
 

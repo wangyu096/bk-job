@@ -492,7 +492,6 @@
       fetchAiConfig() {
         AiService.fetchConfig()
           .then((data) => {
-            console.log('data = ', data);
             this.isAiEnable = data.enabled;
           });
       },
@@ -631,12 +630,12 @@
        */
       handleReadonlyWarning(event) {
         if (!this.readonly) {
-          return;
+          return true;
         }
         const { target } = event;
         // 脚本编辑器获得焦点的状态
         if (target.type !== 'textarea') {
-          return;
+          return true;
         }
 
         if ([
@@ -649,11 +648,11 @@
           'AltLeft',
           'AltRight',
         ].includes(event.code)) {
-          return;
+          return true;
         }
         if ((event.metaKey || event.ctrlKey)
           && !['KeyV', 'KeyX'].includes(event.code)) {
-          return;
+          return true;
         }
         this.messageWarn(this.readonlyTips);
       },
@@ -803,7 +802,7 @@
        */
       handleExitByESC(event) {
         if (event.code !== 'Escape' || !this.isFullScreen) {
-          return;
+          return true;
         }
         this.handleExitFullScreen();
       },

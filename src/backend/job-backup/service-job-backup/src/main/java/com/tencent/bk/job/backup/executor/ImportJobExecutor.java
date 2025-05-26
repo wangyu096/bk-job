@@ -25,7 +25,6 @@
 package com.tencent.bk.job.backup.executor;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.tencent.bk.job.backup.config.ArtifactoryConfig;
 import com.tencent.bk.job.backup.config.BackupStorageConfig;
 import com.tencent.bk.job.backup.constant.BackupJobStatusEnum;
 import com.tencent.bk.job.backup.constant.Constant;
@@ -44,6 +43,7 @@ import com.tencent.bk.job.backup.service.StorageService;
 import com.tencent.bk.job.backup.service.TaskPlanService;
 import com.tencent.bk.job.backup.service.TaskTemplateService;
 import com.tencent.bk.job.common.artifactory.sdk.ArtifactoryClient;
+import com.tencent.bk.job.common.artifactory.sdk.ArtifactoryHelper;
 import com.tencent.bk.job.common.constant.AccountCategoryEnum;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.InternalException;
@@ -108,16 +108,21 @@ public class ImportJobExecutor {
     private final StorageService storageService;
     private final MessageI18nService i18nService;
     private final ArtifactoryClient artifactoryClient;
-    private final ArtifactoryConfig artifactoryConfig;
+    private final ArtifactoryHelper artifactoryHelper;
     private final BackupStorageConfig backupStorageConfig;
 
     @Autowired
-    public ImportJobExecutor(ImportJobService importJobService, TaskTemplateService taskTemplateService,
-                             TaskPlanService taskPlanService, ScriptService scriptService,
-                             AccountService accountService, LogService logService,
-                             StorageService storageService, MessageI18nService i18nService,
+    public ImportJobExecutor(ImportJobService importJobService,
+                             TaskTemplateService taskTemplateService,
+                             TaskPlanService taskPlanService,
+                             ScriptService scriptService,
+                             AccountService accountService,
+                             LogService logService,
+                             StorageService storageService,
+                             MessageI18nService i18nService,
                              ArtifactoryClient artifactoryClient,
-                             ArtifactoryConfig artifactoryConfig, BackupStorageConfig backupStorageConfig) {
+                             ArtifactoryHelper artifactoryHelper,
+                             BackupStorageConfig backupStorageConfig) {
         this.importJobService = importJobService;
         this.taskTemplateService = taskTemplateService;
         this.taskPlanService = taskPlanService;
@@ -127,7 +132,7 @@ public class ImportJobExecutor {
         this.storageService = storageService;
         this.i18nService = i18nService;
         this.artifactoryClient = artifactoryClient;
-        this.artifactoryConfig = artifactoryConfig;
+        this.artifactoryHelper = artifactoryHelper;
         this.backupStorageConfig = backupStorageConfig;
 
         ImportJobExecutor.ImportJobExecutorThread importJobExecutorThread =
@@ -204,7 +209,7 @@ public class ImportJobExecutor {
             if (!importFileDirectory.exists()) {
                 log.debug("begin to download from artifactory:{}", importJob.getFileName());
                 Pair<InputStream, HttpRequestBase> pair = artifactoryClient.getFileInputStream(
-                    artifactoryConfig.getArtifactoryJobProject(),
+                    artifactoryHelper.getJobRealProject(),
                     backupStorageConfig.getBackupRepo(),
                     importJob.getFileName()
                 );
@@ -378,14 +383,17 @@ public class ImportJobExecutor {
         if (CollectionUtils.isNotEmpty(jobBackupInfo.getAccountList())) {
             List<ServiceAccountDTO> appAccountList = accountService.listAccountByAppId(importJob.getCreator(),
                 importJob.getAppId());
-            Map<String, Long> appAccountIdMap = new ConcurrentHashMap<>();
-            appAccountList.forEach(account -> appAccountIdMap.put(account.getAlias(),
-                account.getId()));
+            Map<Integer, Map<String, Long>> categoryAliasToAccountIdMap = new ConcurrentHashMap<>();
+            appAccountList.forEach(account -> categoryAliasToAccountIdMap
+                .computeIfAbsent(account.getCategory(), k -> new ConcurrentHashMap<>())
+                .put(account.getAlias(), account.getId())
+            );
 
             for (ServiceAccountDTO account : jobBackupInfo.getAccountList()) {
                 if (AccountCategoryEnum.DB.getValue().equals(account.getCategory())) {
                     // DB account process related system account first
-                    doProcessAccount(importJob, finalAccountIdMap, appAccountIdMap, account.getDbSystemAccount());
+                    doProcessAccount(importJob, finalAccountIdMap, categoryAliasToAccountIdMap,
+                        account.getDbSystemAccount());
                     if (finalAccountIdMap.get(account.getDbSystemAccount().getId()) == null) {
                         log.error("Error while find or create db account!|{}|{}|{}|{}", importJob.getCreator(),
                             account.getAppId(), account.getAlias(), account.getDbSystemAccount().getAlias());
@@ -397,16 +405,19 @@ public class ImportJobExecutor {
                     }
                     account.getDbSystemAccount().setId(finalAccountIdMap.get(account.getDbSystemAccount().getId()));
                 }
-                doProcessAccount(importJob, finalAccountIdMap, appAccountIdMap, account);
+                doProcessAccount(importJob, finalAccountIdMap, categoryAliasToAccountIdMap, account);
             }
         }
         importJob.setAccountIdMap(finalAccountIdMap);
     }
 
-    private void doProcessAccount(ImportJobInfoDTO importJob, Map<Long, Long> finalAccountIdMap,
-                                  Map<String, Long> appAccountIdMap, ServiceAccountDTO account) {
-        if (appAccountIdMap.get(account.getAlias()) != null) {
-            finalAccountIdMap.put(account.getId(), appAccountIdMap.get(account.getAlias()));
+    private void doProcessAccount(ImportJobInfoDTO importJob,
+                                  Map<Long, Long> finalAccountIdMap,
+                                  Map<Integer, Map<String, Long>> categoryAliasToAccountIdMap,
+                                  ServiceAccountDTO account) {
+        Map<String, Long> accountAliasMap = categoryAliasToAccountIdMap.get(account.getCategory());
+        if (accountAliasMap != null && accountAliasMap.get(account.getAlias()) != null) {
+            finalAccountIdMap.put(account.getId(), accountAliasMap.get(account.getAlias()));
         } else if (finalAccountIdMap.get(account.getId()) == null) {
             Long newAccountId = accountService.saveAccount(importJob.getCreator(), importJob.getAppId(), account);
             if (newAccountId != null && newAccountId > 0) {

@@ -160,13 +160,6 @@ public interface ApplicationService {
     Long createApp(ApplicationDTO application);
 
     /**
-     * 获取Job业务数量
-     *
-     * @return 业务数量
-     */
-    Integer countApps();
-
-    /**
      * 更新业务
      *
      * @param application 业务
@@ -201,4 +194,10 @@ public interface ApplicationService {
      * @return 业务列表
      */
     List<ApplicationDTO> listAllDeletedApps();
+
+    /**
+     * 通过appId获取对应租户
+     *
+     */
+    String getTenantIdByAppId(long appId);
 }

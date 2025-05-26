@@ -272,7 +272,6 @@ public class FileGseTaskStartCommand extends AbstractGseTaskStartCommand {
     @Override
     protected GseTaskResponse startGseTask() {
         TransferFileRequest request = new TransferFileRequest();
-        request.setGseV2Task(gseV2Task);
 
         // 账号信息查询与填充
         AccountDTO accountInfo = accountService.getAccount(stepInstance.getAccountId(), AccountCategoryEnum.SYSTEM,
@@ -379,7 +378,7 @@ public class FileGseTaskStartCommand extends AbstractGseTaskStartCommand {
     private String buildInitialFileTaskUploadLogContent(boolean isSourceValid,
                                                         boolean isSourceAgentInstalled) {
         if (!isSourceValid) {
-            return "Execute object is invalid";
+            return "Source execute object is invalid, please check whether the host belongs to the current business";
         } else if (!isSourceAgentInstalled) {
             return "Agent is not installed";
         } else {
@@ -429,11 +428,11 @@ public class FileGseTaskStartCommand extends AbstractGseTaskStartCommand {
                                                           boolean isSourceValid,
                                                           boolean isSourceAgentInstalled) {
         if (!isTargetValid) {
-            return "Execute object is invalid";
+            return "Target execute object is invalid, please check whether the host belongs to the current business";
         } else if (!isTargetAgentInstalled) {
             return "Agent is not installed";
         } else if (!isSourceValid) {
-            return "Source execute object is invalid";
+            return "Source execute object is invalid, please check whether the host belongs to the current business";
         } else if (!isSourceAgentInstalled) {
             return "Source agent is not installed";
         } else {
@@ -446,7 +445,7 @@ public class FileGseTaskStartCommand extends AbstractGseTaskStartCommand {
         if (log.isDebugEnabled()) {
             log.debug("Write file task initial logs, executionLogs: {}", executionLogs);
         }
-        logService.writeFileLogs(taskInstance.getCreateTime(), new ArrayList<>(executionLogs.values()));
+        logService.writeFileLogs(taskInstance, new ArrayList<>(executionLogs.values()));
     }
 
 
