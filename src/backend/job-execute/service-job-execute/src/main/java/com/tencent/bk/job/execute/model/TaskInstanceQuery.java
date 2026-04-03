@@ -49,9 +49,14 @@ public class TaskInstanceQuery {
     private TaskTypeEnum taskType;
     private Long startTime;
     private Long endTime;
+    /**
+     * 关闭时间范围校验
+     */
+    private boolean disableTimeRangeValidate;
     private Long minTotalTimeMills;
     private Long maxTotalTimeMills;
     private String ip;
+    private String ipv6;
 
     public List<Integer> getStartupModeValues() {
         if (CollectionUtils.isNotEmpty(startupModes)) {

@@ -24,10 +24,14 @@
 
 package com.tencent.bk.job.file_gateway.service;
 
+import com.tencent.bk.job.common.annotation.CompatibleImplementation;
+import com.tencent.bk.job.common.constant.CompatibleType;
+import com.tencent.bk.job.file_gateway.model.dto.FileSourceBasicInfoDTO;
 import com.tencent.bk.job.file_gateway.model.dto.FileSourceDTO;
 import com.tencent.bk.job.file_gateway.model.dto.FileSourceTypeDTO;
 import com.tencent.bk.job.file_gateway.model.req.common.FileSourceStaticParam;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -43,18 +47,32 @@ public interface FileSourceService {
 
     Integer countWorkTableFileSource(List<Long> appIdList, List<Integer> idList);
 
-    List<FileSourceDTO> listAvailableFileSource(Long appId, String credentialId, String alias, Integer start,
-                                                Integer pageSize);
+    List<FileSourceDTO> listAvailableFileSource(
+        Long appId,
+        String credentialId,
+        String alias,
+        Integer start,
+        Integer pageSize
+    );
 
-    List<FileSourceDTO> listWorkTableFileSource(Long appId, String credentialId, String alias, Integer start,
-                                                Integer pageSize);
+    List<FileSourceDTO> listWorkTableFileSource(
+        Long appId,
+        String credentialId,
+        String alias,
+        Integer start,
+        Integer pageSize
+    );
 
-    List<FileSourceDTO> listWorkTableFileSource(List<Long> appIdList, List<Integer> idList, Integer start,
-                                                Integer pageSize);
+    List<FileSourceDTO> listWorkTableFileSource(
+        List<Long> appIdList,
+        List<Integer> idList,
+        Integer start,
+        Integer pageSize
+    );
 
-    Integer saveFileSource(Long appId, FileSourceDTO fileSourceDTO);
+    FileSourceDTO saveFileSource(String username, Long appId, FileSourceDTO fileSourceDTO);
 
-    Integer updateFileSourceById(Long appId, FileSourceDTO fileSourceDTO);
+    FileSourceDTO updateFileSourceById(String username, Long appId, FileSourceDTO fileSourceDTO);
 
     int updateFileSourceStatus(Integer fileSourceId, Integer status);
 
@@ -62,17 +80,36 @@ public interface FileSourceService {
 
     FileSourceTypeDTO getFileSourceTypeByCode(String code);
 
-    Integer deleteFileSourceById(Long appId, Integer id);
+    Integer deleteFileSourceById(String username, Long appId, Integer id);
 
     Boolean enableFileSourceById(String username, Long appId, Integer id, Boolean enableFlag);
+
+    FileSourceDTO getFileSourceById(String username, Long appId, Integer id);
 
     FileSourceDTO getFileSourceById(Long appId, Integer id);
 
     FileSourceDTO getFileSourceById(Integer id);
 
+    List<FileSourceBasicInfoDTO> listFileSourceByIds(Collection<Integer> ids);
+
+    @Deprecated
+    @CompatibleImplementation(name = "fileSourceId", deprecatedVersion = "3.9.x", type = CompatibleType.DEPLOY,
+        explain = "文件源标识仅在appId下唯一，发布完成后可删除")
     FileSourceDTO getFileSourceByCode(String code);
+
+    FileSourceDTO getFileSourceByCode(Long appId, String code);
 
     List<FileSourceStaticParam> getFileSourceParams(Long appId, String fileSourceTypeCode);
 
     Boolean checkFileSourceAlias(Long appId, String alias, Integer fileSourceId);
+
+    boolean existsCode(Long appId, String code);
+
+    boolean existsCodeExceptId(Long appId, String code, Integer exceptId);
+
+    boolean existsFileSource(Long appId, Integer id);
+
+    boolean existsFileSourceUsingCredential(Long appId, String credentialId);
+
+    Integer getFileSourceIdByCode(Long appId, String code);
 }

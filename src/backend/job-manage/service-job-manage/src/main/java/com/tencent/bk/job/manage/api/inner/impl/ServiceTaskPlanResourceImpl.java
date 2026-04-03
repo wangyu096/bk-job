@@ -24,25 +24,44 @@
 
 package com.tencent.bk.job.manage.api.inner.impl;
 
+import com.tencent.bk.job.common.constant.AccountCategoryEnum;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
-import com.tencent.bk.job.common.i18n.MessageI18nService;
-import com.tencent.bk.job.common.model.ServiceResponse;
-import com.tencent.bk.job.common.util.JobContextUtil;
+import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.model.InternalResponse;
+import com.tencent.bk.job.common.mysql.JobTransactional;
 import com.tencent.bk.job.common.util.json.JsonUtils;
+import com.tencent.bk.job.manage.api.common.constants.task.TaskFileTypeEnum;
+import com.tencent.bk.job.manage.api.common.constants.task.TaskScriptSourceEnum;
+import com.tencent.bk.job.manage.api.common.constants.task.TaskStepTypeEnum;
 import com.tencent.bk.job.manage.api.inner.ServiceTaskPlanResource;
-import com.tencent.bk.job.manage.common.consts.account.AccountCategoryEnum;
-import com.tencent.bk.job.manage.common.consts.task.TaskFileTypeEnum;
-import com.tencent.bk.job.manage.common.consts.task.TaskStepTypeEnum;
 import com.tencent.bk.job.manage.model.dto.AccountDTO;
 import com.tencent.bk.job.manage.model.dto.ScriptDTO;
 import com.tencent.bk.job.manage.model.dto.converter.TaskStepConverter;
 import com.tencent.bk.job.manage.model.dto.converter.TaskVariableConverter;
-import com.tencent.bk.job.manage.model.dto.task.*;
-import com.tencent.bk.job.manage.model.inner.*;
+import com.tencent.bk.job.manage.model.dto.task.TaskApprovalStepDTO;
+import com.tencent.bk.job.manage.model.dto.task.TaskFileInfoDTO;
+import com.tencent.bk.job.manage.model.dto.task.TaskFileStepDTO;
+import com.tencent.bk.job.manage.model.dto.task.TaskPlanInfoDTO;
+import com.tencent.bk.job.manage.model.dto.task.TaskScriptStepDTO;
+import com.tencent.bk.job.manage.model.dto.task.TaskStepDTO;
+import com.tencent.bk.job.manage.model.dto.task.TaskTargetDTO;
+import com.tencent.bk.job.manage.model.dto.task.TaskVariableDTO;
+import com.tencent.bk.job.manage.model.inner.ServiceAccountDTO;
+import com.tencent.bk.job.manage.model.inner.ServiceIdNameCheckDTO;
+import com.tencent.bk.job.manage.model.inner.ServiceTaskApprovalStepDTO;
+import com.tencent.bk.job.manage.model.inner.ServiceTaskApprovalUserDTO;
+import com.tencent.bk.job.manage.model.inner.ServiceTaskFileInfoDTO;
+import com.tencent.bk.job.manage.model.inner.ServiceTaskFileStepDTO;
+import com.tencent.bk.job.manage.model.inner.ServiceTaskPlanDTO;
+import com.tencent.bk.job.manage.model.inner.ServiceTaskScriptStepDTO;
+import com.tencent.bk.job.manage.model.inner.ServiceTaskStepDTO;
+import com.tencent.bk.job.manage.model.inner.ServiceTaskVariableDTO;
 import com.tencent.bk.job.manage.model.web.vo.task.TaskPlanVO;
 import com.tencent.bk.job.manage.service.AbstractTaskVariableService;
 import com.tencent.bk.job.manage.service.AccountService;
+import com.tencent.bk.job.manage.service.PublicScriptService;
 import com.tencent.bk.job.manage.service.ScriptService;
 import com.tencent.bk.job.manage.service.plan.TaskPlanService;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +71,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -63,32 +86,30 @@ public class ServiceTaskPlanResourceImpl implements ServiceTaskPlanResource {
     private final AbstractTaskVariableService taskVariableService;
 
     private final ScriptService scriptService;
+    private final PublicScriptService publicScriptService;
 
     private final AccountService accountService;
-
-    private final MessageI18nService i18nService;
 
     @Autowired
     public ServiceTaskPlanResourceImpl(
         TaskPlanService taskPlanService,
         @Qualifier("TaskPlanVariableServiceImpl") AbstractTaskVariableService taskVariableService,
-        ScriptService scriptService,
-        AccountService accountService,
-        MessageI18nService i18nService) {
+        ScriptService scriptService, PublicScriptService publicScriptService,
+        AccountService accountService) {
         this.taskPlanService = taskPlanService;
         this.taskVariableService = taskVariableService;
         this.scriptService = scriptService;
+        this.publicScriptService = publicScriptService;
         this.accountService = accountService;
-        this.i18nService = i18nService;
     }
 
     @Override
-    public ServiceResponse<ServiceTaskPlanDTO> getPlanBasicInfoById(Long appId, Long planId) {
+    public InternalResponse<ServiceTaskPlanDTO> getPlanBasicInfoById(Long appId, Long planId) {
         if (appId == null || appId <= 0 || planId == null || planId <= 0) {
-            return ServiceResponse.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM, i18nService);
+            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
         }
         List<TaskPlanInfoDTO> planList =
-            taskPlanService.listPlanBasicInfoByIds(appId, Collections.singletonList(planId));
+            taskPlanService.listPlanBasicInfoWithVariablesByIds(appId, Collections.singletonList(planId));
         if (CollectionUtils.isNotEmpty(planList)) {
             TaskPlanInfoDTO plan = planList.get(0);
             ServiceTaskPlanDTO planDTO = new ServiceTaskPlanDTO();
@@ -97,59 +118,77 @@ public class ServiceTaskPlanResourceImpl implements ServiceTaskPlanResource {
             planDTO.setCreator(plan.getCreator());
             planDTO.setName(plan.getName());
             planDTO.setDebugTask(plan.getDebug());
-            return ServiceResponse.buildSuccessResp(planDTO);
+            return InternalResponse.buildSuccessResp(planDTO);
         } else {
-            return ServiceResponse.buildCommonFailResp(ErrorCode.TASK_PLAN_NOT_EXIST, i18nService);
+            throw new NotFoundException(ErrorCode.TASK_PLAN_NOT_EXIST);
         }
     }
 
     @Override
-    public ServiceResponse<String> getPlanName(Long planId) {
+    public InternalResponse<String> getPlanName(Long planId) {
         if (planId == null) {
-            return ServiceResponse.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM, i18nService);
+            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
         }
-        return ServiceResponse.buildSuccessResp(taskPlanService.getPlanName(planId));
+        return InternalResponse.buildSuccessResp(taskPlanService.getPlanName(planId));
     }
 
     @Override
-    public ServiceResponse<Long> getGlobalVarIdByName(Long planId, String globalVarName) {
+    public InternalResponse<Long> getGlobalVarIdByName(Long planId, String globalVarName) {
         TaskVariableDTO taskVariableDTO = taskVariableService.getVariableByName(planId, globalVarName);
         if (taskVariableDTO == null) {
-            return ServiceResponse.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM,
-                "Cannot find globalVar by name " + globalVarName);
+            throw new InvalidParamException("Cannot find globalVar by name " + globalVarName, ErrorCode.ILLEGAL_PARAM);
         }
-        return ServiceResponse.buildSuccessResp(taskVariableDTO.getId());
+        return InternalResponse.buildSuccessResp(taskVariableDTO.getId());
     }
 
     @Override
-    public ServiceResponse<String> getGlobalVarNameById(Long planId, Long globalVarId) {
+    public InternalResponse<ServiceTaskVariableDTO> getGlobalVarByName(Long planId, String globalVarName) {
+        TaskVariableDTO taskVariableDTO = taskVariableService.getVariableByName(planId, globalVarName);
+        if (taskVariableDTO == null) {
+            throw new InvalidParamException("Cannot find globalVar by name " + globalVarName, ErrorCode.ILLEGAL_PARAM);
+        }
+        return InternalResponse.buildSuccessResp(TaskVariableDTO.toServiceDTO(taskVariableDTO));
+    }
+
+    @Override
+    public InternalResponse<String> getGlobalVarNameById(Long planId, Long globalVarId) {
         TaskVariableDTO taskVariableDTO = taskVariableService.getVariableById(planId, globalVarId);
         if (taskVariableDTO == null) {
-            return ServiceResponse.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM,
-                "Cannot find globalVar by id " + globalVarId);
+            throw new InvalidParamException("Cannot find globalVar by id " + globalVarId, ErrorCode.ILLEGAL_PARAM);
         }
-        return ServiceResponse.buildSuccessResp(taskVariableDTO.getName());
+        return InternalResponse.buildSuccessResp(taskVariableDTO.getName());
     }
 
     @Override
-    public ServiceResponse<Long> getPlanAppId(Long planId) {
+    public InternalResponse<ServiceTaskVariableDTO> getGlobalVarById(Long planId, Long globalVarId) {
+        TaskVariableDTO taskVariableDTO = taskVariableService.getVariableById(planId, globalVarId);
+        if (taskVariableDTO == null) {
+            throw new InvalidParamException("Cannot find globalVar by id " + globalVarId, ErrorCode.ILLEGAL_PARAM);
+        }
+        return InternalResponse.buildSuccessResp(TaskVariableDTO.toServiceDTO(taskVariableDTO));
+    }
+
+    @Override
+    public InternalResponse<Long> getPlanAppId(Long planId) {
         if (planId == null) {
-            return ServiceResponse.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM, i18nService);
+            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
         }
         TaskPlanInfoDTO taskPlanInfoDTO = taskPlanService.getTaskPlanById(planId);
         if (taskPlanInfoDTO == null) {
             log.warn("Cannot find taskPlanInfoDTO by id {}", planId);
-            return ServiceResponse.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM, i18nService);
+            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
         }
-        return ServiceResponse.buildSuccessResp(taskPlanInfoDTO.getAppId());
+        return InternalResponse.buildSuccessResp(taskPlanInfoDTO.getAppId());
     }
 
     @Override
-    public ServiceResponse<ServiceTaskPlanDTO> getPlanById(Long appId, Long planId, Boolean includeDisabledSteps) {
+    public InternalResponse<ServiceTaskPlanDTO> getPlanById(Long appId, Long planId, Boolean includeDisabledSteps) {
         TaskPlanInfoDTO plan = taskPlanService.getTaskPlanById(appId, planId);
-        log.info("Get plan by planId, planId={}, plan={}", planId, JsonUtils.toJson(plan));
+        if (log.isDebugEnabled()) {
+            log.debug("Get plan by planId, planId={}, plan={}", planId, JsonUtils.toJson(plan));
+        }
         if (plan == null) {
-            return ServiceResponse.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
+            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
                 new String[]{"planId", "Cannot find plan by id " + planId});
         }
         ServiceTaskPlanDTO planDTO = new ServiceTaskPlanDTO();
@@ -163,11 +202,12 @@ public class ServiceTaskPlanResourceImpl implements ServiceTaskPlanResource {
 
         planDTO.setVariableList(buildVariables(plan));
 
-        return ServiceResponse.buildSuccessResp(planDTO);
+        return InternalResponse.buildSuccessResp(planDTO);
     }
 
     @Override
-    public ServiceResponse<Long> createPlanWithIdForMigration(
+    @JobTransactional(transactionManager = "jobManageTransactionManager")
+    public InternalResponse<Long> createPlanWithIdForMigration(
         String username,
         Long appId,
         Long templateId,
@@ -176,54 +216,50 @@ public class ServiceTaskPlanResourceImpl implements ServiceTaskPlanResource {
         Long lastModifyTime,
         String lastModifyUser
     ) {
-        return ServiceResponse.buildSuccessResp(taskPlanService.saveTaskPlanForMigration(username, appId, templateId,
+        return InternalResponse.buildSuccessResp(taskPlanService.saveTaskPlanForMigration(username, appId, templateId,
             planId, createTime, lastModifyTime, lastModifyUser));
     }
 
     @Override
-    public ServiceResponse<ServiceIdNameCheckDTO> checkIdAndName(Long appId, Long templateId, Long planId,
-                                                                 String name) {
+    public InternalResponse<ServiceIdNameCheckDTO> checkIdAndName(Long appId, Long templateId, Long planId,
+                                                                  String name) {
         boolean idResult = taskPlanService.checkPlanId(planId);
         boolean nameResult = taskPlanService.checkPlanName(appId, templateId, 0L, name);
 
         ServiceIdNameCheckDTO idNameCheck = new ServiceIdNameCheckDTO();
         idNameCheck.setIdCheckResult(idResult ? 1 : 0);
         idNameCheck.setNameCheckResult(nameResult ? 1 : 0);
-        return ServiceResponse.buildSuccessResp(idNameCheck);
+        return InternalResponse.buildSuccessResp(idNameCheck);
     }
 
     @Override
-    public ServiceResponse<Long> savePlanForImport(String username, Long appId, Long templateId,
-                                                   Long createTime, TaskPlanVO planInfo) {
-        if (planInfo.validateForImport()) {
-            TaskPlanInfoDTO taskPlanInfo = TaskPlanInfoDTO.fromVO(username, appId, planInfo);
-            if (createTime != null && createTime > 0) {
-                taskPlanInfo.setCreateTime(createTime);
-            }
-            Long finalTemplateId = taskPlanService.saveTaskPlanForBackup(taskPlanInfo);
-            return ServiceResponse.buildSuccessResp(finalTemplateId);
-        } else {
-            return ServiceResponse
-                .buildCommonFailResp("Valid param failed!" + JsonUtils.toJson(JobContextUtil.getDebugMessage()));
+    public InternalResponse<Long> savePlanForImport(String username, Long appId, Long templateId,
+                                                    Long createTime, TaskPlanVO planInfo) {
+        planInfo.validateForImport();
+        TaskPlanInfoDTO taskPlanInfo = TaskPlanInfoDTO.fromVO(username, appId, planInfo);
+        if (createTime != null && createTime > 0) {
+            taskPlanInfo.setCreateTime(createTime);
         }
+        Long finalTemplateId = taskPlanService.saveTaskPlanForBackup(taskPlanInfo);
+        return InternalResponse.buildSuccessResp(finalTemplateId);
     }
 
     @Override
-    public ServiceResponse<List<ServiceTaskVariableDTO>> getPlanVariable(String username, Long appId, Long templateId,
-                                                                         Long planId) {
+    public InternalResponse<List<ServiceTaskVariableDTO>> getPlanVariable(String username, Long appId, Long templateId,
+                                                                          Long planId) {
         List<TaskVariableDTO> taskVariableList = taskVariableService.listVariablesByParentId(planId);
         if (CollectionUtils.isNotEmpty(taskVariableList)) {
             List<ServiceTaskVariableDTO> variableList =
-                taskVariableList.parallelStream().map(TaskVariableDTO::toServiceDTO).collect(Collectors.toList());
-            return ServiceResponse.buildSuccessResp(variableList);
+                taskVariableList.stream().map(TaskVariableDTO::toServiceDTO).collect(Collectors.toList());
+            return InternalResponse.buildSuccessResp(variableList);
         }
-        return ServiceResponse.buildSuccessResp(Collections.emptyList());
+        return InternalResponse.buildSuccessResp(Collections.emptyList());
     }
 
     @Override
-    public ServiceResponse<List<ServiceTaskPlanDTO>> listPlans(String username, Long appId, Long templateId) {
-        List<TaskPlanInfoDTO> taskPlanInfoDTOList = taskPlanService.listPageTaskPlansBasicInfo(appId, templateId);
-        List<ServiceTaskPlanDTO> resultList = taskPlanInfoDTOList.parallelStream().map(it -> {
+    public InternalResponse<List<ServiceTaskPlanDTO>> listPlans(String username, Long appId, Long templateId) {
+        List<TaskPlanInfoDTO> taskPlanInfoDTOList = taskPlanService.listTaskPlansBasicInfo(appId, templateId);
+        List<ServiceTaskPlanDTO> resultList = taskPlanInfoDTOList.stream().map(it -> {
             ServiceTaskPlanDTO serviceTaskPlanDTO = new ServiceTaskPlanDTO();
             serviceTaskPlanDTO.setId(it.getId());
             serviceTaskPlanDTO.setName(it.getName());
@@ -235,7 +271,7 @@ public class ServiceTaskPlanResourceImpl implements ServiceTaskPlanResource {
             List<ServiceTaskStepDTO> serviceTaskStepDTOList = new ArrayList<>();
             if (taskStepDTOList != null && !taskStepDTOList.isEmpty()) {
                 serviceTaskStepDTOList =
-                    taskStepDTOList.parallelStream()
+                    taskStepDTOList.stream()
                         .map(TaskStepConverter::convertToServiceTaskStepDTO).collect(Collectors.toList());
             }
             serviceTaskPlanDTO.setStepList(serviceTaskStepDTOList);
@@ -244,19 +280,19 @@ public class ServiceTaskPlanResourceImpl implements ServiceTaskPlanResource {
             List<ServiceTaskVariableDTO> serviceTaskVariableDTOList = new ArrayList<>();
             if (variableList != null && !variableList.isEmpty()) {
                 serviceTaskVariableDTOList =
-                    variableList.parallelStream()
+                    variableList.stream()
                         .map(TaskVariableConverter::convertToServiceTaskVariableDTO)
                         .collect(Collectors.toList());
             }
             serviceTaskPlanDTO.setVariableList(serviceTaskVariableDTOList);
             return serviceTaskPlanDTO;
         }).collect(Collectors.toList());
-        return ServiceResponse.buildSuccessResp(resultList);
+        return InternalResponse.buildSuccessResp(resultList);
     }
 
     @Override
-    public ServiceResponse<List<Long>> listPlanIds(Long templateId) {
-        return ServiceResponse.buildSuccessResp(taskPlanService.listTaskPlanIds(templateId));
+    public InternalResponse<List<Long>> listPlanIds(Long templateId) {
+        return InternalResponse.buildSuccessResp(taskPlanService.listTaskPlanIds(templateId));
     }
 
     private List<ServiceTaskStepDTO> buildSteps(TaskPlanInfoDTO plan, Boolean includeDisabledSteps) {
@@ -311,7 +347,7 @@ public class ServiceTaskPlanResourceImpl implements ServiceTaskPlanResource {
         scriptStepDTO.setType(scriptStep.getLanguage().getValue());
 
         if (scriptStep.getScriptVersionId() != null && scriptStep.getScriptVersionId() > 0) {
-            ScriptDTO script = scriptService.getByScriptVersionId(scriptStep.getScriptVersionId());
+            ScriptDTO script = getScriptVersion(scriptStep.getScriptSource(), scriptStep.getScriptVersionId());
             if (script == null) {
                 log.warn("Plan related script is not exist, planId={}, scriptVersionId={}", scriptStep.getPlanId(),
                     scriptStep.getScriptVersionId());
@@ -334,6 +370,19 @@ public class ServiceTaskPlanResourceImpl implements ServiceTaskPlanResource {
         scriptStepDTO.setExecuteTarget(targetServer.toServiceTaskTargetDTO());
         scriptStepDTO.setIgnoreError(scriptStep.getIgnoreError());
         return scriptStepDTO;
+    }
+
+    private ScriptDTO getScriptVersion(TaskScriptSourceEnum scriptSource, long scriptVersionId) {
+        ScriptDTO scriptVersion = null;
+        switch (scriptSource) {
+            case CITING:
+                scriptVersion = scriptService.getScriptVersion(scriptVersionId);
+                break;
+            case PUBLIC:
+                scriptVersion = publicScriptService.getScriptVersion(scriptVersionId);
+                break;
+        }
+        return scriptVersion;
     }
 
     private ServiceAccountDTO buildAccount(Long accountId, Map<Long, ServiceAccountDTO> cacheAccountMap) {
@@ -428,9 +477,7 @@ public class ServiceTaskPlanResourceImpl implements ServiceTaskPlanResource {
             return null;
         }
         List<ServiceTaskVariableDTO> variableDTOS = new ArrayList<>();
-        plan.getVariableList().forEach(variableDTO -> {
-            variableDTOS.add(buildVariable(variableDTO));
-        });
+        plan.getVariableList().forEach(variableDTO -> variableDTOS.add(buildVariable(variableDTO)));
         return variableDTOS;
     }
 
@@ -445,7 +492,7 @@ public class ServiceTaskPlanResourceImpl implements ServiceTaskPlanResource {
         if (variable.getType() == TaskVariableTypeEnum.HOST_LIST
             && StringUtils.isNotBlank(variable.getDefaultValue())) {
             variableDTO
-                .setDefaultTargetValue(TaskTargetDTO.fromString(variable.getDefaultValue()).toServiceTaskTargetDTO());
+                .setDefaultTargetValue(TaskTargetDTO.fromJsonString(variable.getDefaultValue()).toServiceTaskTargetDTO());
         }
         return variableDTO;
     }

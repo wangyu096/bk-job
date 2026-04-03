@@ -24,13 +24,12 @@
 
 package com.tencent.bk.job.execute.api.esb.v3;
 
+import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
 import com.tencent.bk.job.common.esb.model.EsbResp;
-import com.tencent.bk.job.common.exception.ServiceException;
-import com.tencent.bk.job.common.i18n.MessageI18nService;
-import com.tencent.bk.job.common.iam.exception.InSufficientPermissionException;
-import com.tencent.bk.job.common.iam.service.AuthService;
+import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.util.json.JsonUtils;
 import com.tencent.bk.job.execute.constants.StepOperationEnum;
 import com.tencent.bk.job.execute.model.StepOperationDTO;
@@ -45,35 +44,26 @@ import org.springframework.web.bind.annotation.RestController;
 public class EsbOperateStepInstanceV3ResourceImpl implements EsbOperateStepInstanceV3Resource {
     private final TaskExecuteService taskExecuteService;
 
-    private final MessageI18nService i18nService;
-
-    private final AuthService authService;
-
-    public EsbOperateStepInstanceV3ResourceImpl(TaskExecuteService taskExecuteService,
-                                                MessageI18nService i18nService, AuthService authService) {
+    public EsbOperateStepInstanceV3ResourceImpl(TaskExecuteService taskExecuteService) {
         this.taskExecuteService = taskExecuteService;
-        this.i18nService = i18nService;
-        this.authService = authService;
     }
 
     @Override
-    @EsbApiTimed(value = "esb.api", extraTags = {"api_name", "v3_operate_step_instance"})
-    public EsbResp<EsbJobExecuteV3DTO> operateStepInstance(String lang, EsbOperateStepInstanceV3Request request) {
+    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_operate_step_instance"})
+    public EsbResp<EsbJobExecuteV3DTO> operateStepInstance(String username,
+                                                           String appCode,
+                                                           @AuditRequestBody EsbOperateStepInstanceV3Request request) {
         log.info("Operate step instance, request={}", JsonUtils.toJson(request));
         if (!checkRequest(request)) {
-            return EsbResp.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM, i18nService);
+            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
         }
         StepOperationEnum operationEnum = StepOperationEnum.getStepOperation(request.getOperationCode());
-        try {
-            StepOperationDTO stepOperation = new StepOperationDTO();
-            stepOperation.setStepInstanceId(request.getStepInstanceId());
-            stepOperation.setOperation(operationEnum);
-            taskExecuteService.doStepOperation(request.getAppId(), request.getUserName(), stepOperation);
-        } catch (InSufficientPermissionException e) {
-            return authService.buildEsbAuthFailResp(e);
-        } catch (ServiceException e) {
-            return EsbResp.buildCommonFailResp(e, i18nService);
-        }
+        StepOperationDTO stepOperation = new StepOperationDTO();
+        stepOperation.setTaskInstanceId(request.getTaskInstanceId());
+        stepOperation.setStepInstanceId(request.getStepInstanceId());
+        stepOperation.setOperation(operationEnum);
+        taskExecuteService.doStepOperation(request.getAppId(), username, stepOperation);
+
         EsbJobExecuteV3DTO result = new EsbJobExecuteV3DTO();
         result.setTaskInstanceId(request.getTaskInstanceId());
         result.setStepInstanceId(request.getStepInstanceId());
@@ -81,10 +71,6 @@ public class EsbOperateStepInstanceV3ResourceImpl implements EsbOperateStepInsta
     }
 
     private boolean checkRequest(EsbOperateStepInstanceV3Request request) {
-        if (request.getAppId() == null || request.getAppId() <= 0) {
-            log.warn("Operate step instance, appId is empty!");
-            return false;
-        }
         if (request.getTaskInstanceId() == null || request.getTaskInstanceId() <= 0) {
             log.warn("Operate step instance, taskInstanceId is empty!");
             return false;

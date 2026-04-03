@@ -28,6 +28,8 @@ import com.tencent.bk.job.file.worker.model.FileMetaData;
 import com.tencent.cos.model.Bucket;
 import com.tencent.cos.model.COSObjectSummary;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.File;
 import java.io.InputStream;
@@ -105,9 +107,14 @@ public class JobTencentInnerCOSClient {
             key);
     }
 
-    public InputStream getFileInputStream(String bucketName, String key) {
-        return TencentInnerCOSUtil.getFileInputStream(accessKey, secretKey, regionName, getRealBucketName(bucketName)
-            , key);
+    public Pair<InputStream, HttpRequestBase> getFileInputStream(String bucketName, String key) {
+        return TencentInnerCOSUtil.getFileInputStream(
+            accessKey,
+            secretKey,
+            regionName,
+            getRealBucketName(bucketName)
+            , key
+        );
     }
 
     public void shutdown() {

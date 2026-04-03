@@ -24,8 +24,9 @@
 
 package com.tencent.bk.job.crontab.model.esb.v3.request;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.tencent.bk.job.common.esb.model.EsbReq;
+import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.esb.model.EsbAppScopeReq;
+import com.tencent.bk.job.common.exception.InvalidParamException;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -34,13 +35,7 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class EsbUpdateCronStatusV3Request extends EsbReq {
-
-    /**
-     * 业务 ID
-     */
-    @JsonProperty("bk_biz_id")
-    private Long appId;
+public class EsbUpdateCronStatusV3Request extends EsbAppScopeReq {
 
     /**
      * 定时作业 ID
@@ -55,11 +50,15 @@ public class EsbUpdateCronStatusV3Request extends EsbReq {
     private Integer status;
 
     public boolean validate() {
-        if (id > 0) {
-            if (status == 0 || status == 1) {
-                return true;
-            }
+        if (id == null || id <= 0) {
+
+            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
+                new String[]{"id", "id must be a positive integer"});
         }
-        return false;
+        if (status == null || status < 0) {
+            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME_AND_REASON,
+                new String[]{"status", "status must >= 0"});
+        }
+        return true;
     }
 }

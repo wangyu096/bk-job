@@ -23,19 +23,38 @@
  * IN THE SOFTWARE.
 */
 
-export const encodeRegexp = (param) => {
-    const regexpKeyword = [
-        '\\', '.', '*', '-', '{', '}', '[', ']', '^', '(', ')', '$', '+', '?', '|',
-    ];
-    const res = regexpKeyword.reduce(
-        (result, charItem) => result.replace(new RegExp(`\\${charItem}`, 'g'), `\\${charItem}`),
-        param,
-    );
-    return res;
+/**
+ * @desc 正则表达式关键字符转换
+ * @param { String } paramStr
+ * @returns { String }
+ */
+export const encodeRegexp = (paramStr) => {
+  const regexpKeyword = [
+    '\\', '.', '*', '-', '{', '}', '[', ']', '^', '(', ')', '$', '+', '?', '|',
+  ];
+  const res = regexpKeyword.reduce(
+    (result, charItem) => result.replace(new RegExp(`\\${charItem}`, 'g'), `\\${charItem}`),
+    paramStr,
+  );
+  return res;
 };
 
-export const encodeMult = (value) => {
-    const temp = document.createElement('textarea');
-    temp.value = value;
-    return temp.value;
+/**
+ * @desc 多行文本处理
+ * @param { String } text
+ * @returns { String }
+ */
+export const encodeMult = (text) => {
+  const temp = document.createElement('textarea');
+  temp.value = text;
+  return temp.value;
 };
+
+/**
+ * @desc 格式化用户输入的HTML
+ * @param { String } str
+ * @returns { String }
+ */
+export const escapeHTML = str => str.replace(/&/g, '&#38;').replace(/"/g, '&#34;')
+  .replace(/'/g, '&#39;')
+  .replace(/</g, '&#60;');

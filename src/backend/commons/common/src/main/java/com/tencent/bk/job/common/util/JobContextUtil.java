@@ -26,17 +26,26 @@ package com.tencent.bk.job.common.util;
 
 import com.tencent.bk.job.common.context.JobContext;
 import com.tencent.bk.job.common.context.JobContextThreadLocal;
+import com.tencent.bk.job.common.i18n.locale.LocaleUtils;
+import com.tencent.bk.job.common.model.dto.AppResourceScope;
+import io.micrometer.core.instrument.Tag;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.AbstractList;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
- * @since 6/11/2019 10:27
+ * Job http 请求上下文工具类
  */
+@Slf4j
 public class JobContextUtil {
 
     public static JobContext getContext() {
@@ -53,7 +62,7 @@ public class JobContextUtil {
 
     public static Long getStartTime() {
         JobContext jobContext = JobContextThreadLocal.get();
-        Long startTime = null;
+        Long startTime;
         if (jobContext != null) {
             startTime = jobContext.getStartTime();
         } else {
@@ -82,19 +91,19 @@ public class JobContextUtil {
         jobContext.setUsername(username);
     }
 
-    public static Long getAppId() {
+    public static AppResourceScope getAppResourceScope() {
         JobContext jobContext = JobContextThreadLocal.get();
-        Long appId = null;
+        AppResourceScope appResourceScope = null;
         if (jobContext != null) {
-            appId = jobContext.getAppId();
+            appResourceScope = jobContext.getAppResourceScope();
         }
 
-        return appId;
+        return appResourceScope;
     }
 
-    public static void setAppId(Long appId) {
+    public static void setAppResourceScope(AppResourceScope appResourceScope) {
         JobContext jobContext = getOrInitContext();
-        jobContext.setAppId(appId);
+        jobContext.setAppResourceScope(appResourceScope);
     }
 
     public static String getRequestId() {
@@ -125,6 +134,11 @@ public class JobContextUtil {
     public static void setUserLang(String userLang) {
         JobContext jobContext = getOrInitContext();
         jobContext.setUserLang(userLang);
+    }
+
+    public static boolean isEnglishLocale() {
+        String normalLang = LocaleUtils.getNormalLang(getUserLang());
+        return normalLang.equals(LocaleUtils.LANG_EN) || normalLang.equals(LocaleUtils.LANG_EN_US);
     }
 
     public static List<String> getDebugMessage() {
@@ -218,9 +232,35 @@ public class JobContextUtil {
     private static JobContext getOrInitContext() {
         JobContext jobContext = JobContextThreadLocal.get();
         if (jobContext == null) {
+            log.debug("jobContext is null, init");
             jobContext = new JobContext();
             setContext(jobContext);
         }
         return jobContext;
+    }
+
+    public static Map<String, Pair<String, AbstractList<Tag>>> getOrInitMetricTagsMap() {
+        JobContext jobContext = getOrInitContext();
+        Map<String, Pair<String, AbstractList<Tag>>> metricTagsMap = jobContext.getMetricTagsMap();
+        if (metricTagsMap == null) {
+            log.debug("metricTagsMap is null, init");
+            metricTagsMap = new HashMap<>();
+            jobContext.setMetricTagsMap(metricTagsMap);
+        }
+        return metricTagsMap;
+    }
+
+    public static String getRequestFrom() {
+        JobContext jobContext = JobContextThreadLocal.get();
+        String requestFrom = null;
+        if (jobContext != null) {
+            requestFrom = jobContext.getRequestFrom();
+        }
+        return requestFrom;
+    }
+
+    public static void setRequestFrom(String requestFrom) {
+        JobContext jobContext = getOrInitContext();
+        jobContext.setRequestFrom(requestFrom);
     }
 }

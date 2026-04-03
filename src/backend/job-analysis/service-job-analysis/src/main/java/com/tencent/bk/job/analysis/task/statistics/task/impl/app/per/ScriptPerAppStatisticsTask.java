@@ -24,20 +24,21 @@
 
 package com.tencent.bk.job.analysis.task.statistics.task.impl.app.per;
 
-import com.tencent.bk.job.analysis.client.ManageMetricsClient;
+import com.tencent.bk.job.analysis.api.consts.StatisticsConstants;
+import com.tencent.bk.job.analysis.api.dto.StatisticsDTO;
 import com.tencent.bk.job.analysis.consts.TotalMetricEnum;
 import com.tencent.bk.job.analysis.dao.StatisticsDAO;
 import com.tencent.bk.job.analysis.service.BasicServiceManager;
 import com.tencent.bk.job.analysis.task.statistics.anotation.StatisticsTask;
 import com.tencent.bk.job.analysis.task.statistics.task.BasePerAppStatisticsTask;
-import com.tencent.bk.job.common.model.ServiceResponse;
-import com.tencent.bk.job.common.statistics.consts.StatisticsConstants;
-import com.tencent.bk.job.common.statistics.model.dto.StatisticsDTO;
-import com.tencent.bk.job.manage.common.consts.JobResourceStatusEnum;
-import com.tencent.bk.job.manage.common.consts.script.ScriptTypeEnum;
-import com.tencent.bk.job.manage.model.inner.ServiceApplicationDTO;
+import com.tencent.bk.job.common.model.InternalResponse;
+import com.tencent.bk.job.manage.api.common.constants.JobResourceStatusEnum;
+import com.tencent.bk.job.manage.api.common.constants.script.ScriptTypeEnum;
+import com.tencent.bk.job.manage.api.inner.ServiceMetricsResource;
+import com.tencent.bk.job.manage.model.inner.resp.ServiceApplicationDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.DSLContext;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -52,12 +53,14 @@ import java.util.List;
 @Service
 public class ScriptPerAppStatisticsTask extends BasePerAppStatisticsTask {
 
-    private final ManageMetricsClient manageMetricsClient;
+    private final ServiceMetricsResource manageMetricsClient;
 
-    protected ScriptPerAppStatisticsTask(BasicServiceManager basicServiceManager, StatisticsDAO statisticsDAO,
-                                         DSLContext dslContext, ManageMetricsClient manageMetricsClient) {
+    protected ScriptPerAppStatisticsTask(BasicServiceManager basicServiceManager,
+                                         StatisticsDAO statisticsDAO,
+                                         @Qualifier("job-analysis-dsl-context") DSLContext dslContext,
+                                         ServiceMetricsResource manageMetricsResource) {
         super(basicServiceManager, statisticsDAO, dslContext);
-        this.manageMetricsClient = manageMetricsClient;
+        this.manageMetricsClient = manageMetricsResource;
     }
 
     private StatisticsDTO genScriptTotalDTO(String dateStr, Long appId, String value) {
@@ -99,7 +102,7 @@ public class ScriptPerAppStatisticsTask extends BasePerAppStatisticsTask {
 
     public List<StatisticsDTO> calcAppScriptTotal(String dateStr, Long appId) {
         List<StatisticsDTO> statisticsDTOList = new ArrayList<>();
-        ServiceResponse<Integer> resp = manageMetricsClient.countScripts(
+        InternalResponse<Integer> resp = manageMetricsClient.countScripts(
             appId,
             null,
             null
@@ -117,7 +120,7 @@ public class ScriptPerAppStatisticsTask extends BasePerAppStatisticsTask {
         List<StatisticsDTO> statisticsDTOList = new ArrayList<>();
         for (int i = 0; i < ScriptTypeEnum.values().length; i++) {
             ScriptTypeEnum scriptType = ScriptTypeEnum.values()[i];
-            ServiceResponse<Integer> resp = manageMetricsClient.countScripts(
+            InternalResponse<Integer> resp = manageMetricsClient.countScripts(
                 appId,
                 scriptType,
                 null
@@ -137,7 +140,7 @@ public class ScriptPerAppStatisticsTask extends BasePerAppStatisticsTask {
         List<StatisticsDTO> statisticsDTOList = new ArrayList<>();
         for (int i = 0; i < JobResourceStatusEnum.values().length; i++) {
             JobResourceStatusEnum jobResourceStatus = JobResourceStatusEnum.values()[i];
-            ServiceResponse<Integer> resp = manageMetricsClient.countScriptVersions(
+            InternalResponse<Integer> resp = manageMetricsClient.countScriptVersions(
                 appId,
                 null,
                 jobResourceStatus

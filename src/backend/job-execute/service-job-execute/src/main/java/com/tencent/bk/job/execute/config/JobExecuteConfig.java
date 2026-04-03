@@ -32,9 +32,6 @@ import org.springframework.context.annotation.Configuration;
 @Data
 public class JobExecuteConfig {
 
-    @Value("${job.execute.swagger.url:execute.swagger.com}")
-    private String swaggerUrl;
-
     /**
      * 功能开关 - 启用账号鉴权
      */
@@ -51,20 +48,24 @@ public class JobExecuteConfig {
     private int resultHandleTasksLimit;
 
     /**
-     * 作业平台web访问地址
-     */
-    @Value("${job.web.url:}")
-    private String jobWebUrl;
-
-    /**
-     * 对接的监控系统
-     */
-    @Value("${monitoring.system.integrated:}")
-    private String monitorSystem;
-
-    /**
      * Symmetric encryption password
      */
     @Value("${job.encrypt.password}")
     private String encryptPassword;
+
+    @Value("${job.execute.limit.file-task.max-tasks:100000}")
+    private Integer fileTasksMax;
+
+    @Value("${job.execute.limit.script-task.max-target-server:50000}")
+    private Integer scriptTaskMaxTargetServer;
+
+    @Value("${gse.script.rootPath:/tmp/bkjob}")
+    private String gseScriptFileRootPath;
+
+    /**
+     * GSE 脚本任务执行结果查询 API 单次返回的执行输出内容长度
+     * 默认值：512M
+     */
+    @Value("${job.execute.scriptTask.query.contentSizeLimit:512MB}")
+    private String scriptTaskQueryContentSizeLimit;
 }

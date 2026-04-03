@@ -24,84 +24,330 @@
 
 package com.tencent.bk.job.manage.api.web.impl;
 
+import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.annotations.AuditRequestBody;
+import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.constant.JobResourceTypeEnum;
 import com.tencent.bk.job.common.iam.constant.ActionId;
-import com.tencent.bk.job.common.iam.constant.ResourceId;
-import com.tencent.bk.job.common.iam.constant.ResourceTypeEnum;
-import com.tencent.bk.job.common.iam.service.WebAuthService;
-import com.tencent.bk.job.common.model.ServiceResponse;
-import com.tencent.bk.job.common.model.permission.AuthResultVO;
-import com.tencent.bk.job.common.web.controller.AbstractJobController;
+import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.iam.model.AuthResult;
+import com.tencent.bk.job.common.model.BaseSearchCondition;
+import com.tencent.bk.job.common.model.PageData;
+import com.tencent.bk.job.common.model.Response;
+import com.tencent.bk.job.common.model.ValidateResult;
+import com.tencent.bk.job.common.model.dto.AppResourceScope;
 import com.tencent.bk.job.manage.api.web.WebTagResource;
+import com.tencent.bk.job.manage.auth.NoResourceScopeAuthService;
+import com.tencent.bk.job.manage.auth.ScriptAuthService;
+import com.tencent.bk.job.manage.auth.TagAuthService;
+import com.tencent.bk.job.manage.auth.TemplateAuthService;
+import com.tencent.bk.job.manage.model.dto.ResourceTagDTO;
 import com.tencent.bk.job.manage.model.dto.TagDTO;
-import com.tencent.bk.job.manage.model.web.request.TagCreateReq;
+import com.tencent.bk.job.manage.model.web.request.BatchPatchResourceTagReq;
+import com.tencent.bk.job.manage.model.web.request.TagCreateUpdateReq;
 import com.tencent.bk.job.manage.model.web.vo.TagVO;
 import com.tencent.bk.job.manage.service.TagService;
-import com.tencent.bk.sdk.iam.dto.PathInfoDTO;
-import com.tencent.bk.sdk.iam.util.PathBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @Slf4j
-public class WebTagResourceImpl extends AbstractJobController implements WebTagResource {
+public class WebTagResourceImpl implements WebTagResource {
     private final TagService tagService;
-    private final WebAuthService authService;
+    private final TagAuthService tagAuthService;
+    private final ScriptAuthService scriptAuthService;
+    private final TemplateAuthService templateAuthService;
+    private final NoResourceScopeAuthService noResourceScopeAuthService;
 
     @Autowired
-    public WebTagResourceImpl(TagService tagService, WebAuthService authService) {
+    public WebTagResourceImpl(TagService tagService,
+                              TagAuthService tagAuthService,
+                              ScriptAuthService scriptAuthService,
+                              TemplateAuthService templateAuthService,
+                              NoResourceScopeAuthService noResourceScopeAuthService) {
         this.tagService = tagService;
-        this.authService = authService;
+        this.tagAuthService = tagAuthService;
+        this.scriptAuthService = scriptAuthService;
+        this.templateAuthService = templateAuthService;
+        this.noResourceScopeAuthService = noResourceScopeAuthService;
     }
 
     @Override
-    public ServiceResponse<List<TagVO>> listTags(String username, Long appId, String tagName) {
-        List<TagDTO> tags = tagService.listTags(appId, tagName);
-        assert tags != null;
+    public Response<PageData<TagVO>> listPageTags(String username,
+                                                  AppResourceScope appResourceScope,
+                                                  String scopeType,
+                                                  String scopeId,
+                                                  String name,
+                                                  String creator,
+                                                  String lastModifyUser,
+                                                  Integer start,
+                                                  Integer pageSize,
+                                                  String orderField,
+                                                  Integer order) {
+        TagDTO tagQuery = new TagDTO();
+        tagQuery.setAppId(appResourceScope.getAppId());
+        tagQuery.setName(name);
+        tagQuery.setCreator(creator);
+        tagQuery.setLastModifyUser(lastModifyUser);
+
+        BaseSearchCondition baseSearchCondition = new BaseSearchCondition();
+        baseSearchCondition.setStart(start);
+        baseSearchCondition.setLength(pageSize);
+        baseSearchCondition.setOrder(order);
+        baseSearchCondition.setOrderField(orderField);
+
+        PageData<TagDTO> pageTags = tagService.listPageTags(tagQuery, baseSearchCondition);
+        PageData<TagVO> pageTagVOs = PageData.from(pageTags, TagDTO::toVO);
+
+        List<Long> tagIds = pageTags.getData().stream().map(TagDTO::getId).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(tagIds)) {
+            List<ResourceTagDTO> resourceTags = tagService.listResourceTagsByTagIds(appResourceScope.getAppId(),
+                tagIds);
+            Map<Long, Map<Integer, List<ResourceTagDTO>>> resourcesGroupByTagIdAndResourceType =
+                groupByTagIdAndResourceType(resourceTags);
+            pageTagVOs.getData().forEach(tag -> {
+                Map<Integer, List<ResourceTagDTO>> resourcesGroupByType =
+                    resourcesGroupByTagIdAndResourceType.get(tag.getId());
+                if (resourcesGroupByType != null) {
+                    List<ResourceTagDTO> appScriptResources = resourcesGroupByType
+                        .get(JobResourceTypeEnum.APP_SCRIPT.getValue());
+                    tag.setRelatedScriptNum(appScriptResources == null ? 0 : appScriptResources.size());
+                    List<ResourceTagDTO> templateResources = resourcesGroupByType
+                        .get(JobResourceTypeEnum.TEMPLATE.getValue());
+                    tag.setRelatedTaskTemplateNum(templateResources == null ? 0 : templateResources.size());
+                } else {
+                    tag.setRelatedScriptNum(0);
+                    tag.setRelatedTaskTemplateNum(0);
+                }
+            });
+        }
+
+        processManagePermission(username, appResourceScope, pageTagVOs.getData());
+
+        return Response.buildSuccessResp(pageTagVOs);
+    }
+
+    private void processManagePermission(String username, AppResourceScope appResourceScope, List<TagVO> tags) {
+        if (CollectionUtils.isEmpty(tags)) {
+            return;
+        }
+        List<Long> tagIds =
+            tags.stream().map(TagVO::getId).distinct().collect(Collectors.toList());
+
+        List<Long> allowTagIds = tagAuthService.batchAuthManageTag(username, appResourceScope, tagIds);
+
+        tags.forEach(tagVO -> tagVO.setCanManage(allowTagIds.contains(tagVO.getId())));
+    }
+
+    private Map<Long, Map<Integer, List<ResourceTagDTO>>> groupByTagIdAndResourceType(
+        List<ResourceTagDTO> resourceTags) {
+
+        Map<Long, Map<Integer, List<ResourceTagDTO>>> result = new HashMap<>();
+        resourceTags.forEach(resourceTag -> {
+            result.computeIfAbsent(resourceTag.getTagId(), k -> new HashMap<>());
+            result.get(resourceTag.getTagId()).computeIfAbsent(resourceTag.getResourceType(), k -> new ArrayList<>());
+            result.get(resourceTag.getTagId()).get(resourceTag.getResourceType()).add(resourceTag);
+        });
+        return result;
+    }
+
+    @Override
+    public Response<List<TagVO>> listTagsBasic(String username,
+                                               AppResourceScope appResourceScope,
+                                               String scopeType,
+                                               String scopeId,
+                                               String name) {
+        List<TagDTO> tags = tagService.listTags(appResourceScope.getAppId(), name);
         List<TagVO> tagVOS = new ArrayList<>(tags.size());
         for (TagDTO tag : tags) {
             TagVO tagVO = new TagVO();
             tagVO.setId(tag.getId());
             tagVO.setName(tag.getName());
+            tagVO.setDescription(tag.getDescription());
             tagVOS.add(tagVO);
         }
-        return ServiceResponse.buildSuccessResp(tagVOS);
+        return Response.buildSuccessResp(tagVOS);
     }
 
     @Override
-    public ServiceResponse<Boolean> updateTagInfo(String username, Long appId, Long tagId, String tagName) {
-        AuthResultVO authResultVO = checkManageTagPermission(username, appId, tagId.toString());
-        if (!authResultVO.isPass()) {
-            return ServiceResponse.buildAuthFailResp(authResultVO);
+    @AuditEntry(actionId = ActionId.MANAGE_TAG)
+    public Response<Boolean> updateTagInfo(String username,
+                                           AppResourceScope appResourceScope,
+                                           String scopeType,
+                                           String scopeId,
+                                           Long tagId,
+                                           TagCreateUpdateReq tagCreateUpdateReq) {
+        TagDTO tag = new TagDTO();
+        tag.setId(tagId);
+        tag.setAppId(appResourceScope.getAppId());
+        tag.setName(tagCreateUpdateReq.getName());
+        tag.setDescription(tagCreateUpdateReq.getDescription());
+        return Response.buildSuccessResp(tagService.updateTagById(username, tag));
+    }
+
+    @Override
+    @AuditEntry(actionId = ActionId.CREATE_TAG)
+    public Response<TagVO> saveTagInfo(String username,
+                                       AppResourceScope appResourceScope,
+                                       String scopeType,
+                                       String scopeId,
+                                       @AuditRequestBody TagCreateUpdateReq tagCreateUpdateReq) {
+        TagDTO tag = new TagDTO();
+        tag.setAppId(appResourceScope.getAppId());
+        tag.setName(tagCreateUpdateReq.getName());
+        tag.setDescription(tagCreateUpdateReq.getDescription());
+        TagDTO newTag = tagService.createTag(username, tag);
+        return Response.buildSuccessResp(TagDTO.toVO(newTag));
+    }
+
+    @Override
+    @AuditEntry(actionId = ActionId.MANAGE_TAG)
+    public Response<Boolean> deleteTag(String username,
+                                       AppResourceScope appResourceScope,
+                                       String scopeType,
+                                       String scopeId,
+                                       Long tagId) {
+        tagService.deleteTag(username, appResourceScope.getAppId(), tagId);
+        return Response.buildSuccessResp(true);
+    }
+
+    @Override
+    public Response<?> patchTagRefResourceTags(String username,
+                                               AppResourceScope appResourceScope,
+                                               String scopeType,
+                                               String scopeId,
+                                               Long tagId,
+                                               BatchPatchResourceTagReq tagBatchUpdateReq) {
+        ValidateResult validateResult = checkBatchPatchResourceTagReq(tagId, tagBatchUpdateReq);
+        if (!validateResult.isPass()) {
+            return Response.buildValidateFailResp(validateResult);
         }
-        return ServiceResponse.buildSuccessResp(tagService.updateTagById(appId, tagId, tagName, username));
-    }
 
-    @Override
-    public ServiceResponse<Long> saveTagInfo(String username, Long appId, TagCreateReq tagCreateReq) {
-        AuthResultVO authResult = checkCreateTagPermission(username, appId);
+        List<ResourceTagDTO> resourceTags = tagService.listResourceTagsByTagId(appResourceScope.getAppId(), tagId);
+        Map<JobResourceTypeEnum, Set<String>> resourceGroups = filterAndClassifyResources(
+            tagBatchUpdateReq.getResourceTypeList(), resourceTags);
+        if (resourceGroups.isEmpty()) {
+            return Response.buildSuccessResp(null);
+        }
+
+        AuthResult authResult = checkTagRelatedResourcesUpdatePermission(username, appResourceScope, resourceGroups);
         if (!authResult.isPass()) {
-            return ServiceResponse.buildAuthFailResp(authResult);
+            throw new PermissionDeniedException(authResult);
         }
-        Long tagId = tagService.insertNewTag(appId, tagCreateReq.getTagName(), username);
-        authService.registerResource(tagId.toString(), tagCreateReq.getTagName(), ResourceId.TAG, username, null);
-        return ServiceResponse.buildSuccessResp(tagId);
+
+        List<ResourceTagDTO> addResourceTags = new ArrayList<>();
+        List<ResourceTagDTO> deleteResourceTags = new ArrayList<>();
+        resourceGroups.forEach((resourceType, resourceIds) -> {
+            if (CollectionUtils.isNotEmpty(tagBatchUpdateReq.getAddTagIdList())) {
+                resourceIds.forEach(resourceId -> tagBatchUpdateReq.getAddTagIdList()
+                    .forEach(addTagId -> addResourceTags.add(
+                        new ResourceTagDTO(resourceType.getValue(), resourceId, addTagId))));
+            }
+            if (CollectionUtils.isNotEmpty(tagBatchUpdateReq.getDeleteTagIdList())) {
+                resourceIds.forEach(resourceId -> tagBatchUpdateReq.getDeleteTagIdList()
+                    .forEach(deleteTagId -> deleteResourceTags.add(
+                        new ResourceTagDTO(resourceType.getValue(), resourceId, deleteTagId))));
+            }
+            tagService.batchPatchResourceTags(addResourceTags, deleteResourceTags);
+        });
+
+        return Response.buildSuccessResp(null);
     }
 
-    private AuthResultVO checkManageTagPermission(String username, Long appId, String tagId) {
-        return authService.auth(true, username, ActionId.MANAGE_TAG, ResourceTypeEnum.TAG, tagId,
-            buildTagPathInfo(appId));
+    private AuthResult checkTagRelatedResourcesUpdatePermission(String username, AppResourceScope appResourceScope,
+                                                                Map<JobResourceTypeEnum, Set<String>> resourceGroup) {
+        if (resourceGroup.size() == 0) {
+            return AuthResult.pass();
+        }
+
+        AuthResult authResult = AuthResult.pass();
+        for (Map.Entry<JobResourceTypeEnum, Set<String>> entry : resourceGroup.entrySet()) {
+            JobResourceTypeEnum resourceType = entry.getKey();
+            Set<String> resources = entry.getValue();
+            switch (resourceType) {
+                case APP_SCRIPT:
+                    authResult = authResult.mergeAuthResult(scriptAuthService.batchAuthResultManageScript(username,
+                        appResourceScope, new ArrayList<>(resources)));
+                    break;
+                case PUBLIC_SCRIPT:
+                    authResult = authResult.mergeAuthResult(
+                        noResourceScopeAuthService.batchAuthResultManagePublicScript(
+                            username, new ArrayList<>(resources)
+                        )
+                    );
+                    break;
+                case TEMPLATE:
+                    authResult = authResult.mergeAuthResult(
+                        templateAuthService.batchAuthResultEditJobTemplate(
+                            username, appResourceScope,
+                            resources.stream().map(Long::valueOf).collect(Collectors.toList())
+                        )
+                    );
+                    break;
+            }
+        }
+        return authResult;
     }
 
-    // 暂时未用到
-    private AuthResultVO checkCreateTagPermission(String username, Long appId) {
-        return authService.auth(true, username, ActionId.CREATE_TAG, ResourceTypeEnum.BUSINESS, appId.toString(), null);
+    private ValidateResult checkBatchPatchResourceTagReq(Long baseTagId, BatchPatchResourceTagReq req) {
+        if (CollectionUtils.isEmpty(req.getResourceTypeList())) {
+            log.warn("BatchPatchResourceTagReq->resourceTypeList is empty");
+            return ValidateResult.fail(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, "resourceTypeList");
+        }
+        if (CollectionUtils.isNotEmpty(req.getAddTagIdList())) {
+            req.getAddTagIdList().remove(baseTagId);
+        }
+        for (Integer resourceType : req.getResourceTypeList()) {
+            if (!isSupportResourceType(resourceType)) {
+                log.warn("BatchPatchResourceTagReq->resourceType is invalid. resourceType: {}", resourceType);
+                return ValidateResult.fail(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, "resourceTypeList");
+            }
+        }
+        if (CollectionUtils.isEmpty(req.getAddTagIdList()) && CollectionUtils.isEmpty(req.getDeleteTagIdList())) {
+            log.warn("BatchPatchResourceTagReq->No tags changed!");
+            return ValidateResult.fail(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME,
+                "addTagIdList|deleteTagIdList");
+        }
+        return ValidateResult.pass();
     }
 
-    private PathInfoDTO buildTagPathInfo(Long appId) {
-        return PathBuilder.newBuilder(ResourceTypeEnum.BUSINESS.getId(), appId.toString()).build();
+    private boolean isSupportResourceType(Integer resourceType) {
+        JobResourceTypeEnum resourceTypeEnum = JobResourceTypeEnum.valOf(resourceType);
+        return (resourceTypeEnum == JobResourceTypeEnum.APP_SCRIPT
+            || resourceTypeEnum == JobResourceTypeEnum.TEMPLATE);
+    }
+
+    private Map<JobResourceTypeEnum, Set<String>> filterAndClassifyResources(List<Integer> filterResourceTypes,
+                                                                             List<ResourceTagDTO> resourceTags) {
+        Map<JobResourceTypeEnum, Set<String>> resources = new HashMap<>();
+        resourceTags.stream().filter(resourceTag -> filterResourceTypes.contains(resourceTag.getResourceType()))
+            .forEach(resourceTag -> {
+                JobResourceTypeEnum resourceType = JobResourceTypeEnum.valOf(resourceTag.getResourceType());
+                resources.computeIfAbsent(resourceType, k -> new HashSet<>());
+                resources.get(resourceType).add(resourceTag.getResourceId());
+
+            });
+        return resources;
+    }
+
+    @Override
+    public Response<Boolean> checkTagName(String username,
+                                          AppResourceScope appResourceScope,
+                                          String scopeType,
+                                          String scopeId,
+                                          Long tagId,
+                                          String name) {
+        boolean isTagNameValid = tagService.checkTagName(appResourceScope.getAppId(), tagId, name);
+        return Response.buildSuccessResp(isTagNameValid);
     }
 }

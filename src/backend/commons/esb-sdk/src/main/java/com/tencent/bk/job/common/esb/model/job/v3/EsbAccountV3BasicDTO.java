@@ -24,25 +24,27 @@
 
 package com.tencent.bk.job.common.esb.model.job.v3;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import lombok.Data;
 
 /**
  * 账号信息
  */
 @Data
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class EsbAccountV3BasicDTO {
     /**
      * 账号ID
      */
+    @JsonPropertyDescription("Account id")
     private Long id;
     /**
      * 账号名称
      */
+    @JsonPropertyDescription("Account name")
     private String name;
     /**
      * 账号别名
      */
+    @JsonPropertyDescription("Account alias")
     private String alias;
 }

@@ -24,12 +24,13 @@
 
 package com.tencent.bk.job.manage.model.dto.task;
 
+import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.esb.util.EsbDTOAppScopeMappingHelper;
 import com.tencent.bk.job.common.exception.InvalidParamException;
-import com.tencent.bk.job.common.util.JobContextUtil;
 import com.tencent.bk.job.common.util.date.DateUtils;
-import com.tencent.bk.job.common.util.json.JsonMapper;
-import com.tencent.bk.job.manage.common.consts.task.TaskTemplateStatusEnum;
+import com.tencent.bk.job.manage.api.common.constants.task.TaskTemplateStatusEnum;
 import com.tencent.bk.job.manage.model.dto.TagDTO;
+import com.tencent.bk.job.manage.model.esb.v3.response.EsbTemplateInfoV3DTO;
 import com.tencent.bk.job.manage.model.inner.ServiceTaskTemplateDTO;
 import com.tencent.bk.job.manage.model.web.request.TaskTemplateCreateUpdateReq;
 import com.tencent.bk.job.manage.model.web.request.TemplateBasicInfoUpdateReq;
@@ -139,7 +140,9 @@ public class TaskTemplateInfoDTO {
         TaskTemplateVO templateVO = new TaskTemplateVO();
         templateVO.setId(templateInfo.getId());
         templateVO.setName(templateInfo.getName());
-        templateVO.setTags(templateInfo.getTags().stream().map(TagDTO::toVO).collect(Collectors.toList()));
+        if (CollectionUtils.isNotEmpty(templateInfo.getTags())) {
+            templateVO.setTags(templateInfo.getTags().stream().map(TagDTO::toVO).collect(Collectors.toList()));
+        }
         templateVO.setStatus(templateInfo.getStatus().getStatus());
         templateVO.setCreator(templateInfo.getCreator());
         templateVO.setCreateTime(templateInfo.getCreateTime());
@@ -165,12 +168,7 @@ public class TaskTemplateInfoDTO {
     public static TaskTemplateInfoDTO fromReq(String username, Long appId,
                                               TaskTemplateCreateUpdateReq templateCreateUpdateReq) {
 
-        log.debug("{}|Converting req to dto|{}|{}|{}", JobContextUtil.getRequestId(), username, appId,
-            JsonMapper.nonEmptyMapper().toJson(templateCreateUpdateReq));
         TaskTemplateInfoDTO templateInfo = fromBasicReq(username, appId, templateCreateUpdateReq);
-        if (templateInfo == null) {
-            return null;
-        }
         if (CollectionUtils.isNotEmpty(templateCreateUpdateReq.getSteps())) {
             templateInfo.setStepList(
                 templateCreateUpdateReq.getSteps().stream().map(TaskStepDTO::fromVO).collect(Collectors.toList()));
@@ -184,21 +182,15 @@ public class TaskTemplateInfoDTO {
             templateInfo.setVariableList(Collections.emptyList());
         }
 
-        log.debug("{}|Converting result|{}", JobContextUtil.getRequestId(),
-            JsonMapper.nonEmptyMapper().toJson(templateInfo));
         return templateInfo;
     }
 
     public static TaskTemplateInfoDTO fromBasicReq(String username, Long appId,
                                                    TemplateBasicInfoUpdateReq templateBasicInfoUpdateReq) {
-        if (templateBasicInfoUpdateReq == null) {
-            throw new InvalidParamException("put body", "body cannot be null");
-        }
         if (appId == null || appId <= 0) {
-            throw new InvalidParamException("appId", "appId must be a positive integer");
+            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
         }
-        log.debug("{}|Converting req to dto|{}|{}|{}", JobContextUtil.getRequestId(), username, appId,
-            JsonMapper.nonEmptyMapper().toJson(templateBasicInfoUpdateReq));
+
         TaskTemplateInfoDTO templateInfo = new TaskTemplateInfoDTO();
         templateInfo.setAppId(appId);
         templateInfo.setLastModifyUser(username);
@@ -219,8 +211,6 @@ public class TaskTemplateInfoDTO {
             templateInfo.setTags(Collections.emptyList());
         }
 
-        log.debug("{}|Converting result|{}", JobContextUtil.getRequestId(),
-            JsonMapper.nonEmptyMapper().toJson(templateInfo));
         return templateInfo;
     }
 
@@ -232,8 +222,10 @@ public class TaskTemplateInfoDTO {
         serviceTemplate.setId(templateInfo.getId());
         serviceTemplate.setAppId(templateInfo.getAppId());
         serviceTemplate.setName(templateInfo.getName());
-        serviceTemplate.setTags(templateInfo.getTags().stream()
-            .map(TagDTO::toServiceDTO).collect(Collectors.toList()));
+        if (CollectionUtils.isNotEmpty(templateInfo.getTags())) {
+            serviceTemplate.setTags(templateInfo.getTags().stream()
+                .map(TagDTO::toServiceDTO).collect(Collectors.toList()));
+        }
         serviceTemplate.setStatus(templateInfo.getStatus().getStatus());
         serviceTemplate.setCreator(templateInfo.getCreator());
         serviceTemplate.setCreateTime(templateInfo.getCreateTime());
@@ -255,5 +247,33 @@ public class TaskTemplateInfoDTO {
                     .map(TaskStepDTO::toServiceDTO).collect(Collectors.toList()));
         }
         return serviceTemplate;
+    }
+
+    public static EsbTemplateInfoV3DTO toEsbTemplateInfoV3DTO(TaskTemplateInfoDTO templateInfo) {
+        if (templateInfo == null) {
+            return null;
+        }
+        EsbTemplateInfoV3DTO template = new EsbTemplateInfoV3DTO();
+        template.setId(templateInfo.getId());
+        EsbDTOAppScopeMappingHelper.fillEsbAppScopeDTOByAppId(templateInfo.getAppId(), template);
+        template.setName(templateInfo.getName());
+        template.setCreator(templateInfo.getCreator());
+        template.setCreateTime(templateInfo.getCreateTime());
+        template.setLastModifyUser(templateInfo.getLastModifyUser());
+        template.setLastModifyTime(templateInfo.getLastModifyTime());
+        template.setDescription(templateInfo.getDescription());
+
+        if (CollectionUtils.isNotEmpty(templateInfo.getVariableList())) {
+            template.setGlobalVarList(
+                templateInfo.getVariableList().stream()
+                    .map(TaskVariableDTO::toEsbGlobalVarV3).collect(Collectors.toList()));
+        }
+
+        if (CollectionUtils.isNotEmpty(templateInfo.getStepList())) {
+            template
+                .setStepList(templateInfo.getStepList().stream()
+                    .map(TaskStepDTO::toEsbStepV3).collect(Collectors.toList()));
+        }
+        return template;
     }
 }

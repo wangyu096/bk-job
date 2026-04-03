@@ -24,15 +24,15 @@
 
 package com.tencent.bk.job.file_gateway.service;
 
-import com.tencent.bk.job.ticket.model.credential.CommonCredentialDTO;
+import com.tencent.bk.job.common.model.dto.CommonCredential;
 
 
 public interface CredentialService {
     /**
-     * 获取凭据
+     * 获取凭证
      *
      * @param id
      * @return
      */
-    CommonCredentialDTO getCredentialById(Long appId, String id);
+    CommonCredential getCredentialById(Long appId, String id);
 }

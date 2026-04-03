@@ -24,32 +24,72 @@
 
 package com.tencent.bk.job.common.esb.model.job;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.tencent.bk.job.common.model.dto.ApplicationHostInfoDTO;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.tencent.bk.job.common.model.dto.ApplicationHostDTO;
 import com.tencent.bk.job.common.model.dto.HostDTO;
-import lombok.AllArgsConstructor;
+import com.tencent.bk.job.common.util.ip.IpUtils;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+
 @Setter
 @Getter
-@JsonInclude(JsonInclude.Include.NON_NULL)
 @NoArgsConstructor
-@AllArgsConstructor
 public class EsbIpDTO {
+
+    @JsonProperty("bk_host_id")
+    @JsonPropertyDescription("Host id")
+    private Long hostId;
+
     @JsonProperty("bk_cloud_id")
-    private Long cloudAreaId;
+    @NotNull(message = "{validation.constraints.InvalidBkCloudId.message}")
+    @Min(value = 0L, message = "{validation.constraints.InvalidBkCloudId.message}")
+    @JsonPropertyDescription("BK-Network Area")
+    private Long bkCloudId;
+
+    @JsonProperty("bk_cloud_name")
+    @JsonPropertyDescription("BK-Network Area Name")
+    private String bkCloudName;
+
+    @JsonProperty("ip")
+    @Pattern(regexp = "\\b((?!\\d\\d\\d)\\d+|1\\d\\d|2[0-4]\\d|25[0-5])\\.((?!\\d\\d\\d)" +
+        "\\d+|1\\d\\d|2[0-4]\\d|25[0-5])\\.((?!\\d\\d\\d)\\d+|1\\d\\d|2[0-4]\\d|25[0-5])\\.((?!\\d\\d\\d)" +
+        "\\d+|1\\d\\d|2[0-4]\\d|25[0-5])\\b",
+        message = "{validation.constraints.InvalidIp.message}")
+    @JsonPropertyDescription("ip")
     private String ip;
 
-    public static EsbIpDTO fromApplicationHostInfo(ApplicationHostInfoDTO applicationHostInfo) {
+    @JsonProperty("ipv6")
+    @JsonPropertyDescription("ipv6")
+    private String ipv6;
+
+    @JsonProperty("bk_agent_id")
+    @JsonPropertyDescription("Agent Id")
+    private String agentId;
+
+    @JsonProperty("alive")
+    @JsonPropertyDescription("Agent是否正常")
+    private Integer alive;
+
+    public EsbIpDTO(Long hostId, Long bkCloudId, String ip) {
+        this.hostId = hostId;
+        this.bkCloudId = bkCloudId;
+        this.ip = ip;
+    }
+
+    public static EsbIpDTO fromApplicationHostInfo(ApplicationHostDTO applicationHostInfo) {
         if (applicationHostInfo == null) {
             return null;
         }
         EsbIpDTO esbIp = new EsbIpDTO();
-        esbIp.setCloudAreaId(applicationHostInfo.getCloudAreaId());
+        esbIp.setBkCloudId(applicationHostInfo.getCloudAreaId());
         esbIp.setIp(applicationHostInfo.getIp());
+        esbIp.setHostId(applicationHostInfo.getHostId());
         return esbIp;
     }
 
@@ -58,8 +98,24 @@ public class EsbIpDTO {
             return null;
         }
         EsbIpDTO esbIp = new EsbIpDTO();
-        esbIp.setCloudAreaId(host.getCloudAreaId());
+        esbIp.setBkCloudId(host.getBkCloudId());
+        esbIp.setBkCloudName(host.getBkCloudName());
         esbIp.setIp(host.getIp());
+        esbIp.setIpv6(host.getIpv6());
+        esbIp.setHostId(host.getHostId());
+        esbIp.setAgentId(host.getAgentId());
+        esbIp.setAlive(host.getAlive());
         return esbIp;
+    }
+
+    public static EsbIpDTO fromCloudIp(String cloudIp) {
+        if (!IpUtils.checkCloudIp(cloudIp)) {
+            return null;
+        }
+        String[] ipProps = cloudIp.split(IpUtils.COLON);
+        EsbIpDTO host = new EsbIpDTO();
+        host.setBkCloudId(Long.valueOf(ipProps[0]));
+        host.setIp(ipProps[1]);
+        return host;
     }
 }

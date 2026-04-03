@@ -24,15 +24,15 @@
 
 package com.tencent.bk.job.file_gateway.api.remote;
 
-import com.tencent.bk.job.common.model.ServiceResponse;
-import com.tencent.bk.job.file_gateway.consts.TaskStatusEnum;
+import com.tencent.bk.job.common.model.Response;
+import com.tencent.bk.job.file_gateway.model.dto.FileTaskProgressDTO;
 import com.tencent.bk.job.file_gateway.model.dto.FileWorkerDTO;
 import com.tencent.bk.job.file_gateway.model.req.inner.HeartBeatReq;
 import com.tencent.bk.job.file_gateway.model.req.inner.OffLineAndReDispatchReq;
 import com.tencent.bk.job.file_gateway.model.req.inner.UpdateFileSourceTaskReq;
 import com.tencent.bk.job.file_gateway.service.FileSourceTaskService;
 import com.tencent.bk.job.file_gateway.service.FileWorkerService;
-import com.tencent.bk.job.file_gateway.service.ReDispatchService;
+import com.tencent.bk.job.file_gateway.service.dispatch.ReDispatchService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
@@ -58,31 +58,25 @@ public class RemoteFileWorkerResourceImpl implements RemoteFileWorkerResource {
     }
 
     @Override
-    public ServiceResponse<Long> heartBeat(HeartBeatReq heartBeatReq) {
+    public Response<Long> heartBeat(HeartBeatReq heartBeatReq) {
         log.info("Input=(heartBeatReq={})", heartBeatReq.toString());
-        return ServiceResponse.buildSuccessResp(fileWorkerService.heartBeat(FileWorkerDTO.fromReq(heartBeatReq)));
+        return Response.buildSuccessResp(fileWorkerService.heartBeat(FileWorkerDTO.fromReq(heartBeatReq)));
     }
 
     @Override
-    public ServiceResponse<String> updateFileSourceTask(UpdateFileSourceTaskReq updateFileSourceTaskReq) {
-        log.debug("Input=({})", updateFileSourceTaskReq);
-        String taskId = updateFileSourceTaskReq.getFileSourceTaskId();
-        String filePath = updateFileSourceTaskReq.getFilePath();
-        String downloadPath = updateFileSourceTaskReq.getDownloadPath();
-        Long fileSize = updateFileSourceTaskReq.getFileSize();
-        String speed = updateFileSourceTaskReq.getSpeed();
-        Integer progress = updateFileSourceTaskReq.getProgress();
-        String content = updateFileSourceTaskReq.getContent();
-        TaskStatusEnum status = updateFileSourceTaskReq.getStatus();
-        return ServiceResponse.buildSuccessResp(fileSourceTaskService.updateFileSourceTask(taskId, filePath,
-            downloadPath, fileSize, speed, progress, content, status));
+    public Response<String> updateFileSourceTask(UpdateFileSourceTaskReq updateFileSourceTaskReq) {
+        log.info("updateFileSourceTaskReq=({})", updateFileSourceTaskReq);
+        FileTaskProgressDTO fileTaskProgressDTO =
+            FileTaskProgressDTO.fromUpdateFileSourceTaskReq(updateFileSourceTaskReq);
+        return Response.buildSuccessResp(fileSourceTaskService.updateFileSourceTask(fileTaskProgressDTO));
     }
 
     @Override
-    public ServiceResponse<List<String>> offLineAndReDispatch(OffLineAndReDispatchReq offLineAndReDispatchReq) {
-        return ServiceResponse.buildSuccessResp(
+    public Response<List<String>> offLineAndReDispatch(OffLineAndReDispatchReq offLineAndReDispatchReq) {
+        return Response.buildSuccessResp(
             reDispatchService.reDispatchByWorker(
-                offLineAndReDispatchReq.getWorkerId(),
+                offLineAndReDispatchReq.getAccessHost(),
+                offLineAndReDispatchReq.getAccessPort(),
                 offLineAndReDispatchReq.getTaskIdList(),
                 offLineAndReDispatchReq.getInitDelayMills(),
                 offLineAndReDispatchReq.getIntervalMills())

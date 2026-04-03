@@ -24,14 +24,14 @@
 
 package com.tencent.bk.job.manage.dao.customsetting.impl;
 
-import com.tencent.bk.job.manage.common.util.JooqDataTypeUtil;
+import com.tencent.bk.job.common.mysql.util.JooqDataTypeUtil;
 import com.tencent.bk.job.manage.dao.customsetting.CustomScriptTemplateDAO;
 import com.tencent.bk.job.manage.model.dto.customsetting.ScriptTemplateDTO;
+import com.tencent.bk.job.manage.model.tables.UserCustomScriptTemplate;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.DSLContext;
 import org.jooq.Record;
 import org.jooq.Result;
-import org.jooq.generated.tables.UserCustomScriptTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
@@ -44,7 +44,7 @@ import java.util.List;
 public class CustomScriptTemplateDAOImpl implements CustomScriptTemplateDAO {
 
     private final UserCustomScriptTemplate TB = UserCustomScriptTemplate.USER_CUSTOM_SCRIPT_TEMPLATE;
-    private DSLContext ctx;
+    private final DSLContext ctx;
 
     @Autowired
     public CustomScriptTemplateDAOImpl(@Qualifier("job-manage-dsl-context") DSLContext ctx) {
@@ -66,10 +66,10 @@ public class CustomScriptTemplateDAOImpl implements CustomScriptTemplateDAO {
         return scriptTemplates;
     }
 
-    private ScriptTemplateDTO extractScriptTemplate(Record result) {
+    private ScriptTemplateDTO extractScriptTemplate(Record record) {
         ScriptTemplateDTO scriptTemplate = new ScriptTemplateDTO();
-        scriptTemplate.setScriptLanguage(result.get(TB.SCRIPT_LANGUAGE).intValue());
-        scriptTemplate.setScriptContent(result.get(TB.SCRIPT_CONTENT, String.class));
+        scriptTemplate.setScriptLanguage(record.get(TB.SCRIPT_LANGUAGE).intValue());
+        scriptTemplate.setScriptContent(record.get(TB.SCRIPT_CONTENT, String.class));
         return scriptTemplate;
     }
 

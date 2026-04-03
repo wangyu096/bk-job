@@ -25,27 +25,36 @@
 package com.tencent.bk.job.manage.api.web.impl;
 
 import com.google.common.base.CaseFormat;
+import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.annotations.AuditRequestBody;
+import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.constant.JobResourceTypeEnum;
+import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.NotFoundException;
 import com.tencent.bk.job.common.iam.constant.ActionId;
-import com.tencent.bk.job.common.iam.constant.ResourceId;
-import com.tencent.bk.job.common.iam.constant.ResourceTypeEnum;
-import com.tencent.bk.job.common.iam.service.WebAuthService;
+import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
-import com.tencent.bk.job.common.model.ServiceResponse;
-import com.tencent.bk.job.common.model.permission.AuthResultVO;
-import com.tencent.bk.job.common.util.JobContextUtil;
-import com.tencent.bk.job.common.util.json.JsonUtils;
-import com.tencent.bk.job.common.web.controller.AbstractJobController;
+import com.tencent.bk.job.common.model.Response;
+import com.tencent.bk.job.common.model.ValidateResult;
+import com.tencent.bk.job.common.model.dto.AppResourceScope;
+import com.tencent.bk.job.common.mysql.JobTransactional;
+import com.tencent.bk.job.manage.api.common.constants.TemplateTypeEnum;
+import com.tencent.bk.job.manage.api.common.constants.task.TaskTemplateStatusEnum;
 import com.tencent.bk.job.manage.api.web.WebTaskTemplateResource;
-import com.tencent.bk.job.manage.common.consts.TemplateTypeEnum;
-import com.tencent.bk.job.manage.common.consts.task.TaskTemplateStatusEnum;
-import com.tencent.bk.job.manage.common.util.IamPathUtil;
+import com.tencent.bk.job.manage.auth.TemplateAuthService;
+import com.tencent.bk.job.manage.manager.variable.StepRefVariableParser;
+import com.tencent.bk.job.manage.model.dto.ResourceTagDTO;
 import com.tencent.bk.job.manage.model.dto.TagDTO;
 import com.tencent.bk.job.manage.model.dto.task.TaskTemplateInfoDTO;
+import com.tencent.bk.job.manage.model.query.TaskTemplateQuery;
 import com.tencent.bk.job.manage.model.web.request.TaskTemplateCreateUpdateReq;
 import com.tencent.bk.job.manage.model.web.request.TemplateBasicInfoUpdateReq;
+import com.tencent.bk.job.manage.model.web.request.TemplateTagBatchPatchReq;
 import com.tencent.bk.job.manage.model.web.vo.TagCountVO;
 import com.tencent.bk.job.manage.model.web.vo.task.TaskTemplateVO;
+import com.tencent.bk.job.manage.service.TagService;
 import com.tencent.bk.job.manage.service.TaskFavoriteService;
 import com.tencent.bk.job.manage.service.auth.TaskTemplateAuthService;
 import com.tencent.bk.job.manage.service.template.TaskTemplateService;
@@ -54,119 +63,110 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * @since 16/10/2019 16:16
+ * 作业模板Resource
  */
 @Slf4j
 @RestController
-public class WebTaskTemplateResourceImpl extends AbstractJobController implements WebTaskTemplateResource {
+public class WebTaskTemplateResourceImpl implements WebTaskTemplateResource {
 
     private final TaskTemplateService templateService;
     private final TaskFavoriteService taskFavoriteService;
-    private final WebAuthService authService;
     private final TaskTemplateAuthService taskTemplateAuthService;
+    private final TagService tagService;
+    private final TemplateAuthService templateAuthService;
 
     @Autowired
     public WebTaskTemplateResourceImpl(
         TaskTemplateService templateService,
         @Qualifier("TaskTemplateFavoriteServiceImpl") TaskFavoriteService taskFavoriteService,
-        WebAuthService authService,
-        TaskTemplateAuthService taskTemplateAuthService
-    ) {
+        TaskTemplateAuthService taskTemplateAuthService,
+        TagService tagService,
+        TemplateAuthService templateAuthService) {
         this.templateService = templateService;
         this.taskFavoriteService = taskFavoriteService;
-        this.authService = authService;
+        this.templateAuthService = templateAuthService;
         this.taskTemplateAuthService = taskTemplateAuthService;
+        this.tagService = tagService;
     }
 
     @Override
-    public ServiceResponse<PageData<TaskTemplateVO>> listTemplates(
-        String username,
-        Long appId,
-        Long templateId,
-        String name,
-        Integer status,
-        String tags,
-        Long panelTag,
-        Integer type,
-        String creator,
-        String lastModifyUser,
-        Integer start,
-        Integer pageSize,
-        String orderField,
-        Integer order
-    ) {
-        AuthResultVO authResultVO = authService.auth(true, username, ActionId.LIST_BUSINESS,
-            ResourceTypeEnum.BUSINESS, appId.toString(), null);
-        if (!authResultVO.isPass()) {
-            return ServiceResponse.buildAuthFailResp(authResultVO);
-        }
+    public Response<PageData<TaskTemplateVO>> listPageTemplates(String username,
+                                                                AppResourceScope appResourceScope,
+                                                                String scopeType,
+                                                                String scopeId,
+                                                                Long templateId,
+                                                                String name,
+                                                                Integer status,
+                                                                String tags,
+                                                                Long panelTag,
+                                                                Integer type,
+                                                                String creator,
+                                                                String lastModifyUser,
+                                                                Integer start,
+                                                                Integer pageSize,
+                                                                String orderField,
+                                                                Integer order) {
 
+        Long appId = appResourceScope.getAppId();
         List<Long> favoriteList = taskFavoriteService.listFavorites(appId, username);
 
-        TaskTemplateInfoDTO taskTemplateCondition = new TaskTemplateInfoDTO();
-        taskTemplateCondition.setAppId(appId);
-        taskTemplateCondition.setName(name);
-        if (templateId != null && templateId > 0) {
-            taskTemplateCondition.setId(templateId);
-            tags = null;
-            panelTag = null;
-            type = null;
-        }
-        if (status != null) {
-            taskTemplateCondition.setStatus(TaskTemplateStatusEnum.valueOf(status));
-        }
-        if (StringUtils.isNotBlank(tags)) {
-            taskTemplateCondition.setTags(Arrays.stream(tags.split(",")).map(tag -> {
-                TagDTO tagInfo = new TagDTO();
-                long tagId;
-                try {
-                    tagId = Long.parseLong(tag);
-                } catch (NumberFormatException e) {
-                    return null;
-                }
-                tagInfo.setId(tagId);
-                return tagInfo;
-            }).filter(Objects::nonNull).collect(Collectors.toList()));
-        }
-        if (panelTag != null && panelTag > 0) {
-            // Frontend need additional param to tell where the tag from
-            TagDTO tagInfo = new TagDTO();
-            tagInfo.setId(panelTag);
-            if (CollectionUtils.isEmpty(taskTemplateCondition.getTags())) {
-                taskTemplateCondition.setTags(Collections.singletonList(tagInfo));
-            } else {
-                taskTemplateCondition.getTags().add(tagInfo);
-            }
+        TaskTemplateQuery query = buildTaskTemplateQuery(appId, name, templateId, status, tags, panelTag, type,
+            start, pageSize, creator, lastModifyUser, orderField, order);
+
+        PageData<TaskTemplateInfoDTO> templateInfoPageData =
+            templateService.listPageTaskTemplatesBasicInfo(query, favoriteList);
+        List<TaskTemplateVO> resultTemplates = new ArrayList<>();
+        if (templateInfoPageData != null) {
+            templateInfoPageData.getData().forEach(templateInfo ->
+                resultTemplates.add(TaskTemplateInfoDTO.toVO(templateInfo)));
+        } else {
+            throw new NotFoundException(ErrorCode.TEMPLATE_NOT_EXIST);
         }
 
+        resultTemplates.forEach(taskTemplate ->
+            taskTemplate.setFavored(favoriteList.contains(taskTemplate.getId()) ? 1 : 0));
+
+        PageData<TaskTemplateVO> resultPageData = new PageData<>();
+        resultPageData.setStart(templateInfoPageData.getStart());
+        resultPageData.setPageSize(templateInfoPageData.getPageSize());
+        resultPageData.setTotal(templateInfoPageData.getTotal());
+        resultPageData.setData(resultTemplates);
+        resultPageData.setExistAny(templateService.isExistAnyAppTemplate(appId));
+
+        taskTemplateAuthService.processTemplatePermission(username, appResourceScope, resultPageData);
+
+        return Response.buildSuccessResp(resultPageData);
+    }
+
+    private TaskTemplateQuery buildTaskTemplateQuery(Long appId, String name, Long templateId, Integer status,
+                                                     String tags,
+                                                     Long panelTag, Integer type, Integer start, Integer pageSize,
+                                                     String creator,
+                                                     String lastModifyUser, String orderField, Integer order) {
+        TaskTemplateQuery query = TaskTemplateQuery.builder().appId(appId).name(name).id(templateId).build();
+
+        if (status != null) {
+            query.setStatus(TaskTemplateStatusEnum.valueOf(status));
+        }
+        addTagCondition(query, tags, panelTag);
+
         // Process type
-        taskTemplateCondition.setScriptStatus(null);
+        query.setScriptStatus(null);
         if (type != null) {
-            if (TemplateTypeEnum.ALL_TEMPLATE.getValue() == type) {
-                // Delete by request
-                // taskTemplateCondition.setTags(null);
-            } else if (TemplateTypeEnum.UNCLASSIFIED.getValue() == type) {
-                TagDTO tagDTO = new TagDTO();
-                tagDTO.setId(0L);
-                if (CollectionUtils.isNotEmpty(taskTemplateCondition.getTags())) {
-                    PageData<TaskTemplateVO> emptyResult = new PageData<>();
-                    emptyResult.setStart(start);
-                    emptyResult.setPageSize(pageSize);
-                    emptyResult.setTotal(0L);
-                    emptyResult.setData(Collections.emptyList());
-                    return ServiceResponse.buildSuccessResp(emptyResult);
-                } else {
-                    taskTemplateCondition.setTags(Collections.singletonList(tagDTO));
-                }
+            if (TemplateTypeEnum.UNCLASSIFIED.getValue() == type) {
+                query.setUntaggedTemplate(true);
             } else if (TemplateTypeEnum.NEED_UPDATE.getValue() == type) {
-                taskTemplateCondition.setScriptStatus(0b11);
+                query.setScriptStatus(0b11);
             }
         }
 
@@ -183,183 +183,235 @@ public class WebTaskTemplateResourceImpl extends AbstractJobController implement
             baseSearchCondition.setOrderField(CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, orderField));
         }
         baseSearchCondition.setOrder(order);
-        PageData<TaskTemplateInfoDTO> templateInfoPageData =
-            templateService.listPageTaskTemplatesBasicInfo(taskTemplateCondition, baseSearchCondition, favoriteList);
-        List<TaskTemplateVO> resultTemplates = new ArrayList<>();
-        if (templateInfoPageData != null) {
-            templateInfoPageData.getData().forEach(templateInfo ->
-                resultTemplates.add(TaskTemplateInfoDTO.toVO(templateInfo)));
-        } else {
-            return ServiceResponse.buildCommonFailResp("No template info found!");
+        query.setBaseSearchCondition(baseSearchCondition);
+        return query;
+    }
+
+    private void addTagCondition(TaskTemplateQuery query, String tags, Long panelTagId) {
+        if (StringUtils.isNotBlank(tags)) {
+            query.setTags(Arrays.stream(tags.split(",")).map(tag -> {
+                TagDTO tagInfo = new TagDTO();
+                long tagId;
+                try {
+                    tagId = Long.parseLong(tag);
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+                tagInfo.setId(tagId);
+                return tagInfo;
+            }).filter(Objects::nonNull).collect(Collectors.toList()));
         }
-
-        resultTemplates.forEach(taskTemplate -> {
-            taskTemplate.setFavored(favoriteList.contains(taskTemplate.getId()) ? 1 : 0);
-        });
-
-        PageData<TaskTemplateVO> resultPageData = new PageData<>();
-        resultPageData.setStart(templateInfoPageData.getStart());
-        resultPageData.setPageSize(templateInfoPageData.getPageSize());
-        resultPageData.setTotal(templateInfoPageData.getTotal());
-        resultPageData.setData(resultTemplates);
-        resultPageData.setExistAny(templateService.isExistAnyAppTemplate(appId));
-
-        taskTemplateAuthService.processTemplatePermission(username, appId, resultPageData);
-
-        ServiceResponse<PageData<TaskTemplateVO>> resp = ServiceResponse.buildSuccessResp(resultPageData);
-
-        return resp;
+        if (panelTagId != null && panelTagId > 0) {
+            // Frontend need additional param to tell where the tag from
+            TagDTO tagInfo = new TagDTO();
+            tagInfo.setId(panelTagId);
+            if (CollectionUtils.isEmpty(query.getTags())) {
+                query.setTags(Collections.singletonList(tagInfo));
+            } else {
+                query.getTags().add(tagInfo);
+            }
+        }
     }
 
     @Override
-    public ServiceResponse<TaskTemplateVO> getTemplateById(String username, Long appId, Long templateId) {
-        AuthResultVO authResultVO = authService.auth(true, username, ActionId.VIEW_JOB_TEMPLATE,
-            ResourceTypeEnum.TEMPLATE, templateId.toString(), IamPathUtil.buildTemplatePathInfo(appId));
-        if (!authResultVO.isPass()) {
-            return ServiceResponse.buildAuthFailResp(authResultVO);
-        }
-        TaskTemplateInfoDTO templateInfo = templateService.getTaskTemplateById(appId, templateId);
-        if (templateInfo == null) {
-            return ServiceResponse.buildCommonFailResp(1, "Not found");
-        }
+    @AuditEntry(actionId = ActionId.VIEW_JOB_TEMPLATE)
+    public Response<TaskTemplateVO> getTemplateById(String username,
+                                                    AppResourceScope appResourceScope,
+                                                    String scopeType,
+                                                    String scopeId,
+                                                    Long templateId) {
+        TaskTemplateInfoDTO templateInfo = templateService.getTaskTemplate(username,
+            appResourceScope.getAppId(), templateId);
+
+        StepRefVariableParser.parseStepRefVars(templateInfo.getStepList(), templateInfo.getVariableList());
 
         TaskTemplateVO taskTemplateVO = TaskTemplateInfoDTO.toVO(templateInfo);
         taskTemplateVO.setCanView(true);
-        taskTemplateVO.setCanEdit(authService.auth(false, username, ActionId.EDIT_JOB_TEMPLATE,
-            ResourceTypeEnum.TEMPLATE, templateId.toString(), IamPathUtil.buildTemplatePathInfo(appId)).isPass());
-        taskTemplateVO.setCanDelete(authService.auth(false, username, ActionId.DELETE_JOB_TEMPLATE,
-            ResourceTypeEnum.TEMPLATE, templateId.toString(), IamPathUtil.buildTemplatePathInfo(appId)).isPass());
+        taskTemplateVO.setCanEdit(templateAuthService.authEditJobTemplate(username, appResourceScope,
+            templateId).isPass());
+        taskTemplateVO.setCanDelete(templateAuthService.authDeleteJobTemplate(username, appResourceScope,
+            templateId).isPass());
         taskTemplateVO.setCanDebug(true);
-        taskTemplateVO.setCanClone(taskTemplateVO.getCanView() && authService
-            .auth(false, username, ActionId.CREATE_JOB_TEMPLATE,
-                ResourceTypeEnum.BUSINESS, appId.toString(), null)
-            .isPass());
+        taskTemplateVO.setCanClone(taskTemplateVO.getCanView()
+            && templateAuthService.authCreateJobTemplate(username, appResourceScope).isPass());
 
-        ServiceResponse<TaskTemplateVO> resp = ServiceResponse.buildSuccessResp(taskTemplateVO);
-        return resp;
+        return Response.buildSuccessResp(taskTemplateVO);
     }
 
     @Override
-    public ServiceResponse<Long> saveTemplate(String username, Long appId, Long templateId,
-                                              TaskTemplateCreateUpdateReq taskTemplateCreateUpdateReq) {
-        AuthResultVO authResultVO;
-        if (templateId > 0) {
-            taskTemplateCreateUpdateReq.setId(templateId);
-            authResultVO = authService.auth(true, username, ActionId.EDIT_JOB_TEMPLATE,
-                ResourceTypeEnum.TEMPLATE, templateId.toString(), IamPathUtil.buildTemplatePathInfo(appId));
-        } else {
-            authResultVO = authService.auth(true, username,
-                ActionId.CREATE_JOB_TEMPLATE, ResourceTypeEnum.BUSINESS,
-                appId.toString(), null);
-        }
-        if (!authResultVO.isPass()) {
-            return ServiceResponse.buildAuthFailResp(authResultVO);
-        }
-        if (taskTemplateCreateUpdateReq.validate()) {
-            Long finalTemplateId = templateService
-                .saveTaskTemplate(TaskTemplateInfoDTO.fromReq(username, appId, taskTemplateCreateUpdateReq));
-            authService.registerResource(finalTemplateId.toString(), taskTemplateCreateUpdateReq.getName(),
-                ResourceId.TEMPLATE, username, null);
-            return ServiceResponse.buildSuccessResp(finalTemplateId);
-        } else {
-            return ServiceResponse
-                .buildCommonFailResp("Valid param failed!" + JsonUtils.toJson(JobContextUtil.getDebugMessage()));
-        }
+    @AuditEntry(
+        actionId = ActionId.CREATE_JOB_TEMPLATE
+    )
+    public Response<TaskTemplateVO> createTemplate(String username,
+                                                   AppResourceScope appResourceScope,
+                                                   String scopeType,
+                                                   String scopeId,
+                                                   @AuditRequestBody TaskTemplateCreateUpdateReq request) {
+
+        request.validate();
+
+        TaskTemplateInfoDTO createdTemplate = templateService.saveTaskTemplate(username,
+            TaskTemplateInfoDTO.fromReq(username, appResourceScope.getAppId(), request));
+        return Response.buildSuccessResp(TaskTemplateInfoDTO.toVO(createdTemplate));
     }
 
     @Override
-    @Transactional(rollbackFor = {Exception.class, Error.class})
-    public ServiceResponse<Boolean> deleteTemplate(String username, Long appId, Long templateId) {
-        AuthResultVO authResultVO = authService.auth(true, username, ActionId.DELETE_JOB_TEMPLATE,
-            ResourceTypeEnum.TEMPLATE, templateId.toString(), IamPathUtil.buildTemplatePathInfo(appId));
-        if (!authResultVO.isPass()) {
-            return ServiceResponse.buildAuthFailResp(authResultVO);
-        }
-        if (templateService.deleteTaskTemplate(appId, templateId)) {
-            taskFavoriteService.deleteFavorite(appId, username, templateId);
-            return ServiceResponse.buildSuccessResp(true);
-        }
-        return ServiceResponse.buildSuccessResp(false);
+    @JobTransactional(transactionManager = "jobManageTransactionManager")
+    @AuditEntry(
+        actionId = ActionId.DELETE_JOB_TEMPLATE,
+        subActionIds = {ActionId.DELETE_JOB_PLAN}
+    )
+    public Response<Boolean> deleteTemplate(String username,
+                                            AppResourceScope appResourceScope,
+                                            String scopeType,
+                                            String scopeId,
+                                            Long templateId) {
+
+        Long appId = appResourceScope.getAppId();
+        templateService.deleteTaskTemplate(username, appId, templateId);
+        taskFavoriteService.deleteFavorite(appId, username, templateId);
+
+        return Response.buildSuccessResp(true);
     }
 
     @Override
-    public ServiceResponse<TagCountVO> getTagTemplateCount(String username, Long appId) {
-        AuthResultVO authResultVO = authService.auth(true, username, ActionId.LIST_BUSINESS,
-            ResourceTypeEnum.BUSINESS, appId.toString(), null);
-        if (!authResultVO.isPass()) {
-            return ServiceResponse.buildAuthFailResp(authResultVO);
-        }
-        return ServiceResponse.buildSuccessResp(templateService.getTagTemplateCount(appId));
+    @AuditEntry(
+        actionId = ActionId.EDIT_JOB_TEMPLATE
+    )
+    public Response<TaskTemplateVO> updateTemplate(String username,
+                                                   AppResourceScope appResourceScope,
+                                                   String scopeType,
+                                                   String scopeId,
+                                                   Long templateId,
+                                                   @AuditRequestBody TaskTemplateCreateUpdateReq request) {
+        request.setId(templateId);
+        request.validate();
+
+        TaskTemplateInfoDTO updatedTemplate = templateService.updateTaskTemplate(
+            username, TaskTemplateInfoDTO.fromReq(username, appResourceScope.getAppId(), request));
+
+        return Response.buildSuccessResp(TaskTemplateInfoDTO.toVO(updatedTemplate));
     }
 
     @Override
-    public ServiceResponse<Boolean> updateTemplateBasicInfo(String username, Long appId, Long templateId,
-                                                            TemplateBasicInfoUpdateReq templateBasicInfoUpdateReq) {
-        if (templateId > 0) {
-            templateBasicInfoUpdateReq.setId(templateId);
-        } else {
-            return ServiceResponse.buildCommonFailResp("Missing template id!");
-        }
-        AuthResultVO authResultVO = authService.auth(true, username, ActionId.EDIT_JOB_TEMPLATE,
-            ResourceTypeEnum.TEMPLATE, templateId.toString(), IamPathUtil.buildTemplatePathInfo(appId));
-        if (!authResultVO.isPass()) {
-            return ServiceResponse.buildAuthFailResp(authResultVO);
-        }
-        return ServiceResponse.buildSuccessResp(templateService
-            .saveTaskTemplateBasicInfo(TaskTemplateInfoDTO.fromBasicReq(username, appId, templateBasicInfoUpdateReq)));
+    public Response<TagCountVO> getTagTemplateCount(String username,
+                                                    AppResourceScope appResourceScope,
+                                                    String scopeType,
+                                                    String scopeId) {
+
+        return Response.buildSuccessResp(templateService.getTagTemplateCount(appResourceScope.getAppId()));
     }
 
     @Override
-    public ServiceResponse<Boolean> addFavorite(String username, Long appId, Long templateId) {
-        AuthResultVO authResultVO = authService.auth(true, username, ActionId.LIST_BUSINESS,
-            ResourceTypeEnum.BUSINESS, appId.toString(), null);
-        if (!authResultVO.isPass()) {
-            return ServiceResponse.buildAuthFailResp(authResultVO);
-        }
-        return ServiceResponse.buildSuccessResp(taskFavoriteService.addFavorite(appId, username, templateId));
+    @AuditEntry(
+        actionId = ActionId.EDIT_JOB_TEMPLATE
+    )
+    public Response<Boolean> updateTemplateBasicInfo(String username,
+                                                     AppResourceScope appResourceScope,
+                                                     String scopeType,
+                                                     String scopeId,
+                                                     Long templateId,
+                                                     @AuditRequestBody TemplateBasicInfoUpdateReq request) {
+        templateService.saveTaskTemplateBasicInfo(username,
+            TaskTemplateInfoDTO.fromBasicReq(username, appResourceScope.getAppId(), request));
+        return Response.buildSuccessResp(true);
     }
 
     @Override
-    public ServiceResponse<Boolean> removeFavorite(String username, Long appId, Long templateId) {
-        AuthResultVO authResultVO = authService.auth(true, username, ActionId.LIST_BUSINESS,
-            ResourceTypeEnum.BUSINESS, appId.toString(), null);
-        if (!authResultVO.isPass()) {
-            return ServiceResponse.buildAuthFailResp(authResultVO);
-        }
-        return ServiceResponse.buildSuccessResp(taskFavoriteService.deleteFavorite(appId, username, templateId));
+    public Response<Boolean> addFavorite(String username,
+                                         AppResourceScope appResourceScope,
+                                         String scopeType,
+                                         String scopeId,
+                                         Long templateId) {
+
+        return Response.buildSuccessResp(taskFavoriteService.addFavorite(appResourceScope.getAppId(), username,
+            templateId));
     }
 
     @Override
-    public ServiceResponse<Boolean> checkTemplateName(String username, Long appId, Long templateId, String name) {
-        AuthResultVO authResultVO = authService.auth(true, username, ActionId.LIST_BUSINESS,
-            ResourceTypeEnum.BUSINESS, appId.toString(), null);
-        if (!authResultVO.isPass()) {
-            return ServiceResponse.buildAuthFailResp(authResultVO);
-        }
-        return ServiceResponse.buildSuccessResp(templateService.checkTemplateName(appId, templateId, name));
+    public Response<Boolean> removeFavorite(String username,
+                                            AppResourceScope appResourceScope,
+                                            String scopeType,
+                                            String scopeId,
+                                            Long templateId) {
+
+        return Response.buildSuccessResp(taskFavoriteService.deleteFavorite(appResourceScope.getAppId(), username,
+            templateId));
     }
 
     @Override
-    public ServiceResponse<List<TaskTemplateVO>> listTemplateBasicInfoByIds(String username, Long appId,
-                                                                            List<Long> templateIds) {
-        AuthResultVO authResultVO = authService.auth(true, username, ActionId.LIST_BUSINESS,
-            ResourceTypeEnum.BUSINESS, appId.toString(), null);
-        if (!authResultVO.isPass()) {
-            return ServiceResponse.buildAuthFailResp(authResultVO);
-        }
+    public Response<Boolean> checkTemplateName(String username,
+                                               AppResourceScope appResourceScope,
+                                               String scopeType,
+                                               String scopeId,
+                                               Long templateId,
+                                               String name) {
+
+        return Response.buildSuccessResp(templateService.checkTemplateName(appResourceScope.getAppId(), templateId,
+            name));
+    }
+
+    @Override
+    public Response<List<TaskTemplateVO>> listTemplateBasicInfoByIds(String username,
+                                                                     AppResourceScope appResourceScope,
+                                                                     String scopeType,
+                                                                     String scopeId,
+                                                                     List<Long> templateIds) {
+
         List<TaskTemplateInfoDTO> taskTemplateBasicInfo =
-            templateService.listTaskTemplateBasicInfoByIds(appId, templateIds);
-        List<TaskTemplateVO> templateBasicInfoVOList = new ArrayList<>();
-        for (TaskTemplateInfoDTO templateInfo : taskTemplateBasicInfo) {
-            if (templateInfo != null) {
-                TaskTemplateVO taskTemplateVO = new TaskTemplateVO();
-                taskTemplateVO.setId(templateInfo.getId());
-                taskTemplateVO.setName(templateInfo.getName());
-
-                templateBasicInfoVOList.add(taskTemplateVO);
-            }
-        }
-        return ServiceResponse.buildSuccessResp(templateBasicInfoVOList);
+            templateService.listTaskTemplateBasicInfoByIds(appResourceScope.getAppId(), templateIds);
+        List<TaskTemplateVO> templateBasicInfoVOList = taskTemplateBasicInfo.stream()
+            .map(TaskTemplateInfoDTO::toVO).collect(Collectors.toList());
+        return Response.buildSuccessResp(templateBasicInfoVOList);
     }
 
+    @Override
+    public Response<Boolean> batchPatchTemplateTags(String username,
+                                                    AppResourceScope appResourceScope,
+                                                    String scopeType,
+                                                    String scopeId,
+                                                    TemplateTagBatchPatchReq req) {
+
+        ValidateResult validateResult = checkTemplateTagBatchPatchReq(req);
+        if (!validateResult.isPass()) {
+            throw new InvalidParamException(validateResult);
+        }
+
+        if (CollectionUtils.isEmpty(req.getAddTagIdList()) && CollectionUtils.isEmpty(req.getDeleteTagIdList())) {
+            // do nothing
+            return Response.buildSuccessResp(true);
+        }
+
+        AuthResult authResult = templateAuthService.batchAuthResultEditJobTemplate(username,
+            appResourceScope, req.getIdList());
+        if (!authResult.isPass()) {
+            throw new PermissionDeniedException(authResult);
+        }
+
+        List<Long> templateIdList = req.getIdList();
+        List<ResourceTagDTO> addResourceTags = null;
+        List<ResourceTagDTO> deleteResourceTags = null;
+        if (CollectionUtils.isNotEmpty(req.getAddTagIdList())) {
+            addResourceTags = tagService.buildResourceTags(JobResourceTypeEnum.TEMPLATE.getValue(),
+                templateIdList.stream().map(String::valueOf).collect(Collectors.toList()),
+                req.getAddTagIdList());
+        }
+        if (CollectionUtils.isNotEmpty(req.getDeleteTagIdList())) {
+            deleteResourceTags = tagService.buildResourceTags(JobResourceTypeEnum.TEMPLATE.getValue(),
+                templateIdList.stream().map(String::valueOf).collect(Collectors.toList()),
+                req.getDeleteTagIdList());
+        }
+        tagService.batchPatchResourceTags(addResourceTags, deleteResourceTags);
+
+        return Response.buildSuccessResp(null);
+    }
+
+    private ValidateResult checkTemplateTagBatchPatchReq(TemplateTagBatchPatchReq req) {
+        if (CollectionUtils.isEmpty(req.getIdList())) {
+            log.warn("TemplateTagBatchPatchReq->idList is empty");
+            return ValidateResult.fail(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, "idList");
+        }
+
+        return ValidateResult.pass();
+    }
 }

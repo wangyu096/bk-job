@@ -27,7 +27,8 @@ package com.tencent.bk.job.execute.api.esb.v2.impl;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
 import com.tencent.bk.job.common.esb.model.EsbResp;
-import com.tencent.bk.job.common.i18n.MessageI18nService;
+import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.ValidateResult;
 import com.tencent.bk.job.execute.api.esb.v2.EsbGetJobInstanceGlobalVarValueResource;
 import com.tencent.bk.job.execute.api.esb.v3.EsbGetJobInstanceGlobalVarValueV3Resource;
@@ -47,36 +48,32 @@ import java.util.List;
 
 @RestController
 @Slf4j
-public class EsbGetJobInstanceGlobalVarValueResourceImpl
-    extends JobQueryCommonProcessor implements EsbGetJobInstanceGlobalVarValueResource {
+public class EsbGetJobInstanceGlobalVarValueResourceImpl implements EsbGetJobInstanceGlobalVarValueResource {
 
-    private final MessageI18nService i18nService;
     private final EsbGetJobInstanceGlobalVarValueV3Resource proxyGetJobInstanceGlobalVarService;
 
     @Autowired
     public EsbGetJobInstanceGlobalVarValueResourceImpl(
-        MessageI18nService i18nService,
         EsbGetJobInstanceGlobalVarValueV3Resource proxyGetJobInstanceGlobalVarService) {
-        this.i18nService = i18nService;
         this.proxyGetJobInstanceGlobalVarService = proxyGetJobInstanceGlobalVarService;
     }
 
     @Override
-    @EsbApiTimed(value = "esb.api", extraTags = {"api_name", "v2_get_job_instance_global_var_value"})
+    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_get_job_instance_global_var_value"})
     public EsbResp<EsbTaskInstanceGlobalVarValueDTO> getJobInstanceGlobalVarValue(
-        String lang,
+        String username,
+        String appCode,
         EsbGetJobInstanceGlobalVarValueRequest request) {
-
         ValidateResult checkResult = checkRequest(request);
         if (!checkResult.isPass()) {
             log.warn("Get job instance global var value, request is illegal!");
-            return EsbResp.buildCommonFailResp(i18nService, checkResult);
+            throw new InvalidParamException(checkResult);
         }
 
         EsbGetJobInstanceGlobalVarValueV3Request newRequest =
             convertToEsbGetJobInstanceGlobalVarValueV3Request(request);
         EsbResp<EsbJobInstanceGlobalVarValueV3DTO> esbResp =
-            proxyGetJobInstanceGlobalVarService.getJobInstanceGlobalVarValue(lang, newRequest);
+            proxyGetJobInstanceGlobalVarService.getJobInstanceGlobalVarValueUsingPost(username, appCode, newRequest);
 
         return EsbResp.convertData(esbResp, this::convertToEsbJobInstanceGlobalVarValueDTO);
     }
@@ -84,40 +81,40 @@ public class EsbGetJobInstanceGlobalVarValueResourceImpl
     private EsbGetJobInstanceGlobalVarValueV3Request convertToEsbGetJobInstanceGlobalVarValueV3Request
         (EsbGetJobInstanceGlobalVarValueRequest request) {
         EsbGetJobInstanceGlobalVarValueV3Request newRequest = new EsbGetJobInstanceGlobalVarValueV3Request();
-        newRequest.setAppCode(request.getAppCode());
-        newRequest.setUserName(request.getUserName());
-        newRequest.setAppId(request.getAppId());
+        newRequest.setBizId(request.getBizId());
+        newRequest.setScopeType(request.getScopeType());
+        newRequest.setScopeId(request.getScopeId());
         newRequest.setTaskInstanceId(request.getTaskInstanceId());
         return newRequest;
     }
 
     private EsbTaskInstanceGlobalVarValueDTO convertToEsbJobInstanceGlobalVarValueDTO(
-        EsbJobInstanceGlobalVarValueV3DTO esbJobInstanceGlobalVarValueV3DTO) {
-        if (esbJobInstanceGlobalVarValueV3DTO == null) {
+        EsbJobInstanceGlobalVarValueV3DTO originResult) {
+        if (originResult == null) {
             return null;
         }
 
         EsbTaskInstanceGlobalVarValueDTO result = new EsbTaskInstanceGlobalVarValueDTO();
-        result.setTaskInstanceId(esbJobInstanceGlobalVarValueV3DTO.getTaskInstanceId());
+        result.setTaskInstanceId(originResult.getTaskInstanceId());
 
-        if (CollectionUtils.isNotEmpty(result.getStepGlobalVarValues())) {
+        if (CollectionUtils.isNotEmpty(originResult.getStepGlobalVarValues())) {
             List<EsbStepInstanceGlobalVarValues> globalVarValuesForSteps = new ArrayList<>();
-            result.getStepGlobalVarValues().forEach(originGlobalVarValuesForStep -> {
-                EsbStepInstanceGlobalVarValues globalVarValuesForStep =
+            originResult.getStepGlobalVarValues().forEach(originStepGlobalVarValues -> {
+                EsbStepInstanceGlobalVarValues stepGlobalVarValues =
                     new EsbStepInstanceGlobalVarValues();
-                globalVarValuesForStep.setStepInstanceId(originGlobalVarValuesForStep.getStepInstanceId());
-                if (CollectionUtils.isNotEmpty(originGlobalVarValuesForStep.getGlobalVarValues())) {
+                stepGlobalVarValues.setStepInstanceId(originStepGlobalVarValues.getStepInstanceId());
+                if (CollectionUtils.isNotEmpty(originStepGlobalVarValues.getGlobalVarValues())) {
                     List<GlobalVarValue> globalVarValues = new ArrayList<>();
-                    originGlobalVarValuesForStep.getGlobalVarValues().forEach(originGlobalVarValue -> {
+                    originStepGlobalVarValues.getGlobalVarValues().forEach(originGlobalVarValue -> {
                         GlobalVarValue globalVarValue = new GlobalVarValue();
-                        globalVarValue.setCategory(originGlobalVarValue.getCategory());
+                        globalVarValue.setCategory(originGlobalVarValue.getType());
                         globalVarValue.setName(originGlobalVarValue.getName());
                         globalVarValue.setValue(originGlobalVarValue.getValue());
                         globalVarValues.add(globalVarValue);
                     });
-                    globalVarValuesForStep.setGlobalVarValues(globalVarValues);
+                    stepGlobalVarValues.setGlobalVarValues(globalVarValues);
                 }
-                globalVarValuesForSteps.add(globalVarValuesForStep);
+                globalVarValuesForSteps.add(stepGlobalVarValues);
             });
             result.setStepGlobalVarValues(globalVarValuesForSteps);
         }
@@ -127,10 +124,6 @@ public class EsbGetJobInstanceGlobalVarValueResourceImpl
 
 
     private ValidateResult checkRequest(EsbGetJobInstanceGlobalVarValueRequest request) {
-        if (request.getAppId() == null || request.getAppId() < 1) {
-            log.warn("App is empty or illegal, appId={}", request.getAppId());
-            return ValidateResult.fail(ErrorCode.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME, "bk_biz_id");
-        }
         if (request.getTaskInstanceId() == null || request.getTaskInstanceId() < 1) {
             log.warn("TaskInstanceId is empty or illegal, taskInstanceId={}", request.getTaskInstanceId());
             return ValidateResult.fail(ErrorCode.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME,

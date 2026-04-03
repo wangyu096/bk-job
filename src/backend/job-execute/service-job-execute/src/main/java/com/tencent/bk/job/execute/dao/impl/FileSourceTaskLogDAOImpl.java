@@ -24,106 +24,154 @@
 
 package com.tencent.bk.job.execute.dao.impl;
 
-import com.tencent.bk.job.execute.common.util.JooqDataTypeUtil;
+import com.tencent.bk.job.common.mysql.dynamic.ds.DbOperationEnum;
+import com.tencent.bk.job.common.mysql.dynamic.ds.MySQLOperation;
+import com.tencent.bk.job.common.mysql.jooq.JooqDataTypeUtil;
 import com.tencent.bk.job.execute.dao.FileSourceTaskLogDAO;
+import com.tencent.bk.job.execute.dao.common.DSLContextProviderFactory;
 import com.tencent.bk.job.execute.model.FileSourceTaskLogDTO;
-import org.jooq.DSLContext;
+import com.tencent.bk.job.execute.model.tables.FileSourceTaskLog;
+import com.tencent.bk.job.execute.model.tables.records.FileSourceTaskLogRecord;
+import org.jooq.Condition;
 import org.jooq.Record;
+import org.jooq.TableField;
 import org.jooq.UpdateSetFirstStep;
 import org.jooq.UpdateSetMoreStep;
-import org.jooq.generated.tables.FileSourceTaskLog;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Repository
-public class FileSourceTaskLogDAOImpl implements FileSourceTaskLogDAO {
-    FileSourceTaskLog defaultTable = FileSourceTaskLog.FILE_SOURCE_TASK_LOG;
-    private DSLContext defaultContext;
+public class FileSourceTaskLogDAOImpl extends BaseDAO implements FileSourceTaskLogDAO {
+
+    private static final FileSourceTaskLog defaultTable = FileSourceTaskLog.FILE_SOURCE_TASK_LOG;
+
+    private static final TableField<?, ?>[] ALL_FIELDS = {
+        defaultTable.ID,
+        defaultTable.TASK_INSTANCE_ID,
+        defaultTable.STEP_INSTANCE_ID,
+        defaultTable.EXECUTE_COUNT,
+        defaultTable.START_TIME,
+        defaultTable.END_TIME,
+        defaultTable.TOTAL_TIME,
+        defaultTable.STATUS,
+        defaultTable.FILE_SOURCE_BATCH_TASK_ID
+    };
+
 
     @Autowired
-    public FileSourceTaskLogDAOImpl(@Qualifier("job-execute-dsl-context") DSLContext defaultContext) {
-        this.defaultContext = defaultContext;
+    public FileSourceTaskLogDAOImpl(DSLContextProviderFactory dslContextProviderFactory) {
+        super(dslContextProviderFactory, defaultTable.getName());
     }
 
-    @Override
-    public FileSourceTaskLogDTO getStepLastExecuteLog(long stepInstanceId) {
-        FileSourceTaskLog t = FileSourceTaskLog.FILE_SOURCE_TASK_LOG;
-        Record result = defaultContext.select(t.STEP_INSTANCE_ID, t.EXECUTE_COUNT, t.START_TIME, t.END_TIME,
-            t.TOTAL_TIME,
-            t.STATUS, t.FILE_SOURCE_BATCH_TASK_ID)
-            .from(t)
-            .where(t.STEP_INSTANCE_ID.eq(stepInstanceId))
-            .orderBy(t.EXECUTE_COUNT.desc())
-            .limit(1)
-            .fetchOne();
-        return extractInfo(result);
-    }
-
-    private FileSourceTaskLogDTO extractInfo(Record result) {
-        if (result == null || result.size() == 0) {
+    private FileSourceTaskLogDTO extractInfo(Record record) {
+        if (record == null) {
             return null;
         }
         FileSourceTaskLogDTO fileSourceTaskLogDTO = new FileSourceTaskLogDTO();
         FileSourceTaskLog t = FileSourceTaskLog.FILE_SOURCE_TASK_LOG;
 
-        fileSourceTaskLogDTO.setStepInstanceId(result.get(t.STEP_INSTANCE_ID));
-        fileSourceTaskLogDTO.setExecuteCount(result.get(t.EXECUTE_COUNT));
-        fileSourceTaskLogDTO.setStartTime(result.get(t.START_TIME));
-        fileSourceTaskLogDTO.setEndTime(result.get(t.END_TIME));
-        fileSourceTaskLogDTO.setTotalTime(result.get(t.TOTAL_TIME));
-        fileSourceTaskLogDTO.setStatus(result.get(t.STATUS).intValue());
-        fileSourceTaskLogDTO.setFileSourceBatchTaskId(result.get(t.FILE_SOURCE_BATCH_TASK_ID));
+        fileSourceTaskLogDTO.setId(record.get(t.ID));
+        fileSourceTaskLogDTO.setTaskInstanceId(record.get(t.TASK_INSTANCE_ID));
+        fileSourceTaskLogDTO.setStepInstanceId(record.get(t.STEP_INSTANCE_ID));
+        fileSourceTaskLogDTO.setExecuteCount(record.get(t.EXECUTE_COUNT));
+        fileSourceTaskLogDTO.setStartTime(record.get(t.START_TIME));
+        fileSourceTaskLogDTO.setEndTime(record.get(t.END_TIME));
+        fileSourceTaskLogDTO.setTotalTime(record.get(t.TOTAL_TIME));
+        fileSourceTaskLogDTO.setStatus(record.get(t.STATUS).intValue());
+        fileSourceTaskLogDTO.setFileSourceBatchTaskId(record.get(t.FILE_SOURCE_BATCH_TASK_ID));
         return fileSourceTaskLogDTO;
     }
 
     @Override
-    public void saveFileSourceTaskLog(FileSourceTaskLogDTO fileSourceTaskLog) {
+    @MySQLOperation(table = "file_source_task_log", op = DbOperationEnum.WRITE)
+    public int insertFileSourceTaskLog(FileSourceTaskLogDTO fileSourceTaskLog) {
         FileSourceTaskLog t = FileSourceTaskLog.FILE_SOURCE_TASK_LOG;
-        defaultContext.insertInto(t, t.STEP_INSTANCE_ID, t.EXECUTE_COUNT, t.START_TIME, t.END_TIME, t.TOTAL_TIME,
-            t.STATUS, t.FILE_SOURCE_BATCH_TASK_ID)
-            .values(fileSourceTaskLog.getStepInstanceId(),
-                fileSourceTaskLog.getExecuteCount(),
-                fileSourceTaskLog.getStartTime(),
-                fileSourceTaskLog.getEndTime(),
-                fileSourceTaskLog.getTotalTime(),
-                JooqDataTypeUtil.getByteFromInteger(fileSourceTaskLog.getStatus()),
-                fileSourceTaskLog.getFileSourceBatchTaskId())
-            .onDuplicateKeyUpdate()
-            .set(t.START_TIME, fileSourceTaskLog.getStartTime())
-            .set(t.END_TIME, fileSourceTaskLog.getEndTime())
-            .set(t.TOTAL_TIME, fileSourceTaskLog.getTotalTime())
-            .set(t.STATUS, JooqDataTypeUtil.getByteFromInteger(fileSourceTaskLog.getStatus())).set(t.FILE_SOURCE_BATCH_TASK_ID, fileSourceTaskLog.getFileSourceBatchTaskId())
+        return dsl().insertInto(
+            t,
+            t.ID,
+            t.TASK_INSTANCE_ID,
+            t.STEP_INSTANCE_ID,
+            t.EXECUTE_COUNT,
+            t.START_TIME,
+            t.END_TIME,
+            t.TOTAL_TIME,
+            t.STATUS,
+            t.FILE_SOURCE_BATCH_TASK_ID
+        ).values(
+            fileSourceTaskLog.getId(),
+            fileSourceTaskLog.getTaskInstanceId(),
+            fileSourceTaskLog.getStepInstanceId(),
+            fileSourceTaskLog.getExecuteCount(),
+            fileSourceTaskLog.getStartTime(),
+            fileSourceTaskLog.getEndTime(),
+            fileSourceTaskLog.getTotalTime(),
+            JooqDataTypeUtil.toByte(fileSourceTaskLog.getStatus()),
+            fileSourceTaskLog.getFileSourceBatchTaskId()
+        ).execute();
+    }
+
+    @Override
+    @MySQLOperation(table = "file_source_task_log", op = DbOperationEnum.WRITE)
+    public int updateFileSourceTaskLogByStepInstance(FileSourceTaskLogDTO fileSourceTaskLog) {
+        List<Condition> conditionList = new ArrayList<>();
+        conditionList.add(defaultTable.TASK_INSTANCE_ID.eq(fileSourceTaskLog.getTaskInstanceId()));
+        conditionList.add(defaultTable.STEP_INSTANCE_ID.eq(fileSourceTaskLog.getStepInstanceId()));
+        conditionList.add(defaultTable.EXECUTE_COUNT.eq(fileSourceTaskLog.getExecuteCount()));
+        return dsl().update(defaultTable)
+            .set(defaultTable.START_TIME, fileSourceTaskLog.getStartTime())
+            .set(defaultTable.END_TIME, fileSourceTaskLog.getEndTime())
+            .set(defaultTable.TOTAL_TIME, fileSourceTaskLog.getTotalTime())
+            .set(defaultTable.STATUS, JooqDataTypeUtil.toByte(fileSourceTaskLog.getStatus()))
+            .set(defaultTable.FILE_SOURCE_BATCH_TASK_ID, fileSourceTaskLog.getFileSourceBatchTaskId())
+            .where(conditionList)
+            .limit(1)
             .execute();
     }
 
     @Override
-    public FileSourceTaskLogDTO getFileSourceTaskLog(long stepInstanceId, int executeCount) {
+    @MySQLOperation(table = "file_source_task_log", op = DbOperationEnum.READ)
+    public FileSourceTaskLogDTO getFileSourceTaskLog(Long taskInstanceId, long stepInstanceId, int executeCount) {
         FileSourceTaskLog t = FileSourceTaskLog.FILE_SOURCE_TASK_LOG;
-        Record result = defaultContext.select(t.STEP_INSTANCE_ID, t.EXECUTE_COUNT, t.START_TIME, t.END_TIME,
-            t.TOTAL_TIME,
-            t.STATUS, t.FILE_SOURCE_BATCH_TASK_ID).from(t)
+        Record record = dsl().select(
+                ALL_FIELDS
+            ).from(t)
             .where(t.STEP_INSTANCE_ID.eq(stepInstanceId))
+            .and(buildTaskInstanceIdQueryCondition(taskInstanceId))
             .and(t.EXECUTE_COUNT.eq(executeCount))
             .fetchOne();
-        return extractInfo(result);
+        return extractInfo(record);
+    }
+
+    private Condition buildTaskInstanceIdQueryCondition(Long taskInstanceId) {
+        return TaskInstanceIdDynamicCondition.build(
+            taskInstanceId,
+            FileSourceTaskLog.FILE_SOURCE_TASK_LOG.TASK_INSTANCE_ID::eq
+        );
     }
 
     @Override
-    public FileSourceTaskLogDTO getFileSourceTaskLogByBatchTaskId(String fileSourceBatchTaskId) {
-        Record result = defaultContext.select(defaultTable.STEP_INSTANCE_ID, defaultTable.EXECUTE_COUNT,
-            defaultTable.START_TIME, defaultTable.END_TIME, defaultTable.TOTAL_TIME,
-            defaultTable.STATUS, defaultTable.FILE_SOURCE_BATCH_TASK_ID).from(defaultTable)
+    @MySQLOperation(table = "file_source_task_log", op = DbOperationEnum.READ)
+    public FileSourceTaskLogDTO getFileSourceTaskLogByBatchTaskId(Long taskInstanceId, String fileSourceBatchTaskId) {
+        Record record = dsl().select(ALL_FIELDS)
+            .from(defaultTable)
             .where(defaultTable.FILE_SOURCE_BATCH_TASK_ID.eq(fileSourceBatchTaskId))
+            .and(buildTaskInstanceIdQueryCondition(taskInstanceId))
             .fetchOne();
-        return extractInfo(result);
+        return extractInfo(record);
     }
 
     @Override
-    public int updateTimeConsumingByBatchTaskId(String fileSourceBatchTaskId, Long startTime, Long endTime,
+    @MySQLOperation(table = "file_source_task_log", op = DbOperationEnum.WRITE)
+    public int updateTimeConsumingByBatchTaskId(Long taskInstanceId,
+                                                String fileSourceBatchTaskId,
+                                                Long startTime,
+                                                Long endTime,
                                                 Long totalTime) {
-        UpdateSetFirstStep firstStep = defaultContext.update(defaultTable);
-        UpdateSetMoreStep moreStep = null;
+        UpdateSetFirstStep<FileSourceTaskLogRecord> firstStep = dsl().update(defaultTable);
+        UpdateSetMoreStep<?> moreStep = null;
         if (startTime != null) {
             moreStep = firstStep.set(defaultTable.START_TIME, startTime);
         }
@@ -142,19 +190,13 @@ public class FileSourceTaskLogDAOImpl implements FileSourceTaskLogDAO {
             }
         }
         if (moreStep != null) {
-            return moreStep.where(defaultTable.FILE_SOURCE_BATCH_TASK_ID.eq(fileSourceBatchTaskId))
+            return moreStep.where(
+                    defaultTable.FILE_SOURCE_BATCH_TASK_ID.eq(fileSourceBatchTaskId))
+                .and(buildTaskInstanceIdQueryCondition(taskInstanceId))
                 .execute();
         } else {
             return 0;
         }
-    }
-
-    @Override
-    public void deleteFileSourceTaskLog(long stepInstanceId, int executeCount) {
-        FileSourceTaskLog t = FileSourceTaskLog.FILE_SOURCE_TASK_LOG;
-        defaultContext.deleteFrom(t).where(t.STEP_INSTANCE_ID.eq(stepInstanceId))
-            .and(t.EXECUTE_COUNT.eq(executeCount))
-            .execute();
     }
 
 }

@@ -25,21 +25,13 @@
 package com.tencent.bk.job.execute.model.esb.v3.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.tencent.bk.job.common.esb.model.EsbReq;
+import com.tencent.bk.job.common.esb.model.EsbAppScopeReq;
 import lombok.Getter;
 import lombok.Setter;
 
-/**
- * get_job_instance_log,根据作业实例ID查询作业执行日志请求
- */
 @Getter
 @Setter
-public class EsbGetJobInstanceIpLogV3Request extends EsbReq {
-    /**
-     * 业务 ID
-     */
-    @JsonProperty("bk_biz_id")
-    private Long appId;
+public class EsbGetJobInstanceIpLogV3Request extends EsbAppScopeReq {
 
     /**
      * 作业执行实例 ID
@@ -60,4 +52,7 @@ public class EsbGetJobInstanceIpLogV3Request extends EsbReq {
     private Long cloudAreaId;
 
     private String ip;
+
+    @JsonProperty("bk_host_id")
+    private Long hostId;
 }

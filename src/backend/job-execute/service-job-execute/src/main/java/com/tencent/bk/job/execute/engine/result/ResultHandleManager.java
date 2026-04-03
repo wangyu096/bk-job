@@ -24,16 +24,19 @@
 
 package com.tencent.bk.job.execute.engine.result;
 
-import brave.ScopedSpan;
-import brave.Tracing;
+import com.tencent.bk.job.execute.common.context.JobExecuteContextThreadLocalRepo;
 import com.tencent.bk.job.execute.common.exception.MessageHandlerUnavailableException;
 import com.tencent.bk.job.execute.common.ha.DestroyOrder;
 import com.tencent.bk.job.execute.config.JobExecuteConfig;
+import com.tencent.bk.job.execute.engine.quota.limit.RunningJobKeepaliveManager;
 import com.tencent.bk.job.execute.engine.result.ha.ResultHandleLimiter;
 import com.tencent.bk.job.execute.engine.result.ha.ResultHandleTaskKeepaliveManager;
 import com.tencent.bk.job.execute.monitor.metrics.ExecuteMonitor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.cloud.sleuth.Span;
+import org.springframework.cloud.sleuth.Tracer;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.stereotype.Component;
@@ -41,7 +44,11 @@ import org.springframework.stereotype.Component;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.DelayQueue;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 任务执行结果处理。
@@ -52,9 +59,9 @@ import java.util.concurrent.*;
 @Slf4j
 public class ResultHandleManager implements SmartLifecycle {
     /**
-     * 日志调用链Tracing
+     * 日志调用链Tracer
      */
-    private final Tracing tracing;
+    private final Tracer tracer;
     /**
      * 结果处理任务存活管理
      */
@@ -73,35 +80,35 @@ public class ResultHandleManager implements SmartLifecycle {
     /**
      * 任务结果处理的任务队列
      */
-    private DelayQueue<ScheduledContinuousResultHandleTask> tasksQueue = new DelayQueue<>();
+    private final DelayQueue<ScheduledContinuousResultHandleTask> tasksQueue = new DelayQueue<>();
     /**
      * 调度的所有的任务
      */
-    private Map<String, ScheduledContinuousResultHandleTask> scheduledTasks = new ConcurrentHashMap<>();
+    private final Map<String, ScheduledContinuousResultHandleTask> scheduledTasks = new ConcurrentHashMap<>();
     /**
      * 任务消费者
      */
-    private Set<TaskWorker> workers = new HashSet<>();
+    private final Set<TaskWorker> workers = new HashSet<>();
     /**
      * 异步任务执行器，用于启动消费者线程
      */
-    private Executor taskExecutor = new SimpleAsyncTaskExecutor("task-result-handle-");
+    private final Executor taskExecutor = new SimpleAsyncTaskExecutor("task-result-handle-");
     /**
      * 最小任务处理线程
      */
-    private int CORE_WORKERS = 50;
+    private final int CORE_WORKERS = 50;
     /**
      * 最大任务处理线程
      */
-    private int MAX_WORKERS = 100;
+    private final int MAX_WORKERS = 100;
     /**
      * 触发新增worker阈值：worker连续处理的任务数
      */
-    private int consecutiveActiveTrigger = 10;
+    private final int consecutiveActiveTrigger = 10;
     /**
      * 触发回收worker阈值：worker连续空闲的周期数
      */
-    private int consecutiveIdleTrigger = 10;
+    private final int consecutiveIdleTrigger = 10;
     /**
      * 最近一次worker启动时间
      */
@@ -109,7 +116,7 @@ public class ResultHandleManager implements SmartLifecycle {
     /**
      * 新增消费者线程最小间隔时间
      */
-    private volatile long startConsumerMinInterval = 10000;
+    private final long startConsumerMinInterval = 10000;
     /**
      * 最近一次worker停止时间
      */
@@ -117,7 +124,7 @@ public class ResultHandleManager implements SmartLifecycle {
     /**
      * 停止消费者线程最小间隔时间
      */
-    private volatile long stopConsumerMinInterval = 60000;
+    private final long stopConsumerMinInterval = 60000;
     /**
      * 任务结果处理引擎是否活动状态
      */
@@ -126,18 +133,25 @@ public class ResultHandleManager implements SmartLifecycle {
      * whether this component is currently running(Spring Lifecycle isRunning method)
      */
     private volatile boolean running = false;
-    private ExecutorService shutdownExecutorService = new ThreadPoolExecutor(10, 20, 120, TimeUnit.SECONDS,
-        new LinkedBlockingQueue<>());
+    private final ExecutorService shutdownExecutor;
+
+    private final RunningJobKeepaliveManager runningJobKeepaliveManager;
 
     @Autowired
-    public ResultHandleManager(Tracing tracing, ExecuteMonitor counters,
+    public ResultHandleManager(Tracer tracer,
+                               ExecuteMonitor counters,
                                ResultHandleTaskKeepaliveManager resultHandleTaskKeepaliveManager,
-                               ResultHandleTaskSampler resultHandleTaskSampler, JobExecuteConfig jobExecuteConfig) {
-        this.tracing = tracing;
+                               ResultHandleTaskSampler resultHandleTaskSampler,
+                               JobExecuteConfig jobExecuteConfig,
+                               @Qualifier("shutdownExecutor") ExecutorService shutdownExecutor,
+                               RunningJobKeepaliveManager runningJobKeepaliveManager) {
+        this.tracer = tracer;
         this.counters = counters;
         this.resultHandleTaskKeepaliveManager = resultHandleTaskKeepaliveManager;
         this.resultHandleTaskSampler = resultHandleTaskSampler;
         this.resultHandleLimiter = new ResultHandleLimiter(jobExecuteConfig.getResultHandleTasksLimit());
+        this.shutdownExecutor = shutdownExecutor;
+        this.runningJobKeepaliveManager = runningJobKeepaliveManager;
     }
 
     /**
@@ -149,8 +163,16 @@ public class ResultHandleManager implements SmartLifecycle {
         resultHandleLimiter.acquire();
         log.info("Handle delivered task: {}", task);
         ScheduledContinuousResultHandleTask scheduleTask =
-            new ScheduledContinuousResultHandleTask(resultHandleTaskSampler, tracing, task, this,
-                resultHandleTaskKeepaliveManager, resultHandleLimiter);
+            new ScheduledContinuousResultHandleTask(
+                resultHandleTaskSampler,
+                tracer,
+                task,
+                this,
+                resultHandleTaskKeepaliveManager,
+                resultHandleLimiter,
+                runningJobKeepaliveManager,
+                JobExecuteContextThreadLocalRepo.get()
+            );
         synchronized (lifecycleMonitor) {
             if (!isActive()) {
                 log.warn("ResultHandleManager is not active, reject! task: {}", task);
@@ -162,11 +184,14 @@ public class ResultHandleManager implements SmartLifecycle {
         if (task instanceof AbstractResultHandleTask) {
             resultHandleTaskKeepaliveManager.addRunningTaskKeepaliveInfo(task.getTaskId());
         }
+        runningJobKeepaliveManager.addKeepaliveTask(task.getTaskContext().getJobInstanceId());
         this.tasksQueue.add(scheduleTask);
         if (task instanceof ScriptResultHandleTask) {
-            resultHandleTaskSampler.incrementScriptTask();
-        } else {
-            resultHandleTaskSampler.incrementFileTask();
+            ScriptResultHandleTask scriptResultHandleTask = (ScriptResultHandleTask) task;
+            resultHandleTaskSampler.incrementScriptTask(scriptResultHandleTask.getAppId());
+        } else if (task instanceof FileResultHandleTask) {
+            FileResultHandleTask fileResultHandleTask = (FileResultHandleTask) task;
+            resultHandleTaskSampler.incrementFileTask(fileResultHandleTask.getAppId());
         }
     }
 
@@ -195,7 +220,7 @@ public class ResultHandleManager implements SmartLifecycle {
     private boolean isWorkerActive(TaskWorker worker) {
         boolean workerActive;
         synchronized (this.workersMonitor) {
-            workerActive = this.workers != null && this.workers.contains(worker);
+            workerActive = this.workers.contains(worker);
         }
         return workerActive && this.isActive();
     }
@@ -251,18 +276,21 @@ public class ResultHandleManager implements SmartLifecycle {
     private void stopTasksGraceful() {
         log.info("Stop tasks graceful - start");
         long start = System.currentTimeMillis();
-        StopTaskCounter stopTaskCounter = StopTaskCounter.getInstance();
+        StopTaskCounter stopTaskCounter = null;
         synchronized (lifecycleMonitor) {
             if (!this.scheduledTasks.isEmpty()) {
                 log.info("Stop result handle tasks, size: {}, tasks: {}", scheduledTasks.size(), scheduledTasks);
+                stopTaskCounter = StopTaskCounter.getInstance();
                 stopTaskCounter.initCounter(scheduledTasks.keySet());
             }
             for (ScheduledContinuousResultHandleTask task : scheduledTasks.values()) {
-                shutdownExecutorService.execute(new StopTask(task, tracing));
+                shutdownExecutor.execute(new StopTask(task, tracer));
             }
         }
         try {
-            stopTaskCounter.waitingForAllTasksDone();
+            if (stopTaskCounter != null) {
+                stopTaskCounter.waitingForAllTasksDone();
+            }
         } catch (Throwable e) {
             log.error("Stop tasks caught exception", e);
         }
@@ -282,7 +310,7 @@ public class ResultHandleManager implements SmartLifecycle {
      */
     private void considerAddingAConsumer() {
         synchronized (this.workersMonitor) {
-            if (this.workers != null && this.workers.size() < this.MAX_WORKERS) {
+            if (this.workers.size() < this.MAX_WORKERS) {
                 long now = System.currentTimeMillis();
                 if (this.lastWorkerStartedAt + this.startConsumerMinInterval < now) {
                     TaskWorker worker = new TaskWorker();
@@ -300,7 +328,7 @@ public class ResultHandleManager implements SmartLifecycle {
      */
     private void considerStoppingAConsumer(TaskWorker worker) {
         synchronized (this.workersMonitor) {
-            if (this.workers != null && this.workers.size() > this.CORE_WORKERS) {
+            if (this.workers.size() > this.CORE_WORKERS) {
                 long now = System.currentTimeMillis();
                 if (this.lastWorkerStoppedAt + this.stopConsumerMinInterval < now) {
                     workers.remove(worker);
@@ -309,24 +337,6 @@ public class ResultHandleManager implements SmartLifecycle {
                 }
             }
         }
-    }
-
-    /**
-     * 返回正在执行的文件任务数量
-     *
-     * @return 任务数量
-     */
-    public long getRunningFileTaskCount() {
-        return this.resultHandleTaskSampler.getHandlingFileTaskCount();
-    }
-
-    /**
-     * 返回正在执行的脚本任务数量
-     *
-     * @return 任务数量
-     */
-    public long getRunningScriptTaskCount() {
-        return this.resultHandleTaskSampler.getHandlingScriptTaskCount();
     }
 
     /**
@@ -373,29 +383,32 @@ public class ResultHandleManager implements SmartLifecycle {
     }
 
     private static final class StopTask implements Runnable {
-        private ScheduledContinuousResultHandleTask task;
-        private Tracing tracing;
+        private final ScheduledContinuousResultHandleTask task;
+        private final Tracer tracer1;
 
-        StopTask(ScheduledContinuousResultHandleTask task, Tracing tracing) {
+        StopTask(ScheduledContinuousResultHandleTask task, Tracer tracer1) {
             this.task = task;
-            this.tracing = tracing;
+            this.tracer1 = tracer1;
         }
 
         @Override
         public void run() {
-            ScopedSpan span = null;
-            try {
-                span = tracing.tracer().startScopedSpanWithParent("stop-task", task.getTraceContext());
+            Span span = tracer1.nextSpan(task.getTraceContext()).name("stop-task");
+
+            try (Tracer.SpanInScope ignored = tracer1.withSpan(span.start())) {
+                JobExecuteContextThreadLocalRepo.set(task.getJobExecuteContext());
                 log.info("Begin to stop task, task: {}", task.getResultHandleTask());
                 task.getResultHandleTask().stop();
                 log.info("Stop task successfully, task: {}", task.getResultHandleTask());
             } catch (Throwable e) {
-                String errorMsg = "Stop task caught exception, task: {}" + task;
+                span.error(e);
+                String errorMsg = "Stop task caught exception, task: " + task;
                 log.warn(errorMsg, e);
             } finally {
                 if (span != null) {
-                    span.finish();
+                    span.end();
                 }
+                JobExecuteContextThreadLocalRepo.unset();
             }
         }
     }

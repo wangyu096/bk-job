@@ -24,85 +24,46 @@
 
 package com.tencent.bk.job.manage.dao.whiteip.impl;
 
-import com.tencent.bk.job.common.i18n.MessageI18nService;
-import com.tencent.bk.job.manage.common.consts.whiteip.ActionScopeEnum;
+import com.tencent.bk.job.common.i18n.service.MessageI18nService;
+import com.tencent.bk.job.manage.api.common.constants.whiteip.ActionScopeEnum;
 import com.tencent.bk.job.manage.dao.whiteip.ActionScopeDAO;
 import com.tencent.bk.job.manage.model.dto.whiteip.ActionScopeDTO;
+import com.tencent.bk.job.manage.model.tables.ActionScope;
+import com.tencent.bk.job.manage.model.tables.records.ActionScopeRecord;
 import com.tencent.bk.job.manage.model.web.vo.whiteip.ActionScopeVO;
 import lombok.val;
 import org.jooq.DSLContext;
-import org.jooq.Record;
-import org.jooq.generated.tables.ActionScope;
-import org.jooq.types.ULong;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Repository
 public class ActionScopeDAOImpl implements ActionScopeDAO {
+    private final DSLContext defaultDslContext;
     private static final ActionScope T_ACTION_SCOPE = ActionScope.ACTION_SCOPE;
     private final MessageI18nService i18nService;
 
     @Autowired
-    public ActionScopeDAOImpl(MessageI18nService i18nService) {
+    public ActionScopeDAOImpl(@Qualifier("job-manage-dsl-context") DSLContext dslContext,
+                              MessageI18nService i18nService) {
+        this.defaultDslContext = dslContext;
         this.i18nService = i18nService;
     }
 
     @Override
-    public Long insertActionScope(DSLContext dslContext, ActionScopeDTO actionScopeDTO) {
-        Record record = dslContext.insertInto(T_ACTION_SCOPE,
-            T_ACTION_SCOPE.NAME,
-            T_ACTION_SCOPE.DESCRIPTION,
-            T_ACTION_SCOPE.CREATOR,
-            T_ACTION_SCOPE.CREATE_TIME,
-            T_ACTION_SCOPE.LAST_MODIFY_USER,
-            T_ACTION_SCOPE.LAST_MODIFY_TIME
-        ).values(
-            actionScopeDTO.getName(),
-            actionScopeDTO.getDescription(),
-            actionScopeDTO.getCreator(),
-            ULong.valueOf(actionScopeDTO.getCreateTime()),
-            actionScopeDTO.getLastModifier(),
-            ULong.valueOf(actionScopeDTO.getLastModifyTime())
-        ).returning(T_ACTION_SCOPE.ID)
-            .fetchOne();
-        return record.get(T_ACTION_SCOPE.ID);
-    }
-
-    @Override
-    public int deleteActionScopeById(DSLContext dslContext, Long id) {
-        return dslContext.deleteFrom(T_ACTION_SCOPE).where(
-            T_ACTION_SCOPE.ID.eq(id)
-        ).execute();
-    }
-
-    @Override
-    public ActionScopeDTO getActionScopeById(DSLContext dslContext, Long id) {
-        val record = dslContext.selectFrom(T_ACTION_SCOPE).where(
-            T_ACTION_SCOPE.ID.eq(id)
+    public ActionScopeDTO getActionScopeByCode(String code) {
+        ActionScopeRecord record = defaultDslContext.selectFrom(T_ACTION_SCOPE).where(
+            T_ACTION_SCOPE.CODE.eq(code)
         ).fetchOne();
-        if (record == null) {
-            return null;
-        } else {
-            return new ActionScopeDTO(
-                record.getId(),
-                record.getCode(),
-                record.getName(),
-                record.getDescription(),
-                record.getCreator(),
-                record.getCreateTime().longValue(),
-                record.getLastModifyUser(),
-                record.getLastModifyTime().longValue()
-            );
-        }
+        return convert(record);
     }
 
     @Override
-    public ActionScopeVO getActionScopeVOById(DSLContext dslContext, Long id) {
-        val record = dslContext.selectFrom(T_ACTION_SCOPE).where(
+    public ActionScopeVO getActionScopeVOById(Long id) {
+        val record = defaultDslContext.selectFrom(T_ACTION_SCOPE).where(
             T_ACTION_SCOPE.ID.eq(id)
         ).fetchOne();
         if (record == null) {
@@ -120,11 +81,8 @@ public class ActionScopeDAOImpl implements ActionScopeDAO {
     }
 
     @Override
-    public List<ActionScopeDTO> listActionScopeDTO(DSLContext dslContext) {
-        val records = dslContext.selectFrom(T_ACTION_SCOPE).fetch();
-        if (records == null) {
-            return new ArrayList<>();
-        }
+    public List<ActionScopeDTO> listActionScopeDTO() {
+        val records = defaultDslContext.selectFrom(T_ACTION_SCOPE).fetch();
         return records.stream().map(record ->
             new ActionScopeDTO(
                 record.getId(),
@@ -140,16 +98,37 @@ public class ActionScopeDAOImpl implements ActionScopeDAO {
     }
 
     @Override
-    public int updateActionScopeById(DSLContext dslContext, ActionScopeDTO actionScopeDTO) {
-        return dslContext.update(T_ACTION_SCOPE)
-            .set(T_ACTION_SCOPE.NAME, actionScopeDTO.getName())
-            .set(T_ACTION_SCOPE.DESCRIPTION, actionScopeDTO.getDescription())
-            .set(T_ACTION_SCOPE.CREATOR, actionScopeDTO.getCreator())
-            .set(T_ACTION_SCOPE.CREATE_TIME, ULong.valueOf(actionScopeDTO.getCreateTime()))
-            .set(T_ACTION_SCOPE.LAST_MODIFY_USER, actionScopeDTO.getLastModifier())
-            .set(T_ACTION_SCOPE.LAST_MODIFY_TIME, ULong.valueOf(actionScopeDTO.getLastModifyTime()))
-            .where(T_ACTION_SCOPE.ID.eq(actionScopeDTO.getId()))
-            .execute();
+    public List<ActionScopeDTO> getActionScopeByIds(List<Long> scopeIdList) {
+        val records = defaultDslContext.select(
+            T_ACTION_SCOPE.ID,
+            T_ACTION_SCOPE.CODE
+        ).from(T_ACTION_SCOPE)
+            .where(T_ACTION_SCOPE.ID.in(scopeIdList)).fetch();
+        return records.stream().map(record ->
+            new ActionScopeDTO(
+                record.get(T_ACTION_SCOPE.ID),
+                record.get(T_ACTION_SCOPE.CODE),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+            )
+        ).collect(Collectors.toList());
     }
 
+    private ActionScopeDTO convert(ActionScopeRecord record) {
+        if (record == null) return null;
+        return new ActionScopeDTO(
+            record.getId(),
+            record.getCode(),
+            record.getName(),
+            record.getDescription(),
+            record.getCreator(),
+            record.getCreateTime().longValue(),
+            record.getLastModifyUser(),
+            record.getLastModifyTime().longValue()
+        );
+    }
 }

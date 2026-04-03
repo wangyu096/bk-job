@@ -24,17 +24,18 @@
 
 package com.tencent.bk.job.crontab.service.impl;
 
-import com.tencent.bk.job.common.exception.ServiceException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
-import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.model.InternalResponse;
+import com.tencent.bk.job.common.model.iam.AuthResultDTO;
 import com.tencent.bk.job.common.util.json.JsonUtils;
-import com.tencent.bk.job.crontab.client.ServiceExecuteTaskResourceClient;
 import com.tencent.bk.job.crontab.exception.TaskExecuteAuthFailedException;
 import com.tencent.bk.job.crontab.service.ExecuteTaskService;
+import com.tencent.bk.job.execute.api.inner.ServiceExecuteTaskResource;
 import com.tencent.bk.job.execute.model.inner.ServiceTaskExecuteResult;
 import com.tencent.bk.job.execute.model.inner.ServiceTaskVariable;
 import com.tencent.bk.job.execute.model.inner.request.ServiceTaskExecuteRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.helpers.MessageFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -47,18 +48,18 @@ import java.util.List;
 @Service
 public class ExecuteTaskServiceImpl implements ExecuteTaskService {
 
-    private ServiceExecuteTaskResourceClient serviceExecuteTaskResourceClient;
+    private final ServiceExecuteTaskResource executeTaskResource;
 
     @Autowired
-    public ExecuteTaskServiceImpl(ServiceExecuteTaskResourceClient serviceExecuteTaskResourceClient) {
-        this.serviceExecuteTaskResourceClient = serviceExecuteTaskResourceClient;
+    public ExecuteTaskServiceImpl(ServiceExecuteTaskResource executeTaskResource) {
+        this.executeTaskResource = executeTaskResource;
     }
 
     @Override
-    public ServiceResponse<ServiceTaskExecuteResult> executeTask(long appId, long taskId, long cronTaskId,
-                                                                 String cronName,
-                                                                 List<ServiceTaskVariable> variableList,
-                                                                 String operator) {
+    public InternalResponse<ServiceTaskExecuteResult> executeTask(long appId, long taskId, long cronTaskId,
+                                                                  String cronName,
+                                                                  List<ServiceTaskVariable> variableList,
+                                                                  String operator) {
 
         try {
             ServiceTaskExecuteRequest request = new ServiceTaskExecuteRequest();
@@ -74,14 +75,29 @@ public class ExecuteTaskServiceImpl implements ExecuteTaskService {
                 log.debug("Sending request to executor|{}", request);
             }
 
-            ServiceResponse<ServiceTaskExecuteResult> taskExecuteResult =
-                serviceExecuteTaskResourceClient.executeTask(request);
-            log.info("Get execute task by cron|appId|{}|taskId|{}|cronTaskId|{}|{}|operator|{}|result|{}", appId,
-                taskId, cronTaskId, cronName, operator, JsonUtils.toJson(taskExecuteResult));
-            return taskExecuteResult;
+            InternalResponse<ServiceTaskExecuteResult> resp =
+                executeTaskResource.executeTask(request);
+            log.info(
+                "Get execute task by cron|appId={}|taskId={}|cronTaskId={}|cronName={}|operator={}|result={}",
+                appId,
+                taskId,
+                cronTaskId,
+                cronName,
+                operator,
+                JsonUtils.toJson(resp)
+            );
+            return resp;
         } catch (Throwable e) {
-            log.error("Get execute task by cron caught exception|appId|{}|taskId|{}|cronTaskId|{}|{}|operator|{}",
-                appId, taskId, cronTaskId, cronName, operator, e);
+            String msg = MessageFormatter.arrayFormat(
+                "Get execute task by cron caught exception|appId={}|taskId={}|cronTaskId={}|cronName={}|operator={}",
+                new String[]{
+                    String.valueOf(appId),
+                    String.valueOf(taskId),
+                    String.valueOf(cronTaskId),
+                    cronName,
+                    operator
+                }).getMessage();
+            log.error(msg, e);
             return null;
         }
     }
@@ -90,7 +106,7 @@ public class ExecuteTaskServiceImpl implements ExecuteTaskService {
     public void authExecuteTask(
         long appId,
         long taskId,
-        long cronTaskId,
+        Long cronTaskId,
         String cronName,
         List<ServiceTaskVariable> variableList,
         String operator
@@ -99,7 +115,6 @@ public class ExecuteTaskServiceImpl implements ExecuteTaskService {
         request.setAppId(appId);
         request.setOperator(operator);
         request.setPlanId(taskId);
-        request.setCronTaskId(cronTaskId);
         request.setTaskName(cronName);
         request.setTaskVariables(variableList);
         request.setStartupMode(3);
@@ -107,20 +122,14 @@ public class ExecuteTaskServiceImpl implements ExecuteTaskService {
             log.debug("Sending auth execute request to executor|{}", request);
         }
 
-        ServiceResponse<AuthResult> authExecuteResult = serviceExecuteTaskResourceClient.authExecuteTask(request);
+        InternalResponse<AuthResultDTO> authExecuteResult = executeTaskResource.authExecuteTask(request);
         log.info("Auth execute result|appId|{}|taskId|{}|cronTaskId|{}|{}|operator|{}|result|{}", appId,
             taskId, cronTaskId, cronName, operator, JsonUtils.toJson(authExecuteResult));
         if (authExecuteResult != null) {
-            if (authExecuteResult.isSuccess() && authExecuteResult.getCode() == 0 &&
-                authExecuteResult.getAuthResult() == null && authExecuteResult.getData() == null) {
-                return;
-            } else if (authExecuteResult.getData() != null || authExecuteResult.getAuthResult() != null) {
-                throw new TaskExecuteAuthFailedException(authExecuteResult.getData(),
-                    authExecuteResult.getAuthResult());
-            } else {
-                throw new ServiceException(authExecuteResult.getCode(), authExecuteResult.getErrorMsg());
+            AuthResultDTO authResult = authExecuteResult.getData();
+            if (authResult != null && !authResult.isPass()) {
+                throw new TaskExecuteAuthFailedException(AuthResult.fromAuthResultDTO(authResult), null);
             }
         }
-        throw new TaskExecuteAuthFailedException(null, null);
     }
 }

@@ -27,16 +27,21 @@ package com.tencent.bk.job.analysis.service;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.tencent.bk.job.analysis.client.ApplicationResourceClient;
 import com.tencent.bk.job.analysis.model.dto.SimpleAppInfoDTO;
-import com.tencent.bk.job.common.exception.DataConsistencyException;
-import com.tencent.bk.job.manage.model.inner.ServiceApplicationDTO;
+import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.manage.api.inner.ServiceApplicationResource;
+import com.tencent.bk.job.manage.model.inner.resp.ServiceApplicationDTO;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -45,7 +50,7 @@ import java.util.concurrent.TimeUnit;
 public class AppService {
 
     private static final String KEY_CACHE_APP_INFO_LIST = "KEY_CACHE_APP_INFO_LIST";
-    protected final ApplicationResourceClient applicationResourceClient;
+    protected final ServiceApplicationResource applicationResource;
     private LoadingCache<Long, String> appIdNameCache = CacheBuilder.newBuilder()
         .maximumSize(3000).expireAfterWrite(30, TimeUnit.SECONDS).
             build(new CacheLoader<Long, String>() {
@@ -71,8 +76,8 @@ public class AppService {
             );
 
     @Autowired
-    public AppService(ApplicationResourceClient applicationResourceClient) {
-        this.applicationResourceClient = applicationResourceClient;
+    public AppService(ServiceApplicationResource applicationResource) {
+        this.applicationResource = applicationResource;
     }
 
     public String getAppNameFromCache(Long appId) {
@@ -85,7 +90,7 @@ public class AppService {
     }
 
     public String getAppNameById(Long appId) {
-        ServiceApplicationDTO serviceApplicationDTO = applicationResourceClient.queryAppById(appId);
+        ServiceApplicationDTO serviceApplicationDTO = applicationResource.queryAppById(appId);
         if (serviceApplicationDTO == null) {
             String msg = String.format("Cannot find appName by id=%s, app may be deleted", appId);
             log.warn(msg);
@@ -101,7 +106,7 @@ public class AppService {
         List<ServiceApplicationDTO> serviceApplicationDTOList = listLocalDBAppsFromCache();
         if (serviceApplicationDTOList == null) {
             log.error("Fail to listLocalDBAppsFromCache, serviceApplicationDTOList is null");
-            throw new DataConsistencyException("none", "localDBApps");
+            throw new InternalException(ErrorCode.INTERNAL_ERROR);
         }
         Map<Long, SimpleAppInfoDTO> map = new HashMap<>();
         for (ServiceApplicationDTO serviceApplicationDTO : serviceApplicationDTOList) {
@@ -130,8 +135,7 @@ public class AppService {
     }
 
     public List<ServiceApplicationDTO> listLocalDBApps() {
-        val resp = applicationResourceClient.listLocalDBApps(-1);
-        List<ServiceApplicationDTO> apps = resp.getData();
-        return apps;
+        val resp = applicationResource.listApps(null);
+        return resp.getData();
     }
 }

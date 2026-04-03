@@ -24,26 +24,23 @@
 
 package com.tencent.bk.job.crontab.service.impl;
 
-import com.tencent.bk.job.common.model.ServiceResponse;
-import com.tencent.bk.job.crontab.client.ServiceTaskPlanResourceClient;
+import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.crontab.service.TaskPlanService;
+import com.tencent.bk.job.manage.api.inner.ServiceTaskPlanResource;
 import com.tencent.bk.job.manage.model.inner.ServiceTaskPlanDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-/**
- * @since 27/4/2020 12:13
- */
 @Slf4j
-@Service
+@Service("jobCrontabTaskPlanService")
 public class TaskPlanServiceImpl implements TaskPlanService {
 
-    private final ServiceTaskPlanResourceClient serviceTaskPlanResourceClient;
+    private final ServiceTaskPlanResource taskPlanResource;
 
     @Autowired
-    public TaskPlanServiceImpl(ServiceTaskPlanResourceClient serviceTaskPlanResourceClient) {
-        this.serviceTaskPlanResourceClient = serviceTaskPlanResourceClient;
+    public TaskPlanServiceImpl(ServiceTaskPlanResource taskPlanResource) {
+        this.taskPlanResource = taskPlanResource;
     }
 
     @Override
@@ -51,8 +48,8 @@ public class TaskPlanServiceImpl implements TaskPlanService {
         if (appId <= 0 || planId <= 0) {
             return null;
         }
-        ServiceResponse<ServiceTaskPlanDTO> planByIdResponse =
-            serviceTaskPlanResourceClient.getPlanBasicInfoById(appId, planId);
+        InternalResponse<ServiceTaskPlanDTO> planByIdResponse =
+            taskPlanResource.getPlanBasicInfoById(appId, planId);
         if (planByIdResponse.isSuccess()) {
             return planByIdResponse.getData();
         }

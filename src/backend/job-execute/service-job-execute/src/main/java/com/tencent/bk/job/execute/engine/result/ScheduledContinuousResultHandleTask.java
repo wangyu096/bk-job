@@ -24,14 +24,16 @@
 
 package com.tencent.bk.job.execute.engine.result;
 
-import brave.ScopedSpan;
-import brave.Tracer;
-import brave.Tracing;
-import brave.propagation.TraceContext;
+import com.tencent.bk.job.execute.common.context.JobExecuteContext;
+import com.tencent.bk.job.execute.common.context.JobExecuteContextThreadLocalRepo;
+import com.tencent.bk.job.execute.engine.quota.limit.RunningJobKeepaliveManager;
 import com.tencent.bk.job.execute.engine.result.ha.ResultHandleLimiter;
 import com.tencent.bk.job.execute.engine.result.ha.ResultHandleTaskKeepaliveManager;
 import com.tencent.bk.job.execute.monitor.ExecuteMetricNames;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.sleuth.Span;
+import org.springframework.cloud.sleuth.Tracer;
 
 import java.util.Objects;
 import java.util.StringJoiner;
@@ -58,11 +60,11 @@ public class ScheduledContinuousResultHandleTask extends DelayedTask {
     /**
      * 任务队列
      */
-    private DelayQueue<ScheduledContinuousResultHandleTask> tasksQueue;
+    private final DelayQueue<ScheduledContinuousResultHandleTask> tasksQueue;
     /**
      * 任务
      */
-    private volatile ContinuousScheduledTask task;
+    private final ContinuousScheduledTask task;
     /**
      * 延时任务
      */
@@ -70,37 +72,68 @@ public class ScheduledContinuousResultHandleTask extends DelayedTask {
     /**
      * 调用链父上下文
      */
-    private TraceContext parent;
+    private final Span parent;
+
+    private final RunningJobKeepaliveManager runningJobKeepaliveManager;
+    /**
+     * 作业执行上下文信息
+     */
+    @Getter
+    private final JobExecuteContext jobExecuteContext;
 
     /**
      * ScheduledContinuousQueuedTask Constructor
      *
-     * @param sampler             采样器
-     * @param tracing             日志调用链
-     * @param task                任务
-     * @param resultHandleManager resultHandleManager
-     * @param resultHandleLimiter 限流
+     * @param sampler                          采样器
+     * @param tracer                           日志调用链
+     * @param task                             任务
+     * @param resultHandleManager              resultHandleManager
+     * @param resultHandleLimiter              限流
+     * @param resultHandleTaskKeepaliveManager resultHandleTaskKeepaliveManager
+     * @param runningJobKeepaliveManager       runningJobKeepaliveManager
+     * @param jobExecuteContext                作业执行上下文
      */
     public ScheduledContinuousResultHandleTask(ResultHandleTaskSampler sampler,
-                                               Tracing tracing, ContinuousScheduledTask task,
+                                               Tracer tracer,
+                                               ContinuousScheduledTask task,
                                                ResultHandleManager resultHandleManager,
                                                ResultHandleTaskKeepaliveManager resultHandleTaskKeepaliveManager,
-                                               ResultHandleLimiter resultHandleLimiter) {
+                                               ResultHandleLimiter resultHandleLimiter,
+                                               RunningJobKeepaliveManager runningJobKeepaliveManager,
+                                               JobExecuteContext jobExecuteContext) {
         this.sampler = sampler;
-        this.tracer = tracing.tracer();
-        this.parent = tracing.currentTraceContext().get();
+        this.tracer = tracer;
+        this.parent = tracer.currentSpan();
         this.task = task;
         this.delayedTask = new DelayedTask(this.task, this.task.getScheduleStrategy().getDelay());
         this.resultHandleManager = resultHandleManager;
         this.tasksQueue = resultHandleManager.getTasksQueue();
         this.resultHandleTaskKeepaliveManager = resultHandleTaskKeepaliveManager;
         this.resultHandleLimiter = resultHandleLimiter;
+        this.runningJobKeepaliveManager = runningJobKeepaliveManager;
+        this.jobExecuteContext = jobExecuteContext;
+    }
+
+    private Span getChildSpan() {
+        return this.tracer.nextSpan(parent).name("execute-task");
     }
 
     @Override
     public void execute() {
-        ScopedSpan span = this.tracer.startScopedSpanWithParent("execute-task",
-            this.parent);
+        Span span = getChildSpan();
+        try (Tracer.SpanInScope ignored = this.tracer.withSpan(span.start())) {
+            JobExecuteContextThreadLocalRepo.set(this.jobExecuteContext);
+            doExecute();
+        } catch (Exception e) {
+            span.error(e);
+            throw e;
+        } finally {
+            JobExecuteContextThreadLocalRepo.unset();
+            span.end();
+        }
+    }
+
+    public void doExecute() {
         // 任务是否执行完成
         boolean isDone = false;
         // 任务是否是可执行的
@@ -130,32 +163,33 @@ public class ScheduledContinuousResultHandleTask extends DelayedTask {
             } else {
                 isDone = true;
             }
-        } catch (Exception | Error e) {
-            span.error(e);
+        } catch (Throwable e) {
             status = "error";
+            isDone = true;
             throw e;
         } finally {
             if (isDone) {
                 if (task instanceof ScriptResultHandleTask) {
-                    resultHandleTaskKeepaliveManager.stopKeepaliveInfoTask(task.getTaskId());
-                    sampler.decrementScriptTask();
+                    ScriptResultHandleTask scriptTask = (ScriptResultHandleTask) task;
+                    resultHandleTaskKeepaliveManager.stopKeepaliveInfoTask(scriptTask.getTaskId());
+                    sampler.decrementScriptTask(scriptTask.getAppId());
                 } else if (task instanceof FileResultHandleTask) {
-                    resultHandleTaskKeepaliveManager.stopKeepaliveInfoTask(task.getTaskId());
-                    sampler.decrementFileTask();
+                    FileResultHandleTask fileTask = (FileResultHandleTask) task;
+                    resultHandleTaskKeepaliveManager.stopKeepaliveInfoTask(fileTask.getTaskId());
+                    sampler.decrementFileTask(fileTask.getAppId());
                 }
+                runningJobKeepaliveManager.stopKeepaliveTask(task.getTaskContext().getJobInstanceId());
                 resultHandleManager.getScheduledTasks().remove(task.getTaskId());
             }
             if (isExecutable) {
                 long end = System.nanoTime();
                 sampler.getMeterRegistry().timer(ExecuteMetricNames.RESULT_HANDLE_TASK_SCHEDULE_PREFIX,
-                    "task_type", task.getTaskType(), "status", status)
+                        "task_type", task.getTaskType(), "status", status)
                     .record(end - start, TimeUnit.NANOSECONDS);
             }
             if (!isReScheduled) {
                 resultHandleLimiter.release();
             }
-            this.parent = span.context();
-            span.finish();
         }
     }
 
@@ -199,7 +233,7 @@ public class ScheduledContinuousResultHandleTask extends DelayedTask {
         return this.delayedTask.getExpireTime();
     }
 
-    public TraceContext getTraceContext() {
+    public Span getTraceContext() {
         return this.parent;
     }
 

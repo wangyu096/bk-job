@@ -24,8 +24,9 @@
 
 package com.tencent.bk.job.file.worker.api;
 
-import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.common.util.json.JsonUtils;
+import com.tencent.bk.job.file.worker.model.req.BaseReq;
 import com.tencent.bk.job.file.worker.model.req.ExecuteActionReq;
 import com.tencent.bk.job.file.worker.model.req.ListFileNodeReq;
 import com.tencent.bk.job.file_gateway.model.resp.common.FileNodesDTO;
@@ -46,14 +47,19 @@ public class FileResourceImpl implements FileResource {
     }
 
     @Override
-    public ServiceResponse<FileNodesDTO> listFileNode(ListFileNodeReq req) {
-        log.info("req={}", JsonUtils.toJson(req));
+    public InternalResponse<Boolean> isFileAvailable(BaseReq req) {
+        return fileResource.isFileAvailable(req);
+    }
+
+    @Override
+    public InternalResponse<FileNodesDTO> listFileNode(ListFileNodeReq req) {
+        log.info("req={}", JsonUtils.toJsonWithoutSkippedFields(req));
         return fileResource.listFileNode(req);
     }
 
     @Override
-    public ServiceResponse<Boolean> executeAction(ExecuteActionReq req) {
-        log.info("req={}", JsonUtils.toJson(req));
+    public InternalResponse<Boolean> executeAction(ExecuteActionReq req) {
+        log.info("req={}", JsonUtils.toJsonWithoutSkippedFields(req));
         return fileResource.executeAction(req);
     }
 }

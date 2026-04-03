@@ -24,37 +24,165 @@
 
 package com.tencent.bk.job.manage.api.esb.v3;
 
+import com.tencent.bk.job.common.annotation.EsbAPI;
+import com.tencent.bk.job.common.constant.JobCommonHeaders;
 import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.common.esb.model.job.v3.EsbPageDataV3;
-import com.tencent.bk.job.manage.model.esb.v3.request.EsbGetScriptListV3Req;
-import com.tencent.bk.job.manage.model.esb.v3.request.EsbGetScriptVersionDetailV3Req;
-import com.tencent.bk.job.manage.model.esb.v3.request.EsbGetScriptVersionListV3Req;
+import com.tencent.bk.job.common.validation.Create;
+import com.tencent.bk.job.common.validation.Delete;
+import com.tencent.bk.job.common.validation.Update;
+import com.tencent.bk.job.manage.model.esb.v3.request.EsbCreatePublicScriptV3Req;
+import com.tencent.bk.job.manage.model.esb.v3.request.EsbCreatePublicScriptVersionV3Req;
+import com.tencent.bk.job.manage.model.esb.v3.request.EsbDeletePublicScriptV3Req;
+import com.tencent.bk.job.manage.model.esb.v3.request.EsbDeletePublicScriptVersionV3Req;
+import com.tencent.bk.job.manage.model.esb.v3.request.EsbGetPublicScriptListV3Request;
+import com.tencent.bk.job.manage.model.esb.v3.request.EsbGetPublicScriptVersionDetailV3Request;
+import com.tencent.bk.job.manage.model.esb.v3.request.EsbGetPublicScriptVersionListV3Request;
+import com.tencent.bk.job.manage.model.esb.v3.request.EsbManagePublicScriptVersionV3Req;
+import com.tencent.bk.job.manage.model.esb.v3.request.EsbUpdatePublicScriptBasicV3Req;
+import com.tencent.bk.job.manage.model.esb.v3.request.EsbUpdatePublicScriptVersionV3Req;
 import com.tencent.bk.job.manage.model.esb.v3.response.EsbScriptV3DTO;
 import com.tencent.bk.job.manage.model.esb.v3.response.EsbScriptVersionDetailV3DTO;
-import org.springframework.web.bind.annotation.*;
-
-import static com.tencent.bk.job.common.i18n.locale.LocaleUtils.COMMON_LANG_HEADER;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 公共脚本相关API-V3
  */
 @RequestMapping("/esb/api/v3")
 @RestController
+@EsbAPI
 public interface EsbPublicScriptV3Resource {
 
-    @PostMapping("/get_public_script_list")
+    @GetMapping("/get_public_script_list")
     EsbResp<EsbPageDataV3<EsbScriptV3DTO>> getPublicScriptList(
-        @RequestHeader(value = COMMON_LANG_HEADER, required = false) String lang,
-        @RequestBody EsbGetScriptListV3Req request);
+        @RequestHeader(value = JobCommonHeaders.USERNAME) String username,
+        @RequestHeader(value = JobCommonHeaders.APP_CODE) String appCode,
+        @RequestParam(value = "name", required = false) String name,
+        @RequestParam(value = "script_language", required = false) Integer scriptLanguage,
+        @RequestParam(value = "start", required = false) Integer start,
+        @RequestParam(value = "length", required = false) Integer length);
+
+    @GetMapping("/get_public_script_version_list")
+    EsbResp<EsbPageDataV3<EsbScriptVersionDetailV3DTO>> getPublicScriptVersionList(
+        @RequestHeader(value = JobCommonHeaders.USERNAME) String username,
+        @RequestHeader(value = JobCommonHeaders.APP_CODE) String appCode,
+        @RequestParam(value = "script_id") String scriptId,
+        @RequestParam(value = "return_script_content", required = false, defaultValue = "false")
+            boolean returnScriptContent,
+        @RequestParam(value = "start", required = false) Integer start,
+        @RequestParam(value = "length", required = false) Integer length);
+
+    @GetMapping("/get_public_script_version_detail")
+    EsbResp<EsbScriptVersionDetailV3DTO> getPublicScriptVersionDetail(
+        @RequestHeader(value = JobCommonHeaders.USERNAME) String username,
+        @RequestHeader(value = JobCommonHeaders.APP_CODE) String appCode,
+        @RequestParam(value = "id", required = false) Long scriptVersionId,
+        @RequestParam(value = "script_id", required = false) String scriptId,
+        @RequestParam(value = "version", required = false) String version);
+
+    @PostMapping("/get_public_script_list")
+    EsbResp<EsbPageDataV3<EsbScriptV3DTO>> getPublicScriptListUsingPost(
+        @RequestHeader(value = JobCommonHeaders.USERNAME) String username,
+        @RequestHeader(value = JobCommonHeaders.APP_CODE) String appCode,
+        @RequestBody
+        @Validated
+            EsbGetPublicScriptListV3Request request
+    );
 
     @PostMapping("/get_public_script_version_list")
-    EsbResp<EsbPageDataV3<EsbScriptVersionDetailV3DTO>> getPublicScriptVersionList(
-        @RequestHeader(value = COMMON_LANG_HEADER, required = false) String lang,
-        @RequestBody EsbGetScriptVersionListV3Req request);
+    EsbResp<EsbPageDataV3<EsbScriptVersionDetailV3DTO>> getPublicScriptVersionListUsingPost(
+        @RequestHeader(value = JobCommonHeaders.USERNAME) String username,
+        @RequestHeader(value = JobCommonHeaders.APP_CODE) String appCode,
+        @RequestBody
+        @Validated
+            EsbGetPublicScriptVersionListV3Request request
+    );
 
     @PostMapping("/get_public_script_version_detail")
-    EsbResp<EsbScriptVersionDetailV3DTO> getPublicScriptVersionDetail(
-        @RequestHeader(value = COMMON_LANG_HEADER, required = false) String lang,
-        @RequestBody EsbGetScriptVersionDetailV3Req request);
+    EsbResp<EsbScriptVersionDetailV3DTO> getPublicScriptVersionDetailUsingPost(
+        @RequestHeader(value = JobCommonHeaders.USERNAME) String username,
+        @RequestHeader(value = JobCommonHeaders.APP_CODE) String appCode,
+        @RequestBody
+        @Validated
+            EsbGetPublicScriptVersionDetailV3Request request
+    );
 
+    @PostMapping("/create_public_script")
+    EsbResp<EsbScriptVersionDetailV3DTO> createPublicScript(
+        @RequestHeader(value = JobCommonHeaders.USERNAME) String username,
+        @RequestHeader(value = JobCommonHeaders.APP_CODE) String appCode,
+        @RequestBody
+        @Validated(Create.class)
+            EsbCreatePublicScriptV3Req request
+    );
+
+    @PostMapping("/create_public_script_version")
+    EsbResp<EsbScriptVersionDetailV3DTO> createPublicScriptVersion(
+        @RequestHeader(value = JobCommonHeaders.USERNAME) String username,
+        @RequestHeader(value = JobCommonHeaders.APP_CODE) String appCode,
+        @RequestBody
+        @Validated(Create.class)
+            EsbCreatePublicScriptVersionV3Req request
+    );
+
+    @PostMapping("/delete_public_script")
+    EsbResp deletePublicScript(
+        @RequestHeader(value = JobCommonHeaders.USERNAME) String username,
+        @RequestHeader(value = JobCommonHeaders.APP_CODE) String appCode,
+        @RequestBody
+        @Validated(Delete.class)
+            EsbDeletePublicScriptV3Req request
+    );
+
+    @PostMapping("/delete_public_script_version")
+    EsbResp deletePublicScriptVersion(
+        @RequestHeader(value = JobCommonHeaders.USERNAME) String username,
+        @RequestHeader(value = JobCommonHeaders.APP_CODE) String appCode,
+        @RequestBody
+        @Validated(Delete.class)
+            EsbDeletePublicScriptVersionV3Req request
+    );
+
+    @PostMapping("/disable_public_script_version")
+    EsbResp<EsbScriptVersionDetailV3DTO> disablePublicScriptVersion(
+        @RequestHeader(value = JobCommonHeaders.USERNAME) String username,
+        @RequestHeader(value = JobCommonHeaders.APP_CODE) String appCode,
+        @RequestBody
+        @Validated(Update.class)
+            EsbManagePublicScriptVersionV3Req request
+    );
+
+    @PostMapping("/publish_public_script_version")
+    EsbResp<EsbScriptVersionDetailV3DTO> publishPublicScriptVersion(
+        @RequestHeader(value = JobCommonHeaders.USERNAME) String username,
+        @RequestHeader(value = JobCommonHeaders.APP_CODE) String appCode,
+        @RequestBody
+        @Validated(Update.class)
+            EsbManagePublicScriptVersionV3Req request
+    );
+
+    @PostMapping("/update_public_script_basic")
+    EsbResp<EsbScriptV3DTO> updatePublicScriptBasic(
+        @RequestHeader(value = JobCommonHeaders.USERNAME) String username,
+        @RequestHeader(value = JobCommonHeaders.APP_CODE) String appCode,
+        @RequestBody
+        @Validated(Update.class)
+            EsbUpdatePublicScriptBasicV3Req request
+    );
+
+    @PostMapping("/update_public_script_version")
+    EsbResp<EsbScriptVersionDetailV3DTO> updatePublicScriptVersion(
+        @RequestHeader(value = JobCommonHeaders.USERNAME) String username,
+        @RequestHeader(value = JobCommonHeaders.APP_CODE) String appCode,
+        @RequestBody
+        @Validated(Update.class)
+            EsbUpdatePublicScriptVersionV3Req request
+    );
 }

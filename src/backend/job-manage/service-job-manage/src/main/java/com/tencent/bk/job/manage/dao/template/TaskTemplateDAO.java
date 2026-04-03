@@ -24,11 +24,11 @@
 
 package com.tencent.bk.job.manage.dao.template;
 
-import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.manage.model.dto.task.TaskTemplateInfoDTO;
-import org.jooq.types.ULong;
+import com.tencent.bk.job.manage.model.query.TaskTemplateQuery;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -40,25 +40,18 @@ public interface TaskTemplateDAO {
     /**
      * 根据参数拉取模版基本信息列表
      *
-     * @param templateCondition     查询参数
-     * @param baseSearchCondition   分页信息
-     * @param excludeTemplateIdList 排除列表
+     * @param query 查询条件
      * @return 分页后的模版基本信息列表
      */
-    PageData<TaskTemplateInfoDTO> listPageTaskTemplates(TaskTemplateInfoDTO templateCondition,
-                                                        BaseSearchCondition baseSearchCondition,
-                                                        List<Long> excludeTemplateIdList);
+    PageData<TaskTemplateInfoDTO> listPageTaskTemplates(TaskTemplateQuery query);
 
     /**
-     * 根据模版 ID 列表批量查询模版数据
+     * 批量查询模版数据
      *
-     * @param appId          业务 ID
-     * @param templateIdList 模版 ID 列表
+     * @param query 查询条件
      * @return 模版信息
      */
-    List<TaskTemplateInfoDTO> listTaskTemplateByIds(Long appId, List<Long> templateIdList,
-                                                    TaskTemplateInfoDTO templateCondition,
-                                                    BaseSearchCondition baseSearchCondition);
+    List<TaskTemplateInfoDTO> listTaskTemplates(TaskTemplateQuery query);
 
     /**
      * 根据模版 ID 查询模版数据
@@ -76,6 +69,14 @@ public interface TaskTemplateDAO {
      * @return 模版信息
      */
     TaskTemplateInfoDTO getTaskTemplateById(Long templateId);
+
+    /**
+     * 根据模版 IDs 批量查询模版数据
+     *
+     * @param templateIds 模版 ID
+     * @return 模版信息列表
+     */
+    List<TaskTemplateInfoDTO> listTaskTemplateBasicInfoByIds(List<Long> templateIds);
 
     /**
      * 查询已删除的模板信息
@@ -112,28 +113,12 @@ public interface TaskTemplateDAO {
     boolean deleteTaskTemplateById(Long appId, Long templateId);
 
     /**
-     * 获取模版 Tag 个数
-     *
-     * @param appId 业务 ID
-     * @return Tag ID 与个数
-     */
-    Map<Long, Long> getTemplateTagCount(Long appId);
-
-    /**
      * 获取模版总个数
      *
      * @param appId 业务 ID
      * @return 模版总个数
      */
     Long getAllTemplateCount(Long appId);
-
-    /**
-     * 获取未分类的模版个数
-     *
-     * @param appId 业务 ID
-     * @return 未分类模版个数
-     */
-    Long getUnclassifiedTemplateCount(Long appId);
 
     /**
      * 获取待更新的模版个数
@@ -221,11 +206,32 @@ public interface TaskTemplateDAO {
      */
     boolean isExistAnyAppTemplate(Long appId);
 
-    void updateTemplateStatus(ULong templateId, int scriptStatus);
+    /**
+     * 更新作业模版引用的脚本的状态
+     *
+     * @param templateId        作业模版
+     * @param scriptStatusFlags 脚本更新状态
+     */
+    void updateTemplateScriptStatusFlags(Long templateId, int scriptStatusFlags);
+
+    /**
+     * 批量更新作业模版引用的脚本的状态
+     *
+     * @param templateIds       作业模版ID 列表
+     * @param scriptStatusFlags 脚本更新状态
+     */
+    void batchUpdateTemplateScriptStatus(Collection<Long> templateIds, int scriptStatusFlags);
 
     Integer countTemplates(Long appId);
 
-    Integer countByTag(Long appId, Long tagId);
-
     List<Long> listAllTemplateId();
+
+    List<Long> listAllAppTemplateId(Long appId);
+
+    /**
+     * 获取模板标签(兼容老版本)
+     *
+     * @return Map<TemplateId, List < TagId>>
+     */
+    Map<Long, List<Long>> listAllTemplateTagsCompatible();
 }

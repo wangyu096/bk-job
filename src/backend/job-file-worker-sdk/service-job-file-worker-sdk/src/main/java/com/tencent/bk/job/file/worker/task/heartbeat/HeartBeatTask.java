@@ -25,18 +25,17 @@
 package com.tencent.bk.job.file.worker.task.heartbeat;
 
 import com.tencent.bk.job.common.model.http.HttpReq;
-import com.tencent.bk.job.common.util.http.AbstractHttpHelper;
-import com.tencent.bk.job.common.util.http.DefaultHttpHelper;
 import com.tencent.bk.job.common.util.http.HttpReqGenUtil;
-import com.tencent.bk.job.common.util.ip.IpUtils;
+import com.tencent.bk.job.common.util.http.JobHttpClient;
 import com.tencent.bk.job.common.util.json.JsonUtils;
 import com.tencent.bk.job.common.util.machine.MachineUtil;
 import com.tencent.bk.job.file.worker.config.WorkerConfig;
-import com.tencent.bk.job.file.worker.cos.service.GatewayInfoService;
-import com.tencent.bk.job.file.worker.cos.service.MetaDataService;
+import com.tencent.bk.job.file.worker.service.EnvironmentService;
+import com.tencent.bk.job.file.worker.service.GatewayInfoService;
+import com.tencent.bk.job.file.worker.service.MetaDataService;
 import com.tencent.bk.job.file_gateway.model.req.inner.HeartBeatReq;
-import io.micrometer.core.instrument.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -46,44 +45,40 @@ import java.io.FileNotFoundException;
 @Service
 public class HeartBeatTask {
 
-    public static volatile boolean runFlag = true;
-
-    private final AbstractHttpHelper httpHelper = new DefaultHttpHelper();
-
+    private final JobHttpClient jobHttpClient;
     private final WorkerConfig workerConfig;
     private final GatewayInfoService gatewayInfoService;
     private final MetaDataService metaDataService;
+    private final EnvironmentService environmentService;
 
     @Autowired
-    public HeartBeatTask(WorkerConfig workerConfig, GatewayInfoService gatewayInfoService,
-                         MetaDataService metaDataService) {
+    public HeartBeatTask(JobHttpClient jobHttpClient,
+                         WorkerConfig workerConfig,
+                         GatewayInfoService gatewayInfoService,
+                         MetaDataService metaDataService,
+                         EnvironmentService environmentService) {
+        this.jobHttpClient = jobHttpClient;
         this.workerConfig = workerConfig;
         this.gatewayInfoService = gatewayInfoService;
         this.metaDataService = metaDataService;
+        this.environmentService = environmentService;
     }
 
-    public static void stopHeartBeat() {
-        runFlag = false;
-    }
-
-    private HeartBeatReq getWorkerInfo() {
-        String innerIp = IpUtils.getFirstMachineIP();
+    private HeartBeatReq getHeartBeatReq() {
         HeartBeatReq heartBeatReq = new HeartBeatReq();
-        heartBeatReq.setId(workerConfig.getId());
+        heartBeatReq.setName(workerConfig.getName());
+        heartBeatReq.setTagList(workerConfig.getTagList());
         heartBeatReq.setAppId(workerConfig.getAppId());
         heartBeatReq.setToken(workerConfig.getToken());
-        if (StringUtils.isBlank(workerConfig.getAccessHost())) {
-            heartBeatReq.setAccessHost(innerIp);
-        } else {
-            heartBeatReq.setAccessHost(workerConfig.getAccessHost());
-        }
+
+        // 二进制部署环境与K8s环境差异处理
+        heartBeatReq.setAccessHost(environmentService.getAccessHost());
+        Pair<String, String> protocolAndIpPair = environmentService.getInnerProtocolAndIp();
+        heartBeatReq.setInnerIpProtocol(protocolAndIpPair.getLeft());
+        heartBeatReq.setInnerIp(protocolAndIpPair.getRight());
+
         heartBeatReq.setAccessPort(workerConfig.getAccessPort());
         heartBeatReq.setCloudAreaId(workerConfig.getCloudAreaId());
-        if (StringUtils.isBlank(workerConfig.getInnerIp())) {
-            heartBeatReq.setInnerIp(innerIp);
-        } else {
-            heartBeatReq.setInnerIp(workerConfig.getInnerIp());
-        }
         heartBeatReq.setAbilityTagList(workerConfig.getAbilityTagList());
         heartBeatReq.setVersion(workerConfig.getVersion());
         heartBeatReq.setCpuOverload(MachineUtil.systemCPULoad());
@@ -100,21 +95,11 @@ public class HeartBeatTask {
         return heartBeatReq;
     }
 
-    public void run() {
-        if (!runFlag) {
-            log.info("HeartBeat closed, ignore");
-            return;
-        }
+    public void doHeartBeat() {
         String url = gatewayInfoService.getHeartBeatUrl();
-        HttpReq req = HttpReqGenUtil.genSimpleJsonReq(url, getWorkerInfo());
-        String respStr;
-        try {
-            log.info(String.format("url=%s,body=%s,headers=%s", url, req.getBody(),
-                JsonUtils.toJson(req.getHeaders())));
-            respStr = httpHelper.post(url, req.getBody(), req.getHeaders());
-            log.info(String.format("respStr=%s", respStr));
-        } catch (Exception e) {
-            log.error("Fail to request file-gateway:", e);
-        }
+        HeartBeatReq heartBeatReq = getHeartBeatReq();
+        log.info("HeartBeat: url={},body={}", url, JsonUtils.toJsonWithoutSkippedFields(heartBeatReq));
+        HttpReq req = HttpReqGenUtil.genSimpleJsonReq(url, heartBeatReq);
+        jobHttpClient.post(req);
     }
 }

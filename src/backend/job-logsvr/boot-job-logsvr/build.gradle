@@ -25,20 +25,15 @@
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 dependencies {
-    compile project(":job-logsvr:service-job-logsvr")
-    compile project(":commons:common-i18n")
-    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
-    implementation 'org.springframework.cloud:spring-cloud-starter-consul-discovery'
-    implementation 'org.springframework.cloud:spring-cloud-starter-config'
-    implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    implementation 'org.springframework.boot:spring-boot-starter-security'
-    implementation 'io.prometheus:simpleclient_pushgateway'
-    implementation 'io.micrometer:micrometer-registry-prometheus'
+    api project(":job-logsvr:service-job-logsvr")
+    api project(":commons:common-i18n")
+    implementation 'org.springframework.cloud:spring-cloud-starter-bootstrap'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo'
+    testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo.spring26x'
 }
 springBoot {
-    mainClassName = "com.tencent.bk.job.logsvr.JobLogBootApplication"
+    getMainClass().set("com.tencent.bk.job.logsvr.JobLogBootApplication")
     buildInfo()
 }
 task renameArtifacts(type: Copy) {
@@ -47,8 +42,7 @@ task renameArtifacts(type: Copy) {
     destinationDir file('build/libs/')
     rename "boot-job-logsvr-${version}.jar", "job-logsvr-${version}.jar"
 }
-renameArtifacts.dependsOn jar
-assemble.dependsOn renameArtifacts
+renameArtifacts.dependsOn assemble
 
 task copyToLatestJar(type: Copy) {
     group = "local"
@@ -59,3 +53,4 @@ task copyToLatestJar(type: Copy) {
 }
 copyToLatestJar.dependsOn assemble
 apply from: "$rootDir/task_job_package.gradle"
+copyToRelease.dependsOn renameArtifacts

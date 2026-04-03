@@ -27,7 +27,7 @@ package com.tencent.bk.job.manage.model.dto.task;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
 import com.tencent.bk.job.common.esb.model.job.v3.EsbGlobalVarV3DTO;
-import com.tencent.bk.job.common.exception.ParamErrorException;
+import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.manage.model.inner.ServiceTaskVariableDTO;
 import com.tencent.bk.job.manage.model.web.vo.task.TaskVariableVO;
 import lombok.AllArgsConstructor;
@@ -73,7 +73,7 @@ public class TaskVariableDTO {
         taskVariable.setType(variableInfo.getType().getType());
         if (TaskVariableTypeEnum.HOST_LIST == variableInfo.getType()) {
             taskVariable
-                .setDefaultTargetValue(TaskTargetDTO.toVO(TaskTargetDTO.fromString(variableInfo.getDefaultValue())));
+                .setDefaultTargetValue(TaskTargetDTO.toVO(TaskTargetDTO.fromJsonString(variableInfo.getDefaultValue())));
         } else {
             if (variableInfo.getType().needMask()) {
                 taskVariable.setDefaultValue(variableInfo.getType().getMask());
@@ -101,10 +101,10 @@ public class TaskVariableDTO {
         variableInfo.setName(variableVO.getName());
         variableInfo.setType(TaskVariableTypeEnum.valOf(variableVO.getType()));
         if (variableInfo.getType() == null) {
-            throw new ParamErrorException(ErrorCode.WRONG_VARIABLE_TYPE);
+            throw new InvalidParamException(ErrorCode.WRONG_VARIABLE_TYPE);
         }
         if (TaskVariableTypeEnum.HOST_LIST == variableInfo.getType()) {
-            variableInfo.setDefaultValue(TaskTargetDTO.fromVO(variableVO.getDefaultTargetValue()).toString());
+            variableInfo.setDefaultValue(TaskTargetDTO.fromVO(variableVO.getDefaultTargetValue()).toJsonString());
         } else {
             variableInfo.setDefaultValue(variableVO.getDefaultValue());
         }
@@ -131,7 +131,7 @@ public class TaskVariableDTO {
         serviceTaskVariable.setName(taskVariable.getName());
         serviceTaskVariable.setType(taskVariable.getType().getType());
         if (TaskVariableTypeEnum.HOST_LIST == taskVariable.getType()) {
-            TaskTargetDTO taskTarget = TaskTargetDTO.fromString(taskVariable.getDefaultValue());
+            TaskTargetDTO taskTarget = TaskTargetDTO.fromJsonString(taskVariable.getDefaultValue());
             if (taskTarget != null) {
                 serviceTaskVariable.setDefaultTargetValue(taskTarget.toServiceTaskTargetDTO());
             }
@@ -157,7 +157,7 @@ public class TaskVariableDTO {
         if (TaskVariableTypeEnum.HOST_LIST == taskVariable.getType()) {
             esbGlobalVar.setServer(
                 TaskTargetDTO.toEsbServerV3(
-                    TaskTargetDTO.fromString(
+                    TaskTargetDTO.fromJsonString(
                         taskVariable.getDefaultValue()
                     )
                 )

@@ -29,9 +29,9 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.mongodb.client.MongoCollection;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.exception.InternalException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -46,12 +46,12 @@ import java.util.concurrent.TimeUnit;
 @Component
 @Slf4j
 public class LogCollectionFactory {
-    private MongoTemplate mongoTemplate;
-    private LogCollectionLoaderFactory loaderFactory;
+    private final MongoTemplate mongoTemplate;
+    private final LogCollectionLoaderFactory loaderFactory;
 
 
     private final LoadingCache<String, MongoCollection<Document>> collectionCache =
-        CacheBuilder.newBuilder().maximumSize(365).expireAfterAccess(2, TimeUnit.HOURS).build(new CacheLoader<String,
+        CacheBuilder.newBuilder().maximumSize(30).expireAfterAccess(2, TimeUnit.HOURS).build(new CacheLoader<String,
             MongoCollection<Document>>() {
         @Override
         public MongoCollection<Document> load(String collectionName) {
@@ -83,7 +83,7 @@ public class LogCollectionFactory {
         }
         if (collection == null) {
             log.error("Collection {} is not exist!", collectionName);
-            throw new ServiceException(ErrorCode.SERVICE_INTERNAL_ERROR);
+            throw new InternalException(ErrorCode.INTERNAL_ERROR);
         }
         return collection;
     }

@@ -24,16 +24,19 @@
 
 package com.tencent.bk.job.backup.service.impl;
 
-import com.tencent.bk.job.backup.client.ServiceTemplateResourceClient;
-import com.tencent.bk.job.backup.client.WebTemplateResourceClient;
 import com.tencent.bk.job.backup.service.TaskTemplateService;
-import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.constant.JobConstants;
+import com.tencent.bk.job.common.model.InternalResponse;
+import com.tencent.bk.job.common.model.Response;
+import com.tencent.bk.job.manage.api.inner.ServiceBackupTmpResource;
+import com.tencent.bk.job.manage.api.inner.ServiceTaskTemplateResource;
 import com.tencent.bk.job.manage.model.inner.ServiceIdNameCheckDTO;
 import com.tencent.bk.job.manage.model.inner.ServiceTaskVariableDTO;
 import com.tencent.bk.job.manage.model.web.request.TaskTemplateCreateUpdateReq;
 import com.tencent.bk.job.manage.model.web.vo.task.TaskTemplateVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.slf4j.helpers.MessageFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -41,27 +44,25 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * @since 29/7/2020 17:46
- */
+
 @Slf4j
-@Service
+@Service("jobBackupTaskTemplateServiceImpl")
 public class TaskTemplateServiceImpl implements TaskTemplateService {
-    private final WebTemplateResourceClient webTemplateResourceClient;
-    private final ServiceTemplateResourceClient serviceTemplateResourceClient;
+    private final ServiceTaskTemplateResource templateResource;
+    private final ServiceBackupTmpResource backupTmpResource;
 
     @Autowired
-    public TaskTemplateServiceImpl(WebTemplateResourceClient webTemplateResourceClient,
-                                   ServiceTemplateResourceClient serviceTemplateResourceClient) {
-        this.webTemplateResourceClient = webTemplateResourceClient;
-        this.serviceTemplateResourceClient = serviceTemplateResourceClient;
+    public TaskTemplateServiceImpl(ServiceTaskTemplateResource templateResource,
+                                   ServiceBackupTmpResource backupTmpResource) {
+        this.templateResource = templateResource;
+        this.backupTmpResource = backupTmpResource;
     }
 
     @Override
     public TaskTemplateVO getTemplateById(String username, Long appId, Long id) {
         try {
-            ServiceResponse<TaskTemplateVO> templateByIdResponse =
-                webTemplateResourceClient.getTemplateById(username, appId, id);
+            Response<TaskTemplateVO> templateByIdResponse =
+                backupTmpResource.getTemplateById(username, appId, id);
             if (templateByIdResponse != null) {
                 if (0 == templateByIdResponse.getCode()) {
                     return templateByIdResponse.getData();
@@ -70,7 +71,15 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
                 }
             }
         } catch (Exception e) {
-            log.error("Error while getting template info!|{}|{}|{}", username, appId, id, e);
+            String msg = MessageFormatter.arrayFormat(
+                "Error while getting template info!|{}|{}|{}",
+                new String[]{
+                    username,
+                    String.valueOf(appId),
+                    String.valueOf(id)
+                }
+            ).getMessage();
+            log.error(msg, e);
         }
         return null;
     }
@@ -78,8 +87,8 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
     @Override
     public ServiceIdNameCheckDTO checkIdAndName(Long appId, long id, String name) {
         try {
-            ServiceResponse<ServiceIdNameCheckDTO> idNameCheckResponse =
-                serviceTemplateResourceClient.checkIdAndName(appId, id, name);
+            InternalResponse<ServiceIdNameCheckDTO> idNameCheckResponse =
+                templateResource.checkIdAndName(appId, id, name);
             if (idNameCheckResponse != null) {
                 if (0 == idNameCheckResponse.getCode()) {
                     return idNameCheckResponse.getData();
@@ -88,7 +97,15 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
                 }
             }
         } catch (Exception e) {
-            log.error("Error while check id and name!|{}|{}|{}", appId, id, name, e);
+            String msg = MessageFormatter.arrayFormat(
+                "Error while check id and name!|{}|{}|{}",
+                new String[]{
+                    String.valueOf(appId),
+                    String.valueOf(id),
+                    name
+                }
+            ).getMessage();
+            log.error(msg, e);
         }
         return null;
     }
@@ -114,15 +131,16 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
                     taskVariableVO.setDelete(0);
                 }).collect(Collectors.toList()));
             }
+            templateCreateUpdateReq.setTags(taskTemplate.getTags());
 
-            ServiceResponse<Long> saveTemplateResult = serviceTemplateResourceClient.saveTemplateForMigration(
+            InternalResponse<Long> saveTemplateResult = templateResource.saveTemplateForMigration(
                 username,
                 appId,
                 taskTemplate.getId(),
                 null,
                 null,
                 null,
-                1,
+                JobConstants.REQUEST_SOURCE_JOB_BACKUP,
                 templateCreateUpdateReq
             );
 
@@ -135,7 +153,15 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
                 }
             }
         } catch (Exception e) {
-            log.error("Error while trying to save template!|{}|{}|{}", username, appId, taskTemplate, e);
+            String msg = MessageFormatter.arrayFormat(
+                "Error while trying to save template!|{}|{}|{}",
+                new String[]{
+                    username,
+                    String.valueOf(appId),
+                    String.valueOf(taskTemplate)
+                }
+            ).getMessage();
+            log.error(msg, e);
         }
         return null;
     }
@@ -143,8 +169,8 @@ public class TaskTemplateServiceImpl implements TaskTemplateService {
     @Override
     public List<ServiceTaskVariableDTO> getTemplateVariable(String username, Long appId, Long templateId) {
         try {
-            ServiceResponse<List<ServiceTaskVariableDTO>> templateVariableResponse =
-                serviceTemplateResourceClient.getTemplateVariable(username, appId, templateId);
+            InternalResponse<List<ServiceTaskVariableDTO>> templateVariableResponse =
+                templateResource.getTemplateVariable(username, appId, templateId);
             if (templateVariableResponse != null) {
                 if (0 == templateVariableResponse.getCode()) {
                     return templateVariableResponse.getData();

@@ -47,10 +47,16 @@ public class CronJobVO {
     private Long id;
 
     /**
-     * 业务 ID
+     * 资源范围类型
      */
-    @ApiModelProperty("业务 ID")
-    private Long appId;
+    @ApiModelProperty(value = "资源范围类型", allowableValues = "biz-业务,biz_set-业务集")
+    private String scopeType;
+
+    /**
+     * 资源范围ID
+     */
+    @ApiModelProperty("资源范围ID")
+    private String scopeId;
 
     /**
      * 定时任务名称
@@ -119,6 +125,18 @@ public class CronJobVO {
      */
     @ApiModelProperty("上次执行结果 0 - 未执行 1 - 成功 2 - 失败")
     private Integer lastExecuteStatus;
+
+    /**
+     * 上次执行错误码
+     */
+    @ApiModelProperty("上次执行错误码")
+    private Long lastExecuteErrorCode;
+
+    /**
+     * 上次执行错误次数
+     */
+    @ApiModelProperty("上次执行错误次数")
+    private Integer lastExecuteErrorCount;
 
     /**
      * 是否启用

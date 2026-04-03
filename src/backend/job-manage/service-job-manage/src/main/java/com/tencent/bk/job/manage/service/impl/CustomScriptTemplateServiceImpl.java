@@ -24,8 +24,8 @@
 
 package com.tencent.bk.job.manage.service.impl;
 
-import com.tencent.bk.job.common.model.dto.ApplicationInfoDTO;
-import com.tencent.bk.job.common.util.JobVariableResolver;
+import com.tencent.bk.job.common.model.dto.ApplicationDTO;
+import com.tencent.bk.job.common.service.VariableResolver;
 import com.tencent.bk.job.common.util.date.DateUtils;
 import com.tencent.bk.job.manage.dao.customsetting.CustomScriptTemplateDAO;
 import com.tencent.bk.job.manage.model.dto.customsetting.ScriptTemplateDTO;
@@ -41,14 +41,18 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
-import static com.tencent.bk.job.manage.common.constants.ScriptTemplateVariableEnum.*;
+import static com.tencent.bk.job.manage.common.constants.ScriptTemplateVariableEnum.BIZ_ID;
+import static com.tencent.bk.job.manage.common.constants.ScriptTemplateVariableEnum.BIZ_NAME;
+import static com.tencent.bk.job.manage.common.constants.ScriptTemplateVariableEnum.DATETIME;
+import static com.tencent.bk.job.manage.common.constants.ScriptTemplateVariableEnum.DISPLAY_NAME;
+import static com.tencent.bk.job.manage.common.constants.ScriptTemplateVariableEnum.USERNAME;
 
 @Service
 @Slf4j
 public class CustomScriptTemplateServiceImpl implements CustomScriptTemplateService {
 
-    private CustomScriptTemplateDAO customScriptTemplateDAO;
-    private ApplicationService applicationService;
+    private final CustomScriptTemplateDAO customScriptTemplateDAO;
+    private final ApplicationService applicationService;
 
     @Autowired
     public CustomScriptTemplateServiceImpl(CustomScriptTemplateDAO customScriptTemplateDAO,
@@ -68,36 +72,28 @@ public class CustomScriptTemplateServiceImpl implements CustomScriptTemplateServ
     }
 
     @Override
-    public List<ScriptTemplateDTO> listRenderedCustomScriptTemplate(String username, long appId) {
-        List<ScriptTemplateDTO> scriptTemplates = listCustomScriptTemplate(username);
-        if (CollectionUtils.isNotEmpty(scriptTemplates)) {
-            scriptTemplates.forEach(scriptTemplate ->
-                renderScriptTemplate(new ScriptTemplateVariableRenderDTO(appId, username), scriptTemplate));
-        }
-        return scriptTemplates;
-    }
-
-    @Override
     public void renderScriptTemplate(ScriptTemplateVariableRenderDTO scriptTemplateVariableRender,
                                      ScriptTemplateDTO scriptTemplate) {
         String scriptContent = scriptTemplate.getScriptContent();
-        Set<String> variables = JobVariableResolver.resolvedVariables(scriptContent);
+        Set<String> variables = VariableResolver.resolveScriptBuildInVariables(scriptContent);
         if (CollectionUtils.isEmpty(variables)) {
             return;
         }
         for (String variable : variables) {
             String variablePattern = "\\{\\{" + variable + "}}";
             if (variable.equals(BIZ_ID.getName())) {
-                if (scriptTemplateVariableRender.getAppId() != null) {
+                if (scriptTemplateVariableRender.getScopeId() != null) {
                     scriptContent = scriptContent.replaceAll(variablePattern,
-                        String.valueOf(scriptTemplateVariableRender.getAppId()));
+                        scriptTemplateVariableRender.getScopeId());
                 } else {
                     scriptContent = scriptContent.replaceAll(variablePattern, scriptTemplateVariableRender
                         .getDefaultVariablesValues().get(variable));
                 }
             } else if (variable.equals(BIZ_NAME.getName())) {
-                if (scriptTemplateVariableRender.getAppId() != null) {
-                    ApplicationInfoDTO app = applicationService.getAppInfoById(scriptTemplateVariableRender.getAppId());
+                if (scriptTemplateVariableRender.getScopeType() != null &&
+                    scriptTemplateVariableRender.getScopeId() != null) {
+                    ApplicationDTO app = applicationService.getAppByScope(scriptTemplateVariableRender.getScopeType(),
+                        scriptTemplateVariableRender.getScopeId());
                     String appName = app == null ? "" : app.getName();
                     scriptContent = scriptContent.replaceAll(variablePattern, appName);
                 } else {

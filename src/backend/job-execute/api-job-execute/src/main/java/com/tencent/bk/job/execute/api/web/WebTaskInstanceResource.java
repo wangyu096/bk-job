@@ -24,12 +24,26 @@
 
 package com.tencent.bk.job.execute.api.web;
 
-import com.tencent.bk.job.common.model.ServiceResponse;
-import com.tencent.bk.job.execute.model.web.vo.*;
+import com.tencent.bk.job.common.annotation.CompatibleImplementation;
+import com.tencent.bk.job.common.annotation.WebAPI;
+import com.tencent.bk.job.common.constant.CompatibleType;
+import com.tencent.bk.job.common.model.Response;
+import com.tencent.bk.job.common.model.dto.AppResourceScope;
+import com.tencent.bk.job.execute.model.web.vo.ExecuteStepVO;
+import com.tencent.bk.job.execute.model.web.vo.ExecuteVariableVO;
+import com.tencent.bk.job.execute.model.web.vo.TaskInstanceDetailVO;
+import com.tencent.bk.job.execute.model.web.vo.TaskInstanceVO;
+import com.tencent.bk.job.execute.model.web.vo.TaskOperationLogVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestAttribute;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import springfox.documentation.annotations.ApiIgnore;
 
 import java.util.List;
 
@@ -39,52 +53,122 @@ import java.util.List;
 @Api(tags = {"job-execute:web:Task_Step_Instance"})
 @RequestMapping("/web/execution/")
 @RestController
+@WebAPI
 public interface WebTaskInstanceResource {
+    @Deprecated
+    @CompatibleImplementation(name = "dao_add_task_instance_id", deprecatedVersion = "3.11.x",
+        type = CompatibleType.DEPLOY, explain = "发布完成后可以删除")
     @ApiOperation(value = "获取作业步骤实例详情", produces = "application/json")
-    @GetMapping("/app/{appId}/task-instance/step_instance/{stepInstanceId}")
-    ServiceResponse<ExecuteStepVO> getStepInstanceDetail(
+    @GetMapping(value = {"/scope/{scopeType}/{scopeId}/task-instance/step_instance/{stepInstanceId}"})
+    Response<ExecuteStepVO> getStepInstanceDetail(
         @ApiParam("用户名，网关自动传入")
-        @RequestHeader("username") String username,
-        @ApiParam(value = "业务ID", required = true, example = "1")
-        @PathVariable("appId") Long appId,
+        @RequestHeader("username")
+        String username,
+        @ApiIgnore
+        @RequestAttribute(value = "appResourceScope")
+        AppResourceScope appResourceScope,
+        @ApiParam(value = "资源范围类型", required = true)
+        @PathVariable(value = "scopeType")
+        String scopeType,
+        @ApiParam(value = "资源范围ID", required = true)
+        @PathVariable(value = "scopeId")
+        String scopeId,
         @ApiParam(value = "步骤实例ID", name = "stepInstanceId", required = true)
-        @PathVariable("stepInstanceId") Long stepInstanceId);
+        @PathVariable("stepInstanceId")
+        Long stepInstanceId
+    );
+
+    @ApiOperation(value = "获取作业步骤实例详情", produces = "application/json")
+    @GetMapping(value = {
+        "/scope/{scopeType}/{scopeId}/taskInstance/{taskInstanceId}/stepInstance/{stepInstanceId}/detail"})
+    Response<ExecuteStepVO> getStepInstanceDetailV2(
+        @ApiParam("用户名，网关自动传入")
+        @RequestHeader("username")
+        String username,
+        @ApiIgnore
+        @RequestAttribute(value = "appResourceScope")
+        AppResourceScope appResourceScope,
+        @ApiParam(value = "资源范围类型", required = true)
+        @PathVariable(value = "scopeType")
+        String scopeType,
+        @ApiParam(value = "资源范围ID", required = true)
+        @PathVariable(value = "scopeId")
+        String scopeId,
+        @ApiParam(value = "作业实例ID", name = "taskInstanceId", required = true)
+        @PathVariable("taskInstanceId")
+        Long taskInstanceId,
+        @ApiParam(value = "步骤实例ID", name = "stepInstanceId", required = true)
+        @PathVariable("stepInstanceId")
+        Long stepInstanceId
+    );
 
     @ApiOperation(value = "获取作业实例全局参数", produces = "application/json")
-    @GetMapping("/app/{appId}/task-instance/task-variables/{taskInstanceId}")
-    ServiceResponse<List<ExecuteVariableVO>> getTaskInstanceVariables(
+    @GetMapping(value = {"/scope/{scopeType}/{scopeId}/task-instance/task-variables/{taskInstanceId}"})
+    Response<List<ExecuteVariableVO>> getTaskInstanceVariables(
         @ApiParam("用户名，网关自动传入")
-        @RequestHeader("username") String username,
-        @ApiParam(value = "业务ID", required = true, example = "1")
-        @PathVariable("appId") Long appId,
+        @RequestHeader("username")
+        String username,
+        @ApiIgnore
+        @RequestAttribute(value = "appResourceScope")
+        AppResourceScope appResourceScope,
+        @ApiParam(value = "资源范围类型", required = true)
+        @PathVariable(value = "scopeType")
+        String scopeType,
+        @ApiParam(value = "资源范围ID", required = true)
+        @PathVariable(value = "scopeId")
+        String scopeId,
         @ApiParam(value = "作业实例ID", name = "taskInstanceId", required = true)
-        @PathVariable("taskInstanceId") Long taskInstanceId);
+        @PathVariable("taskInstanceId")
+        Long taskInstanceId
+    );
 
     @ApiOperation(value = "获取作业操作日志", produces = "application/json")
-    @GetMapping("/app/{appId}/task-instance/operation-log/{taskInstanceId}")
-    ServiceResponse<List<TaskOperationLogVO>> getTaskInstanceOperationLog(
+    @GetMapping(value = {"/scope/{scopeType}/{scopeId}/task-instance/operation-log/{taskInstanceId}"})
+    Response<List<TaskOperationLogVO>> getTaskInstanceOperationLog(
         @ApiParam("用户名，网关自动传入")
-        @RequestHeader("username") String username,
-        @ApiParam(value = "业务ID", required = true, example = "1")
-        @PathVariable("appId") Long appId,
+        @RequestHeader("username")
+        String username,
+        @ApiIgnore
+        @RequestAttribute(value = "appResourceScope")
+        AppResourceScope appResourceScope,
+        @ApiParam(value = "资源范围类型", required = true)
+        @PathVariable(value = "scopeType")
+        String scopeType,
+        @ApiParam(value = "资源范围ID", required = true)
+        @PathVariable(value = "scopeId")
+        String scopeId,
         @ApiParam(value = "作业实例ID", name = "taskInstanceId", required = true)
-        @PathVariable("taskInstanceId") Long taskInstanceId);
+        @PathVariable("taskInstanceId")
+        Long taskInstanceId
+    );
 
     @ApiOperation(value = "获取作业实例详情,包括步骤列表和全局变量列表", produces = "application/json")
-    @GetMapping("/app/{appId}/task-instance/{taskInstanceId}")
-    ServiceResponse<TaskInstanceDetailVO> getTaskInstanceDetail(
+    @GetMapping(value = {"/scope/{scopeType}/{scopeId}/task-instance/{taskInstanceId}"})
+    Response<TaskInstanceDetailVO> getTaskInstanceDetail(
         @ApiParam("用户名，网关自动传入")
-        @RequestHeader("username") String username,
-        @ApiParam(value = "业务ID", required = true, example = "1")
-        @PathVariable("appId") Long appId,
+        @RequestHeader("username")
+        String username,
+        @ApiIgnore
+        @RequestAttribute(value = "appResourceScope")
+        AppResourceScope appResourceScope,
+        @ApiParam(value = "资源范围类型", required = true)
+        @PathVariable(value = "scopeType")
+        String scopeType,
+        @ApiParam(value = "资源范围ID", required = true)
+        @PathVariable(value = "scopeId")
+        String scopeId,
         @ApiParam(value = "作业实例ID", name = "taskInstanceId", required = true)
-        @PathVariable("taskInstanceId") Long taskInstanceId);
+        @PathVariable("taskInstanceId")
+        Long taskInstanceId
+    );
 
     @ApiOperation(value = "获取作业实例基本信息", produces = "application/json")
     @GetMapping("/task_instance/{taskInstanceId}")
-    ServiceResponse<TaskInstanceVO> getTaskInstanceBasic(
+    Response<TaskInstanceVO> getTaskInstanceBasic(
         @ApiParam("用户名，网关自动传入")
         @RequestHeader("username") String username,
         @ApiParam(value = "作业实例ID", name = "taskInstanceId", required = true)
-        @PathVariable("taskInstanceId") Long taskInstanceId);
+        @PathVariable("taskInstanceId")
+        Long taskInstanceId
+    );
 }

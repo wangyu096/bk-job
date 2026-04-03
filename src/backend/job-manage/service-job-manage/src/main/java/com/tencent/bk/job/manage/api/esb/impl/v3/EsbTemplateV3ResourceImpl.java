@@ -24,22 +24,21 @@
 
 package com.tencent.bk.job.manage.api.esb.impl.v3;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
 import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.common.esb.model.job.v3.EsbPageDataV3;
-import com.tencent.bk.job.common.i18n.MessageI18nService;
-import com.tencent.bk.job.common.iam.constant.ActionId;
-import com.tencent.bk.job.common.iam.constant.ResourceTypeEnum;
-import com.tencent.bk.job.common.iam.model.AuthResult;
-import com.tencent.bk.job.common.iam.service.AuthService;
+import com.tencent.bk.job.common.esb.util.EsbDTOAppScopeMappingHelper;
+import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.model.ValidateResult;
+import com.tencent.bk.job.common.service.AppScopeMappingService;
 import com.tencent.bk.job.manage.api.esb.v3.EsbTemplateV3Resource;
 import com.tencent.bk.job.manage.model.dto.task.TaskTemplateInfoDTO;
 import com.tencent.bk.job.manage.model.esb.v3.request.EsbGetTemplateListV3Request;
 import com.tencent.bk.job.manage.model.esb.v3.response.EsbTemplateBasicInfoV3DTO;
+import com.tencent.bk.job.manage.model.query.TaskTemplateQuery;
 import com.tencent.bk.job.manage.service.template.TaskTemplateService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,37 +51,59 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class EsbTemplateV3ResourceImpl implements EsbTemplateV3Resource {
     private final TaskTemplateService taskTemplateService;
-    private final MessageI18nService i18nService;
-    private final AuthService authService;
+    private final AppScopeMappingService appScopeMappingService;
 
     @Autowired
-    public EsbTemplateV3ResourceImpl(TaskTemplateService taskTemplateService, MessageI18nService i18nService,
-                                     AuthService authService) {
+    public EsbTemplateV3ResourceImpl(TaskTemplateService taskTemplateService,
+                                     AppScopeMappingService appScopeMappingService) {
         this.taskTemplateService = taskTemplateService;
-        this.i18nService = i18nService;
-        this.authService = authService;
+        this.appScopeMappingService = appScopeMappingService;
     }
 
     @Override
-    @EsbApiTimed(value = "esb.api", extraTags = {"api_name", "v3_get_job_template_list"})
-    public EsbResp<EsbPageDataV3<EsbTemplateBasicInfoV3DTO>> getTemplateList(String lang,
-                                                                             EsbGetTemplateListV3Request request) {
+    public EsbResp<EsbPageDataV3<EsbTemplateBasicInfoV3DTO>> getTemplateList(String username,
+                                                                             String appCode,
+                                                                             Long bizId,
+                                                                             String scopeType,
+                                                                             String scopeId,
+                                                                             String creator,
+                                                                             String name,
+                                                                             Long createTimeStart,
+                                                                             Long createTimeEnd,
+                                                                             String lastModifyUser,
+                                                                             Long lastModifyTimeStart,
+                                                                             Long lastModifyTimeEnd,
+                                                                             Integer start,
+                                                                             Integer length) {
+        EsbGetTemplateListV3Request request = new EsbGetTemplateListV3Request();
+        request.setBizId(bizId);
+        request.setScopeType(scopeType);
+        request.setScopeId(scopeId);
+        request.setCreator(creator);
+        request.setName(name);
+        request.setCreateTimeStart(createTimeStart);
+        request.setLastModifyUser(lastModifyUser);
+        request.setCreateTimeEnd(createTimeEnd);
+        request.setLastModifyTimeEnd(lastModifyTimeEnd);
+        request.setLastModifyTimeStart(lastModifyTimeStart);
+        request.setStart(start);
+        request.setLength(length);
+        request.fillAppResourceScope(appScopeMappingService);
+        return getTemplateListUsingPost(username, appCode, request);
+    }
+
+    @Override
+    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_get_job_template_list"})
+    public EsbResp<EsbPageDataV3<EsbTemplateBasicInfoV3DTO>> getTemplateListUsingPost(
+        String username,
+        String appCode,
+        EsbGetTemplateListV3Request request) {
         ValidateResult checkResult = checkRequest(request);
         if (!checkResult.isPass()) {
             log.warn("Get template list, request is illegal!");
-            return EsbResp.buildCommonFailResp(i18nService, checkResult);
+            throw new InvalidParamException(checkResult);
         }
         long appId = request.getAppId();
-
-        AuthResult authResult = authService.auth(true, request.getUserName(), ActionId.LIST_BUSINESS,
-            ResourceTypeEnum.BUSINESS, request.getAppId().toString(), null);
-        if (!authResult.isPass()) {
-            return authService.buildEsbAuthFailResp(authResult.getRequiredActionResources());
-        }
-
-        TaskTemplateInfoDTO taskTemplateCondition = new TaskTemplateInfoDTO();
-        taskTemplateCondition.setAppId(appId);
-        taskTemplateCondition.setName(request.getName());
 
         BaseSearchCondition baseSearchCondition = new BaseSearchCondition();
         if (request.getStart() != null) {
@@ -103,9 +124,11 @@ public class EsbTemplateV3ResourceImpl implements EsbTemplateV3Resource {
         baseSearchCondition.setLastModifyTimeStart(request.getLastModifyTimeStart());
         baseSearchCondition.setLastModifyTimeEnd(request.getLastModifyTimeEnd());
 
+        TaskTemplateQuery query = TaskTemplateQuery.builder().appId(appId).name(request.getName())
+            .baseSearchCondition(baseSearchCondition).build();
+
         PageData<TaskTemplateInfoDTO> pageTemplates =
-            taskTemplateService.listPageTaskTemplatesBasicInfo(taskTemplateCondition, baseSearchCondition,
-            null);
+            taskTemplateService.listPageTaskTemplatesBasicInfo(query, null);
         EsbPageDataV3<EsbTemplateBasicInfoV3DTO> esbPageData = EsbPageDataV3.from(pageTemplates,
             this::convertToEsbTemplateBasicInfo);
         return EsbResp.buildSuccessResp(esbPageData);
@@ -113,10 +136,6 @@ public class EsbTemplateV3ResourceImpl implements EsbTemplateV3Resource {
 
 
     private ValidateResult checkRequest(EsbGetTemplateListV3Request request) {
-        if (request.getAppId() == null || request.getAppId() < 1) {
-            log.warn("AppId is empty or illegal!");
-            return ValidateResult.fail(ErrorCode.MISSING_OR_ILLEGAL_PARAM_WITH_PARAM_NAME, "bk_biz_id");
-        }
         // TODO 暂不校验，后面补上
         return ValidateResult.pass();
     }
@@ -124,7 +143,7 @@ public class EsbTemplateV3ResourceImpl implements EsbTemplateV3Resource {
     private EsbTemplateBasicInfoV3DTO convertToEsbTemplateBasicInfo(TaskTemplateInfoDTO taskTemplate) {
         EsbTemplateBasicInfoV3DTO result = new EsbTemplateBasicInfoV3DTO();
         result.setId(taskTemplate.getId());
-        result.setAppId(taskTemplate.getAppId());
+        EsbDTOAppScopeMappingHelper.fillEsbAppScopeDTOByAppId(taskTemplate.getAppId(), result);
         result.setName(taskTemplate.getName());
         result.setCreator(taskTemplate.getCreator());
         result.setLastModifyUser(taskTemplate.getLastModifyUser());

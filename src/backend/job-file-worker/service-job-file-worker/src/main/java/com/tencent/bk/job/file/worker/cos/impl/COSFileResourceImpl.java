@@ -24,36 +24,34 @@
 
 package com.tencent.bk.job.file.worker.cos.impl;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.ServiceException;
-import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.common.util.PageUtil;
 import com.tencent.bk.job.common.util.StringUtil;
 import com.tencent.bk.job.common.util.date.DateUtils;
 import com.tencent.bk.job.common.util.file.PathUtil;
-import com.tencent.bk.job.common.util.json.JsonUtils;
 import com.tencent.bk.job.file.worker.api.IFileResource;
 import com.tencent.bk.job.file.worker.cos.JobTencentInnerCOSClient;
 import com.tencent.bk.job.file.worker.cos.consts.COSActionCodeEnum;
 import com.tencent.bk.job.file.worker.cos.consts.COSNodeTypeEnum;
-import com.tencent.bk.job.file.worker.cos.service.COSBaseService;
-import com.tencent.bk.job.file.worker.cos.service.COSRemoteClient;
-import com.tencent.bk.job.file.worker.cos.service.MetaDataService;
-import com.tencent.bk.job.file.worker.cos.service.RemoteClient;
 import com.tencent.bk.job.file.worker.model.BucketDTO;
 import com.tencent.bk.job.file.worker.model.FileDTO;
 import com.tencent.bk.job.file.worker.model.req.BaseReq;
 import com.tencent.bk.job.file.worker.model.req.ExecuteActionReq;
 import com.tencent.bk.job.file.worker.model.req.ListFileNodeReq;
+import com.tencent.bk.job.file.worker.service.COSBaseService;
+import com.tencent.bk.job.file.worker.service.COSRemoteClient;
+import com.tencent.bk.job.file.worker.service.MetaDataService;
+import com.tencent.bk.job.file.worker.service.RemoteClient;
 import com.tencent.bk.job.file_gateway.model.resp.common.FileNodesDTO;
 import com.tencent.bk.job.file_gateway.model.resp.common.FileTreeNodeDef;
-import com.tencent.bk.job.file_gateway.model.resp.common.FileVO;
 import com.tencent.cos.model.Bucket;
 import com.tencent.cos.model.COSObjectSummary;
-import io.micrometer.core.instrument.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.helpers.MessageFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -82,7 +80,7 @@ public class COSFileResourceImpl implements IFileResource {
             JobTencentInnerCOSClient jobTencentInnerCOSClient = cosBaseService.getCOSClientFromBaseReq(req);
             List<Bucket> bucketList = jobTencentInnerCOSClient.listBuckets();
             // 根据name搜索
-            bucketList = bucketList.parallelStream().filter(
+            bucketList = bucketList.stream().filter(
                 bucketDTO -> {
                     String name = req.getName();
                     String bucketName = bucketDTO.getName();
@@ -102,7 +100,7 @@ public class COSFileResourceImpl implements IFileResource {
             return bucketDTOList;
         } catch (Throwable t) {
             log.error("Fail to listBucket", t);
-            throw new ServiceException(ErrorCode.FAIL_TO_REQUEST_THIRD_FILE_SOURCE_LIST_BUCKET, t.getMessage());
+            throw new InvalidParamException(t.getMessage(), ErrorCode.FAIL_TO_REQUEST_THIRD_FILE_SOURCE_LIST_BUCKET);
         }
     }
 
@@ -115,7 +113,7 @@ public class COSFileResourceImpl implements IFileResource {
         } catch (Exception e) {
             String msg = "Fail to listAllObjects from " + cosBaseService.getEndPointDomain(req);
             log.error(msg, e);
-            throw new ServiceException(ErrorCode.FAIL_TO_REQUEST_THIRD_FILE_SOURCE_LIST_OBJECTS, msg);
+            throw new InvalidParamException(msg, ErrorCode.FAIL_TO_REQUEST_THIRD_FILE_SOURCE_LIST_OBJECTS);
         }
         List<FileDTO> fileDTOList = new ArrayList<>();
         cosObjectSummaryList.forEach(cosObjectSummary -> {
@@ -142,8 +140,12 @@ public class COSFileResourceImpl implements IFileResource {
             jobTencentInnerCOSClient.deleteBucket(bucketName);
             return true;
         } catch (Exception e) {
-            log.error("Fail to delete bucket {}", bucketName, e);
-            throw new ServiceException(ErrorCode.FAIL_TO_REQUEST_THIRD_FILE_SOURCE_DELETE_BUCKET, e.getMessage());
+            String msg = MessageFormatter.format(
+                "Fail to delete bucket {}",
+                bucketName
+            ).getMessage();
+            log.error(msg, e);
+            throw new InvalidParamException(e.getMessage(), ErrorCode.FAIL_TO_REQUEST_THIRD_FILE_SOURCE_DELETE_BUCKET);
         }
     }
 
@@ -155,20 +157,27 @@ public class COSFileResourceImpl implements IFileResource {
             jobTencentInnerCOSClient.deleteObject(bucketName, key);
             return true;
         } catch (Exception e) {
-            log.error("Fail to delete bucket {} file:{}", bucketName, key, e);
-            throw new ServiceException(ErrorCode.FAIL_TO_REQUEST_THIRD_FILE_SOURCE_DELETE_OBJECT, e.getMessage());
+            String msg = MessageFormatter.arrayFormat(
+                "Fail to delete bucket {} file:{}",
+                new String[]{
+                    bucketName,
+                    key
+                }
+            ).getMessage();
+            log.error(msg, e);
+            throw new InvalidParamException(e.getMessage(), ErrorCode.FAIL_TO_REQUEST_THIRD_FILE_SOURCE_DELETE_OBJECT);
         }
     }
 
     private void checkBucketName(String bucketName) {
         if (StringUtils.isBlank(bucketName)) {
-            throw new ServiceException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, new String[]{"bucketName"});
+            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, new String[]{"bucketName"});
         }
     }
 
     private void checkKey(String key) {
         if (StringUtils.isBlank(key)) {
-            throw new ServiceException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, new String[]{"key"});
+            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, new String[]{"key"});
         }
     }
 
@@ -207,6 +216,21 @@ public class COSFileResourceImpl implements IFileResource {
         return new COSRemoteClient(jobTencentInnerCOSClient);
     }
 
+    @Override
+    public InternalResponse<Boolean> isFileAvailable(BaseReq req) {
+        try {
+            ListFileNodeReq listFileNodeReq = new ListFileNodeReq(req);
+            listFileNodeReq.setPath("");
+            listFileNodeReq.setName("");
+            listFileNodeReq.setStart(0);
+            listFileNodeReq.setPageSize(1);
+            listBucket(listFileNodeReq);
+            return InternalResponse.buildSuccessResp(true);
+        } catch (Throwable t) {
+            return InternalResponse.buildSuccessResp(false);
+        }
+    }
+
     private String getTypeFromFileName(String fileName) {
         if (StringUtils.isBlank(fileName)) {
             return "UNKNOWN";
@@ -233,39 +257,6 @@ public class COSFileResourceImpl implements IFileResource {
         return fileName.endsWith("/");
     }
 
-    private List<FileVO> parseBucketFileList(String bucketName, String path, String respStr) {
-        ServiceResponse<List<FileDTO>> resp = null;
-        if (path == null) {
-            path = "";
-        }
-        try {
-            resp = JsonUtils.fromJson(respStr, new TypeReference<ServiceResponse<List<FileDTO>>>() {
-            });
-        } catch (Exception e) {
-            log.error("Fail to parse bucket file from response={}", respStr, e);
-            throw new ServiceException(ErrorCode.FAIL_TO_REQUEST_FILE_WORKER_LIST_OBJECTS, resp.getErrorMsg());
-        }
-        if (resp.isSuccess()) {
-            List<FileVO> fileVOList = new ArrayList<>();
-            List<FileDTO> fileDTOList = resp.getData();
-            for (FileDTO fileDTO : fileDTOList) {
-                FileVO fileVO = new FileVO();
-                fileVO.setName(fileDTO.getKey());
-                fileVO.setCompletePath(bucketName + "/" + path + fileDTO.getKey());
-                fileVO.setSize(fileDTO.getSize());
-                fileVO.setDir(isDir(fileDTO.getKey()));
-                fileVO.setType(getTypeFromFileName(fileDTO.getKey()));
-                fileVO.setDownloadUrl(fileDTO.getDownloadUrl());
-                fileVO.setLastModifyTime(fileDTO.getLastModified());
-                fileVOList.add(fileVO);
-            }
-            return fileVOList;
-        } else {
-            log.error("get failed bucket file response={}", respStr);
-            throw new ServiceException(resp.getCode(), resp.getErrorMsg());
-        }
-    }
-
     private int getSlashNum(String str) {
         if (StringUtils.isBlank(str)) return 0;
         int count = 0;
@@ -290,7 +281,7 @@ public class COSFileResourceImpl implements IFileResource {
         List<BucketDTO> bucketDTOList = listBucket(req);
         // 排序：创建时间降序
         bucketDTOList.sort((o1, o2) -> o2.getCreateDate().compareTo(o1.getCreateDate()));
-        List<Map<String, Object>> mapData = bucketDTOList.parallelStream().map(bucketDTO -> {
+        List<Map<String, Object>> mapData = bucketDTOList.stream().map(bucketDTO -> {
             Map<String, Object> map = new HashMap<>();
             map.put("name", bucketDTO.getName());
             map.put("type", bucketDTO.getXCosAcl());
@@ -338,11 +329,11 @@ public class COSFileResourceImpl implements IFileResource {
         fileDTOList.addAll(dirList);
         fileDTOList.addAll(fileList);
         // 分页
-        List<Map<String, Object>> mapData = fileDTOList.parallelStream().map(fileDTO -> {
+        List<Map<String, Object>> mapData = fileDTOList.stream().map(fileDTO -> {
             Map<String, Object> map = new HashMap<>();
             String fileName = fileDTO.getKey();
             map.put("name", fileName);
-            map.put("type", "文本文件");
+            map.put("type", getTypeFromFileName(fileName));
             map.put("updateTime", DateUtils.formatUnixTimestamp(fileDTO.getLastModified(), ChronoUnit.MILLIS));
             map.put("completePath", PathUtil.joinFilePath(req.getPath(), fileName));
             map.put("dir", isDir(fileName));
@@ -366,7 +357,7 @@ public class COSFileResourceImpl implements IFileResource {
     }
 
     @Override
-    public ServiceResponse<FileNodesDTO> listFileNode(ListFileNodeReq req) {
+    public InternalResponse<FileNodesDTO> listFileNode(ListFileNodeReq req) {
         FileNodesDTO fileNodesDTO = new FileNodesDTO();
         String parentNodeType = parseParentNodeTypeByPath(req.getPath());
         FileTreeNodeDef metaData = metaDataService.getChildFileNodeMetaDataByParent(req.getFileSourceTypeCode(),
@@ -375,22 +366,22 @@ public class COSFileResourceImpl implements IFileResource {
         if (COSNodeTypeEnum.FILE_SOURCE.name().equals(parentNodeType)) {
             // 父节点类型为文件源，则子节点为Bucket，listBucket
             fillBucketFileNodesDTO(fileNodesDTO, req);
-            return ServiceResponse.buildSuccessResp(fileNodesDTO);
+            return InternalResponse.buildSuccessResp(fileNodesDTO);
         } else if (COSNodeTypeEnum.BUCKET.name().equals(parentNodeType)) {
             // 父节点类型为Bucket，则子节点为File，listBucketFile
             fillFileFileNodesDTO(fileNodesDTO, req);
-            return ServiceResponse.buildSuccessResp(fileNodesDTO);
+            return InternalResponse.buildSuccessResp(fileNodesDTO);
         } else if (COSNodeTypeEnum.FILE.name().equals(parentNodeType)) {
             // 父节点类型为File，则子节点仍为File，listBucketFile
             fillFileFileNodesDTO(fileNodesDTO, req);
-            return ServiceResponse.buildSuccessResp(fileNodesDTO);
+            return InternalResponse.buildSuccessResp(fileNodesDTO);
         } else {
-            throw new ServiceException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, new String[]{"nodeType"});
+            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, new String[]{"nodeType"});
         }
     }
 
     @Override
-    public ServiceResponse<Boolean> executeAction(ExecuteActionReq req) {
+    public InternalResponse<Boolean> executeAction(ExecuteActionReq req) {
         String actionCode = req.getActionCode();
         if (COSActionCodeEnum.DELETE_BUCKET.name().equals(actionCode)) {
             // deleteBucket
@@ -402,7 +393,7 @@ public class COSFileResourceImpl implements IFileResource {
             if (StringUtils.isNotBlank(bucketName)) {
                 deleteBucket(bucketName, req);
             } else {
-                throw new ServiceException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, new String[]{"bucketName"});
+                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, new String[]{"bucketName"});
             }
         } else if (COSActionCodeEnum.DELETE_FILE.name().equals(actionCode)) {
             // deleteBucketFile
@@ -419,9 +410,9 @@ public class COSFileResourceImpl implements IFileResource {
                 log.debug("deleteBucketFile:bucketName={},path={}", bucketName, path);
                 deleteBucketFile(bucketName, path, req);
             } else {
-                throw new ServiceException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, new String[]{"path"});
+                throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, new String[]{"path"});
             }
         }
-        return ServiceResponse.buildSuccessResp(true);
+        return InternalResponse.buildSuccessResp(true);
     }
 }

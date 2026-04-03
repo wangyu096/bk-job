@@ -32,12 +32,12 @@ import TaskStep from '@model/task/task-step';
  *
  * 扩展字段：
  * enable —— 该步骤是否在执行方案中使用
- * templateStepId —— 该步骤对应的模版步骤id
+ * templateStepId —— 该步骤对应的模板步骤id
 */
 export default class ExecPlanStep extends TaskStep {
-    constructor (payload) {
-        super(payload);
-        this.enable = payload.enable || 0;
-        this.templateStepId = payload.templateStepId || 0;
-    }
+  constructor(payload) {
+    super(payload);
+    this.enable = payload.enable || 0;
+    this.templateStepId = payload.templateStepId || 0;
+  }
 }

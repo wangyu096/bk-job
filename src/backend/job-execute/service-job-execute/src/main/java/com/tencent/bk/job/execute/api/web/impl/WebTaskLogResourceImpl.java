@@ -24,24 +24,36 @@
 
 package com.tencent.bk.job.execute.api.web.impl;
 
+import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.job.common.artifactory.config.ArtifactoryConfig;
+import com.tencent.bk.job.common.artifactory.model.dto.NodeDTO;
+import com.tencent.bk.job.common.artifactory.sdk.ArtifactoryClient;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.i18n.MessageI18nService;
-import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.constant.ExecuteObjectTypeEnum;
+import com.tencent.bk.job.common.constant.JobConstants;
+import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.iam.constant.ActionId;
+import com.tencent.bk.job.common.model.Response;
+import com.tencent.bk.job.common.model.dto.AppResourceScope;
 import com.tencent.bk.job.common.util.date.DateUtils;
-import com.tencent.bk.job.common.web.controller.AbstractJobController;
 import com.tencent.bk.job.execute.api.web.WebTaskLogResource;
-import com.tencent.bk.job.execute.config.StorageSystemConfig;
+import com.tencent.bk.job.execute.config.LogExportConfig;
+import com.tencent.bk.job.execute.config.StorageConfig;
 import com.tencent.bk.job.execute.engine.consts.FileDirTypeConf;
 import com.tencent.bk.job.execute.engine.util.NFSUtils;
 import com.tencent.bk.job.execute.model.LogExportJobInfoDTO;
 import com.tencent.bk.job.execute.model.StepInstanceBaseDTO;
 import com.tencent.bk.job.execute.model.web.vo.LogExportJobInfoVO;
 import com.tencent.bk.job.execute.service.LogExportService;
-import com.tencent.bk.job.execute.service.TaskInstanceService;
+import com.tencent.bk.job.execute.service.StepInstanceService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -51,84 +63,157 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 
 @RestController
 @Slf4j
-public class WebTaskLogResourceImpl extends AbstractJobController implements WebTaskLogResource {
+public class WebTaskLogResourceImpl implements WebTaskLogResource {
     private final String logFileDir;
-    private final MessageI18nService i18nService;
-    private final TaskInstanceService taskInstanceService;
+    private final StepInstanceService stepInstanceService;
     private final LogExportService logExportService;
+    private final ArtifactoryClient artifactoryClient;
+    private final ArtifactoryConfig artifactoryConfig;
+    private final LogExportConfig logExportConfig;
 
     @Autowired
-    public WebTaskLogResourceImpl(MessageI18nService i18nService, TaskInstanceService taskInstanceService,
-                                  StorageSystemConfig storageSystemConfig, LogExportService logExportService) {
-        this.i18nService = i18nService;
-        this.taskInstanceService = taskInstanceService;
+    public WebTaskLogResourceImpl(StepInstanceService stepInstanceService,
+                                  StorageConfig storageConfig,
+                                  LogExportService logExportService,
+                                  @Qualifier("jobArtifactoryClient") ArtifactoryClient artifactoryClient,
+                                  ArtifactoryConfig artifactoryConfig,
+                                  LogExportConfig logExportConfig) {
+        this.stepInstanceService = stepInstanceService;
         this.logExportService = logExportService;
-        this.logFileDir = NFSUtils.getFileDir(storageSystemConfig.getJobStorageRootPath(),
+        this.logFileDir = NFSUtils.getFileDir(storageConfig.getJobStorageRootPath(),
             FileDirTypeConf.JOB_INSTANCE_PATH);
+        this.artifactoryClient = artifactoryClient;
+        this.artifactoryConfig = artifactoryConfig;
+        this.logExportConfig = logExportConfig;
+    }
+
+    private boolean existsLogZipFileInNFS(String zipFileName) {
+        File zipFile = new File(logFileDir + zipFileName);
+        boolean existsFlag = zipFile.exists();
+        if (!existsFlag) {
+            log.warn("Job info exist but file is gone!|{}", zipFileName);
+        }
+        return existsFlag;
+    }
+
+    private boolean existsLogZipFileInArtifactory(String zipFileName) {
+        NodeDTO nodeDTO = null;
+        try {
+            nodeDTO = artifactoryClient.queryNodeDetail(
+                artifactoryConfig.getArtifactoryJobProject(),
+                logExportConfig.getLogExportRepo(),
+                zipFileName
+            );
+        } catch (Throwable t) {
+            log.warn("Fail to queryNodeDetail", t);
+        }
+        return nodeDTO != null;
     }
 
     @Override
-    public ServiceResponse<LogExportJobInfoVO> requestDownloadLogFile(String username, Long appId,
-                                                                      Long stepInstanceId, String ip,
-                                                                      Boolean repackage) {
-        if (appId == null || appId <= 0 || stepInstanceId == null || stepInstanceId < 0) {
-            log.warn("Check request param fail, appId={}, stepInstanceId={}", appId, stepInstanceId);
-            return ServiceResponse.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM, i18nService);
-        }
+    @AuditEntry(actionId = ActionId.VIEW_HISTORY)
+    public Response<LogExportJobInfoVO> requestDownloadLogFile(String username,
+                                                               AppResourceScope appResourceScope,
+                                                               String scopeType,
+                                                               String scopeId,
+                                                               Long taskInstanceId,
+                                                               Long stepInstanceId,
+                                                               Integer executeObjectType,
+                                                               Long executeObjectResourceId,
+                                                               Boolean repackage) {
+        Long appId = appResourceScope.getAppId();
+
         if (repackage == null) {
             repackage = false;
         }
 
-        StepInstanceBaseDTO stepInstance = taskInstanceService.getBaseStepInstance(stepInstanceId);
-        if (!stepInstance.getAppId().equals(appId)) {
-            return ServiceResponse.buildCommonFailResp(ErrorCode.STEP_INSTANCE_NOT_EXIST, i18nService);
+        StepInstanceBaseDTO stepInstance = stepInstanceService.getBaseStepInstance(taskInstanceId, stepInstanceId);
+        if (!stepInstance.getAppId().equals(appResourceScope.getAppId())) {
+            throw new NotFoundException(ErrorCode.STEP_INSTANCE_NOT_EXIST);
+        }
+
+        boolean getByExecuteObject = executeObjectResourceId != null;
+        ExecuteObjectTypeEnum executeObjectTypeEnum = null;
+        if (getByExecuteObject) {
+            executeObjectTypeEnum = ExecuteObjectTypeEnum.valOf(executeObjectType);
         }
 
         if (!repackage) {
-            log.debug("Do not need repackage, check exist job");
-            LogExportJobInfoDTO exportInfo = logExportService.getExportInfo(appId, stepInstanceId, ip);
+            if (log.isDebugEnabled()) {
+                log.debug("Do not need repackage, check exist job " +
+                        "|stepInstanceId={}|executeObjectType={}|executeObjectResourceId={}",
+                    stepInstanceId, executeObjectType, executeObjectResourceId);
+            }
+            LogExportJobInfoDTO exportInfo = logExportService.getExportInfo(appId, stepInstanceId,
+                executeObjectTypeEnum, executeObjectResourceId);
             if (exportInfo != null) {
                 log.debug("Find exist job info|{}", exportInfo);
                 switch (exportInfo.getStatus()) {
                     case INIT:
                     case PROCESSING:
                     case FAILED:
-                        return ServiceResponse.buildSuccessResp(LogExportJobInfoDTO.toVO(exportInfo));
+                        return Response.buildSuccessResp(LogExportJobInfoDTO.toVO(exportInfo));
                     case SUCCESS:
-                        File zipFile = new File(logFileDir + exportInfo.getZipFileName());
-                        // 如果日志文件已存在，直接返回
-                        if (zipFile.exists()) {
-                            return ServiceResponse.buildSuccessResp(LogExportJobInfoDTO.toVO(exportInfo));
-                        } else {
-                            log.warn("Job info exist but file is gone!|{}", exportInfo);
-                            repackage = true;
+                        switch (logExportConfig.getStorageBackend()) {
+                            case JobConstants.FILE_STORAGE_BACKEND_ARTIFACTORY:
+                                repackage = !existsLogZipFileInArtifactory(exportInfo.getZipFileName());
+                                break;
+                            case JobConstants.FILE_STORAGE_BACKEND_LOCAL:
+                                repackage = !existsLogZipFileInNFS(exportInfo.getZipFileName());
+                                break;
+                            default:
+                                break;
                         }
+                        // 不需要重新打包
+                        if (!repackage) {
+                            return Response.buildSuccessResp(LogExportJobInfoDTO.toVO(exportInfo));
+                        }
+                        log.warn("Not exist zip file, needs to be repackaged! |{}", exportInfo);
                         break;
                     default:
-                        return ServiceResponse.buildCommonFailResp(ErrorCode.EXPORT_STEP_EXECUTION_LOG_FAIL,
-                            i18nService);
+                        throw new InternalException(ErrorCode.EXPORT_STEP_EXECUTION_LOG_FAIL);
                 }
             }
         }
 
         int executeCount = stepInstance.getExecuteCount();
 
-        String logFileName = getLogFileName(stepInstanceId, ip, executeCount);
+        String logFileName = getLogFileName(stepInstanceId, executeCount,
+            executeObjectTypeEnum, executeObjectResourceId);
         if (StringUtils.isBlank(logFileName)) {
-            return ServiceResponse.buildCommonFailResp(ErrorCode.EXPORT_STEP_EXECUTION_LOG_FAIL, i18nService);
+            log.warn("Log File Name is blank! request fail! " +
+                    "|stepInstanceId={}|executeObjectType={}|executeObjectResourceId={}|executeCount={}",
+                stepInstanceId, executeObjectType, executeObjectResourceId, executeCount);
+            throw new InternalException(ErrorCode.EXPORT_STEP_EXECUTION_LOG_FAIL);
         }
 
-        LogExportJobInfoDTO exportInfo = logExportService.packageLogFile(username, appId, stepInstanceId, ip,
-            executeCount, logFileDir, logFileName, repackage);
-        return ServiceResponse.buildSuccessResp(LogExportJobInfoDTO.toVO(exportInfo));
+        LogExportJobInfoDTO exportInfo = logExportService.packageLogFile(
+            username,
+            appId,
+            taskInstanceId,
+            stepInstanceId,
+            executeObjectTypeEnum,
+            executeObjectResourceId,
+            executeCount,
+            logFileDir,
+            logFileName,
+            repackage
+        );
+        return Response.buildSuccessResp(LogExportJobInfoDTO.toVO(exportInfo));
     }
 
-    private String getLogFileName(Long stepInstanceId, String ip, int executeCount) {
-        String fileName = makeExportLogFileName(stepInstanceId, executeCount, ip);
+    private String getLogFileName(Long stepInstanceId,
+                                  int executeCount,
+                                  ExecuteObjectTypeEnum executeObjectType,
+                                  Long executeObjectResourceId) {
+        String fileName = makeExportLogFileName(stepInstanceId, executeCount,
+            executeObjectType, executeObjectResourceId);
         String logFileName = fileName + ".log";
 
         File dir = new File(logFileDir);
@@ -138,15 +223,72 @@ public class WebTaskLogResourceImpl extends AbstractJobController implements Web
         return logFileName;
     }
 
-    @Override
-    public ResponseEntity<StreamingResponseBody> downloadLogFile(HttpServletResponse response, String username,
-                                                                 Long appId, Long stepInstanceId, String ip) {
-        if (appId == null || appId <= 0 || stepInstanceId == null || stepInstanceId < 0) {
-            log.warn("Check request param fail, appId={}, stepInstanceId={}", appId, stepInstanceId);
-            return ResponseEntity.notFound().build();
+    private Pair<Long, StreamingResponseBody> getFileSizeAndStreamFromNFS(
+        LogExportJobInfoDTO exportInfo
+    ) throws FileNotFoundException {
+        File zipFile = new File(logFileDir + exportInfo.getZipFileName());
+        // 如果日志压缩文件已存在，直接返回
+        if (zipFile.exists()) {
+            StreamingResponseBody streamingResponseBody =
+                outputStream -> {
+                    try (FileInputStream fis = new FileInputStream(zipFile)) {
+                        IOUtils.copy(fis, outputStream);
+                    }
+                };
+            return Pair.of(zipFile.length(), streamingResponseBody);
+        } else {
+            log.warn("Job info exist but file is gone!|{}", exportInfo);
+            throw new FileNotFoundException(zipFile.getAbsolutePath());
         }
-        StepInstanceBaseDTO stepInstance = taskInstanceService.getBaseStepInstance(stepInstanceId);
+    }
+
+    private Pair<Long, StreamingResponseBody> getFileSizeAndStreamFromArtifactory(
+        LogExportJobInfoDTO exportInfo
+    ) {
+        NodeDTO nodeDTO;
+        InputStream ins;
+        try {
+            nodeDTO = artifactoryClient.queryNodeDetail(
+                artifactoryConfig.getArtifactoryJobProject(),
+                logExportConfig.getLogExportRepo(),
+                exportInfo.getZipFileName()
+            );
+        } catch (Exception e) {
+            throw new InternalException(ErrorCode.FAIL_TO_GET_NODE_INFO_FROM_ARTIFACTORY);
+        }
+        try {
+            log.debug("get {} fileInputStream from artifactory", exportInfo.getZipFileName());
+            Pair<InputStream, HttpRequestBase> pair = artifactoryClient.getFileInputStream(
+                artifactoryConfig.getArtifactoryJobProject(),
+                logExportConfig.getLogExportRepo(),
+                exportInfo.getZipFileName()
+            );
+            ins = pair.getLeft();
+        } catch (Exception e) {
+            throw new InternalException(ErrorCode.FAIL_TO_DOWNLOAD_NODE_FROM_ARTIFACTORY);
+        }
+        final InputStream finalIns = ins;
+        StreamingResponseBody streamingResponseBody =
+            outputStream -> IOUtils.copy(finalIns, outputStream);
+        return Pair.of(nodeDTO.getSize(), streamingResponseBody);
+    }
+
+    @Override
+    @AuditEntry(actionId = ActionId.VIEW_HISTORY)
+    public ResponseEntity<StreamingResponseBody> downloadLogFile(HttpServletResponse response,
+                                                                 String username,
+                                                                 AppResourceScope appResourceScope,
+                                                                 String scopeType,
+                                                                 String scopeId,
+                                                                 Long taskInstanceId,
+                                                                 Long stepInstanceId,
+                                                                 Integer executeObjectType,
+                                                                 Long executeObjectResourceId) {
+        Long appId = appResourceScope.getAppId();
+
+        StepInstanceBaseDTO stepInstance = stepInstanceService.getBaseStepInstance(taskInstanceId, stepInstanceId);
         if (!stepInstance.getAppId().equals(appId)) {
+            log.info("StepInstance: {} is not in app: {}", stepInstance.getId(), appResourceScope.getAppId());
             return ResponseEntity.notFound().build();
         }
 
@@ -154,16 +296,31 @@ public class WebTaskLogResourceImpl extends AbstractJobController implements Web
 
         LogExportJobInfoDTO exportInfo;
 
-        boolean isGetByIp = StringUtils.isNotBlank(ip);
-        if (isGetByIp) {
-            String logFileName = getLogFileName(stepInstanceId, ip, executeCount);
+        boolean isGetByExecuteObject = executeObjectResourceId != null;
+        if (isGetByExecuteObject) {
+            ExecuteObjectTypeEnum executeObjectTypeEnum = ExecuteObjectTypeEnum.valOf(executeObjectType);
+            String logFileName = getLogFileName(stepInstanceId, executeCount,
+                executeObjectTypeEnum, executeObjectResourceId);
             if (StringUtils.isBlank(logFileName)) {
+                log.warn("Log File Name is blank! download fail! " +
+                        "|stepInstanceId={}|executeObjectType={}|executeObjectResourceId={}|executeCount={}",
+                    stepInstanceId, executeObjectType, executeObjectResourceId, executeCount);
                 return ResponseEntity.notFound().build();
             }
-            exportInfo = logExportService.packageLogFile(username, appId, stepInstanceId, ip, executeCount,
-                logFileDir, logFileName, false);
+            exportInfo = logExportService.packageLogFile(
+                username,
+                appId,
+                taskInstanceId,
+                stepInstanceId,
+                executeObjectTypeEnum,
+                executeObjectResourceId,
+                executeCount,
+                logFileDir,
+                logFileName,
+                false
+            );
         } else {
-            exportInfo = logExportService.getExportInfo(appId, stepInstanceId, ip);
+            exportInfo = logExportService.getExportInfo(appId, stepInstanceId, null, null);
         }
 
         if (exportInfo != null) {
@@ -174,41 +331,52 @@ public class WebTaskLogResourceImpl extends AbstractJobController implements Web
                 case FAILED:
                     break;
                 case SUCCESS:
-                    File zipFile = new File(logFileDir + exportInfo.getZipFileName());
-                    // 如果日志文件已存在，直接返回
-                    if (zipFile.exists()) {
-                        StreamingResponseBody streamingResponseBody =
-                            outputStream -> {
-                                try (FileInputStream fis = new FileInputStream(zipFile)) {
-                                    IOUtils.copy(fis, outputStream);
-                                }
-                            };
-
-                        HttpHeaders headers = new HttpHeaders();
-                        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + zipFile.getName() +
-                            "\"");
-                        headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
-                        headers.add("Pragma", "no-cache");
-                        headers.add("Expires", "0");
-
-                        return ResponseEntity.ok().headers(headers).contentLength(zipFile.length())
-                            .contentType(MediaType.APPLICATION_OCTET_STREAM).body(streamingResponseBody);
-                    } else {
-                        log.warn("Job info exist but file is gone!|{}", exportInfo);
+                    Pair<Long, StreamingResponseBody> fileInfoPair;
+                    switch (logExportConfig.getStorageBackend()) {
+                        case JobConstants.FILE_STORAGE_BACKEND_ARTIFACTORY:
+                            // 从制品库获取文件下载流
+                            fileInfoPair = getFileSizeAndStreamFromArtifactory(exportInfo);
+                            break;
+                        case JobConstants.FILE_STORAGE_BACKEND_LOCAL:
+                            try {
+                                // 从NFS获取文件下载流
+                                fileInfoPair = getFileSizeAndStreamFromNFS(exportInfo);
+                            } catch (FileNotFoundException e) {
+                                log.warn("log export file not found", e);
+                                return ResponseEntity.notFound().build();
+                            }
+                            break;
+                        default:
+                            log.error("storage backend:{} not support yet", logExportConfig.getStorageBackend());
+                            return ResponseEntity.notFound().build();
                     }
-                    break;
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.add(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + exportInfo.getZipFileName() + "\""
+                    );
+                    headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
+                    headers.add("Pragma", "no-cache");
+                    headers.add("Expires", "0");
+                    return ResponseEntity.ok().headers(headers).contentLength(fileInfoPair.getLeft())
+                        .contentType(MediaType.APPLICATION_OCTET_STREAM).body(fileInfoPair.getRight());
                 default:
             }
         }
+        log.warn("Not exist job info.|appId={}|stepInstanceId={}|executeObjectType={}|executeObjectResourceId={}",
+            appId, stepInstanceId, executeObjectType, executeObjectResourceId);
         return ResponseEntity.notFound().build();
     }
 
-    private String makeExportLogFileName(Long stepInstanceId, Integer executeCount, String ip) {
+    private String makeExportLogFileName(Long stepInstanceId,
+                                         int executeCount,
+                                         ExecuteObjectTypeEnum executeObjectType,
+                                         Long executeObjectResourceId) {
         StringBuilder fileName = new StringBuilder();
         fileName.append("bk_job_export_log_");
         fileName.append("step_").append(stepInstanceId).append("_").append(executeCount).append("_");
-        if (!StringUtils.isBlank(ip)) {
-            fileName.append(ip).append("_");
+        if (executeObjectResourceId != null) {
+            fileName.append(executeObjectType.getValue()).append("_").append(executeObjectResourceId).append("_");
         }
         fileName.append(DateUtils.formatLocalDateTime(LocalDateTime.now(), "yyyyMMddHHmmssSSS"));
         return fileName.toString();

@@ -50,35 +50,35 @@ public class JobManageConfig {
     @Value("${job.edition:ee}")
     private String jobEdition;
 
-    @Value("${job.web.url:}")
-    private String jobWebUrl;
-
-    @Value("${bk.helper.url:}")
-    private String bkHelperUrl;
-
     @Value("${bk.doc.root:}")
     private String bkDocRoot;
 
     @Value("${bk.feedback.root:}")
     private String bkFeedBackRoot;
 
+    @Value("${bk.sharedResUrl:}")
+    private String bkSharedResUrl;
+
+    @Value("${bk.sharedBaseJsPath:/bk_job/base.js}")
+    private String bkSharedBaseJsPath;
+
     @Value("${bk.ce.root:https://bk.tencent.com}")
     private String bkCERoot;
 
-    @Value("${job.manage.sync.app.enable:true}")
+    @Value("${job.manage.sync.app.enabled:true}")
     private boolean enableSyncApp;
 
-    @Value("${job.manage.sync.host.enable:true}")
+    @Value("${job.manage.sync.host.enabled:true}")
     private boolean enableSyncHost;
 
-    @Value("${job.manage.sync.agentStatus.enable:true}")
+    @Value("${job.manage.sync.agentStatus.enabled:true}")
     private boolean enableSyncAgentStatus;
 
-    @Value("${job.manage.sync.resource.watch.enable:true}")
+    @Value("${job.manage.sync.resource.watch.enabled:true}")
     private boolean enableResourceWatch;
 
-    @Value("${job.manage.swagger.url:manage.swagger.com}")
-    private String swaggerUrl;
+    @Value("${job.manage.sync.hostEvent.handlerNum:3}")
+    private int hostEventHandlerNum;
 
     //---------------------------- Cmdb Config ---------------------------------
     @Value("${cmdb.default.supplier.account:0}")
@@ -87,7 +87,7 @@ public class JobManageConfig {
     @Value("${cmdb.server.url:}")
     private String cmdbServerUrl;
 
-    @Value("${cmdb.app.index.path:/#/business/{appId}/index}")
+    @Value("${cmdb.app.index.path:/#/{scopeType}/{scopeId}/index}")
     private String cmdbAppIndexPath;
 
     //---------------------------- Paas Config ---------------------------------

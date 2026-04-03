@@ -35,7 +35,6 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -46,7 +45,7 @@ import java.util.Map;
 @Slf4j
 public class CustomLoginClient implements ILoginClient {
     private static final String API_GET_USER_INFO = "/user/get_info/";
-    private String customLoginApiUrl;
+    private final String customLoginApiUrl;
 
     public CustomLoginClient(String customLoginApiUrl) {
         if (customLoginApiUrl.endsWith("/")) {
@@ -92,7 +91,7 @@ public class CustomLoginClient implements ILoginClient {
         }
     }
 
-    private String doHttpGet(String uri, Map<String, String> queryParams, String secretField) throws IOException {
+    private String doHttpGet(String uri, Map<String, String> queryParams, String secretField) {
         boolean error = false;
         long start = System.currentTimeMillis();
         String responseBody = null;
@@ -101,7 +100,7 @@ public class CustomLoginClient implements ILoginClient {
         try {
             responseBody = HttpConPoolUtil.get(false, url, null);
             return responseBody;
-        } catch (IOException e) {
+        } catch (Throwable e) {
             log.error("doHttpGet| url={}| params={}| exception={}", uri, buildPrintedParams(queryParams, secretField),
                 e.getMessage());
             error = true;
@@ -144,11 +143,6 @@ public class CustomLoginClient implements ILoginClient {
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException("encode failed");
         }
-    }
-
-    @Override
-    public BkUserDTO getUserInfoByUserName(String userName) {
-        return null;
     }
 
     @Getter

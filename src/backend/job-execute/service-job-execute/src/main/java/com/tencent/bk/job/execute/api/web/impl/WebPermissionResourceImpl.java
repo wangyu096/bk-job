@@ -25,83 +25,75 @@
 package com.tencent.bk.job.execute.api.web.impl;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.i18n.MessageI18nService;
+import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.iam.model.AuthResult;
 import com.tencent.bk.job.common.iam.service.WebAuthService;
-import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.model.Response;
+import com.tencent.bk.job.common.model.dto.AppResourceScope;
 import com.tencent.bk.job.common.model.permission.AuthResultVO;
 import com.tencent.bk.job.execute.api.web.WebPermissionResource;
+import com.tencent.bk.job.execute.auth.ExecuteAuthService;
 import com.tencent.bk.job.execute.model.TaskInstanceDTO;
 import com.tencent.bk.job.execute.model.web.request.OperationPermissionReq;
-import com.tencent.bk.job.execute.service.ExecuteAuthService;
 import com.tencent.bk.job.execute.service.TaskInstanceService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
 
-@RestController
+@RestController("jobExecuteWebPermissionResourceImpl")
 @Slf4j
 public class WebPermissionResourceImpl implements WebPermissionResource {
     private final WebAuthService webAuthService;
     private final ExecuteAuthService executeAuthService;
     private final TaskInstanceService taskInstanceService;
-    private final MessageI18nService i18nService;
 
     public WebPermissionResourceImpl(WebAuthService webAuthService,
-                                     ExecuteAuthService executeAuthService, TaskInstanceService taskInstanceService,
-                                     MessageI18nService i18nService) {
+                                     ExecuteAuthService executeAuthService,
+                                     TaskInstanceService taskInstanceService) {
         this.webAuthService = webAuthService;
         this.executeAuthService = executeAuthService;
         this.taskInstanceService = taskInstanceService;
-        this.i18nService = i18nService;
     }
 
     @Override
-    public ServiceResponse<String> getApplyUrl(String username, OperationPermissionReq req) {
-//        authService.
-        return null;
+    public Response<AuthResultVO> checkOperationPermission(String username, OperationPermissionReq req) {
+        return checkOperationPermission(
+            username, req.getScopeType(), req.getScopeId(),
+            req.getOperation(), req.getResourceId(), req.isReturnPermissionDetail());
     }
 
     @Override
-    public ServiceResponse<AuthResultVO> checkOperationPermission(String username, OperationPermissionReq req) {
-        return checkOperationPermission(username, req.getAppId(), req.getOperation(), req.getResourceId(),
-            req.isReturnPermissionDetail());
-    }
-
-    @Override
-    public ServiceResponse<AuthResultVO> checkOperationPermission(String username, Long appId, String operation,
-                                                                  String resourceId, Boolean returnPermissionDetail) {
+    public Response<AuthResultVO> checkOperationPermission(String username,
+                                                           String scopeType,
+                                                           String scopeId,
+                                                           String operation,
+                                                           String resourceId,
+                                                           Boolean returnPermissionDetail) {
+        AppResourceScope appResourceScope = new AppResourceScope(scopeType, scopeId, null);
         if (StringUtils.isEmpty(operation)) {
-            return ServiceResponse.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM, i18nService);
+            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
         }
         String[] resourceAndAction = operation.split("/");
         if (resourceAndAction.length != 2) {
-            return ServiceResponse.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM, i18nService);
+            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
         }
         String resourceType = resourceAndAction[0];
         String action = resourceAndAction[1];
-        boolean isReturnApplyUrl = returnPermissionDetail == null ? false : returnPermissionDetail;
+        boolean isReturnApplyUrl = returnPermissionDetail != null && returnPermissionDetail;
 
         switch (resourceType) {
             case "task_instance":
                 long taskInstanceId = Long.parseLong(resourceId);
                 TaskInstanceDTO taskInstance = taskInstanceService.getTaskInstance(taskInstanceId);
-                if (taskInstance == null) {
-                    return ServiceResponse.buildSuccessResp(
-                        AuthResultVO.fail());
-                }
                 switch (action) {
                     case "view":
                     case "redo":
-                        AuthResult authResult = executeAuthService.authViewTaskInstance(username, appId,
-                            taskInstanceId);
-                        if (!authResult.isPass() && isReturnApplyUrl) {
-                            authResult.setApplyUrl(webAuthService.getApplyUrl(authResult.getRequiredActionResources()));
-                        }
-                        return ServiceResponse.buildSuccessResp(webAuthService.toAuthResultVO(authResult));
+                        AuthResult authResult = executeAuthService.checkViewTaskInstancePermission(username,
+                            appResourceScope, taskInstance);
+                        return Response.buildSuccessResp(webAuthService.toAuthResultVO(isReturnApplyUrl, authResult));
                 }
                 break;
         }
-        return ServiceResponse.buildSuccessResp(AuthResultVO.fail());
+        return Response.buildSuccessResp(AuthResultVO.fail());
     }
 }

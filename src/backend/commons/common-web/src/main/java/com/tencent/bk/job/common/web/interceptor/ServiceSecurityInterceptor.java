@@ -24,14 +24,14 @@
 
 package com.tencent.bk.job.common.web.interceptor;
 
-import com.tencent.bk.job.common.security.autoconfigure.ServiceSecurityProperties;
-import com.tencent.bk.job.common.security.jwt.JwtManager;
+import com.tencent.bk.job.common.annotation.JobInterceptor;
+import com.tencent.bk.job.common.constant.InterceptorOrder;
+import com.tencent.bk.job.common.jwt.JwtManager;
+import com.tencent.bk.job.common.service.SpringProfile;
 import com.tencent.bk.job.common.web.exception.ServiceNoAuthException;
-import com.tencent.bk.job.common.web.util.ProfileUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
 import javax.servlet.http.HttpServletRequest;
@@ -41,18 +41,15 @@ import javax.servlet.http.HttpServletResponse;
  * 服务认证拦截器
  */
 @Slf4j
-@Component
+@JobInterceptor(pathPatterns = "/**", order = InterceptorOrder.Init.CHECK_VALID)
 public class ServiceSecurityInterceptor extends HandlerInterceptorAdapter {
     private final JwtManager jwtManager;
-    private final ProfileUtil profileUtil;
-    private final ServiceSecurityProperties securityProperties;
+    private final SpringProfile springProfile;
 
     @Autowired
-    public ServiceSecurityInterceptor(JwtManager jwtManager, ProfileUtil profileUtil,
-                                      ServiceSecurityProperties securityProperties) {
+    public ServiceSecurityInterceptor(JwtManager jwtManager, SpringProfile springProfile) {
         this.jwtManager = jwtManager;
-        this.profileUtil = profileUtil;
-        this.securityProperties = securityProperties;
+        this.springProfile = springProfile;
     }
 
 
@@ -61,12 +58,12 @@ public class ServiceSecurityInterceptor extends HandlerInterceptorAdapter {
         if (shouldFilter(request)) {
             String jwt = request.getHeader("x-job-auth-token");
             if (StringUtils.isEmpty(jwt)) {
-                log.warn("Invalid request, jwt is empty! url: {}", request.getRequestURI());
+                log.error("Invalid request, jwt is empty! url: {}", request.getRequestURI());
                 throw new ServiceNoAuthException();
             }
             boolean checkResult = jwtManager.verifyJwt(jwt);
             if (!checkResult) {
-                log.warn("Invalid request, jwt is invalid or expired! url: {}", request.getRequestURI());
+                log.error("Invalid request, jwt is invalid or expired! url: {}", request.getRequestURI());
                 throw new ServiceNoAuthException();
             }
         }
@@ -75,7 +72,7 @@ public class ServiceSecurityInterceptor extends HandlerInterceptorAdapter {
 
     private boolean shouldFilter(HttpServletRequest request) {
         // dev环境需要支持swagger，请求无需认证
-        if (profileUtil.isDevProfileActive()) {
+        if (springProfile.isDevProfileActive()) {
             return false;
         }
 

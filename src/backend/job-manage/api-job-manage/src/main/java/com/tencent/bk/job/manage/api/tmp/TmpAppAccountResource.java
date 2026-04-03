@@ -24,12 +24,17 @@
 
 package com.tencent.bk.job.manage.api.tmp;
 
-import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.manage.model.tmp.TmpAccountCreateUpdateReq;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @Api(tags = {"job-manage:tmp:App_Account"})
@@ -38,7 +43,7 @@ public interface TmpAppAccountResource {
 
     @ApiOperation(value = "新增账号（不校验alias）", produces = "application/json")
     @PostMapping("/account")
-    ServiceResponse saveAccount(
+    Response saveAccount(
         @ApiParam(value = "用户名，网关自动传入", required = true) @RequestHeader("username") String username,
         @ApiParam(value = "业务 ID", required = true) @PathVariable("appId") Long appId,
         @ApiParam("创建时间") @RequestHeader(value = "X-Create-Time", required = false) Long createTime,

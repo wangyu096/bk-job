@@ -24,7 +24,6 @@
 
 package com.tencent.bk.gradle.tasks;
 
-import kotlin.text.Charsets;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
@@ -33,8 +32,24 @@ import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.TaskAction;
 
 import javax.inject.Inject;
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -48,7 +63,7 @@ class GenCompleteDependJarListAndRemoveInfectedJarsTask extends DefaultTask {
     @Input
     public String dependJarInfoRootPath = "../../support-files/dependJarInfo";
     @Input
-    public String defaultEdition = "ee";
+    public String defaultEdition = "ce";
     @Input
     public String defaultPackageType = "allInOne";
     Set<String> patternSet = new HashSet<>();
@@ -156,7 +171,7 @@ class GenCompleteDependJarListAndRemoveInfectedJarsTask extends DefaultTask {
     private void writeListToFile(List<String> list, File file) {
         BufferedWriter bw = null;
         try {
-            bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"));
+            bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8));
             for (int i = 0; i < list.size(); i++) {
                 String line = list.get(i);
                 if (i == 0) {
@@ -278,7 +293,7 @@ class GenCompleteDependJarListAndRemoveInfectedJarsTask extends DefaultTask {
         // 写入Jar列表至文件
         BufferedWriter bw = null;
         try {
-            bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(jarListFile), "UTF-8"));
+            bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(jarListFile), StandardCharsets.UTF_8));
             for (int i = 0; i < libJarNameList.size(); i++) {
                 String libJarName = libJarNameList.get(i);
                 String libJarPath = libJarPathPrefix + libJarName;
@@ -325,7 +340,7 @@ class GenCompleteDependJarListAndRemoveInfectedJarsTask extends DefaultTask {
                 System.out.println("exec command:\n" + command);
                 Process process = Runtime.getRuntime().exec(command, null, bootJarFile.getParentFile());
                 ins = process.getInputStream();
-                BufferedReader br = new BufferedReader(new InputStreamReader(ins, Charsets.UTF_8));
+                BufferedReader br = new BufferedReader(new InputStreamReader(ins, StandardCharsets.UTF_8));
                 String line = "";
                 while ((line = br.readLine()) != null) {
                     System.out.println(line);
@@ -406,5 +421,45 @@ class GenCompleteDependJarListAndRemoveInfectedJarsTask extends DefaultTask {
 
     public void remove(String pattern) {
         patternSet.add(pattern);
+    }
+
+    public FileCollection getBootJarOutputFiles() {
+        return bootJarOutputFiles;
+    }
+
+    public void setBootJarOutputFiles(FileCollection bootJarOutputFiles) {
+        this.bootJarOutputFiles = bootJarOutputFiles;
+    }
+
+    public String getCompleteJarListsRootPath() {
+        return completeJarListsRootPath;
+    }
+
+    public void setCompleteJarListsRootPath(String completeJarListsRootPath) {
+        this.completeJarListsRootPath = completeJarListsRootPath;
+    }
+
+    public String getDependJarInfoRootPath() {
+        return dependJarInfoRootPath;
+    }
+
+    public void setDependJarInfoRootPath(String dependJarInfoRootPath) {
+        this.dependJarInfoRootPath = dependJarInfoRootPath;
+    }
+
+    public String getDefaultEdition() {
+        return defaultEdition;
+    }
+
+    public void setDefaultEdition(String defaultEdition) {
+        this.defaultEdition = defaultEdition;
+    }
+
+    public String getDefaultPackageType() {
+        return defaultPackageType;
+    }
+
+    public void setDefaultPackageType(String defaultPackageType) {
+        this.defaultPackageType = defaultPackageType;
     }
 }

@@ -24,43 +24,48 @@
 
 package com.tencent.bk.job.file_gateway.service.impl;
 
-import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.model.InternalResponse;
+import com.tencent.bk.job.common.model.dto.CommonCredential;
 import com.tencent.bk.job.common.util.json.JsonUtils;
-import com.tencent.bk.job.file_gateway.client.ServiceCredentialResourceClient;
 import com.tencent.bk.job.file_gateway.service.CredentialService;
-import com.tencent.bk.job.ticket.model.credential.CommonCredentialDTO;
-import com.tencent.bk.job.ticket.model.inner.resp.ServiceCredentialDTO;
+import com.tencent.bk.job.manage.api.inner.ServiceCredentialResource;
+import com.tencent.bk.job.manage.model.inner.resp.ServiceCredentialDTO;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.helpers.FormattingTuple;
+import org.slf4j.helpers.MessageFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Slf4j
-@Service
+@Service("jobFileGatewayCredentialServiceImpl")
 public class CredentialServiceImpl implements CredentialService {
 
-    ServiceCredentialResourceClient credentialService;
+    private final ServiceCredentialResource credentialResource;
 
     @Autowired
-    public CredentialServiceImpl(ServiceCredentialResourceClient credentialService) {
-        this.credentialService = credentialService;
+    public CredentialServiceImpl(ServiceCredentialResource credentialResource) {
+        this.credentialResource = credentialResource;
     }
 
     @Override
-    public CommonCredentialDTO getCredentialById(Long appId, String id) {
-        ServiceResponse<ServiceCredentialDTO> credentialServiceResponse = credentialService.getCredentialById(appId,
+    public CommonCredential getCredentialById(Long appId, String id) {
+        InternalResponse<ServiceCredentialDTO> credentialWebResponse = credentialResource.getCredentialById(appId,
             id);
-        ServiceCredentialDTO credentialDTO = credentialServiceResponse.getData();
+        ServiceCredentialDTO credentialDTO = credentialWebResponse.getData();
         if (credentialDTO == null) {
             return null;
         }
         try {
-            CommonCredentialDTO commonCredentialDTO = JsonUtils.fromJson(credentialDTO.getValue(),
-                CommonCredentialDTO.class);
+            CommonCredential commonCredential = credentialDTO.getCredential();
             // Type补全
-            commonCredentialDTO.setType(credentialDTO.getType());
-            return commonCredentialDTO;
+            commonCredential.setType(credentialDTO.getType());
+            return commonCredential;
         } catch (Exception e) {
-            log.error("credential not valid:{}", credentialDTO);
+            FormattingTuple msg = MessageFormatter.format(
+                "credential not valid:{}",
+                JsonUtils.toJsonWithoutSkippedFields(credentialDTO)
+            );
+            log.error(msg.toString(), e);
             return null;
         }
     }

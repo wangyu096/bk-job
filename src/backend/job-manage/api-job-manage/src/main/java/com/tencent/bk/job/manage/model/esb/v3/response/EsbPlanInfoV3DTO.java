@@ -24,9 +24,10 @@
 
 package com.tencent.bk.job.manage.model.esb.v3.response;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.tencent.bk.job.common.esb.model.job.v3.EsbGlobalVarV3DTO;
+import com.tencent.bk.job.common.esb.model.job.v3.resp.EsbStepV3DTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -37,18 +38,19 @@ import java.util.List;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class EsbPlanInfoV3DTO extends EsbPlanBasicInfoV3DTO {
 
     /**
      * 步骤信息
      */
     @JsonProperty("step_list")
+    @JsonPropertyDescription("Job plan steps")
     private List<EsbStepV3DTO> stepList;
 
     /**
      * 全局变量信息
      */
     @JsonProperty("global_var_list")
+    @JsonPropertyDescription("Job plan global variables")
     private List<EsbGlobalVarV3DTO> globalVarList;
 }

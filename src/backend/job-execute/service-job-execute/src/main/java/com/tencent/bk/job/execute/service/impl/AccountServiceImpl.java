@@ -27,28 +27,30 @@ package com.tencent.bk.job.execute.service.impl;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.tencent.bk.job.common.constant.AccountCategoryEnum;
+import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.exception.ServiceException;
-import com.tencent.bk.job.common.model.ServiceResponse;
-import com.tencent.bk.job.execute.client.AccountResourceClient;
+import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.execute.model.AccountDTO;
 import com.tencent.bk.job.execute.service.AccountService;
-import com.tencent.bk.job.manage.common.consts.account.AccountCategoryEnum;
-import com.tencent.bk.job.manage.common.consts.account.AccountTypeEnum;
+import com.tencent.bk.job.manage.api.common.constants.account.AccountTypeEnum;
+import com.tencent.bk.job.manage.api.inner.ServiceAccountResource;
 import com.tencent.bk.job.manage.model.inner.ServiceAccountDTO;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-@Service
+@Service("jobExecuteAccountService")
 @Slf4j
 public class AccountServiceImpl implements AccountService {
-    private final AccountResourceClient accountResourceClient;
+    private final ServiceAccountResource accountResource;
 
-    private LoadingCache<String, AccountDTO> accountCache = CacheBuilder.newBuilder()
+    private final LoadingCache<String, AccountDTO> accountCache = CacheBuilder.newBuilder()
         .maximumSize(10000).expireAfterWrite(1, TimeUnit.MINUTES).
             build(new CacheLoader<String, AccountDTO>() {
                       @Override
@@ -72,16 +74,16 @@ public class AccountServiceImpl implements AccountService {
             );
 
     @Autowired
-    public AccountServiceImpl(AccountResourceClient accountResourceClient) {
-        this.accountResourceClient = accountResourceClient;
+    public AccountServiceImpl(ServiceAccountResource accountResource) {
+        this.accountResource = accountResource;
     }
 
     @Override
     public AccountDTO getAccountById(Long accountId) throws ServiceException {
-        ServiceResponse<ServiceAccountDTO> resp = accountResourceClient.getAccountByAccountId(accountId);
+        InternalResponse<ServiceAccountDTO> resp = accountResource.getAccountByAccountId(accountId);
         if (!resp.isSuccess()) {
             log.warn("Get account by accountId:{} return fail resp", accountId);
-            throw new ServiceException(resp.getCode(), resp.getErrorMsg());
+            throw new InternalException(resp.getCode());
         }
         if (resp.getData() == null) {
             log.warn("Get account by accountId:{} return empty account", accountId);
@@ -92,11 +94,11 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public AccountDTO getAccountByAccountName(Long appId, String accountName) throws ServiceException {
-        ServiceResponse<ServiceAccountDTO> resp = accountResourceClient.getAccountByAccountName(appId,
+        InternalResponse<ServiceAccountDTO> resp = accountResource.getAccountByAccountName(appId,
             accountName);
         if (!resp.isSuccess()) {
             log.warn("Get accountName by appId:{}, accountName:{} return fail resp", appId, accountName);
-            throw new ServiceException(resp.getCode());
+            throw new InternalException(resp.getCode());
         }
         if (resp.getData() == null) {
             log.warn("Get accountName by appId:{}, accountName:{} return empty accountName", appId, accountName);
@@ -135,16 +137,16 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public AccountDTO getAccountByAlias(AccountCategoryEnum accountCategory, Long appId,
                                         String alias) throws ServiceException {
-        ServiceResponse<ServiceAccountDTO> resp = accountResourceClient.getAccountByCategoryAndAliasInApp(appId,
+        InternalResponse<ServiceAccountDTO> resp = accountResource.getAccountByCategoryAndAliasInApp(appId,
             accountCategory.getValue(), alias);
         if (!resp.isSuccess()) {
             log.warn("Get account by category: {}, alias:{}, appId:{} return fail resp", accountCategory, alias, appId);
-            throw new ServiceException(resp.getCode(), resp.getErrorMsg());
+            throw new InternalException(resp.getCode());
         }
         if (resp.getData() == null) {
             log.warn("Get account by category: {}, alias:{}, appId:{} return empty account", accountCategory, alias,
                 appId);
-            throw new ServiceException(resp.getCode(), resp.getErrorMsg());
+            throw new InternalException(ErrorCode.INTERNAL_ERROR);
         }
         return convertToAccountInfo(resp.getData());
     }

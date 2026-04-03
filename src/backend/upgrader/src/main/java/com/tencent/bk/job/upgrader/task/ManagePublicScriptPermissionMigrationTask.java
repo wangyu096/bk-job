@@ -35,10 +35,13 @@ import com.tencent.bk.job.common.util.json.JsonUtils;
 import com.tencent.bk.job.upgrader.anotation.ExecuteTimeEnum;
 import com.tencent.bk.job.upgrader.anotation.UpgradeTask;
 import com.tencent.bk.job.upgrader.client.IamClient;
+import com.tencent.bk.job.upgrader.iam.ApiClientUtils;
 import com.tencent.bk.job.upgrader.model.ActionPolicies;
 import com.tencent.bk.job.upgrader.model.Policy;
+import com.tencent.bk.job.upgrader.task.param.ParamNameConsts;
 import com.tencent.bk.sdk.iam.constants.SystemId;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.helpers.MessageFormatter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,25 +68,19 @@ public class ManagePublicScriptPermissionMigrationTask extends BaseUpgradeTask {
         Properties properties = getProperties();
         if (iamClient == null) {
             iamClient = new IamClient(
-                (String) properties.get("iam.base-url"),
-                (String) properties.get("app.code"),
-                (String) properties.get("app.secret")
+                (String) properties.get(ParamNameConsts.CONFIG_PROPERTY_IAM_BASE_URL),
+                (String) properties.get(ParamNameConsts.CONFIG_PROPERTY_APP_CODE),
+                (String) properties.get(ParamNameConsts.CONFIG_PROPERTY_APP_SECRET)
             );
         }
         return iamClient;
     }
 
     private EsbIamClient getEsbIamClient() {
-        Properties properties = getProperties();
-        if (esbIamClient == null) {
-            esbIamClient = new EsbIamClient(
-                (String) properties.get("esb.service.url"),
-                (String) properties.get("app.code"),
-                (String) properties.get("app.secret"),
-                false
-            );
+        if (this.esbIamClient == null) {
+            this.esbIamClient = ApiClientUtils.buildEsbIamClient(getProperties());
         }
-        return esbIamClient;
+        return this.esbIamClient;
     }
 
     private List<Policy> queryAuthorizedPolicies(String actionId) {
@@ -111,7 +108,14 @@ public class ManagePublicScriptPermissionMigrationTask extends BaseUpgradeTask {
             log.info("batchAuthedPolicy={}", JsonUtils.toJson(batchAuthedPolicy));
             return true;
         } catch (Exception e) {
-            log.error("Fail to auth subject {} to {}", JsonUtils.toJson(policy.getSubject()), policy.getExpiredAt(), e);
+            String msg = MessageFormatter.arrayFormat(
+                "Fail to auth subject {} to {}",
+                new String[]{
+                    JsonUtils.toJson(policy.getSubject()),
+                    String.valueOf(policy.getExpiredAt())
+                }
+            ).getMessage();
+            log.error(msg, e);
             return false;
         }
     }
@@ -129,7 +133,7 @@ public class ManagePublicScriptPermissionMigrationTask extends BaseUpgradeTask {
     }
 
     @Override
-    public int execute(String[] args) {
+    public boolean execute(String[] args) {
         log.info(getName() + " for version " + getTargetVersion() + " begin to run...");
         String oldActionId = "manage_public_script";
         // 1.旧权限数据读取
@@ -155,6 +159,6 @@ public class ManagePublicScriptPermissionMigrationTask extends BaseUpgradeTask {
         log.info("newAuthorizedPolicies:");
         showPolicies(newAuthorizedPolicies);
         printSeparateLine();
-        return 0;
+        return true;
     }
 }

@@ -24,23 +24,30 @@
 
 package com.tencent.bk.job.execute.api.esb.v2.impl;
 
+import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
 import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.common.esb.model.job.EsbGlobalVarDTO;
 import com.tencent.bk.job.common.esb.model.job.EsbIpDTO;
 import com.tencent.bk.job.common.esb.model.job.EsbServerDTO;
-import com.tencent.bk.job.common.exception.ServiceException;
-import com.tencent.bk.job.common.i18n.MessageI18nService;
-import com.tencent.bk.job.common.iam.exception.InSufficientPermissionException;
-import com.tencent.bk.job.common.iam.service.AuthService;
+import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.iam.constant.ActionId;
+import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.ValidateResult;
-import com.tencent.bk.job.common.model.dto.IpDTO;
+import com.tencent.bk.job.common.model.dto.HostDTO;
 import com.tencent.bk.job.common.util.json.JsonUtils;
+import com.tencent.bk.job.common.web.metrics.CustomTimed;
 import com.tencent.bk.job.execute.api.esb.v2.EsbExecuteTaskResource;
 import com.tencent.bk.job.execute.common.constants.TaskStartupModeEnum;
 import com.tencent.bk.job.execute.engine.model.TaskVariableDTO;
-import com.tencent.bk.job.execute.model.*;
+import com.tencent.bk.job.execute.metrics.ExecuteMetricsConstants;
+import com.tencent.bk.job.execute.model.DynamicServerGroupDTO;
+import com.tencent.bk.job.execute.model.DynamicServerTopoNodeDTO;
+import com.tencent.bk.job.execute.model.ExecuteTargetDTO;
+import com.tencent.bk.job.execute.model.TaskExecuteParam;
+import com.tencent.bk.job.execute.model.TaskInstanceDTO;
 import com.tencent.bk.job.execute.model.esb.v2.EsbJobExecuteDTO;
 import com.tencent.bk.job.execute.model.esb.v2.request.EsbExecuteJobRequest;
 import com.tencent.bk.job.execute.service.TaskExecuteService;
@@ -58,26 +65,29 @@ public class EsbExecuteTaskResourceImpl extends JobExecuteCommonProcessor implem
 
     private final TaskExecuteService taskExecuteService;
 
-    private final MessageI18nService i18nService;
-
-    private final AuthService authService;
-
     @Autowired
-    public EsbExecuteTaskResourceImpl(TaskExecuteService taskExecuteService, MessageI18nService i18nService,
-                                      AuthService authService) {
+    public EsbExecuteTaskResourceImpl(TaskExecuteService taskExecuteService) {
         this.taskExecuteService = taskExecuteService;
-        this.i18nService = i18nService;
-        this.authService = authService;
     }
 
     @Override
-    @EsbApiTimed(value = "esb.api", extraTags = {"api_name", "v2_execute_job"})
-    public EsbResp<EsbJobExecuteDTO> executeJob(String lang, EsbExecuteJobRequest request) {
+    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_execute_job"})
+    @CustomTimed(metricName = ExecuteMetricsConstants.NAME_JOB_TASK_START,
+        extraTags = {
+            ExecuteMetricsConstants.TAG_KEY_START_MODE, ExecuteMetricsConstants.TAG_VALUE_START_MODE_API,
+            ExecuteMetricsConstants.TAG_KEY_TASK_TYPE, ExecuteMetricsConstants.TAG_VALUE_TASK_TYPE_EXECUTE_PLAN
+        })
+    @AuditEntry(actionId = ActionId.LAUNCH_JOB_PLAN)
+    public EsbResp<EsbJobExecuteDTO> executeJob(
+        String username,
+        String appCode,
+        @AuditRequestBody EsbExecuteJobRequest request) {
+
         log.info("Execute task, request={}", JsonUtils.toJson(request));
         ValidateResult checkResult = checkExecuteTaskRequest(request);
         if (!checkResult.isPass()) {
             log.warn("Execute job request is illegal!");
-            return EsbResp.buildCommonFailResp(i18nService, checkResult);
+            throw new InvalidParamException(checkResult);
         }
 
         request.trimIps();
@@ -90,42 +100,31 @@ public class EsbExecuteTaskResourceImpl extends JobExecuteCommonProcessor implem
                 taskVariableDTO.setName(globalVar.getName());
                 if ((globalVar.getIpList() != null || globalVar.getDynamicGroupIdList() != null
                     || globalVar.getTargetServer() != null) && StringUtils.isEmpty(globalVar.getValue())) {
-                    ServersDTO serversDTO = convertToServersDTO(globalVar.getTargetServer(), globalVar.getIpList(),
-                        globalVar.getDynamicGroupIdList());
-                    taskVariableDTO.setTargetServers(serversDTO);
+                    ExecuteTargetDTO executeTargetDTO = convertToServersDTO(
+                        globalVar.getTargetServer(), globalVar.getIpList(), globalVar.getDynamicGroupIdList());
+                    taskVariableDTO.setExecuteTarget(executeTargetDTO);
                 } else {
                     taskVariableDTO.setValue(globalVar.getValue());
                 }
                 executeVariableValues.add(taskVariableDTO);
             }
         }
-        try {
-            TaskInstanceDTO taskInstanceDTO = taskExecuteService.createTaskInstanceForTask(
-                TaskExecuteParam
-                    .builder()
-                    .appId(request.getAppId())
-                    .planId(request.getTaskId())
-                    .operator(request.getUserName())
-                    .executeVariableValues(executeVariableValues)
-                    .startupMode(TaskStartupModeEnum.API)
-                    .callbackUrl(request.getCallbackUrl())
-                    .appCode(request.getAppCode())
-                    .build());
-            taskExecuteService.startTask(taskInstanceDTO.getId());
+        TaskInstanceDTO taskInstanceDTO = taskExecuteService.executeJobPlan(
+            TaskExecuteParam
+                .builder()
+                .appId(request.getAppId())
+                .planId(request.getTaskId())
+                .operator(username)
+                .executeVariableValues(executeVariableValues)
+                .startupMode(TaskStartupModeEnum.API)
+                .callbackUrl(request.getCallbackUrl())
+                .appCode(appCode)
+                .build());
 
-            EsbJobExecuteDTO result = new EsbJobExecuteDTO();
-            result.setTaskInstanceId(taskInstanceDTO.getId());
-            result.setTaskName(taskInstanceDTO.getName());
-            return EsbResp.buildSuccessResp(result);
-        } catch (InSufficientPermissionException e) {
-            return authService.buildEsbAuthFailResp(e);
-        } catch (ServiceException e) {
-            log.warn("Fail to start task", e);
-            return EsbResp.buildCommonFailResp(e, i18nService);
-        } catch (Exception e) {
-            log.warn("Fail to start task", e);
-            return EsbResp.buildCommonFailResp(ErrorCode.STARTUP_TASK_FAIL, i18nService);
-        }
+        EsbJobExecuteDTO result = new EsbJobExecuteDTO();
+        result.setTaskInstanceId(taskInstanceDTO.getId());
+        result.setTaskName(taskInstanceDTO.getName());
+        return EsbResp.buildSuccessResp(result);
     }
 
     private ValidateResult checkExecuteTaskRequest(EsbExecuteJobRequest request) {
@@ -146,43 +145,43 @@ public class EsbExecuteTaskResourceImpl extends JobExecuteCommonProcessor implem
         return ValidateResult.pass();
     }
 
-    private ServersDTO convertToServersDTO(EsbServerDTO servers, List<EsbIpDTO> ipList,
-                                           List<String> dynamicGroupIdList) {
+    private ExecuteTargetDTO convertToServersDTO(EsbServerDTO servers, List<EsbIpDTO> ipList,
+                                                 List<String> dynamicGroupIdList) {
         if (servers == null && ipList == null && dynamicGroupIdList == null) {
             return null;
         }
-        ServersDTO serversDTO = new ServersDTO();
+        ExecuteTargetDTO executeTargetDTO = new ExecuteTargetDTO();
         if (servers != null) {
             if (servers.getIps() != null) {
-                List<IpDTO> staticIpList = new ArrayList<>();
-                servers.getIps().forEach(ip -> staticIpList.add(new IpDTO(ip.getCloudAreaId(), ip.getIp())));
-                serversDTO.setStaticIpList(staticIpList);
+                List<HostDTO> staticIpList = new ArrayList<>();
+                servers.getIps().forEach(ip -> staticIpList.add(new HostDTO(ip.getBkCloudId(), ip.getIp())));
+                executeTargetDTO.setStaticIpList(staticIpList);
             }
             if (servers.getDynamicGroupIds() != null) {
                 List<DynamicServerGroupDTO> dynamicServerGroups = new ArrayList<>();
                 servers.getDynamicGroupIds().forEach(
                     groupId -> dynamicServerGroups.add(new DynamicServerGroupDTO(groupId)));
-                serversDTO.setDynamicServerGroups(dynamicServerGroups);
+                executeTargetDTO.setDynamicServerGroups(dynamicServerGroups);
             }
             if (servers.getTopoNodes() != null) {
                 List<DynamicServerTopoNodeDTO> topoNodes = new ArrayList<>();
                 servers.getTopoNodes().forEach(
                     topoNode -> topoNodes.add(new DynamicServerTopoNodeDTO(topoNode.getId(), topoNode.getNodeType())));
-                serversDTO.setTopoNodes(topoNodes);
+                executeTargetDTO.setTopoNodes(topoNodes);
             }
         } else {
             if (ipList != null) {
-                List<IpDTO> staticIpList = new ArrayList<>();
-                ipList.forEach(ip -> staticIpList.add(new IpDTO(ip.getCloudAreaId(), ip.getIp())));
-                serversDTO.setStaticIpList(staticIpList);
+                List<HostDTO> staticIpList = new ArrayList<>();
+                ipList.forEach(ip -> staticIpList.add(new HostDTO(ip.getBkCloudId(), ip.getIp())));
+                executeTargetDTO.setStaticIpList(staticIpList);
             }
             if (dynamicGroupIdList != null) {
                 List<DynamicServerGroupDTO> dynamicServerGroups = new ArrayList<>();
                 dynamicGroupIdList.forEach(groupId -> dynamicServerGroups.add(new DynamicServerGroupDTO(groupId)));
-                serversDTO.setDynamicServerGroups(dynamicServerGroups);
+                executeTargetDTO.setDynamicServerGroups(dynamicServerGroups);
             }
         }
-        return serversDTO;
+        return executeTargetDTO;
 
 
     }

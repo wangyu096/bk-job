@@ -26,29 +26,33 @@ package com.tencent.bk.job.manage.dao;
 
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
-import com.tencent.bk.job.manage.common.consts.JobResourceStatusEnum;
-import com.tencent.bk.job.manage.common.consts.script.ScriptTypeEnum;
+import com.tencent.bk.job.manage.api.common.constants.JobResourceStatusEnum;
+import com.tencent.bk.job.manage.api.common.constants.script.ScriptTypeEnum;
+import com.tencent.bk.job.manage.model.dto.ScriptBasicDTO;
 import com.tencent.bk.job.manage.model.dto.ScriptDTO;
-import com.tencent.bk.job.manage.model.dto.ScriptQueryDTO;
-import com.tencent.bk.job.manage.model.dto.TagDTO;
-import org.jooq.DSLContext;
+import com.tencent.bk.job.manage.model.query.ScriptQuery;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @date 2019/09/19
- */
 public interface ScriptDAO {
     /**
-     * 根据条件查询脚本
+     * 根据条件查询脚本-分页
      *
      * @param scriptQuery
      * @param baseSearchCondition
      * @return
      */
-    PageData<ScriptDTO> listPageScript(ScriptQueryDTO scriptQuery, BaseSearchCondition baseSearchCondition);
+    PageData<ScriptDTO> listPageScript(ScriptQuery scriptQuery, BaseSearchCondition baseSearchCondition);
+
+    /**
+     * 根据条件查询脚本
+     *
+     * @param scriptQuery 查询条件
+     * @return 脚本列表
+     */
+    List<ScriptDTO> listScripts(ScriptQuery scriptQuery);
 
     /**
      * 根据scriptId获取脚本信息
@@ -57,6 +61,14 @@ public interface ScriptDAO {
      * @return
      */
     ScriptDTO getScriptByScriptId(String scriptId);
+
+    /**
+     * 根据scriptIds批量获取脚本基础信息
+     *
+     * @param scriptIds 脚本ID集合
+     * @return 脚本基础信息列表
+     */
+    List<ScriptBasicDTO> listScriptBasicInfoByScriptIds(Collection<String> scriptIds);
 
     /**
      * 通过id查询脚本版本
@@ -90,77 +102,35 @@ public interface ScriptDAO {
     String saveScript(ScriptDTO script);
 
     /**
-     * 新增脚本
+     * 更新脚本最新更新人、更新时间
      *
-     * @param script
-     * @
+     * @param scriptId 脚本 ID
+     * @param lastModifyUser 更新人
+     * @param lastModifyTime 最后更新时间
      */
-    String saveScript(ScriptDTO script, long createTime, long lastModifyTime);
-
-    /**
-     * 新增脚本
-     *
-     * @param script
-     * @
-     */
-    String saveScript(DSLContext dslContext, ScriptDTO script, long createTime, long lastModifyTime);
-
-    /**
-     * 更新脚本
-     *
-     * @param script
-     */
-    void updateScript(ScriptDTO script);
-
-    /**
-     * 更新脚本
-     *
-     * @param script
-     */
-    void updateScript(ScriptDTO script, long lastModifyTime);
-
-    /**
-     * 更新脚本
-     *
-     * @param script
-     */
-    void updateScript(DSLContext dslContext, ScriptDTO script, long lastModifyTime);
+    void updateScriptLastModify(String scriptId, String lastModifyUser, Long lastModifyTime);
 
     /**
      * 删除脚本
      *
-     * @param scriptId
+     * @param scriptId 脚本 ID
      */
     void deleteScript(String scriptId);
 
     /**
      * 新增脚本版本
      *
-     * @param scriptVersion
+     * @param scriptVersion 脚本版本
      */
     Long saveScriptVersion(ScriptDTO scriptVersion);
 
     /**
-     * 新增脚本版本
-     *
-     * @param scriptVersion
-     */
-    Long saveScriptVersion(ScriptDTO scriptVersion, long createTime, long lastModifyTime);
-
-    /**
-     * 新增脚本版本
-     *
-     * @param scriptVersion
-     */
-    Long saveScriptVersion(DSLContext dslContext, ScriptDTO scriptVersion, long createTime, long lastModifyTime);
-
-    /**
      * 根据脚本ID查询所有的版本
      *
-     * @param scriptId
-     * @return
+     * @param scriptId 脚本 ID
+     * @return 脚本版本列表
      */
-    List<ScriptDTO> listByScriptId(String scriptId);
+    List<ScriptDTO> listScriptVersionsByScriptId(String scriptId);
 
     /**
      * 业务下是否存在相同脚本Id
@@ -169,7 +139,7 @@ public interface ScriptDAO {
      * @param scriptId
      * @return
      */
-    boolean isExistDuplicateId(Long appId, String scriptId);
+    boolean isExistDuplicateScriptId(Long appId, String scriptId);
 
     /**
      * 业务下是否存在同名脚本
@@ -237,15 +207,6 @@ public interface ScriptDAO {
     void updateScriptName(String operator, String scriptId, String name);
 
     /**
-     * 更新脚本标签
-     *
-     * @param operator
-     * @param scriptId
-     * @param tags
-     */
-    void updateScriptTags(String operator, String scriptId, List<TagDTO> tags);
-
-    /**
      * 更新脚本版本信息
      *
      * @param operator
@@ -278,17 +239,16 @@ public interface ScriptDAO {
      * @param baseSearchCondition 基本查询条件
      * @return 脚本列表
      */
-    PageData<ScriptDTO> listPageOnlineScript(ScriptQueryDTO scriptCondition,
+    PageData<ScriptDTO> listPageOnlineScript(ScriptQuery scriptCondition,
                                              BaseSearchCondition baseSearchCondition);
 
     /**
      * 分页查询脚本版本
      *
-     * @param scriptQuery
-     * @param baseSearchCondition
-     * @return
+     * @param scriptQuery 查询条件
+     * @return 脚本版本分页
      */
-    PageData<ScriptDTO> listPageScriptVersion(ScriptQueryDTO scriptQuery, BaseSearchCondition baseSearchCondition);
+    PageData<ScriptDTO> listPageScriptVersion(ScriptQuery scriptQuery);
 
     /**
      * 获取脚本已上线版本信息
@@ -297,7 +257,7 @@ public interface ScriptDAO {
      * @param scriptId 脚本 ID
      * @return 脚本版本
      */
-    ScriptDTO getOnlineByScriptId(long appId, String scriptId);
+    ScriptDTO getOnlineScriptVersionByScriptId(long appId, String scriptId);
 
     /**
      * 获取脚本已上线版本信息
@@ -305,7 +265,7 @@ public interface ScriptDAO {
      * @param scriptId 脚本 ID
      * @return 脚本版本
      */
-    ScriptDTO getOnlineByScriptId(String scriptId);
+    ScriptDTO getOnlineScriptVersionByScriptId(String scriptId);
 
     /**
      * 获取业务脚本数量
@@ -330,7 +290,7 @@ public interface ScriptDAO {
      * @param scriptVersionId 脚本版本Id
      * @return 是否重复
      */
-    boolean isExistDuplicateId(Long scriptVersionId);
+    boolean isExistDuplicateScriptId(Long scriptVersionId);
 
     /**
      * 业务下是否存在任意脚本
@@ -372,19 +332,19 @@ public interface ScriptDAO {
     Integer countScriptVersions(Long appId, ScriptTypeEnum scriptTypeEnum, JobResourceStatusEnum jobResourceStatusEnum);
 
     /**
-     * 根据标签统计脚本
-     *
-     * @param appId 业务Id
-     * @param tagId 标签Id
-     * @return
-     */
-    Integer countByTag(Long appId, Long tagId);
-
-    /**
      * 查询某业务的所有脚本Id
      *
      * @param appId 业务Id
      * @return
      */
-    List<String> listScriptId(Long appId);
+    List<String> listAppScriptIds(Long appId);
+
+    /**
+     * 获取脚本标签(兼容老版本)
+     *
+     * @return Map<ScriptId, List < TagId>>
+     */
+    Map<String, List<Long>> listAllScriptTagsCompatible();
+
+    Map<Long, JobResourceStatusEnum> batchGetScriptVersionStatus(Collection<Long> scriptVersionIds);
 }

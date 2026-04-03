@@ -24,9 +24,9 @@
 
 package com.tencent.bk.job.execute.statistics;
 
+import com.tencent.bk.job.analysis.api.consts.StatisticsConstants;
+import com.tencent.bk.job.analysis.api.dto.StatisticsDTO;
 import com.tencent.bk.job.common.constant.NotExistPathHandlerEnum;
-import com.tencent.bk.job.common.statistics.consts.StatisticsConstants;
-import com.tencent.bk.job.common.statistics.model.dto.StatisticsDTO;
 import com.tencent.bk.job.common.util.TimeUtil;
 import com.tencent.bk.job.common.util.date.DateUtils;
 import com.tencent.bk.job.execute.common.constants.RunStatusEnum;
@@ -38,15 +38,14 @@ import com.tencent.bk.job.execute.dao.StepInstanceDAO;
 import com.tencent.bk.job.execute.model.FileStepInstanceDTO;
 import com.tencent.bk.job.execute.model.TaskInstanceDTO;
 import com.tencent.bk.job.execute.service.ApplicationService;
+import com.tencent.bk.job.execute.service.RollingConfigService;
 import com.tencent.bk.job.execute.service.TaskInstanceService;
-import com.tencent.bk.job.execute.statistics.consts.StatisticsActionEnum;
-import com.tencent.bk.job.execute.statistics.model.TaskStatisticsCmd;
-import com.tencent.bk.job.manage.common.consts.script.ScriptTypeEnum;
+import com.tencent.bk.job.manage.api.common.constants.script.ScriptTypeEnum;
 import lombok.extern.slf4j.Slf4j;
-import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StopWatch;
 
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
@@ -64,11 +63,10 @@ public class StatisticsServiceImpl implements StatisticsService {
     private final Object writeLock = new Object();
     private final TaskInstanceService taskInstanceService;
     private final ApplicationService applicationService;
-    private final TaskStatisticsMsgSender taskStatisticsMsgSender;
     private final StepInstanceDAO stepInstanceDAO;
-    private final DSLContext dslContext;
     private final StatisticsDAO statisticsDAO;
     private final StatisticConfig statisticConfig;
+    private final RollingConfigService rollingConfigService;
     private volatile Map<String, Map<StatisticsKey, AtomicInteger>> incrementMap = new ConcurrentHashMap<>();
     private volatile LinkedBlockingQueue<Map<String, Map<StatisticsKey, AtomicInteger>>> flushQueue =
         new LinkedBlockingQueue<>(600);
@@ -77,29 +75,27 @@ public class StatisticsServiceImpl implements StatisticsService {
     public StatisticsServiceImpl(
         TaskInstanceService taskInstanceService,
         ApplicationService applicationService,
-        TaskStatisticsMsgSender taskStatisticsMsgSender,
         StepInstanceDAO stepInstanceDAO,
-        DSLContext dslContext,
         StatisticsDAO statisticsDAO,
-        StatisticConfig statisticConfig
+        StatisticConfig statisticConfig,
+        RollingConfigService rollingConfigService
     ) {
         this.taskInstanceService = taskInstanceService;
         this.applicationService = applicationService;
-        this.taskStatisticsMsgSender = taskStatisticsMsgSender;
         this.stepInstanceDAO = stepInstanceDAO;
-        this.dslContext = dslContext;
         this.statisticsDAO = statisticsDAO;
         this.statisticConfig = statisticConfig;
+        this.rollingConfigService = rollingConfigService;
     }
 
     @PostConstruct
     public void init() {
-        StatisticsFlushThread flushThread = new StatisticsFlushThread(dslContext, flushQueue);
+        StatisticsFlushThread flushThread = new StatisticsFlushThread(statisticsDAO, flushQueue);
         flushThread.setName("flushThread");
         flushThread.start();
     }
 
-    public void updateExecutedTaskCount(
+    private void updateExecutedTaskCount(
         TaskInstanceDTO taskInstanceDTO,
         Map<StatisticsKey, AtomicInteger> metricsMap
     ) {
@@ -113,15 +109,15 @@ public class StatisticsServiceImpl implements StatisticsService {
         log.debug("executedTaskCount={}", executedTaskCountValue);
     }
 
-    public void updateExecutedTaskByStartupMode(TaskInstanceDTO taskInstanceDTO,
-                                                Map<StatisticsKey, AtomicInteger> metricsMap) {
+    private void updateExecutedTaskByStartupMode(TaskInstanceDTO taskInstanceDTO,
+                                                 Map<StatisticsKey, AtomicInteger> metricsMap) {
         // 按渠道统计
         Integer startupMode = taskInstanceDTO.getStartupMode();
         if (startupMode == null) {
             log.warn("startupMode is null, ignore");
             return;
         }
-        if (startupMode == TaskStartupModeEnum.NORMAL.getValue()) {
+        if (startupMode == TaskStartupModeEnum.WEB.getValue()) {
             StatisticsKey keyStartupNormalTaskCount = new StatisticsKey(taskInstanceDTO.getAppId(),
                 StatisticsConstants.RESOURCE_EXECUTED_TASK, StatisticsConstants.DIMENSION_TASK_STARTUP_MODE,
                 StatisticsConstants.DIMENSION_VALUE_TASK_STARTUP_MODE_NORMAL);
@@ -150,8 +146,8 @@ public class StatisticsServiceImpl implements StatisticsService {
         }
     }
 
-    public void updateExecutedTaskByType(TaskInstanceDTO taskInstanceDTO,
-                                         Map<StatisticsKey, AtomicInteger> metricsMap) {
+    private void updateExecutedTaskByType(TaskInstanceDTO taskInstanceDTO,
+                                          Map<StatisticsKey, AtomicInteger> metricsMap) {
         // 按类型统计
         Integer type = taskInstanceDTO.getType();
         if (type == null) {
@@ -166,6 +162,16 @@ public class StatisticsServiceImpl implements StatisticsService {
                 statisticsKey -> new AtomicInteger(0));
             int taskTypeNormalTaskCountValue = taskTypeNormalTaskCount.incrementAndGet();
             log.debug("taskTypeNormalTaskCount={}", taskTypeNormalTaskCountValue);
+            // 滚动执行
+            if (rollingConfigService.isTaskRollingEnabled(taskInstanceDTO.getId())) {
+                StatisticsKey keyRollingTaskNormalTaskCount = new StatisticsKey(taskInstanceDTO.getAppId(),
+                    StatisticsConstants.RESOURCE_ROLLING_TASK, StatisticsConstants.DIMENSION_TASK_TYPE,
+                    StatisticsConstants.DIMENSION_VALUE_TASK_TYPE_EXECUTE_TASK);
+                AtomicInteger rollingTaskNormalTaskCount = metricsMap.computeIfAbsent(keyRollingTaskNormalTaskCount,
+                    statisticsKey -> new AtomicInteger(0));
+                int rollingTaskNormalTaskCountValue = rollingTaskNormalTaskCount.incrementAndGet();
+                log.debug("rollingTaskNormalTaskCount={}", rollingTaskNormalTaskCountValue);
+            }
         } else if (type.equals(TaskTypeEnum.SCRIPT.getValue())) {
             StatisticsKey keyTaskTypeScriptTaskCount = new StatisticsKey(taskInstanceDTO.getAppId(),
                 StatisticsConstants.RESOURCE_EXECUTED_TASK, StatisticsConstants.DIMENSION_TASK_TYPE,
@@ -174,6 +180,16 @@ public class StatisticsServiceImpl implements StatisticsService {
                 statisticsKey -> new AtomicInteger(0));
             int taskTypeScriptTaskCountValue = taskTypeScriptTaskCount.incrementAndGet();
             log.debug("taskTypeScriptTaskCount={}", taskTypeScriptTaskCountValue);
+            // 滚动执行
+            if (rollingConfigService.isTaskRollingEnabled(taskInstanceDTO.getId())) {
+                StatisticsKey keyRollingTaskScriptTaskCount = new StatisticsKey(taskInstanceDTO.getAppId(),
+                    StatisticsConstants.RESOURCE_ROLLING_TASK, StatisticsConstants.DIMENSION_TASK_TYPE,
+                    StatisticsConstants.DIMENSION_VALUE_TASK_TYPE_FAST_EXECUTE_SCRIPT);
+                AtomicInteger rollingTaskScriptTaskCount = metricsMap.computeIfAbsent(keyRollingTaskScriptTaskCount,
+                    statisticsKey -> new AtomicInteger(0));
+                int rollingTaskScriptTaskCountValue = rollingTaskScriptTaskCount.incrementAndGet();
+                log.debug("rollingTaskScriptTaskCount={}", rollingTaskScriptTaskCountValue);
+            }
         } else if (type.equals(TaskTypeEnum.FILE.getValue())) {
             StatisticsKey keyTaskTypeFileTaskCount = new StatisticsKey(taskInstanceDTO.getAppId(),
                 StatisticsConstants.RESOURCE_EXECUTED_TASK, StatisticsConstants.DIMENSION_TASK_TYPE,
@@ -182,13 +198,23 @@ public class StatisticsServiceImpl implements StatisticsService {
                 statisticsKey -> new AtomicInteger(0));
             int taskTypeFileTaskCountValue = taskTypeFileTaskCount.incrementAndGet();
             log.debug("taskTypeFileTaskCount={}", taskTypeFileTaskCountValue);
+            // 滚动执行
+            if (rollingConfigService.isTaskRollingEnabled(taskInstanceDTO.getId())) {
+                StatisticsKey keyRollingTaskFileTaskCount = new StatisticsKey(taskInstanceDTO.getAppId(),
+                    StatisticsConstants.RESOURCE_ROLLING_TASK, StatisticsConstants.DIMENSION_TASK_TYPE,
+                    StatisticsConstants.DIMENSION_VALUE_TASK_TYPE_FAST_PUSH_FILE);
+                AtomicInteger rollingTaskFileTaskCount = metricsMap.computeIfAbsent(keyRollingTaskFileTaskCount,
+                    statisticsKey -> new AtomicInteger(0));
+                int rollingTaskFileTaskCountValue = rollingTaskFileTaskCount.incrementAndGet();
+                log.debug("rollingTaskFileTaskCount={}", rollingTaskFileTaskCountValue);
+            }
         } else {
             log.warn("do not support type {}, ignore", type);
         }
     }
 
-    public void updateExecutedFastScriptStatistics(TaskInstanceDTO taskInstanceDTO,
-                                                   Map<StatisticsKey, AtomicInteger> metricsMap) {
+    private void updateExecutedFastScriptStatistics(TaskInstanceDTO taskInstanceDTO,
+                                                    Map<StatisticsKey, AtomicInteger> metricsMap) {
         Integer type = taskInstanceDTO.getType();
         if (type != null && type.equals(TaskTypeEnum.SCRIPT.getValue())) {
             // 查StepInstance
@@ -198,7 +224,7 @@ public class StatisticsServiceImpl implements StatisticsService {
                 return;
             }
             // 查StepInstanceScript
-            Byte scriptType = stepInstanceDAO.getScriptTypeByStepInstanceId(stepInstanceId);
+            Byte scriptType = stepInstanceDAO.getScriptTypeByStepInstanceId(taskInstanceDTO.getId(), stepInstanceId);
             // 更新统计数据
             // 快速执行脚本：按脚本类型统计
             String scriptTypeName = ScriptTypeEnum.getName(scriptType.intValue());
@@ -212,8 +238,8 @@ public class StatisticsServiceImpl implements StatisticsService {
         }
     }
 
-    public void updateExecutedFastFileStatistics(TaskInstanceDTO taskInstanceDTO,
-                                                 Map<StatisticsKey, AtomicInteger> metricsMap) {
+    private void updateExecutedFastFileStatistics(TaskInstanceDTO taskInstanceDTO,
+                                                  Map<StatisticsKey, AtomicInteger> metricsMap) {
         Integer type = taskInstanceDTO.getType();
         if (type != null && type.equals(TaskTypeEnum.FILE.getValue())) {
             // 查StepInstance
@@ -223,7 +249,8 @@ public class StatisticsServiceImpl implements StatisticsService {
                 return;
             }
             // 查StepInstanceFile
-            FileStepInstanceDTO fileStepInstanceDTO = stepInstanceDAO.getFileStepInstance(stepInstanceId);
+            FileStepInstanceDTO fileStepInstanceDTO = stepInstanceDAO.getFileStepInstance(
+                taskInstanceDTO.getId(), stepInstanceId);
             // 更新统计数据
             // 快速分发文件：按传输模式统计
             Integer notExistPathHandler = fileStepInstanceDTO.getNotExistPathHandler();
@@ -250,9 +277,9 @@ public class StatisticsServiceImpl implements StatisticsService {
         }
     }
 
-    public void updateFailedTaskCount(TaskInstanceDTO taskInstanceDTO, Map<StatisticsKey, AtomicInteger> metricsMap) {
+    private void updateFailedTaskCount(TaskInstanceDTO taskInstanceDTO, Map<StatisticsKey, AtomicInteger> metricsMap) {
         // 累计执行失败次数统计
-        if (RunStatusEnum.FAIL.getValue().equals(taskInstanceDTO.getStatus())) {
+        if (taskInstanceDTO.getStatus() == RunStatusEnum.FAIL) {
             StatisticsKey keyFailedTaskCount = new StatisticsKey(taskInstanceDTO.getAppId(),
                 StatisticsConstants.RESOURCE_FAILED_TASK, StatisticsConstants.DIMENSION_TIME_UNIT,
                 StatisticsConstants.DIMENSION_VALUE_TIME_UNIT_DAY);
@@ -260,15 +287,26 @@ public class StatisticsServiceImpl implements StatisticsService {
                 statisticsKey -> new AtomicInteger(0));
             int failedTaskCountValue = failedTaskCount.incrementAndGet();
             log.debug("failedTaskCount={}", failedTaskCountValue);
+            // 滚动执行
+            if (rollingConfigService.isTaskRollingEnabled(taskInstanceDTO.getId())) {
+                StatisticsKey keyFailedRollingTaskCount = new StatisticsKey(taskInstanceDTO.getAppId(),
+                    StatisticsConstants.RESOURCE_ROLLING_FAILED_TASK, StatisticsConstants.DIMENSION_TIME_UNIT,
+                    StatisticsConstants.DIMENSION_VALUE_TIME_UNIT_DAY);
+                AtomicInteger failedRollingTaskCount = metricsMap.computeIfAbsent(keyFailedRollingTaskCount,
+                    statisticsKey -> new AtomicInteger(0));
+                int failedRollingTaskCountValue = failedRollingTaskCount.incrementAndGet();
+                log.debug("failedRollingTaskCount={}", failedRollingTaskCountValue);
+            }
         }
     }
 
-    public void updateFastScriptCountByStatus(TaskInstanceDTO taskInstanceDTO,
-                                              Map<StatisticsKey, AtomicInteger> metricsMap) {
+    private void updateFastScriptCountByStatus(TaskInstanceDTO taskInstanceDTO,
+                                               Map<StatisticsKey, AtomicInteger> metricsMap) {
         // 快速脚本按状态统计
         Integer type = taskInstanceDTO.getType();
         if (type != null && type.equals(TaskTypeEnum.SCRIPT.getValue())) {
-            if (RunStatusEnum.SUCCESS.getValue().equals(taskInstanceDTO.getStatus())) {
+            RunStatusEnum status = taskInstanceDTO.getStatus();
+            if (status == RunStatusEnum.SUCCESS) {
                 // 执行成功的快速脚本统计
                 StatisticsKey keySuccessFastScriptCount = new StatisticsKey(taskInstanceDTO.getAppId(),
                     StatisticsConstants.RESOURCE_EXECUTED_FAST_SCRIPT, StatisticsConstants.DIMENSION_STEP_RUN_STATUS,
@@ -277,7 +315,7 @@ public class StatisticsServiceImpl implements StatisticsService {
                     statisticsKey -> new AtomicInteger(0));
                 int successFastScriptCountValue = successFastScriptCount.incrementAndGet();
                 log.debug("successFastScriptCount={}", successFastScriptCountValue);
-            } else if (RunStatusEnum.FAIL.getValue().equals(taskInstanceDTO.getStatus())) {
+            } else if (status == RunStatusEnum.FAIL) {
                 // 执行失败的快速脚本统计
                 StatisticsKey keyFailedFastScriptCount = new StatisticsKey(taskInstanceDTO.getAppId(),
                     StatisticsConstants.RESOURCE_EXECUTED_FAST_SCRIPT, StatisticsConstants.DIMENSION_STEP_RUN_STATUS,
@@ -286,16 +324,26 @@ public class StatisticsServiceImpl implements StatisticsService {
                     statisticsKey -> new AtomicInteger(0));
                 int failedFastScriptCountValue = failedFastScriptCount.incrementAndGet();
                 log.debug("failedFastScriptCount={}", failedFastScriptCountValue);
+            } else if (status == RunStatusEnum.ABNORMAL_STATE) {
+                // 状态异常的快速脚本统计
+                StatisticsKey keyExceptionFastScriptCount = new StatisticsKey(taskInstanceDTO.getAppId(),
+                    StatisticsConstants.RESOURCE_EXECUTED_FAST_SCRIPT, StatisticsConstants.DIMENSION_STEP_RUN_STATUS,
+                    StatisticsConstants.DIMENSION_VALUE_STEP_RUN_STATUS_EXCEPTION);
+                AtomicInteger exceptionFastScriptCount = metricsMap.computeIfAbsent(keyExceptionFastScriptCount,
+                    statisticsKey -> new AtomicInteger(0));
+                int exceptionFastScriptCountValue = exceptionFastScriptCount.incrementAndGet();
+                log.debug("exceptionFastScriptCount={}", exceptionFastScriptCountValue);
             }
         }
     }
 
-    public void updateFastFileCountByStatus(TaskInstanceDTO taskInstanceDTO,
-                                            Map<StatisticsKey, AtomicInteger> metricsMap) {
+    private void updateFastFileCountByStatus(TaskInstanceDTO taskInstanceDTO,
+                                             Map<StatisticsKey, AtomicInteger> metricsMap) {
         // 快速文件按状态统计
         Integer type = taskInstanceDTO.getType();
         if (type != null && type.equals(TaskTypeEnum.FILE.getValue())) {
-            if (RunStatusEnum.SUCCESS.getValue().equals(taskInstanceDTO.getStatus())) {
+            RunStatusEnum status = taskInstanceDTO.getStatus();
+            if (status == RunStatusEnum.SUCCESS) {
                 // 执行成功的快速文件统计
                 StatisticsKey keySuccessFastFileCount = new StatisticsKey(taskInstanceDTO.getAppId(),
                     StatisticsConstants.RESOURCE_EXECUTED_FAST_FILE, StatisticsConstants.DIMENSION_STEP_RUN_STATUS,
@@ -304,7 +352,7 @@ public class StatisticsServiceImpl implements StatisticsService {
                     statisticsKey -> new AtomicInteger(0));
                 int successFastFileCountValue = successFastFileCount.incrementAndGet();
                 log.debug("successFastFileCount={}", successFastFileCountValue);
-            } else if (RunStatusEnum.FAIL.getValue().equals(taskInstanceDTO.getStatus())) {
+            } else if (status == RunStatusEnum.FAIL) {
                 // 执行失败的快速文件统计
                 StatisticsKey keyFailedFastFileCount = new StatisticsKey(taskInstanceDTO.getAppId(),
                     StatisticsConstants.RESOURCE_EXECUTED_FAST_FILE, StatisticsConstants.DIMENSION_STEP_RUN_STATUS,
@@ -313,12 +361,21 @@ public class StatisticsServiceImpl implements StatisticsService {
                     statisticsKey -> new AtomicInteger(0));
                 int failedFastFileCountValue = failedFastFileCount.incrementAndGet();
                 log.debug("failedFastFileCount={}", failedFastFileCountValue);
+            } else if (status == RunStatusEnum.ABNORMAL_STATE) {
+                // 执行失败的快速文件统计
+                StatisticsKey keyExceptionFastFileCount = new StatisticsKey(taskInstanceDTO.getAppId(),
+                    StatisticsConstants.RESOURCE_EXECUTED_FAST_FILE, StatisticsConstants.DIMENSION_STEP_RUN_STATUS,
+                    StatisticsConstants.DIMENSION_VALUE_STEP_RUN_STATUS_EXCEPTION);
+                AtomicInteger exceptionFastFileCount = metricsMap.computeIfAbsent(keyExceptionFastFileCount,
+                    statisticsKey -> new AtomicInteger(0));
+                int exceptionFastFileCountValue = exceptionFastFileCount.incrementAndGet();
+                log.debug("exceptionFastFileCount={}", exceptionFastFileCountValue);
             }
         }
     }
 
-    public void updateExecutedTaskByTimeConsuming(TaskInstanceDTO taskInstanceDTO,
-                                                  Map<StatisticsKey, AtomicInteger> metricsMap) {
+    private void updateExecutedTaskByTimeConsuming(TaskInstanceDTO taskInstanceDTO,
+                                                   Map<StatisticsKey, AtomicInteger> metricsMap) {
         // 按执行耗时统计
         Long totalTime = taskInstanceDTO.getTotalTime();
         if (totalTime == null) {
@@ -356,39 +413,68 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
 
     @Override
-    public void updateStartJobStatistics(long taskInstanceId) {
-        TaskInstanceDTO taskInstanceDTO = taskInstanceService.getTaskInstance(taskInstanceId);
-        String createDateStr = DateUtils.getDateStrFromUnixTimeMills(taskInstanceDTO.getCreateTime());
-        synchronized (writeLock) {
-            Map<StatisticsKey, AtomicInteger> metricsMap = incrementMap.computeIfAbsent(createDateStr,
-                dateStr -> new ConcurrentHashMap<>());
-            // 触发时间当天的数据统计
-            // 累计任务执行次数统计
-            updateExecutedTaskCount(taskInstanceDTO, metricsMap);
-            // 按渠道统计
-            updateExecutedTaskByStartupMode(taskInstanceDTO, metricsMap);
-            // 按类型统计
-            updateExecutedTaskByType(taskInstanceDTO, metricsMap);
-            // 快速执行脚本：按脚本类型统计
-            updateExecutedFastScriptStatistics(taskInstanceDTO, metricsMap);
-            // 快速分发文件：按传输模式统计
-            updateExecutedFastFileStatistics(taskInstanceDTO, metricsMap);
+    public void updateStartJobStatistics(TaskInstanceDTO taskInstanceDTO) {
+        StopWatch watch = new StopWatch("updateStartJobStatistics");
+        try {
+            String createDateStr = DateUtils.getDateStrFromUnixTimeMills(taskInstanceDTO.getCreateTime());
+            watch.start("getWriteLock");
+            synchronized (writeLock) {
+                watch.stop();
+
+                Map<StatisticsKey, AtomicInteger> metricsMap = incrementMap.computeIfAbsent(createDateStr,
+                    dateStr -> new ConcurrentHashMap<>());
+                // 触发时间当天的数据统计
+                // 累计任务执行次数统计
+                watch.start("updateExecutedTaskCount");
+                updateExecutedTaskCount(taskInstanceDTO, metricsMap);
+                watch.stop();
+
+                // 按渠道统计
+                watch.start("updateExecutedTaskByStartupMode");
+                updateExecutedTaskByStartupMode(taskInstanceDTO, metricsMap);
+                watch.stop();
+
+                // 按类型统计
+                watch.start("updateExecutedTaskByType");
+                updateExecutedTaskByType(taskInstanceDTO, metricsMap);
+                watch.stop();
+
+                // 快速执行脚本：按脚本类型统计
+                watch.start("updateExecutedFastScriptStatistics");
+                updateExecutedFastScriptStatistics(taskInstanceDTO, metricsMap);
+                watch.stop();
+
+                // 快速分发文件：按传输模式统计
+                watch.start("updateExecutedFastFileStatistics");
+                updateExecutedFastFileStatistics(taskInstanceDTO, metricsMap);
+                watch.stop();
+            }
+        } catch (Throwable ignoreException) {
+            // 捕获所有异常，不影响主流程
+            log.error("UpdateStartJobStatistics exception", ignoreException);
+        } finally {
+            if (watch.isRunning()) {
+                watch.stop();
+            }
+            if (watch.getTotalTimeMillis() > 100) {
+                log.warn("UpdateStartJobStatistics slow, watch: {}", watch.prettyPrint());
+            }
         }
+
     }
 
     @Override
-    public void updateEndJobStatistics(long taskInstanceId) {
+    public void updateEndJobStatistics(TaskInstanceDTO taskInstanceDTO) {
         synchronized (writeLock) {
-            TaskInstanceDTO taskInstanceDTO = taskInstanceService.getTaskInstance(taskInstanceId);
             String createDateStr = DateUtils.getDateStrFromUnixTimeMills(taskInstanceDTO.getCreateTime());
             Map<StatisticsKey, AtomicInteger> metricsMap = incrementMap.computeIfAbsent(createDateStr,
                 dateStr -> new ConcurrentHashMap<>());
             // 触发时间当天的数据统计
             // 累计执行失败次数统计
             updateFailedTaskCount(taskInstanceDTO, metricsMap);
-            // 快速执行脚本成功/失败次数统计
+            // 快速执行脚本成功/失败/异常次数统计
             updateFastScriptCountByStatus(taskInstanceDTO, metricsMap);
-            // 快速分发文件成功/失败次数统计
+            // 快速分发文件成功/失败/异常次数统计
             updateFastFileCountByStatus(taskInstanceDTO, metricsMap);
             // 按执行耗时统计
             updateExecutedTaskByTimeConsuming(taskInstanceDTO, metricsMap);
@@ -437,16 +523,11 @@ public class StatisticsServiceImpl implements StatisticsService {
                             offset, limit);
                         // 触发统计
                         for (Long taskInstanceId : taskInstanceIds) {
-                            TaskStatisticsCmd taskStatisticsCmd = new TaskStatisticsCmd();
-                            taskStatisticsCmd.setTaskInstanceId(taskInstanceId);
-                            taskStatisticsCmd.setTime(LocalDateTime.now());
-                            taskStatisticsCmd.setAction(StatisticsActionEnum.START_JOB.name());
-                            taskStatisticsMsgSender.sendTaskStatisticsCmd(taskStatisticsCmd);
-                            taskStatisticsCmd.setAction(StatisticsActionEnum.END_JOB.name());
-                            taskStatisticsMsgSender.sendTaskStatisticsCmd(taskStatisticsCmd);
+                            TaskInstanceDTO taskInstance = taskInstanceService.getTaskInstance(taskInstanceId);
+                            updateStartJobStatistics(taskInstance);
+                            updateStartJobStatistics(taskInstance);
                         }
                         offset += limit;
-                        Thread.sleep(2000);
                     } while (taskInstanceIds.size() == limit);
                 }
             }

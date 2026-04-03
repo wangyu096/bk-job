@@ -24,24 +24,34 @@
 
 package com.tencent.bk.job.execute.api.esb.v2;
 
+import com.tencent.bk.job.common.annotation.EsbAPI;
+import com.tencent.bk.job.common.constant.JobCommonHeaders;
 import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.execute.model.esb.v2.EsbStepInstanceStatusDTO;
 import com.tencent.bk.job.execute.model.esb.v2.request.EsbGetStepInstanceStatusRequest;
-import org.springframework.web.bind.annotation.*;
-
-import static com.tencent.bk.job.common.i18n.locale.LocaleUtils.COMMON_LANG_HEADER;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 根据步骤实例 ID 查询步骤执行状态API-V2
  */
 @RequestMapping("/esb/api/v2")
 @RestController
+@EsbAPI
 public interface EsbGetStepInstanceStatusResource {
 
     @PostMapping("/get_step_instance_status")
     EsbResp<EsbStepInstanceStatusDTO> getJobStepInstanceStatus(
-        @RequestHeader(value = COMMON_LANG_HEADER, required = false) String lang,
-        @RequestBody EsbGetStepInstanceStatusRequest request);
+        @RequestHeader(value = JobCommonHeaders.USERNAME) String username,
+        @RequestHeader(value = JobCommonHeaders.APP_CODE) String appCode,
+        @RequestBody
+        @Validated
+            EsbGetStepInstanceStatusRequest request
+    );
 
 
 }

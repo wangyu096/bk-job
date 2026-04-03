@@ -24,33 +24,33 @@
 
 package com.tencent.bk.job.manage.api.inner;
 
-import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.annotation.InternalAPI;
+import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.manage.model.inner.ServiceTagDTO;
+import com.tentent.bk.job.common.api.feign.annotation.SmartFeignClient;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 @Api(tags = {"job-manage:Service:Tag"})
-@RequestMapping("/service/tag")
-@RestController
+@SmartFeignClient(value = "job-manage", contextId = "tagResource")
+@InternalAPI
 public interface ServiceTagResource {
 
     @ApiOperation(value = "获取业务下的所有标签", produces = "application/json")
-    @GetMapping("/list")
-    ServiceResponse<List<ServiceTagDTO>> listTags(
+    @GetMapping("/service/tag/list")
+    InternalResponse<List<ServiceTagDTO>> listTags(
         @ApiParam(value = "业务Id")
         @RequestParam(value = "appId", required = false)
             Long appId
     );
 
     @ApiOperation(value = "获取所有公共标签", produces = "application/json")
-    @GetMapping("/list/public")
-    ServiceResponse<List<ServiceTagDTO>> listPublicTags();
+    @GetMapping("/service/tag/list/public")
+    InternalResponse<List<ServiceTagDTO>> listPublicTags();
 
 }

@@ -24,9 +24,9 @@
 
 package com.tencent.bk.job.file.worker.api;
 
-import com.tencent.bk.job.common.model.ServiceResponse;
-import com.tencent.bk.job.file.worker.cos.service.OpService;
+import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.file.worker.model.req.WorkerOffLineReq;
+import com.tencent.bk.job.file.worker.service.OpService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,7 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @Slf4j
-@RestController
+@RestController("jobFileWorkerOpResourceImpl")
 public class OpResourceImpl implements OpResource {
 
     private final OpService opService;
@@ -45,13 +45,13 @@ public class OpResourceImpl implements OpResource {
     }
 
     @Override
-    public ServiceResponse<List<String>> offLine(String username, WorkerOffLineReq req) {
+    public Response<List<String>> offLine(String username, WorkerOffLineReq req) {
         log.info("Input=({},{})", username, req);
-        return ServiceResponse.buildSuccessResp(opService.offLine());
+        return Response.buildSuccessResp(opService.offLine());
     }
 
     @Override
-    public ServiceResponse<List<String>> taskList(String username) {
-        return ServiceResponse.buildSuccessResp(opService.taskList());
+    public Response<List<String>> taskList(String username) {
+        return Response.buildSuccessResp(opService.taskList());
     }
 }

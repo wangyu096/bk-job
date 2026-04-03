@@ -25,15 +25,19 @@
 package com.tencent.bk.job.manage.model.dto.task;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.ParamErrorException;
-import com.tencent.bk.job.manage.common.consts.task.TaskStepTypeEnum;
-import com.tencent.bk.job.manage.model.esb.v3.response.EsbStepV3DTO;
+import com.tencent.bk.job.common.esb.model.job.v3.resp.EsbStepV3DTO;
+import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.manage.api.common.constants.task.TaskStepTypeEnum;
 import com.tencent.bk.job.manage.model.inner.ServiceTaskStepDTO;
 import com.tencent.bk.job.manage.model.web.vo.task.TaskStepVO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.apache.commons.collections4.CollectionUtils;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @since 2/10/2019 20:30
@@ -78,6 +82,11 @@ public class TaskStepDTO {
 
     private Integer enable;
 
+    /**
+     * 步骤引用的变量
+     */
+    private List<TaskVariableDTO> refVariables;
+
     public static TaskStepVO toVO(TaskStepDTO taskStep) {
         if (taskStep == null) {
             return null;
@@ -85,19 +94,20 @@ public class TaskStepDTO {
         TaskStepVO stepVO = new TaskStepVO();
         stepVO.setId(taskStep.getId());
         stepVO.setTemplateStepId(taskStep.getTemplateStepId());
-        stepVO.setType(taskStep.getType().getType());
+        stepVO.setType(taskStep.getType().getValue());
         stepVO.setName(taskStep.getName());
         stepVO.setScriptStepInfo(TaskScriptStepDTO.toVO(taskStep.getScriptStepInfo()));
         stepVO.setFileStepInfo(TaskFileStepDTO.toVO(taskStep.getFileStepInfo()));
         stepVO.setApprovalStepInfo(TaskApprovalStepDTO.toVO(taskStep.getApprovalStepInfo()));
         stepVO.setEnable(taskStep.getEnable());
+        if (CollectionUtils.isNotEmpty(taskStep.getRefVariables())) {
+            stepVO.setRefVariables(taskStep.getRefVariables().stream().map(TaskVariableDTO::getName)
+                .distinct().collect(Collectors.toList()));
+        }
         return stepVO;
     }
 
     public static TaskStepDTO fromVO(TaskStepVO stepVO) {
-        if (stepVO == null) {
-            throw new ParamErrorException(ErrorCode.MISSING_PARAM);
-        }
         TaskStepDTO taskStep = new TaskStepDTO();
         taskStep.setId(stepVO.getId());
         taskStep.setType(TaskStepTypeEnum.valueOf(stepVO.getType()));
@@ -115,7 +125,7 @@ public class TaskStepDTO {
             taskStep.setDelete(0);
         }
         if (taskStep.getType() == null) {
-            throw new ParamErrorException(ErrorCode.WRONG_STEP_TYPE);
+            throw new InvalidParamException(ErrorCode.WRONG_STEP_TYPE);
         }
         switch (taskStep.getType()) {
             case SCRIPT:
@@ -128,7 +138,7 @@ public class TaskStepDTO {
                 taskStep.setApprovalStepInfo(TaskApprovalStepDTO.fromVO(stepVO.getId(), stepVO.getApprovalStepInfo()));
                 break;
             default:
-                throw new ParamErrorException(ErrorCode.WRONG_STEP_TYPE);
+                throw new InvalidParamException(ErrorCode.WRONG_STEP_TYPE);
         }
         return taskStep;
     }
@@ -140,7 +150,7 @@ public class TaskStepDTO {
         EsbStepV3DTO esbStep = new EsbStepV3DTO();
         esbStep.setId(taskStep.getId());
         esbStep.setName(taskStep.getName());
-        esbStep.setType(taskStep.getType().getType());
+        esbStep.setType(taskStep.getType().getValue());
         switch (taskStep.getType()) {
             case SCRIPT:
                 esbStep.setScriptInfo(TaskScriptStepDTO.toEsbScriptInfoV3(taskStep.getScriptStepInfo()));
@@ -164,7 +174,7 @@ public class TaskStepDTO {
         ServiceTaskStepDTO serviceTaskStep = new ServiceTaskStepDTO();
         serviceTaskStep.setId(taskStep.getId());
         serviceTaskStep.setName(taskStep.getName());
-        serviceTaskStep.setType(taskStep.getType().getType());
+        serviceTaskStep.setType(taskStep.getType().getValue());
         serviceTaskStep.setEnable(taskStep.getEnable());
         switch (taskStep.getType()) {
             case SCRIPT:

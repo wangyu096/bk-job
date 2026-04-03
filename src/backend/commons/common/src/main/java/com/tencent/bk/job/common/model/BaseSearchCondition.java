@@ -24,8 +24,8 @@
 
 package com.tencent.bk.job.common.model;
 
-import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
@@ -35,28 +35,30 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class BaseSearchCondition {
+@NoArgsConstructor
+public class BaseSearchCondition implements Cloneable {
     /**
      * 分页起始
      */
-    @ApiModelProperty(value = "分页起始", required = false)
     private Integer start;
     /**
      * 分页大小
      */
-    @ApiModelProperty(value = "分页大小", required = false)
     private Integer length;
 
     /**
-     * 排序 0：逆序 1：正序
+     * 分页-是否计算总数；默认计算。分页计算总数可能会影响 API 性能, 必要场景才可使用
      */
-    @ApiModelProperty(value = "排序 0：逆序 1：正序", required = false)
+    private boolean countPageTotal = true;
+
+    /**
+     * 排序 0：降序 1：升序
+     */
     private Integer order;
 
     /**
      * 排序的字段
      */
-    @ApiModelProperty(value = "排序的字段", required = false)
     private String orderField;
 
 
@@ -88,6 +90,22 @@ public class BaseSearchCondition {
      */
     private Long lastModifyTimeEnd;
 
+    public static BaseSearchCondition pageCondition(Integer start, Integer length) {
+        BaseSearchCondition searchCondition = new BaseSearchCondition();
+        searchCondition.setStart(start);
+        searchCondition.setLength(length);
+        searchCondition.setCountPageTotal(true);
+        return searchCondition;
+    }
+
+    public static BaseSearchCondition pageCondition(Integer start, Integer length, boolean countPageTotal) {
+        BaseSearchCondition searchCondition = new BaseSearchCondition();
+        searchCondition.setStart(start);
+        searchCondition.setLength(length);
+        searchCondition.setCountPageTotal(countPageTotal);
+        return searchCondition;
+    }
+
     public int getLengthOrDefault(int defaultLength) {
         return (length == null || length <= 0) ? defaultLength : length;
     }
@@ -99,6 +117,21 @@ public class BaseSearchCondition {
     public boolean isGetAll() {
         return start != null && start == -1
             && length != null && length == -1;
+    }
+
+    public BaseSearchCondition clone() {
+        BaseSearchCondition baseSearchCondition = new BaseSearchCondition();
+        baseSearchCondition.setStart(start);
+        baseSearchCondition.setLength(length);
+        baseSearchCondition.setOrderField(orderField);
+        baseSearchCondition.setOrder(order);
+        baseSearchCondition.setCreateTimeEnd(createTimeEnd);
+        baseSearchCondition.setCreateTimeStart(createTimeStart);
+        baseSearchCondition.setCreator(creator);
+        baseSearchCondition.setLastModifyUser(lastModifyUser);
+        baseSearchCondition.setLastModifyTimeStart(lastModifyTimeStart);
+        baseSearchCondition.setLastModifyTimeEnd(lastModifyTimeEnd);
+        return baseSearchCondition;
     }
 
 }

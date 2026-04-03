@@ -41,21 +41,31 @@
     <div id="app"></div>
     <script>
       window.PROJECT_CONFIG = (function() {
-        const SITE_URL = "/";
-        const BK_STATIC_URL = "/";
         const REMOTE_STATIC_URL = "";
         const AJAX_URL_PREFIX = "{{JOB_API_GATEWAY_URL}}";
         const EXTERNAL_THEME = "{{JOB_EXTERNAL_THEME}}";
 
         return {
           APP_ID: "",
+          SCOPE_TYPE: "",
+          SCOPE_ID: "",
           AJAX_URL_PREFIX: AJAX_URL_PREFIX,
-          SITE_URL: SITE_URL,
-          BK_STATIC_URL: BK_STATIC_URL,
-          REMOTE_STATIC_URL: REMOTE_STATIC_URL,
+          SITE_URL: "/",
+          BK_STATIC_URL: "/",
+          REMOTE_STATIC_URL: '',
           EXTERNAL_THEME: EXTERNAL_THEME,
+          HELPER_CONTACT_LINK: ''
         };
       })();
+    </script>
+    <script>
+      // 通过 URL 直接访问时 chrome 默认使用 https 协议，强制前端系统协议和 AJAX_URL_PREFIX 保持一直
+      // 降级处理（在 https 域名下，请求 http 的 api 会失败）
+      if (/^http:/.test(window.PROJECT_CONFIG.AJAX_URL_PREFIX)) {
+        if (/^https/.test(window.location.href)) {
+          window.location.href = window.location.href.replace(/^https/, 'http')
+        }
+      }
     </script>
     <script>
       if (

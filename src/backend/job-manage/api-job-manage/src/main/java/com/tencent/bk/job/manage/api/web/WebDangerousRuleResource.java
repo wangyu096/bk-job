@@ -24,46 +24,84 @@
 
 package com.tencent.bk.job.manage.api.web;
 
-import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.annotation.WebAPI;
+import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.manage.model.web.request.globalsetting.AddOrUpdateDangerousRuleReq;
 import com.tencent.bk.job.manage.model.web.request.globalsetting.MoveDangerousRuleReq;
 import com.tencent.bk.job.manage.model.web.vo.globalsetting.DangerousRuleVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 @Api(tags = {"job-manage:web:DangerousRule"})
 @RequestMapping("/web/dangerousRule")
 @RestController
+@WebAPI
 public interface WebDangerousRuleResource {
 
     @ApiOperation(value = "获取高危语句规则列表", produces = "application/json")
     @GetMapping("/list")
-    ServiceResponse<List<DangerousRuleVO>> listDangerousRules(
+    Response<List<DangerousRuleVO>> listDangerousRules(
         @ApiParam("用户名，网关自动传入")
         @RequestHeader("username")
-            String username
+            String username,
+        @ApiParam(value = "表达式：模糊搜索")
+        @RequestParam(value = "expression", required = false)
+            String expression,
+        @ApiParam("规则说明：模糊搜索")
+        @RequestParam(value = "description", required = false)
+            String description,
+        @ApiParam("脚本类型：可多选")
+        @RequestParam(value = "scriptTypeList", required = false)
+            List<Byte> scriptTypeList,
+        @ApiParam("动作：可多选")
+        @RequestParam(value = "action", required = false)
+            List<Byte> action
     );
 
 
-    @ApiOperation(value = "添加/修改高危语句规则", produces = "application/json")
+    @ApiOperation(value = "创建高危语句规则", produces = "application/json")
     @PostMapping
-    ServiceResponse<Boolean> addOrUpdateDangerousRule(
+    Response<DangerousRuleVO> createDangerousRule(
         @ApiParam(value = "用户名，网关自动传入", required = true)
         @RequestHeader("username")
             String username,
         @ApiParam(value = "创建或更新请求体", required = true)
         @RequestBody
-            AddOrUpdateDangerousRuleReq req
+        @Validated AddOrUpdateDangerousRuleReq req
+    );
+
+    @ApiOperation(value = "修改高危语句规则", produces = "application/json")
+    @PutMapping("/{id}")
+    Response<DangerousRuleVO> updateDangerousRule(
+        @ApiParam(value = "用户名，网关自动传入", required = true)
+        @RequestHeader("username")
+            String username,
+        @ApiParam("高危语句规则ID")
+        @PathVariable("id")
+            Long id,
+        @ApiParam(value = "创建或更新请求体", required = true)
+        @RequestBody
+        @Validated AddOrUpdateDangerousRuleReq req
     );
 
 
     @ApiOperation(value = "移动高危语句规则", produces = "application/json")
     @PutMapping("/move")
-    ServiceResponse<Integer> moveDangerousRule(
+    Response<Integer> moveDangerousRule(
         @ApiParam(value = "用户名，网关自动传入", required = true)
         @RequestHeader("username")
             String username,
@@ -75,7 +113,7 @@ public interface WebDangerousRuleResource {
 
     @ApiOperation(value = "删除高危语句规则", produces = "application/json")
     @DeleteMapping("/{id}")
-    ServiceResponse<Integer> deleteDangerousRuleById(
+    Response<Integer> deleteDangerousRuleById(
         @ApiParam("用户名，网关自动传入")
         @RequestHeader("username")
             String username,

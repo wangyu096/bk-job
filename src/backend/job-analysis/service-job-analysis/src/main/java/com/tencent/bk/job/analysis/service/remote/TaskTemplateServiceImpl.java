@@ -24,41 +24,32 @@
 
 package com.tencent.bk.job.analysis.service.remote;
 
-import com.tencent.bk.job.analysis.client.ServiceTaskTemplateResourceClient;
 import com.tencent.bk.job.analysis.service.TaskTemplateService;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
+import com.tencent.bk.job.manage.api.inner.ServiceTaskTemplateResource;
 import com.tencent.bk.job.manage.model.inner.ServiceTaskTemplateDTO;
-import com.tencent.bk.job.manage.model.inner.request.ServiceListPageTaskTemplatesRequest;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Slf4j
-@Service
+@Service("jobAnalysisTaskTemplateServiceImpl")
 public class TaskTemplateServiceImpl implements TaskTemplateService {
-    private final ServiceTaskTemplateResourceClient taskTemplateResourceClient;
+    private final ServiceTaskTemplateResource taskTemplateResource;
 
     @Autowired
-    public TaskTemplateServiceImpl(ServiceTaskTemplateResourceClient taskTemplateResourceClient) {
-        this.taskTemplateResourceClient = taskTemplateResourceClient;
+    public TaskTemplateServiceImpl(ServiceTaskTemplateResource taskTemplateResource) {
+        this.taskTemplateResource = taskTemplateResource;
     }
 
     @Override
-    public PageData<ServiceTaskTemplateDTO> listPageTaskTemplates(ServiceTaskTemplateDTO templateCondition,
-                                                                  BaseSearchCondition baseSearchCondition,
-                                                                  List<Long> favoriteTemplateId) {
+    public PageData<ServiceTaskTemplateDTO> listPageTaskTemplates(Long appId,
+                                                                  BaseSearchCondition baseSearchCondition) {
         val result =
-            taskTemplateResourceClient.listPageTaskTemplates(
-                new ServiceListPageTaskTemplatesRequest(
-                    templateCondition,
-                    baseSearchCondition,
-                    favoriteTemplateId
-                )
-            );
+            taskTemplateResource.listPageTaskTemplates(appId,
+                baseSearchCondition.getStart(), baseSearchCondition.getLength());
         if (result != null) {
             return result.getData();
         } else {

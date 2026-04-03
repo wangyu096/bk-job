@@ -25,11 +25,19 @@
 package com.tencent.bk.job.common.iam.model;
 
 import com.tencent.bk.job.common.iam.constant.ResourceTypeEnum;
+import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.model.iam.AuthResultDTO;
+import com.tencent.bk.job.common.model.iam.PathInfoDTO;
+import com.tencent.bk.job.common.model.iam.PermissionActionResourceDTO;
+import com.tencent.bk.job.common.model.iam.PermissionResourceDTO;
+import com.tencent.bk.job.common.model.iam.PermissionResourceGroupDTO;
 import com.tencent.bk.job.common.util.CustomCollectionUtils;
 import lombok.Data;
+import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 鉴权结果
@@ -77,14 +85,17 @@ public class AuthResult {
             return;
         }
 
+        // 根据actionId从已经添加过的权限操作资源中找出已有的actionId相同的资源，没有则创建一个新的
         PermissionActionResource actionResource = createOrGetPermissionActionResource(actionId);
 
         PermissionResourceGroup resourceGroup = null;
+        // 找出已经添加过的同类别依赖资源分组
         for (PermissionResourceGroup existedResourceGroup : actionResource.getResourceGroups()) {
             if (existedResourceGroup.getResourceType() == permissionResource.getResourceType()) {
                 resourceGroup = existedResourceGroup;
             }
         }
+        // 第一次添加权限依赖资源
         if (resourceGroup == null) {
             resourceGroup = new PermissionResourceGroup();
             resourceGroup.setResourceType(permissionResource.getResourceType());
@@ -162,6 +173,191 @@ public class AuthResult {
             authResult.setRequiredActionResources(requiredActionResourceList);
         }
         return authResult;
+    }
+
+    public static AuthResultDTO toAuthResultDTO(AuthResult authResult) {
+        AuthResultDTO result = new AuthResultDTO();
+        result.setPass(authResult.isPass());
+        result.setApplyUrl(authResult.getApplyUrl());
+
+        List<PermissionActionResourceDTO> actionResourcesDTOS = new ArrayList<>();
+        for (PermissionActionResource actionResource :
+            authResult.getRequiredActionResources()) {
+            PermissionActionResourceDTO actionResourceDTO = new PermissionActionResourceDTO();
+            actionResourceDTO.setActionId(actionResource.getActionId());
+
+            if (CollectionUtils.isNotEmpty(actionResource.getResourceGroups())) {
+                List<PermissionResourceGroupDTO> resourceGroupDTOS = new ArrayList<>();
+                for (PermissionResourceGroup resourceGroup : actionResource.getResourceGroups()) {
+                    PermissionResourceGroupDTO resourceGroupDTO = new PermissionResourceGroupDTO();
+                    resourceGroupDTO.setResourceType(resourceGroup.getResourceType().getId());
+                    resourceGroupDTO.setSystemId(resourceGroup.getSystemId());
+                    if (CollectionUtils.isNotEmpty(resourceGroup.getPermissionResources())) {
+                        List<PermissionResourceDTO> resourceDTOS = new ArrayList<>();
+                        for (PermissionResource resource : resourceGroup.getPermissionResources()) {
+                            resourceDTOS.add(toPermissionResourceDTO(resource));
+                        }
+                        resourceGroupDTO.setPermissionResources(resourceDTOS);
+                    }
+                    resourceGroupDTOS.add(resourceGroupDTO);
+                }
+                actionResourceDTO.setResourceGroups(resourceGroupDTOS);
+            }
+            actionResourcesDTOS.add(actionResourceDTO);
+        }
+        result.setRequiredActionResources(actionResourcesDTOS);
+        return result;
+    }
+
+    private static PermissionResourceDTO toPermissionResourceDTO(PermissionResource resource) {
+        PermissionResourceDTO resourceDTO = new PermissionResourceDTO();
+        resourceDTO.setResourceId(resource.getResourceId());
+        resourceDTO.setResourceType(resource.getType());
+        resourceDTO.setResourceName(resource.getResourceName());
+        resourceDTO.setSubResourceType(resource.getSubResourceType());
+        resourceDTO.setSystemId(resource.getSystemId());
+        resourceDTO.setPathInfo(toPathInfoDTO(resource.getPathInfo()));
+        if (CollectionUtils.isNotEmpty(resource.getParentHierarchicalResources())) {
+            resourceDTO.setParentHierarchicalResources(
+                resource.getParentHierarchicalResources().stream().map(AuthResult::toPermissionResourceDTO)
+                    .collect(Collectors.toList()));
+        }
+        return resourceDTO;
+    }
+
+    private static PathInfoDTO toPathInfoDTO(com.tencent.bk.sdk.iam.dto.PathInfoDTO pathInfo) {
+        if (pathInfo == null) {
+            return null;
+        }
+        PathBuilder pathBuilder = PathBuilder.newBuilder(pathInfo.getType(), pathInfo.getId());
+
+        com.tencent.bk.sdk.iam.dto.PathInfoDTO child = pathInfo.getChild();
+        while (child != null) {
+            pathBuilder.child(child.getType(), child.getId());
+            child = child.getChild();
+        }
+
+        return pathBuilder.build();
+    }
+
+    private static class PathBuilder {
+        private final String id;
+        private final String type;
+        private PathBuilder child;
+        private PathBuilder head;
+
+        private PathBuilder(String type, String id) {
+            this.type = type;
+            this.id = id;
+            this.head = this;
+        }
+
+        private PathBuilder(String type, String id, PathBuilder head) {
+            this.type = type;
+            this.id = id;
+            this.head = head;
+        }
+
+        public static PathBuilder newBuilder(String type, String id) {
+            return new PathBuilder(type, id);
+        }
+
+        public PathBuilder head(PathBuilder head) {
+            this.head = head;
+            return this;
+        }
+
+        public PathBuilder child(String type, String id) {
+            this.child = new PathBuilder(type, id, this.head);
+            return this.child;
+        }
+
+        public PathInfoDTO build() {
+            if (this.head == this) {
+                PathInfoDTO pathInfo = new PathInfoDTO(this.id, this.type);
+                if (this.child != null) {
+                    pathInfo.setChild(this.child.head(this.child).build());
+                }
+
+                return pathInfo;
+            } else {
+                return this.head.build();
+            }
+        }
+    }
+
+    public static AuthResult fromAuthResultDTO(AuthResultDTO authResultDTO) {
+        AuthResult result = new AuthResult();
+        result.setPass(authResultDTO.isPass());
+        result.setApplyUrl(authResultDTO.getApplyUrl());
+
+        List<PermissionActionResource> actionResources = new ArrayList<>();
+        for (PermissionActionResourceDTO actionResourceDTO : authResultDTO.getRequiredActionResources()) {
+            PermissionActionResource actionResource = new PermissionActionResource();
+            actionResource.setActionId(actionResourceDTO.getActionId());
+
+            if (CollectionUtils.isNotEmpty(actionResourceDTO.getResourceGroups())) {
+                List<PermissionResourceGroup> resourceGroups = new ArrayList<>();
+                for (PermissionResourceGroupDTO resourceGroupDTO : actionResourceDTO.getResourceGroups()) {
+                    PermissionResourceGroup resourceGroup = new PermissionResourceGroup();
+                    resourceGroup.setResourceType(ResourceTypeEnum.getByResourceTypeId(resourceGroupDTO.getResourceType()));
+                    resourceGroup.setSystemId(resourceGroupDTO.getSystemId());
+                    if (CollectionUtils.isNotEmpty(resourceGroupDTO.getPermissionResources())) {
+                        List<PermissionResource> resources = new ArrayList<>();
+                        for (PermissionResourceDTO resourceDTO : resourceGroupDTO.getPermissionResources()) {
+                            resources.add(toPermissionResource(resourceDTO));
+                        }
+                        resourceGroup.setPermissionResources(resources);
+                    }
+                    resourceGroups.add(resourceGroup);
+                }
+                actionResource.setResourceGroups(resourceGroups);
+            }
+            actionResources.add(actionResource);
+        }
+        result.setRequiredActionResources(actionResources);
+        return result;
+    }
+
+    private static PermissionResource toPermissionResource(PermissionResourceDTO resourceDTO) {
+        PermissionResource resource = new PermissionResource();
+        resource.setResourceId(resourceDTO.getResourceId());
+        resource.setResourceType(ResourceTypeEnum.getByResourceTypeId(resourceDTO.getResourceType()));
+        resource.setResourceName(resourceDTO.getResourceName());
+        resource.setSubResourceType(resourceDTO.getSubResourceType());
+        resource.setSystemId(resourceDTO.getSystemId());
+        resource.setPathInfo(toIamPathInfoDTO(resourceDTO.getPathInfo()));
+        if (CollectionUtils.isNotEmpty(resourceDTO.getParentHierarchicalResources())) {
+            resource.setParentHierarchicalResources(
+                resourceDTO.getParentHierarchicalResources().stream().map(AuthResult::toPermissionResource)
+                    .collect(Collectors.toList()));
+        }
+        return resource;
+    }
+
+    private static com.tencent.bk.sdk.iam.dto.PathInfoDTO toIamPathInfoDTO(PathInfoDTO pathInfo) {
+        if (pathInfo == null) {
+            return null;
+        }
+        com.tencent.bk.sdk.iam.util.PathBuilder pathBuilder =
+            com.tencent.bk.sdk.iam.util.PathBuilder.newBuilder(pathInfo.getType(), pathInfo.getId());
+
+        PathInfoDTO child = pathInfo.getChild();
+        while (child != null) {
+            pathBuilder.child(child.getType(), child.getId());
+            child = child.getChild();
+        }
+
+        return pathBuilder.build();
+    }
+
+    /**
+     * 处理鉴权结果。如果鉴权不通过，抛出 PermissionDeniedException
+     */
+    public void denyIfNoPermission() throws PermissionDeniedException {
+        if (!isPass()) {
+            throw new PermissionDeniedException(this);
+        }
     }
 
 }

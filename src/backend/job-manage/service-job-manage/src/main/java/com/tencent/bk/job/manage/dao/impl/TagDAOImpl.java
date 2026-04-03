@@ -24,16 +24,21 @@
 
 package com.tencent.bk.job.manage.dao.impl;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.DuplicateEntryException;
+import com.tencent.bk.job.common.constant.Order;
+import com.tencent.bk.job.common.model.BaseSearchCondition;
+import com.tencent.bk.job.common.model.PageData;
+import com.tencent.bk.job.common.util.date.DateUtils;
 import com.tencent.bk.job.manage.dao.TagDAO;
 import com.tencent.bk.job.manage.model.dto.TagDTO;
+import com.tencent.bk.job.manage.model.tables.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.jooq.*;
-import org.jooq.exception.DataAccessException;
-import org.jooq.generated.tables.Tag;
-import org.jooq.types.UByte;
+import org.jooq.Condition;
+import org.jooq.DSLContext;
+import org.jooq.OrderField;
+import org.jooq.Record;
+import org.jooq.Result;
+import org.jooq.TableField;
 import org.jooq.types.ULong;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -42,6 +47,7 @@ import org.springframework.stereotype.Repository;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -52,6 +58,8 @@ import java.util.stream.Collectors;
 @Repository
 public class TagDAOImpl implements TagDAO {
     private static final Tag TABLE = Tag.TAG;
+    private static final TableField<?, ?>[] ALL_FIELDS = {TABLE.ID, TABLE.APP_ID, TABLE.NAME, TABLE.DESCRIPTION,
+        TABLE.CREATOR, TABLE.CREATE_TIME, TABLE.LAST_MODIFY_USER, TABLE.LAST_MODIFY_TIME};
     private final DSLContext context;
 
     @Autowired
@@ -62,8 +70,7 @@ public class TagDAOImpl implements TagDAO {
     private TagDTO getTagByConditions(Collection<Condition> conditions) {
         TagDTO result = null;
         Record record =
-            context.select(TABLE.ID, TABLE.APP_ID, TABLE.NAME, TABLE.CREATOR, TABLE.LAST_MODIFY_USER)
-                .from(Tag.TAG).where(conditions).fetchOne();
+            context.select(ALL_FIELDS).from(Tag.TAG).where(conditions).fetchOne();
         if (record != null) {
             result = record.into(TagDTO.class);
         }
@@ -75,6 +82,13 @@ public class TagDAOImpl implements TagDAO {
         List<Condition> conditions = new ArrayList<>();
         conditions.add(TABLE.ID.eq(ULong.valueOf(tagId)));
         return getTagByConditions(conditions);
+    }
+
+    @Override
+    public List<TagDTO> listTagInfoByIds(Collection<Long> tagIds) {
+        List<Condition> conditions = new ArrayList<>();
+        conditions.add(TABLE.ID.in(tagIds));
+        return listTagsByConditions(conditions);
     }
 
     @Override
@@ -96,6 +110,13 @@ public class TagDAOImpl implements TagDAO {
     }
 
     @Override
+    public List<TagDTO> listTagsByIds(List<Long> tagIds) {
+        List<Condition> conditions = new ArrayList<>();
+        conditions.add(TABLE.ID.in(tagIds));
+        return listTagsByConditions(conditions);
+    }
+
+    @Override
     public List<TagDTO> listTagsByIds(long appId, Long... tagIds) {
         return this.listTagsByIds(appId, Arrays.asList(tagIds));
     }
@@ -107,35 +128,38 @@ public class TagDAOImpl implements TagDAO {
     }
 
     @Override
-    public Long insertTag(TagDTO tag) throws DuplicateEntryException {
+    public Long insertTag(TagDTO tag) {
         if (StringUtils.isBlank(tag.getLastModifyUser())) {
             tag.setLastModifyUser(tag.getCreator());
         }
-        try {
-            Record record =
-                context.insertInto(Tag.TAG, TABLE.APP_ID, TABLE.NAME, TABLE.CREATOR, TABLE.LAST_MODIFY_USER)
-                    .values(ULong.valueOf(tag.getAppId()), tag.getName(), tag.getCreator(), tag.getLastModifyUser())
-                    .onDuplicateKeyIgnore().returning(TABLE.ID).fetchOne();
-            if (record == null) {
-                List<Condition> conditions = new ArrayList<>();
-                conditions.add(TABLE.APP_ID.equal(ULong.valueOf(tag.getAppId())));
-                conditions.add(TABLE.NAME.equal(tag.getName()));
-                record = context.select(TABLE.ID).from(Tag.TAG).where(conditions).fetchOne();
-            }
-            return record.get(TABLE.ID).longValue();
-        } catch (DataAccessException e) {
-            log.error("Error while inserting tag, maybe duplicate name!|{}", tag, e);
-            throw new DuplicateEntryException(ErrorCode.TAG_ALREADY_EXIST,
-                "Duplicate name on tag|app_id|" + tag.getAppId() + "|name|" + tag.getName(), e);
+        if (tag.getCreateTime() == null) {
+            tag.setCreateTime(DateUtils.currentTimeSeconds());
+            tag.setLastModifyTime(tag.getCreateTime());
         }
+        Record record =
+            context.insertInto(Tag.TAG, TABLE.APP_ID, TABLE.NAME, TABLE.DESCRIPTION, TABLE.CREATOR,
+                TABLE.CREATE_TIME, TABLE.LAST_MODIFY_USER, TABLE.LAST_MODIFY_TIME)
+                .values(ULong.valueOf(tag.getAppId()), tag.getName(), tag.getDescription(), tag.getCreator(),
+                    tag.getCreateTime(), tag.getLastModifyUser(), tag.getLastModifyTime())
+                .onDuplicateKeyIgnore().returning(TABLE.ID).fetchOne();
+        if (record == null) {
+            List<Condition> conditions = new ArrayList<>();
+            conditions.add(TABLE.APP_ID.equal(ULong.valueOf(tag.getAppId())));
+            conditions.add(TABLE.NAME.equal(tag.getName()));
+            record = context.select(TABLE.ID).from(Tag.TAG).where(conditions).fetchOne();
+        }
+        return record != null ? record.get(TABLE.ID).longValue() : 0;
     }
 
     @Override
-    public Boolean updateTagById(TagDTO tag) {
+    public boolean updateTagById(TagDTO tag) {
         List<Condition> conditions = buildBasicCondition(tag.getAppId());
         conditions.add(TABLE.ID.eq(ULong.valueOf(tag.getId())));
-        int affected = context.update(Tag.TAG).set(TABLE.NAME, tag.getName())
-            .set(TABLE.LAST_MODIFY_USER, tag.getLastModifyUser()).where(conditions).limit(1).execute();
+        int affected = context.update(Tag.TAG)
+            .set(TABLE.NAME, tag.getName())
+            .set(TABLE.LAST_MODIFY_USER, tag.getLastModifyUser())
+            .set(TABLE.DESCRIPTION, tag.getDescription())
+            .where(conditions).limit(1).execute();
         if (affected == 1) {
             return true;
         } else if (affected <= 0) {
@@ -155,38 +179,132 @@ public class TagDAOImpl implements TagDAO {
     }
 
     private List<TagDTO> listTagsByConditions(List<Condition> conditions) {
-        Result<Record5<ULong, ULong, String, String, String>> records =
-            context.select(TABLE.ID, TABLE.APP_ID, TABLE.NAME, TABLE.CREATOR, TABLE.LAST_MODIFY_USER)
-                .from(Tag.TAG).where(conditions).fetch();
-        List<TagDTO> result = new ArrayList<>();
-        if (records != null && records.size() > 0) {
-            records.forEach(record -> result.add(record.into(TagDTO.class)));
+        Result<Record> result =
+            context.select(ALL_FIELDS).from(Tag.TAG).where(conditions).fetch();
+        List<TagDTO> resultTags = new ArrayList<>();
+        if (result.size() > 0) {
+            result.forEach(record -> resultTags.add(record.into(TagDTO.class)));
         }
-        return result;
+        return resultTags;
     }
 
     @Override
-    public List<TagDTO> listTags(TagDTO searchCondition) {
-        List<Condition> conditions = buildSearchCondition(searchCondition);
-        Result<Record5<ULong, ULong, String, String, String>> records =
-            context.select(TABLE.ID, TABLE.APP_ID, TABLE.NAME, TABLE.CREATOR, TABLE.LAST_MODIFY_USER).from(Tag.TAG)
+    public List<TagDTO> listTags(TagDTO tagQuery) {
+        List<Condition> conditions = buildSearchCondition(tagQuery);
+        Result<Record> result =
+            context.select(ALL_FIELDS).from(Tag.TAG)
                 .where(conditions).orderBy(TABLE.ROW_UPDATE_TIME.desc()).fetch();
         List<TagDTO> tags = new ArrayList<>();
-        if (records != null && records.size() > 0) {
-            records.forEach(record -> tags.add(record.into(TagDTO.class)));
+        if (result.size() > 0) {
+            result.forEach(record -> tags.add(record.into(TagDTO.class)));
         }
         return tags;
     }
 
-    private List<Condition> buildSearchCondition(TagDTO searchCondition) {
+    @Override
+    public PageData<TagDTO> listPageTags(TagDTO tagQuery, BaseSearchCondition baseSearchCondition) {
+        long count = getTagsPageCount(tagQuery);
+        if (count == 0) {
+            return PageData.emptyPageData(baseSearchCondition.getStart(), baseSearchCondition.getLength());
+        }
+
+        List<Condition> conditions = buildSearchCondition(tagQuery);
+        int start = baseSearchCondition.getStartOrDefault(0);
+        int length = baseSearchCondition.getLengthOrDefault(10);
+        List<OrderField<?>> orderFields = buildOrderFields(baseSearchCondition);
+        Result<Record> result = context.select(ALL_FIELDS).from(Tag.TAG)
+            .where(conditions).orderBy(orderFields)
+            .limit(start, length).fetch();
+        List<TagDTO> tags = result.size() > 0 ? result.map(this::extractRecord) : Collections.emptyList();
+        return new PageData<>(start, length, count, tags);
+    }
+
+    private long getTagsPageCount(TagDTO tagQuery) {
+        List<Condition> conditions = buildSearchCondition(tagQuery);
+        Long count = context.selectCount().from(TABLE).where(conditions).fetchOne(0, Long.class);
+        return count == null ? 0 : count;
+    }
+
+    private List<Condition> buildSearchCondition(TagDTO tagQuery) {
         List<Condition> conditions = new ArrayList<>();
-        conditions.add(TABLE.APP_ID.eq(ULong.valueOf(searchCondition.getAppId())));
-        if (StringUtils.isNotBlank(searchCondition.getName())) {
-            String likePattern = "%" + searchCondition.getName() + "%";
+        conditions.add(TABLE.APP_ID.eq(ULong.valueOf(tagQuery.getAppId())));
+        if (StringUtils.isNotBlank(tagQuery.getName())) {
+            String likePattern = "%" + tagQuery.getName() + "%";
             conditions.add(TABLE.NAME.like(likePattern));
         }
-        conditions.add(TABLE.IS_DELETED.eq(UByte.valueOf(0)));
+        if (StringUtils.isNotEmpty(tagQuery.getCreator())) {
+            conditions.add(TABLE.CREATOR.equal(tagQuery.getCreator()));
+        }
+        if (StringUtils.isNotEmpty(tagQuery.getLastModifyUser())) {
+            conditions.add(TABLE.LAST_MODIFY_USER.equal(tagQuery.getLastModifyUser()));
+        }
         return conditions;
     }
 
+    private List<OrderField<?>> buildOrderFields(BaseSearchCondition baseSearchCondition) {
+        List<OrderField<?>> orderFields = new ArrayList<>();
+        if (StringUtils.isBlank(baseSearchCondition.getOrderField())) {
+            orderFields.add(TABLE.LAST_MODIFY_TIME.desc());
+        } else {
+            String orderField = baseSearchCondition.getOrderField();
+            if ("name".equals(orderField)) {
+                //升序
+                if (baseSearchCondition.getOrder() == Order.ASCENDING.getOrder()) {
+                    orderFields.add(TABLE.NAME.asc());
+                } else {
+                    orderFields.add(TABLE.NAME.desc());
+                }
+            } else if ("createTime".equals(orderField)) {
+                //升序
+                if (baseSearchCondition.getOrder() == Order.ASCENDING.getOrder()) {
+                    orderFields.add(TABLE.CREATE_TIME.asc());
+                } else {
+                    orderFields.add(TABLE.CREATE_TIME.desc());
+                }
+
+            } else {
+                // 默认按照last_modify_time排序
+                if (baseSearchCondition.getOrder() == Order.ASCENDING.getOrder()) {
+                    orderFields.add(TABLE.LAST_MODIFY_TIME.asc());
+                } else {
+                    orderFields.add(TABLE.LAST_MODIFY_TIME.desc());
+                }
+            }
+        }
+        return orderFields;
+    }
+
+
+    private TagDTO extractRecord(Record record) {
+        if (record == null) {
+            return null;
+        }
+        TagDTO tag = new TagDTO();
+        tag.setAppId(record.get(TABLE.APP_ID).longValue());
+        tag.setId(record.get(TABLE.ID).longValue());
+        tag.setName(record.get(TABLE.NAME));
+        tag.setDescription(record.get(TABLE.DESCRIPTION));
+        tag.setCreator(record.get(TABLE.CREATOR));
+        tag.setCreateTime(record.get(TABLE.CREATE_TIME));
+        tag.setLastModifyUser(record.get(TABLE.LAST_MODIFY_USER));
+        tag.setLastModifyTime(record.get(TABLE.LAST_MODIFY_TIME));
+        return tag;
+    }
+
+    @Override
+    public boolean deleteTagById(Long tagId) {
+        return context.deleteFrom(TABLE).where(TABLE.ID.eq(ULong.valueOf(tagId))).execute() == 1;
+    }
+
+    @Override
+    public boolean isExistDuplicateName(Long appId, String tagName) {
+        return context.fetchExists(TABLE,
+            TABLE.APP_ID.eq(ULong.valueOf(appId)).and(TABLE.NAME.eq(tagName)));
+    }
+
+    @Override
+    public List<TagDTO> listAllTags() {
+        Result<Record> result = context.select(ALL_FIELDS).from(Tag.TAG).fetch();
+        return result.size() > 0 ? result.map(this::extractRecord) : Collections.emptyList();
+    }
 }

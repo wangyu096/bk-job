@@ -24,7 +24,8 @@
 
 package com.tencent.bk.job.gateway.filter;
 
-import com.tencent.bk.job.gateway.config.BkConfig;
+import com.tencent.bk.job.common.service.config.JobCommonConfig;
+import com.tencent.bk.job.gateway.filter.web.CsrfCheckGatewayFilterFactory;
 import com.tencent.bk.job.gateway.web.service.LoginService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,7 +42,13 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.server.ServerWebExchange;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class CsrfCheckGatewayFilterFactoryTest {
     private static final String COOKIE_CSRF_KEY_NAME = "job_csrf_key";
@@ -50,10 +57,10 @@ public class CsrfCheckGatewayFilterFactoryTest {
 
     @BeforeEach
     public void init() {
-        BkConfig bkConfig = mock(BkConfig.class);
-        when(bkConfig.getJobWebUrl()).thenReturn("http://jobv3.com");
+        JobCommonConfig jobCommonConfig = mock(JobCommonConfig.class);
+        when(jobCommonConfig.getJobWebUrl()).thenReturn("http://jobv3.com");
         LoginService loginService = mock(LoginService.class);
-        factory = new CsrfCheckGatewayFilterFactory(bkConfig, loginService);
+        factory = new CsrfCheckGatewayFilterFactory(jobCommonConfig, loginService);
     }
 
     @AfterEach

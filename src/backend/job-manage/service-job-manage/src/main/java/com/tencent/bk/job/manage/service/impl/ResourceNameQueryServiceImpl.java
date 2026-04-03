@@ -25,14 +25,20 @@
 package com.tencent.bk.job.manage.service.impl;
 
 import com.tencent.bk.job.common.iam.constant.ResourceTypeEnum;
+import com.tencent.bk.job.common.iam.service.AppAuthService;
 import com.tencent.bk.job.common.iam.service.AuthService;
 import com.tencent.bk.job.common.iam.service.ResourceNameQueryService;
-import com.tencent.bk.job.common.model.dto.ApplicationInfoDTO;
+import com.tencent.bk.job.common.iam.util.IamUtil;
+import com.tencent.bk.job.common.model.dto.ApplicationDTO;
+import com.tencent.bk.job.common.service.AppScopeMappingService;
 import com.tencent.bk.job.manage.model.dto.AccountDTO;
+import com.tencent.bk.job.manage.model.dto.CredentialDTO;
 import com.tencent.bk.job.manage.model.dto.ScriptDTO;
 import com.tencent.bk.job.manage.model.dto.TagDTO;
 import com.tencent.bk.job.manage.service.AccountService;
 import com.tencent.bk.job.manage.service.ApplicationService;
+import com.tencent.bk.job.manage.service.CredentialService;
+import com.tencent.bk.job.manage.service.PublicScriptService;
 import com.tencent.bk.job.manage.service.ScriptService;
 import com.tencent.bk.job.manage.service.TagService;
 import com.tencent.bk.job.manage.service.plan.TaskPlanService;
@@ -43,31 +49,46 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Slf4j
-@Service("ResourceNameQueryService")
+@Service("jobManageResourceNameQueryService")
 public class ResourceNameQueryServiceImpl implements ResourceNameQueryService {
 
-    private ApplicationService applicationService;
-    private ScriptService scriptService;
-    private TaskTemplateService templateService;
-    private TaskPlanService planService;
-    private AccountService accountService;
-    private TagService tagService;
+    private final ApplicationService applicationService;
+    private final ScriptService scriptService;
+    private final PublicScriptService publicScriptService;
+    private final TaskTemplateService templateService;
+    private final TaskPlanService planService;
+    private final AccountService accountService;
+    private final TagService tagService;
+    private final CredentialService credentialService;
+    private final AppScopeMappingService appScopeMappingService;
 
     @Autowired
-    public ResourceNameQueryServiceImpl(ApplicationService applicationService, ScriptService scriptService,
-                                        TaskTemplateService templateService, TaskPlanService planService,
-                                        AccountService accountService, TagService tagService, AuthService authService) {
+    public ResourceNameQueryServiceImpl(ApplicationService applicationService,
+                                        ScriptService scriptService,
+                                        PublicScriptService publicScriptService,
+                                        TaskTemplateService templateService,
+                                        TaskPlanService planService,
+                                        AccountService accountService,
+                                        TagService tagService,
+                                        AuthService authService,
+                                        AppAuthService appAuthService,
+                                        CredentialService credentialService,
+                                        AppScopeMappingService appScopeMappingService) {
         this.applicationService = applicationService;
         this.scriptService = scriptService;
+        this.publicScriptService = publicScriptService;
         this.templateService = templateService;
         this.planService = planService;
         this.accountService = accountService;
         this.tagService = tagService;
+        this.credentialService = credentialService;
+        this.appScopeMappingService = appScopeMappingService;
         authService.setResourceNameQueryService(this);
+        appAuthService.setResourceNameQueryService(this);
     }
 
     private String getAppName(Long appId) {
-        ApplicationInfoDTO appInfo = applicationService.getAppInfoById(appId);
+        ApplicationDTO appInfo = applicationService.getAppByAppId(appId);
         if (appInfo != null) {
             if (StringUtils.isNotBlank(appInfo.getName())) {
                 return appInfo.getName();
@@ -80,12 +101,19 @@ public class ResourceNameQueryServiceImpl implements ResourceNameQueryService {
     public String getResourceName(ResourceTypeEnum resourceType, String resourceId) {
         switch (resourceType) {
             case BUSINESS:
-                long appId = Long.parseLong(resourceId);
-                if (appId > 0) {
+            case BUSINESS_SET:
+                Long appId = appScopeMappingService.getAppIdByScope(
+                    IamUtil.getResourceScopeFromIamResource(resourceType, resourceId));
+                if (appId != null && appId > 0) {
                     return getAppName(appId);
                 }
                 break;
             case PUBLIC_SCRIPT:
+                ScriptDTO publicScript = publicScriptService.getScriptByScriptId(resourceId);
+                if (publicScript != null) {
+                    return publicScript.getName();
+                }
+                break;
             case SCRIPT:
                 ScriptDTO script = scriptService.getScriptByScriptId(resourceId);
                 if (script != null) {
@@ -122,6 +150,13 @@ public class ResourceNameQueryServiceImpl implements ResourceNameQueryService {
                     }
                 }
                 break;
+            case TICKET:
+                CredentialDTO credentialDTO = credentialService.getCredentialById(resourceId);
+                if (credentialDTO == null) {
+                    log.warn("Cannot find ticket by ticketId {}", resourceId);
+                    return null;
+                }
+                return credentialDTO.getName();
             default:
                 return null;
         }

@@ -24,18 +24,33 @@
 
 package com.tencent.bk.job.manage.service.plan.impl;
 
+import com.tencent.bk.audit.annotations.ActionAuditRecord;
+import com.tencent.bk.audit.annotations.AuditInstanceRecord;
+import com.tencent.bk.audit.context.ActionAuditContext;
+import com.tencent.bk.job.common.audit.constants.EventContentConstants;
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.ParamErrorException;
+import com.tencent.bk.job.common.exception.AlreadyExistsException;
+import com.tencent.bk.job.common.exception.FailedPreconditionException;
+import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.NotFoundException;
 import com.tencent.bk.job.common.exception.ServiceException;
-import com.tencent.bk.job.common.i18n.MessageI18nService;
+import com.tencent.bk.job.common.i18n.service.MessageI18nService;
+import com.tencent.bk.job.common.iam.constant.ActionId;
+import com.tencent.bk.job.common.iam.constant.ResourceTypeId;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
+import com.tencent.bk.job.common.model.dto.AppResourceScope;
+import com.tencent.bk.job.common.mysql.JobTransactional;
 import com.tencent.bk.job.common.util.JobContextUtil;
+import com.tencent.bk.job.common.util.PageUtil;
 import com.tencent.bk.job.common.util.date.DateUtils;
 import com.tencent.bk.job.crontab.model.CronJobVO;
-import com.tencent.bk.job.manage.common.consts.task.TaskPlanTypeEnum;
+import com.tencent.bk.job.manage.api.common.constants.task.TaskPlanTypeEnum;
+import com.tencent.bk.job.manage.auth.PlanAuthService;
+import com.tencent.bk.job.manage.auth.TemplateAuthService;
 import com.tencent.bk.job.manage.dao.plan.TaskPlanDAO;
 import com.tencent.bk.job.manage.model.dto.TaskPlanQueryDTO;
+import com.tencent.bk.job.manage.model.dto.task.TaskPlanBasicInfoDTO;
 import com.tencent.bk.job.manage.model.dto.task.TaskPlanInfoDTO;
 import com.tencent.bk.job.manage.model.dto.task.TaskStepDTO;
 import com.tencent.bk.job.manage.model.dto.task.TaskTemplateInfoDTO;
@@ -49,45 +64,78 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.helpers.MessageFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_ID;
+import static com.tencent.bk.audit.constants.AuditAttributeNames.INSTANCE_NAME;
+
 /**
- * @since 19/11/2019 16:43
+ * 作业执行方案 Service
  */
 @Slf4j
-@Service("TaskPlanServiceImpl")
+@Service("TaskPlanService")
 public class TaskPlanServiceImpl implements TaskPlanService {
 
     private final TaskPlanDAO taskPlanDAO;
     private final MessageI18nService i18nService;
-    private final CronJobService cronJobService;
-    private AbstractTaskStepService taskPlanStepService;
-    private AbstractTaskVariableService taskPlanVariableService;
-
-    @Autowired
+    private final AbstractTaskStepService taskPlanStepService;
+    private final AbstractTaskVariableService taskTemplateVariableService;
+    private final AbstractTaskVariableService taskPlanVariableService;
+    private final PlanAuthService planAuthService;
+    private CronJobService cronJobService;
     private TaskTemplateService taskTemplateService;
+    private final TemplateAuthService templateAuthService;
+
+
+    /**
+     * 通过 Set 方式注入，避免循环依赖问题
+     */
     @Autowired
-    private TaskPlanService taskPlanService;
+    @Lazy
+    public void setTaskTemplateService(TaskTemplateService taskTemplateService) {
+        this.taskTemplateService = taskTemplateService;
+    }
+
+    /**
+     * 通过 Set 方式注入，避免循环依赖问题
+     */
+    @Autowired
+    @Lazy
+    public void setCronJobService(CronJobService cronJobService) {
+        this.cronJobService = cronJobService;
+    }
 
     @Autowired
     public TaskPlanServiceImpl(
         TaskPlanDAO taskPlanDAO,
         @Qualifier("TaskPlanStepServiceImpl") AbstractTaskStepService taskPlanStepService,
+        @Qualifier("TaskTemplateVariableServiceImpl") AbstractTaskVariableService taskTemplateVariableService,
         @Qualifier("TaskPlanVariableServiceImpl") AbstractTaskVariableService taskPlanVariableService,
-        MessageI18nService i18nService, CronJobService cronJobService
-    ) {
+        MessageI18nService i18nService,
+        PlanAuthService planAuthService,
+        TemplateAuthService templateAuthService) {
         this.taskPlanDAO = taskPlanDAO;
         this.taskPlanStepService = taskPlanStepService;
+        this.taskTemplateVariableService = taskTemplateVariableService;
         this.taskPlanVariableService = taskPlanVariableService;
         this.i18nService = i18nService;
-        this.cronJobService = cronJobService;
+        this.planAuthService = planAuthService;
+        this.templateAuthService = templateAuthService;
     }
 
     /**
@@ -115,7 +163,7 @@ public class TaskPlanServiceImpl implements TaskPlanService {
     }
 
     @Override
-    public List<TaskPlanInfoDTO> listPageTaskPlansBasicInfo(Long appId, Long templateId) {
+    public List<TaskPlanInfoDTO> listTaskPlansBasicInfo(Long appId, Long templateId) {
         checkTemplateExist(appId, templateId);
         return taskPlanDAO.listTaskPlans(appId, templateId);
     }
@@ -129,42 +177,18 @@ public class TaskPlanServiceImpl implements TaskPlanService {
         boolean getAll = baseSearchCondition.isGetAll();
 
         List<TaskPlanInfoDTO> favoredPlanInfos = null;
-        boolean hasFavored = false;
         if (CollectionUtils.isNotEmpty(favoritePlanIdList)) {
             favoredPlanInfos = taskPlanDAO.listTaskPlanByIds(taskPlanQuery.getAppId(),
                 favoritePlanIdList, taskPlanQuery, baseSearchCondition);
-            if (CollectionUtils.isNotEmpty(favoredPlanInfos)) {
-                hasFavored = true;
+        }
+
+        PageData<TaskPlanInfoDTO> taskPlanInfoPageData = PageUtil.pageQuery(getAll, favoredPlanInfos, start, length,
+            finalStart -> {
+                baseSearchCondition.setStart(finalStart);
+                return taskPlanDAO.listPageTaskPlans(taskPlanQuery,
+                    baseSearchCondition, favoritePlanIdList);
             }
-        }
-
-        if (hasFavored && CollectionUtils.isNotEmpty(favoredPlanInfos) && !getAll) {
-            if (favoredPlanInfos.size() < start) {
-                baseSearchCondition.setStart(start - favoredPlanInfos.size());
-                favoredPlanInfos = null;
-            } else {
-                favoredPlanInfos.subList(0, start).clear();
-                baseSearchCondition.setStart(0);
-                baseSearchCondition.setLength(length - favoredPlanInfos.size());
-            }
-        }
-
-        PageData<TaskPlanInfoDTO> taskPlanInfoPageData = taskPlanDAO.listPageTaskPlans(taskPlanQuery,
-            baseSearchCondition, favoritePlanIdList);
-
-        if (hasFavored && CollectionUtils.isNotEmpty(favoredPlanInfos)) {
-            taskPlanInfoPageData.getData().addAll(0, favoredPlanInfos);
-            if (!getAll) {
-                if (length < taskPlanInfoPageData.getData().size()) {
-                    taskPlanInfoPageData.getData().subList(length, taskPlanInfoPageData.getData().size()).clear();
-                }
-            }
-        }
-
-        if (!getAll) {
-            taskPlanInfoPageData.setStart(start);
-            taskPlanInfoPageData.setPageSize(length);
-        }
+        );
 
         if (CollectionUtils.isNotEmpty(taskPlanInfoPageData.getData())) {
             taskPlanInfoPageData.setData(fillTemplateInfo(taskPlanInfoPageData.getData().get(0).getAppId(),
@@ -200,6 +224,11 @@ public class TaskPlanServiceImpl implements TaskPlanService {
     }
 
     @Override
+    public List<TaskPlanBasicInfoDTO> listTaskPlanByIds(Collection<Long> planIds) {
+        return taskPlanDAO.listTaskPlanBasicInfoByIds(planIds);
+    }
+
+    @Override
     public TaskPlanInfoDTO getTaskPlanById(Long appId, Long planId) {
         TaskPlanInfoDTO taskPlan = taskPlanDAO.getTaskPlanById(appId, 0L, planId, null);
         if (taskPlan != null) {
@@ -213,168 +242,321 @@ public class TaskPlanServiceImpl implements TaskPlanService {
     }
 
     @Override
-    @Transactional(rollbackFor = ServiceException.class)
-    public Long saveTaskPlan(TaskPlanInfoDTO taskPlanInfo) {
-        boolean insert = false;
-        if (taskPlanInfo == null) {
-            throw new ParamErrorException(ErrorCode.TASK_PLAN_NOT_EXIST);
-        }
-        if (taskPlanInfo.getId() == null || taskPlanInfo.getId() <= 0) {
-            TaskTemplateInfoDTO taskTemplate =
-                taskTemplateService.getTaskTemplateById(taskPlanInfo.getAppId(), taskPlanInfo.getTemplateId());
-            TaskPlanInfoDTO.buildPlanInfo(taskPlanInfo, taskTemplate);
-            insert = true;
-        }
-        try {
-            // process plan id
-            Long planId;
-            taskPlanInfo.setLastModifyUser(taskPlanInfo.getLastModifyUser());
-            taskPlanInfo.setLastModifyTime(taskPlanInfo.getLastModifyTime());
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_JOB_PLAN,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PLAN,
+            instanceIds = "#planId",
+            instanceNames = "#$?.name"
+        ),
+        content = EventContentConstants.VIEW_JOB_PLAN
+    )
+    public TaskPlanInfoDTO getTaskPlan(String username, Long appId, Long templateId, Long planId) {
+        checkViewPlanPermission(username, appId, templateId, planId);
 
-            if (insert) {
-                taskPlanInfo.setCreateTime(DateUtils.currentTimeSeconds());
-                planId = taskPlanDAO.insertTaskPlan(taskPlanInfo);
-                if (planId == null) {
-                    throw new ServiceException(ErrorCode.INSERT_TASK_PLAN_FAILED);
-                }
-                taskPlanInfo.setId(planId);
-            } else {
-                if (!taskPlanDAO.updateTaskPlanById(taskPlanInfo)) {
-                    throw new ServiceException(ErrorCode.UPDATE_TASK_PLAN_FAILED);
-                }
-                planId = taskPlanInfo.getId();
-            }
-
-            if (insert) {
-                // Save step
-                for (TaskStepDTO taskStep : taskPlanInfo.getStepList()) {
-                    taskStep.setPlanId(planId);
-                    // Insert give template step id
-                    if (taskPlanInfo.getEnableStepList().contains(taskStep.getTemplateStepId())) {
-                        taskStep.setEnable(1);
-                    } else {
-                        taskStep.setEnable(0);
-                    }
-                    // new step, insert to get id
-                    taskStep.setId(taskPlanStepService.insertStep(taskStep));
-                }
-            } else {
-                List<TaskStepDTO> taskStepList = taskPlanStepService.listStepsByParentId(planId);
-                if (CollectionUtils.isNotEmpty(taskStepList)) {
-                    for (TaskStepDTO taskStep : taskStepList) {
-                        // Update give step id
-                        if (taskPlanInfo.getEnableStepList().contains(taskStep.getId())) {
-                            taskStep.setEnable(1);
-                        } else {
-                            taskStep.setEnable(0);
-                        }
-                        taskPlanStepService.updateStepById(taskStep);
-                    }
-                }
-            }
-
-            if (insert) {
-                // Insert new variable
-                taskPlanInfo.getVariableList().forEach(variable -> variable.setPlanId(planId));
-                taskPlanVariableService.batchInsertVariable(taskPlanInfo.getVariableList());
-            } else {
-                for (TaskVariableDTO taskVariable : taskPlanInfo.getVariableList()) {
-                    taskVariable.setPlanId(planId);
-                    // Update exist variable
-                    taskPlanVariableService.updateVariableById(taskVariable);
-                }
-            }
-            return planId;
-        } catch (ServiceException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("Unknown exception while insert plan!", e);
-            throw new ServiceException(ErrorCode.SAVE_TASK_PLAN_UNKNOWN_ERROR);
+        TaskPlanInfoDTO taskPlan = getTaskPlanById(appId, templateId, planId);
+        if (taskPlan == null) {
+            log.warn("Task plan not exist, appId: {}, planId: {}", appId, planId);
+            throw new NotFoundException(ErrorCode.TASK_PLAN_NOT_EXIST);
         }
+
+        return taskPlan;
+    }
+
+    @ActionAuditRecord(
+        actionId = ActionId.VIEW_JOB_PLAN,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PLAN,
+            instanceIds = "#planId",
+            instanceNames = "#$?.name"
+        ),
+        content = EventContentConstants.VIEW_JOB_PLAN
+    )
+    public TaskPlanInfoDTO getTaskPlan(String username, Long appId, Long planId) {
+        TaskPlanInfoDTO taskPlan = getTaskPlanById(appId, planId);
+        if (taskPlan == null) {
+            log.warn("Task plan not exist, appId: {}, planId: {}", appId, planId);
+            throw new NotFoundException(ErrorCode.TASK_PLAN_NOT_EXIST);
+        }
+
+        checkViewPlanPermission(username, appId, taskPlan.getTemplateId(), planId);
+
+        return taskPlan;
     }
 
     @Override
-    public Boolean deleteTaskPlan(Long appId, Long templateId, Long planId) {
+    @JobTransactional(transactionManager = "jobManageTransactionManager")
+    @ActionAuditRecord(
+        actionId = ActionId.CREATE_JOB_PLAN,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PLAN,
+            instanceIds = "#$?.id",
+            instanceNames = "#$?.name"
+        ),
+        content = EventContentConstants.CREATE_JOB_PLAN
+    )
+    public TaskPlanInfoDTO createTaskPlan(String username, TaskPlanInfoDTO taskPlanInfo) {
+        checkCreatePlanPermission(username, taskPlanInfo.getAppId(), taskPlanInfo.getTemplateId());
+        TaskPlanInfoDTO newPlan = createTaskPlan(taskPlanInfo);
+        planAuthService.registerPlan(newPlan.getId(), newPlan.getName(), username);
+        return newPlan;
+    }
+
+    @Override
+    public TaskPlanInfoDTO createTaskPlan(TaskPlanInfoDTO taskPlanInfo) {
+        TaskTemplateInfoDTO taskTemplate =
+            taskTemplateService.getTaskTemplateById(taskPlanInfo.getAppId(), taskPlanInfo.getTemplateId());
+        TaskPlanInfoDTO.buildPlanInfo(taskPlanInfo, taskTemplate);
+
+        // process plan id
+        Long planId;
+        taskPlanInfo.setLastModifyUser(taskPlanInfo.getLastModifyUser());
+        taskPlanInfo.setLastModifyTime(taskPlanInfo.getLastModifyTime());
+        taskPlanInfo.setCreateTime(DateUtils.currentTimeSeconds());
+        planId = taskPlanDAO.insertTaskPlan(taskPlanInfo);
+        if (planId == null) {
+            throw new InternalException(ErrorCode.INSERT_TASK_PLAN_FAILED);
+        }
+        taskPlanInfo.setId(planId);
+
+        // Save step
+        for (TaskStepDTO taskStep : taskPlanInfo.getStepList()) {
+            taskStep.setPlanId(planId);
+            // Insert give template step id
+            if (taskPlanInfo.getEnableStepList().contains(taskStep.getTemplateStepId())) {
+                taskStep.setEnable(1);
+            } else {
+                taskStep.setEnable(0);
+            }
+            // new step, insert to get id
+            taskStep.setId(taskPlanStepService.insertStep(taskStep));
+        }
+
+        // Insert new variable
+        taskPlanInfo.getVariableList().forEach(variable -> variable.setPlanId(planId));
+        taskPlanVariableService.batchInsertVariable(taskPlanInfo.getVariableList());
+
+        return getTaskPlanById(planId);
+    }
+
+    private void checkCreatePlanPermission(String username, long appId, long templateId) {
+        planAuthService.authCreateJobPlan(username, new AppResourceScope(appId), templateId, null)
+            .denyIfNoPermission();
+    }
+
+    private void checkViewPlanPermission(String username, long appId, long templateId, long planId) {
+        planAuthService.authViewJobPlan(username, new AppResourceScope(appId), templateId, planId, null)
+            .denyIfNoPermission();
+    }
+
+    private void checkEditPlanPermission(String username, long appId, long templateId, long planId) {
+        planAuthService.authEditJobPlan(username, new AppResourceScope(appId), templateId, planId, null)
+            .denyIfNoPermission();
+    }
+
+    private void checkDeletePlanPermission(String username, long appId, long templateId, long planId) {
+        planAuthService.authDeleteJobPlan(username, new AppResourceScope(appId), templateId, planId, null)
+            .denyIfNoPermission();
+    }
+
+    @Override
+    @JobTransactional(transactionManager = "jobManageTransactionManager")
+    @ActionAuditRecord(
+        actionId = ActionId.EDIT_JOB_PLAN,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PLAN,
+            instanceIds = "#taskPlanInfo?.id",
+            instanceNames = "#taskPlanInfo?.name"
+        ),
+        content = EventContentConstants.EDIT_JOB_PLAN
+    )
+    public TaskPlanInfoDTO updateTaskPlan(String username, TaskPlanInfoDTO taskPlanInfo) {
+        checkEditPlanPermission(username, taskPlanInfo.getAppId(), taskPlanInfo.getTemplateId(),
+            taskPlanInfo.getId());
+
+        return updateTaskPlan(taskPlanInfo);
+    }
+
+    @Override
+    @JobTransactional(transactionManager = "jobManageTransactionManager")
+    public TaskPlanInfoDTO updateDebugTaskPlan(String username, TaskPlanInfoDTO taskPlanInfo) {
+        // 调试作业模版会保存一份内置的执行方案；从用户角度来说仍然还是在处理跟模版相关的操作，所以使用模版查看鉴权
+        templateAuthService.authViewJobTemplate(username,
+            new AppResourceScope(taskPlanInfo.getAppId()), taskPlanInfo.getTemplateId())
+            .denyIfNoPermission();
+
+        return updateTaskPlan(taskPlanInfo);
+    }
+
+    private TaskPlanInfoDTO updateTaskPlan(TaskPlanInfoDTO taskPlanInfo) {
+        Long planId = taskPlanInfo.getId();
+
+        TaskPlanInfoDTO originPlan = getTaskPlanById(planId);
+        if (originPlan == null) {
+            throw new NotFoundException(ErrorCode.TASK_PLAN_NOT_EXIST);
+        }
+
+        taskPlanInfo.setLastModifyUser(taskPlanInfo.getLastModifyUser());
+        taskPlanInfo.setLastModifyTime(taskPlanInfo.getLastModifyTime());
+
+        if (!taskPlanDAO.updateTaskPlanById(taskPlanInfo)) {
+            throw new InternalException(ErrorCode.UPDATE_TASK_PLAN_FAILED);
+        }
+
+        List<TaskStepDTO> taskStepList = taskPlanStepService.listStepsByParentId(planId);
+        if (CollectionUtils.isNotEmpty(taskStepList)) {
+            for (TaskStepDTO taskStep : taskStepList) {
+                // Update give step id
+                if (taskPlanInfo.getEnableStepList().contains(taskStep.getId())) {
+                    taskStep.setEnable(1);
+                } else {
+                    taskStep.setEnable(0);
+                }
+                taskPlanStepService.updateStepById(taskStep);
+            }
+        }
+
+        for (TaskVariableDTO taskVariable : taskPlanInfo.getVariableList()) {
+            taskVariable.setPlanId(planId);
+            // Update exist variable
+            taskPlanVariableService.updateVariableById(taskVariable);
+        }
+
+        TaskPlanInfoDTO updatedPlan = getTaskPlanById(planId);
+
+        // 审计记录
+        ActionAuditContext.current()
+            .setOriginInstance(TaskPlanInfoDTO.toEsbPlanInfoV3(originPlan))
+            .setInstance(TaskPlanInfoDTO.toEsbPlanInfoV3(updatedPlan));
+
+        return updatedPlan;
+    }
+
+    @Override
+    @ActionAuditRecord(
+        actionId = ActionId.DELETE_JOB_PLAN,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PLAN,
+            instanceIds = "#planId",
+            instanceNames = "#$?.name"
+        ),
+        content = EventContentConstants.DELETE_JOB_PLAN
+    )
+    public TaskPlanInfoDTO deleteTaskPlan(String username, Long appId, Long templateId, Long planId) {
+        checkDeletePlanPermission(username, appId, templateId, planId);
+
+        TaskPlanInfoDTO plan = getTaskPlanById(appId, templateId, planId);
+        if (plan == null) {
+            throw new NotFoundException(ErrorCode.TASK_PLAN_NOT_EXIST);
+        }
+
         Map<Long, List<CronJobVO>> cronJobMap =
             cronJobService.batchListCronJobByPlanIds(appId, Collections.singletonList(planId));
         if (MapUtils.isNotEmpty(cronJobMap) && CollectionUtils.isNotEmpty(cronJobMap.get(planId))) {
-            throw new ServiceException(ErrorCode.DELETE_PLAN_FAILED_USING_BY_CRON);
+            throw new FailedPreconditionException(ErrorCode.DELETE_PLAN_FAILED_USING_BY_CRON);
         }
-        return taskPlanDAO.deleteTaskPlanById(appId, templateId, planId);
+        taskPlanDAO.deleteTaskPlanById(appId, templateId, planId);
+
+        return plan;
     }
 
     @Override
-    @Transactional(rollbackFor = ServiceException.class)
+    @JobTransactional(transactionManager = "jobManageTransactionManager")
     public TaskPlanInfoDTO getDebugTaskPlan(String username, Long appId, Long templateId) {
         TaskPlanInfoDTO taskPlan = taskPlanDAO.getDebugTaskPlan(appId, templateId);
         TaskTemplateInfoDTO taskTemplateInfo = taskTemplateService.getTaskTemplateBasicInfoById(appId, templateId);
         if (taskTemplateInfo == null) {
-            throw new ServiceException(ErrorCode.TEMPLATE_NOT_EXIST);
+            throw new NotFoundException(ErrorCode.TEMPLATE_NOT_EXIST);
         }
         if (taskPlan != null) {
             if (!taskTemplateInfo.getVersion().equals(taskPlan.getVersion())) {
-                taskPlanService.sync(appId, templateId, taskPlan.getId(), taskTemplateInfo.getVersion());
+                // 作业模板有更新，需要同步到调试执行方案（不含变量）
+                sync(appId, templateId, taskPlan.getId(), taskTemplateInfo.getVersion());
                 taskPlan = taskPlanDAO.getDebugTaskPlan(appId, templateId);
             }
-            taskPlan.setStepList(taskPlanStepService.listStepsByParentId(taskPlan.getId()));
-            taskPlan.setVariableList(taskPlanVariableService.listVariablesByParentId(taskPlan.getId()));
-            return taskPlan;
-        }
-
-        try {
-            taskPlan = new TaskPlanInfoDTO();
-            taskPlan.setAppId(appId);
-            taskPlan.setTemplateId(templateId);
-            taskPlan.setName(taskTemplateInfo.getName() +
-                "_" + i18nService.getI18n("job.task.plan.debug")
-                + "_" + System.currentTimeMillis() / 1000L
+            List<TaskVariableDTO> templateVariableList =
+                taskTemplateVariableService.listVariablesByParentId(taskPlan.getTemplateId());
+            // 始终使用模板最新变量作为执行方案变量并更新到DB
+            setPlanIdForVariables(taskPlan.getId(), templateVariableList);
+            int deletedVarNum = taskPlanVariableService.deleteVariableByParentId(taskPlan.getId());
+            List<Long> insertedVarIds = taskPlanVariableService.batchInsertVariable(templateVariableList);
+            log.debug(
+                "sync template variable to debug plan:{} taskPlan variable deleted, {} variable inserted:{}",
+                deletedVarNum,
+                insertedVarIds.size(),
+                insertedVarIds
             );
-            taskPlan.setCreator(username);
-            taskPlan.setLastModifyUser(username);
-            taskPlan.setLastModifyTime(DateUtils.currentTimeSeconds());
-            taskPlan.setDebug(true);
-            taskPlan.setId(taskPlanService.saveTaskPlan(taskPlan));
-
-            taskPlan = taskPlanDAO.getTaskPlanById(appId, templateId, taskPlan.getId(), TaskPlanTypeEnum.DEBUG);
             taskPlan.setStepList(taskPlanStepService.listStepsByParentId(taskPlan.getId()));
             taskPlan.setVariableList(taskPlanVariableService.listVariablesByParentId(taskPlan.getId()));
-            taskPlan.setVersion(taskTemplateInfo.getVersion());
+            taskPlan.setName(taskTemplateInfo.getName());
 
-            for (TaskStepDTO taskStep : taskPlan.getStepList()) {
-                taskStep.setEnable(1);
-                taskPlan.getEnableStepList().add(taskStep.getId());
-            }
-            taskPlanService.saveTaskPlan(taskPlan);
             return taskPlan;
-        } catch (Exception e) {
-            log.error("Error while creating debug plan", e);
-            throw new ServiceException(ErrorCode.CREATE_DEBUG_PLAN_ERROR);
         }
+
+        // 如果不存在调试方案，需要创建一个再查询
+        taskPlan = new TaskPlanInfoDTO();
+        taskPlan.setAppId(appId);
+        taskPlan.setTemplateId(templateId);
+        taskPlan.setName(taskTemplateInfo.getName());
+        taskPlan.setCreator(username);
+        taskPlan.setLastModifyUser(username);
+        taskPlan.setLastModifyTime(DateUtils.currentTimeSeconds());
+        taskPlan.setDebug(true);
+        taskPlan.setId(createTaskPlan(taskPlan).getId());
+
+        taskPlan = taskPlanDAO.getTaskPlanById(appId, templateId, taskPlan.getId(), TaskPlanTypeEnum.DEBUG);
+        taskPlan.setStepList(taskPlanStepService.listStepsByParentId(taskPlan.getId()));
+        taskPlan.setVariableList(taskPlanVariableService.listVariablesByParentId(taskPlan.getId()));
+        taskPlan.setVersion(taskTemplateInfo.getVersion());
+
+        for (TaskStepDTO taskStep : taskPlan.getStepList()) {
+            taskStep.setEnable(1);
+            taskPlan.getEnableStepList().add(taskStep.getId());
+        }
+        updateTaskPlan(taskPlan);
+        return taskPlan;
+    }
+
+    private void setPlanIdForVariables(Long planId, List<TaskVariableDTO> variableList) {
+        if (CollectionUtils.isEmpty(variableList)) {
+            return;
+        }
+        variableList.forEach(variable -> variable.setPlanId(planId));
     }
 
     @Override
-    public List<TaskPlanInfoDTO> listPlanBasicInfoByIds(Long appId, List<Long> planIdList) {
+    public List<TaskPlanInfoDTO> listPlanBasicInfoWithVariablesByIds(Long appId, List<Long> planIdList) {
         List<TaskPlanInfoDTO> taskPlanInfoList = taskPlanDAO.listTaskPlanByIds(
             appId,
             planIdList,
             null,
             null
         );
-        taskPlanInfoList.parallelStream().forEach(taskPlan ->
+        taskPlanInfoList.forEach(taskPlan ->
             taskPlan.setVariableList(taskPlanVariableService.listVariablesByParentId(taskPlan.getId())));
         return fillTemplateInfo(appId, taskPlanInfoList);
     }
 
+    @Override
+    public List<TaskPlanInfoDTO> listPlanBasicInfoByIds(Long appId, List<Long> planIdList) {
+        return taskPlanDAO.listTaskPlanByIds(
+            appId,
+            planIdList,
+            null,
+            null
+        );
+    }
+
     private List<TaskPlanInfoDTO> fillTemplateInfo(Long appId, List<TaskPlanInfoDTO> planList) {
-        List<Long> templateIdList = planList.parallelStream().map(TaskPlanInfoDTO::getTemplateId).distinct()
+        List<Long> templateIdList = planList.stream().map(TaskPlanInfoDTO::getTemplateId).distinct()
             .collect(Collectors.toList());
         List<TaskTemplateInfoDTO> templateInfoList =
             taskTemplateService.listTaskTemplateBasicInfoByIds(appId, templateIdList);
 
         Map<Long, TaskTemplateInfoDTO> templateInfoMap = new ConcurrentHashMap<>(templateInfoList.size());
-        templateInfoList.parallelStream()
+        templateInfoList
             .forEach(taskTemplateInfoDTO -> templateInfoMap.put(taskTemplateInfoDTO.getId(), taskTemplateInfoDTO));
-        return planList.parallelStream()
+        return planList.stream()
             .filter(planInfo -> templateInfoMap.containsKey(planInfo.getTemplateId())).peek(taskPlanInfoDTO -> {
                 taskPlanInfoDTO.setTemplateName(templateInfoMap.get(taskPlanInfoDTO.getTemplateId()).getName());
                 taskPlanInfoDTO.setTemplateVersion(templateInfoMap.get(taskPlanInfoDTO.getTemplateId()).getVersion());
@@ -397,7 +579,15 @@ public class TaskPlanServiceImpl implements TaskPlanService {
     }
 
     @Override
-    @Transactional(rollbackFor = {Exception.class, Error.class})
+    @JobTransactional(transactionManager = "jobManageTransactionManager")
+    @ActionAuditRecord(
+        actionId = ActionId.SYNC_JOB_PLAN,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PLAN,
+            instanceIds = "#planId"
+        ),
+        content = "Sync plan [{{" + INSTANCE_NAME + "}}]({{" + INSTANCE_ID + "}})"
+    )
     public Boolean sync(Long appId, Long templateId, Long planId, String templateVersion) {
         TaskTemplateInfoDTO taskTemplate = taskTemplateService.getTaskTemplateById(appId, templateId);
         if (taskTemplate == null) {
@@ -406,7 +596,7 @@ public class TaskPlanServiceImpl implements TaskPlanService {
         if (!templateVersion.equals(taskTemplate.getVersion())) {
             return false;
         }
-        TaskPlanInfoDTO taskPlan = taskPlanService.getTaskPlanById(appId, planId);
+        TaskPlanInfoDTO taskPlan = getTaskPlanById(appId, planId);
         if (taskPlan == null) {
             return false;
         }
@@ -460,22 +650,23 @@ public class TaskPlanServiceImpl implements TaskPlanService {
             taskPlan.setVariableList(Collections.emptyList());
         }
 
-        taskPlanService.syncPlan(taskPlan);
+        syncPlan(taskPlan);
+
+        // 审计 - 实例名称
+        ActionAuditContext.current().setInstanceName(taskPlan.getName());
+
         return true;
     }
 
     @Override
-    @Transactional(rollbackFor = {Exception.class, Error.class})
+    @JobTransactional(transactionManager = "jobManageTransactionManager")
     public void syncPlan(TaskPlanInfoDTO taskPlanInfo) {
-        if (taskPlanInfo == null) {
-            throw new ParamErrorException(ErrorCode.MISSING_PARAM);
-        }
         try {
             // process plan id
             Long planId = taskPlanInfo.getId();
 
             if (!taskPlanDAO.updateTaskPlanById(taskPlanInfo)) {
-                throw new ServiceException(ErrorCode.UPDATE_TASK_PLAN_FAILED);
+                throw new InternalException(ErrorCode.UPDATE_TASK_PLAN_FAILED);
             }
 
             List<TaskStepDTO> taskStepList = taskPlanStepService.listStepsByParentId(planId);
@@ -500,7 +691,7 @@ public class TaskPlanServiceImpl implements TaskPlanService {
             List<Long> oldVariableIdList;
             if (CollectionUtils.isNotEmpty(oldVariableList)) {
                 oldVariableIdList =
-                    oldVariableList.parallelStream().map(TaskVariableDTO::getId).collect(Collectors.toList());
+                    oldVariableList.stream().map(TaskVariableDTO::getId).collect(Collectors.toList());
             } else {
                 oldVariableIdList = null;
             }
@@ -530,7 +721,7 @@ public class TaskPlanServiceImpl implements TaskPlanService {
             throw e;
         } catch (Exception e) {
             log.error("Unknown exception while sync plan!", e);
-            throw new ServiceException(ErrorCode.SYNC_TASK_PLAN_UNKNOWN_ERROR);
+            throw new InternalException(ErrorCode.SYNC_TASK_PLAN_UNKNOWN_ERROR);
         }
     }
 
@@ -547,7 +738,7 @@ public class TaskPlanServiceImpl implements TaskPlanService {
             if (taskTemplateInfo != null) {
                 taskPlan.setName(taskTemplateInfo.getName());
             } else {
-                throw new ServiceException(ErrorCode.TEMPLATE_NOT_EXIST);
+                throw new NotFoundException(ErrorCode.TEMPLATE_NOT_EXIST);
             }
             taskPlan.setCreator(username);
             if (createTime != null && createTime > 0) {
@@ -570,7 +761,7 @@ public class TaskPlanServiceImpl implements TaskPlanService {
             taskPlan.setLastStepId(taskTemplateInfo.getLastStepId());
             taskPlan.setNeedUpdate(false);
             taskPlan.setVersion(taskTemplateInfo.getVersion());
-            taskPlanService.saveTaskPlanWithId(taskPlan);
+            saveTaskPlanWithId(taskPlan);
 
             taskPlan = taskPlanDAO.getTaskPlanById(appId, templateId, taskPlan.getId(), TaskPlanTypeEnum.NORMAL);
             taskPlan.setStepList(taskTemplateInfo.getStepList());
@@ -591,11 +782,11 @@ public class TaskPlanServiceImpl implements TaskPlanService {
 
                 taskPlan.getEnableStepList().add(taskStep.getId());
             }
-            taskPlanService.saveTaskPlan(taskPlan);
+            createTaskPlan(taskPlan);
             return planId;
         } catch (Exception e) {
             log.error("Error while creating debug plan", e);
-            throw new ServiceException(ErrorCode.CREATE_DEBUG_PLAN_ERROR);
+            throw new InternalException(ErrorCode.CREATE_DEBUG_PLAN_ERROR);
         }
     }
 
@@ -620,16 +811,13 @@ public class TaskPlanServiceImpl implements TaskPlanService {
     }
 
     @Override
-    @Transactional(rollbackFor = {Exception.class, Error.class})
+    @JobTransactional(transactionManager = "jobManageTransactionManager")
     public Long saveTaskPlanForBackup(TaskPlanInfoDTO taskPlanInfo) {
         try {
-            if (taskPlanInfo == null) {
-                throw new ServiceException(ErrorCode.MISSING_PARAM);
-            }
             TaskPlanInfoDTO taskPlanByName = taskPlanDAO.getTaskPlanByName(taskPlanInfo.getAppId(),
                 taskPlanInfo.getTemplateId(), taskPlanInfo.getName());
             if (taskPlanByName != null) {
-                throw new ServiceException(ErrorCode.PLAN_NAME_EXIST);
+                throw new AlreadyExistsException(ErrorCode.PLAN_NAME_EXIST);
             }
 
             // process template id
@@ -641,10 +829,10 @@ public class TaskPlanServiceImpl implements TaskPlanService {
                     if (taskPlanDAO.insertTaskPlanWithId(taskPlanInfo)) {
                         planId = taskPlanInfo.getId();
                     } else {
-                        throw new ServiceException(ErrorCode.INSERT_TASK_PLAN_FAILED);
+                        throw new InternalException(ErrorCode.INSERT_TASK_PLAN_FAILED);
                     }
                 } else {
-                    throw new ServiceException(ErrorCode.PLAN_ID_EXIST);
+                    throw new AlreadyExistsException(ErrorCode.PLAN_ID_EXIST);
                 }
             }
             taskPlanInfo.setId(planId);
@@ -661,7 +849,7 @@ public class TaskPlanServiceImpl implements TaskPlanService {
                 preStep = taskStepDTO;
             }
             if (preStep == null) {
-                throw new ServiceException(ErrorCode.INSERT_TASK_PLAN_FAILED);
+                throw new InternalException(ErrorCode.INSERT_TASK_PLAN_FAILED);
             }
             preStep.setNextStepId(0L);
             taskPlanStepService.insertStep(preStep);
@@ -678,12 +866,29 @@ public class TaskPlanServiceImpl implements TaskPlanService {
             throw e;
         } catch (Exception e) {
             log.error("Unknown exception while insert template!", e);
-            throw new ServiceException(ErrorCode.SAVE_TEMPLATE_UNKNOWN_ERROR);
+            throw new InternalException(ErrorCode.SAVE_TEMPLATE_UNKNOWN_ERROR);
         }
     }
 
     @Override
+    @ActionAuditRecord(
+        actionId = ActionId.DELETE_JOB_PLAN,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PLAN
+        ),
+        content = EventContentConstants.DELETE_JOB_PLAN
+    )
     public boolean deleteTaskPlanByTemplate(Long appId, Long templateId) {
+        // 审计
+        List<TaskPlanInfoDTO> deletePlans = listTaskPlansBasicInfo(appId, templateId);
+        if (CollectionUtils.isNotEmpty(deletePlans)) {
+            ActionAuditContext.current()
+                .setInstanceIdList(
+                    deletePlans.stream().map(plan -> plan.getId().toString()).collect(Collectors.toList()))
+                .setInstanceNameList(
+                    deletePlans.stream().map(TaskPlanInfoDTO::getName).collect(Collectors.toList()));
+        }
+
         return taskPlanDAO.deleteTaskPlanByTemplate(appId, templateId);
     }
 
@@ -715,15 +920,32 @@ public class TaskPlanServiceImpl implements TaskPlanService {
     }
 
     @Override
-    @Transactional(rollbackFor = {Exception.class, Error.class})
+    @JobTransactional(transactionManager = "jobManageTransactionManager")
+    @ActionAuditRecord(
+        actionId = ActionId.EDIT_JOB_PLAN,
+        instance = @AuditInstanceRecord(
+            resourceType = ResourceTypeId.PLAN
+        ),
+        content = EventContentConstants.EDIT_JOB_PLAN
+    )
     public boolean batchUpdatePlanVariable(List<TaskPlanInfoDTO> planInfoList) {
         if (CollectionUtils.isEmpty(planInfoList)) {
             return true;
         }
         for (TaskPlanInfoDTO planInfo : planInfoList) {
             try {
+                TaskPlanInfoDTO originPlan = getTaskPlanById(planInfo.getId());
+                if (originPlan == null) {
+                    throw new NotFoundException(ErrorCode.TASK_PLAN_NOT_EXIST);
+                }
+
                 if (taskPlanVariableService.batchUpdateVariableByName(planInfo.getVariableList())) {
                     if (taskPlanDAO.updateTaskPlanById(planInfo)) {
+                        // 添加审计
+                        TaskPlanInfoDTO updatedPlan = getTaskPlanById(planInfo.getId());
+                        ActionAuditContext.current()
+                            .addInstanceInfo(String.valueOf(planInfo.getId()), planInfo.getName(), originPlan,
+                                updatedPlan);
                         continue;
                     } else {
                         log.error("Error while updating plan info after batch update variable value!|{}", planInfo);
@@ -731,9 +953,13 @@ public class TaskPlanServiceImpl implements TaskPlanService {
                 } else {
                     log.error("Error while batch update variable value!|{}", planInfo);
                 }
-                throw new ServiceException(ErrorCode.BATCH_UPDATE_PLAN_VARIABLE_FAILED);
+                throw new InternalException(ErrorCode.BATCH_UPDATE_PLAN_VARIABLE_FAILED);
             } catch (Exception e) {
-                log.error("Error while batch update plan variable value!|{}", planInfo, e);
+                String msg = MessageFormatter.format(
+                    "Error while batch update plan variable value!|{}",
+                    planInfo
+                ).getMessage();
+                log.error(msg, e);
                 throw e;
             }
         }
@@ -743,7 +969,7 @@ public class TaskPlanServiceImpl implements TaskPlanService {
     private void checkTemplateExist(Long appId, Long templateId) {
         TaskTemplateInfoDTO taskTemplateBasicInfo = taskTemplateService.getTaskTemplateBasicInfoById(appId, templateId);
         if (taskTemplateBasicInfo == null) {
-            throw new ServiceException(ErrorCode.TEMPLATE_NOT_EXIST);
+            throw new NotFoundException(ErrorCode.TEMPLATE_NOT_EXIST);
         }
     }
 }

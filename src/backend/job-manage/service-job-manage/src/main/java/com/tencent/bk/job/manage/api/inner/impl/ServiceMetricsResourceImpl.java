@@ -24,18 +24,20 @@
 
 package com.tencent.bk.job.manage.api.inner.impl;
 
-import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.model.InternalResponse;
+import com.tencent.bk.job.manage.api.common.constants.JobResourceStatusEnum;
+import com.tencent.bk.job.manage.api.common.constants.account.AccountTypeEnum;
+import com.tencent.bk.job.manage.api.common.constants.script.ScriptTypeEnum;
+import com.tencent.bk.job.manage.api.common.constants.task.TaskFileTypeEnum;
+import com.tencent.bk.job.manage.api.common.constants.task.TaskScriptSourceEnum;
+import com.tencent.bk.job.manage.api.common.constants.task.TaskStepTypeEnum;
 import com.tencent.bk.job.manage.api.inner.ServiceMetricsResource;
-import com.tencent.bk.job.manage.common.consts.JobResourceStatusEnum;
-import com.tencent.bk.job.manage.common.consts.account.AccountTypeEnum;
-import com.tencent.bk.job.manage.common.consts.script.ScriptTypeEnum;
-import com.tencent.bk.job.manage.common.consts.task.TaskFileTypeEnum;
-import com.tencent.bk.job.manage.common.consts.task.TaskScriptSourceEnum;
-import com.tencent.bk.job.manage.common.consts.task.TaskStepTypeEnum;
+import com.tencent.bk.job.manage.model.dto.ResourceTagDTO;
 import com.tencent.bk.job.manage.service.AccountService;
-import com.tencent.bk.job.manage.service.ApplicationHostService;
 import com.tencent.bk.job.manage.service.ApplicationService;
-import com.tencent.bk.job.manage.service.ScriptService;
+import com.tencent.bk.job.manage.service.ScriptManager;
+import com.tencent.bk.job.manage.service.TagService;
+import com.tencent.bk.job.manage.service.host.HostService;
 import com.tencent.bk.job.manage.service.plan.TaskPlanService;
 import com.tencent.bk.job.manage.service.template.TaskTemplateService;
 import lombok.extern.slf4j.Slf4j;
@@ -43,92 +45,102 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
-@RestController
+@RestController("manageMetricsResource")
 @Slf4j
 public class ServiceMetricsResourceImpl implements ServiceMetricsResource {
 
     private final ApplicationService applicationService;
     private final AccountService accountService;
-    private final ScriptService scriptService;
+    private final ScriptManager scriptManager;
     private final TaskTemplateService taskTemplateService;
     private final TaskPlanService taskPlanService;
-    private final ApplicationHostService applicationHostService;
+    private final HostService hostService;
+    private final TagService tagService;
 
     @Autowired
-    public ServiceMetricsResourceImpl(ApplicationService applicationService, AccountService accountService,
-                                      ScriptService scriptService, TaskTemplateService taskTemplateService,
-                                      TaskPlanService taskPlanService, ApplicationHostService applicationHostService) {
+    public ServiceMetricsResourceImpl(ApplicationService applicationService,
+                                      AccountService accountService,
+                                      ScriptManager scriptManager,
+                                      TaskTemplateService taskTemplateService,
+                                      TaskPlanService taskPlanService,
+                                      HostService hostService,
+                                      TagService tagService) {
         this.applicationService = applicationService;
         this.accountService = accountService;
-        this.scriptService = scriptService;
+        this.scriptManager = scriptManager;
         this.taskTemplateService = taskTemplateService;
         this.taskPlanService = taskPlanService;
-        this.applicationHostService = applicationHostService;
+        this.hostService = hostService;
+        this.tagService = tagService;
     }
 
     @Override
-    public ServiceResponse<Integer> countApps(String username) {
-        return ServiceResponse.buildSuccessResp(applicationService.countApps(username));
+    public InternalResponse<Integer> countApps(String username) {
+        return InternalResponse.buildSuccessResp(applicationService.countApps());
     }
 
     @Override
-    public ServiceResponse<Integer> countTemplates(Long appId) {
-        return ServiceResponse.buildSuccessResp(taskTemplateService.countTemplates(appId));
+    public InternalResponse<Integer> countTemplates(Long appId) {
+        return InternalResponse.buildSuccessResp(taskTemplateService.countTemplates(appId));
     }
 
     @Override
-    public ServiceResponse<Integer> countTaskPlans(Long appId) {
-        return ServiceResponse.buildSuccessResp(taskPlanService.countTaskPlans(appId));
+    public InternalResponse<Integer> countTaskPlans(Long appId) {
+        return InternalResponse.buildSuccessResp(taskPlanService.countTaskPlans(appId));
     }
 
     @Override
-    public ServiceResponse<Integer> countTemplateSteps(Long appId, TaskStepTypeEnum taskStepType,
-                                                       TaskScriptSourceEnum scriptSource, TaskFileTypeEnum fileType) {
-        return ServiceResponse.buildSuccessResp(taskTemplateService.countTemplateSteps(appId, taskStepType,
+    public InternalResponse<Integer> countTemplateSteps(Long appId, TaskStepTypeEnum taskStepType,
+                                                        TaskScriptSourceEnum scriptSource, TaskFileTypeEnum fileType) {
+        return InternalResponse.buildSuccessResp(taskTemplateService.countTemplateSteps(appId, taskStepType,
             scriptSource, fileType));
     }
 
     @Override
-    public ServiceResponse<Integer> countScripts(Long appId, ScriptTypeEnum scriptTypeEnum,
-                                                 JobResourceStatusEnum jobResourceStatusEnum) {
-        return ServiceResponse.buildSuccessResp(scriptService.countScripts(appId, scriptTypeEnum,
+    public InternalResponse<Integer> countScripts(Long appId, ScriptTypeEnum scriptTypeEnum,
+                                                  JobResourceStatusEnum jobResourceStatusEnum) {
+        return InternalResponse.buildSuccessResp(scriptManager.countScripts(appId, scriptTypeEnum,
             jobResourceStatusEnum));
     }
 
     @Override
-    public ServiceResponse<Integer> countCiteScripts(Long appId) {
-        return ServiceResponse.buildSuccessResp(scriptService.countCiteScripts(appId));
+    public InternalResponse<Integer> countCiteScripts(Long appId) {
+        return InternalResponse.buildSuccessResp(scriptManager.countCiteScripts(appId));
     }
 
     @Override
-    public ServiceResponse<Integer> countCiteScriptSteps(Long appId) {
-        List<String> scriptIdList = scriptService.listScriptIds(appId);
-        return ServiceResponse.buildSuccessResp(taskTemplateService.countCiteScriptSteps(appId, scriptIdList));
+    public InternalResponse<Integer> countCiteScriptSteps(Long appId) {
+        List<String> scriptIdList = scriptManager.listScriptIds(appId);
+        return InternalResponse.buildSuccessResp(taskTemplateService.countCiteScriptSteps(appId, scriptIdList));
     }
 
     @Override
-    public ServiceResponse<Integer> countScriptVersions(Long appId, ScriptTypeEnum scriptTypeEnum,
-                                                        JobResourceStatusEnum jobResourceStatusEnum) {
-        return ServiceResponse.buildSuccessResp(scriptService.countScriptVersions(appId, scriptTypeEnum,
+    public InternalResponse<Integer> countScriptVersions(Long appId, ScriptTypeEnum scriptTypeEnum,
+                                                         JobResourceStatusEnum jobResourceStatusEnum) {
+        return InternalResponse.buildSuccessResp(scriptManager.countScriptVersions(appId, scriptTypeEnum,
             jobResourceStatusEnum));
     }
 
     @Override
-    public ServiceResponse<Integer> countAccounts(AccountTypeEnum accountType) {
-        return ServiceResponse.buildSuccessResp(accountService.countAccounts(accountType));
+    public InternalResponse<Integer> countAccounts(AccountTypeEnum accountType) {
+        return InternalResponse.buildSuccessResp(accountService.countAccounts(accountType));
     }
 
     @Override
-    public ServiceResponse<Long> countHostsByOsType(String osType) {
-        return ServiceResponse.buildSuccessResp(applicationHostService.countHostsByOsType(osType));
+    public InternalResponse<Long> countHostsByOsType(String osType) {
+        return InternalResponse.buildSuccessResp(hostService.countHostsByOsType(osType));
     }
 
     @Override
-    public ServiceResponse<Long> tagCitedCount(Long appId, Long tagId) {
-        Integer citedScriptCount = scriptService.countByTag(appId, tagId);
-        Integer citedTaskTemplateCount = taskTemplateService.countByTag(appId, tagId);
-        Long tagCitedCount = (long) citedScriptCount + (long) citedTaskTemplateCount;
-        return ServiceResponse.buildSuccessResp(tagCitedCount);
+    public InternalResponse<Map<String, Integer>> groupHostByOsType() {
+        return InternalResponse.buildSuccessResp(hostService.groupHostByOsType());
+    }
+
+    @Override
+    public InternalResponse<Long> tagCitedCount(Long appId, Long tagId) {
+        List<ResourceTagDTO> scriptResourceTags = tagService.listResourceTagsByTagId(appId, tagId);
+        return InternalResponse.buildSuccessResp((long) scriptResourceTags.size());
     }
 }

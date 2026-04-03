@@ -24,11 +24,17 @@
 
 package com.tencent.bk.job.crontab.api.inner;
 
-import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.annotation.EsbAPI;
+import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.crontab.model.inner.ServiceInnerCronJobInfoDTO;
 import com.tencent.bk.job.crontab.model.inner.request.ServiceAddInnerCronJobRequestDTO;
+import com.tentent.bk.job.common.api.feign.annotation.SmartFeignClient;
 import io.swagger.annotations.Api;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
@@ -36,8 +42,8 @@ import java.util.List;
  * @since 18/2/2020 15:11
  */
 @Api(tags = {"Inner_Cron_Job"})
-@RequestMapping("/service/inner/cron/job")
-@RestController
+@SmartFeignClient(value = "job-crontab", contextId = "innerCronJobResource")
+@EsbAPI
 public interface ServiceInnerCronJobResource {
 
     /**
@@ -48,8 +54,8 @@ public interface ServiceInnerCronJobResource {
      * @param request  作业详情
      * @return 是否创建成功
      */
-    @PutMapping("/{systemId}/{jobKey}")
-    ServiceResponse<Boolean> addNewCronJob(
+    @PutMapping("/service/inner/cron/job/{systemId}/{jobKey}")
+    InternalResponse<Boolean> addNewCronJob(
         @PathVariable("systemId") String systemId,
         @PathVariable("jobKey") String jobKey, @RequestBody ServiceAddInnerCronJobRequestDTO request
     );
@@ -61,8 +67,8 @@ public interface ServiceInnerCronJobResource {
      * @param jobKey   任务 Key
      * @return 定时任务详情
      */
-    @GetMapping("/{systemId}/{jobKey}")
-    ServiceResponse<ServiceInnerCronJobInfoDTO> getCronJobInfoByKey(
+    @GetMapping("/service/inner/cron/job/{systemId}/{jobKey}")
+    InternalResponse<ServiceInnerCronJobInfoDTO> getCronJobInfoByKey(
         @PathVariable("systemId") String systemId,
         @PathVariable("jobKey") String jobKey
     );
@@ -74,8 +80,8 @@ public interface ServiceInnerCronJobResource {
      * @param jobKey   任务 Key
      * @return 删除是否成功
      */
-    @DeleteMapping("/{systemId}/{jobKey}")
-    ServiceResponse<Boolean> deleteCronJob(
+    @DeleteMapping("/service/inner/cron/job/{systemId}/{jobKey}")
+    InternalResponse<Boolean> deleteCronJob(
         @PathVariable("systemId") String systemId,
         @PathVariable("jobKey") String jobKey
     );
@@ -86,7 +92,7 @@ public interface ServiceInnerCronJobResource {
      * @param systemId 系统 ID
      * @return 定时任务列表
      */
-    @GetMapping("/{systemId}")
-    ServiceResponse<List<ServiceInnerCronJobInfoDTO>> listCronJobs(@PathVariable("systemId") String systemId);
+    @GetMapping("/service/inner/cron/job/{systemId}")
+    InternalResponse<List<ServiceInnerCronJobInfoDTO>> listCronJobs(@PathVariable("systemId") String systemId);
 
 }

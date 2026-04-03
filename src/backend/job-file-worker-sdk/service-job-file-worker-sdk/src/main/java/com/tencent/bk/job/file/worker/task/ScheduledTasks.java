@@ -24,8 +24,9 @@
 
 package com.tencent.bk.job.file.worker.task;
 
-import com.tencent.bk.job.file.worker.task.clear.ClearExpiredFileTask;
-import com.tencent.bk.job.file.worker.task.heartbeat.HeartBeatTask;
+import com.tencent.bk.job.file.worker.state.event.WorkerEvent;
+import com.tencent.bk.job.file.worker.state.event.WorkerEventService;
+import com.tencent.bk.job.file.worker.task.clear.ClearFileTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,29 +34,42 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-@Component
+@Component("jobFileWorkerScheduledTasks")
 @EnableScheduling
 public class ScheduledTasks {
 
     private static final Logger logger = LoggerFactory.getLogger(ScheduledTasks.class);
 
-    private final HeartBeatTask heartBeatTask;
-    private final ClearExpiredFileTask clearExpiredFileTask;
+    private final WorkerEventService workerEventService;
+    private final ClearFileTask clearFileTask;
 
     @Autowired
-    public ScheduledTasks(HeartBeatTask heartBeatTask, ClearExpiredFileTask clearExpiredFileTask) {
-        this.heartBeatTask = heartBeatTask;
-        this.clearExpiredFileTask = clearExpiredFileTask;
+    public ScheduledTasks(WorkerEventService workerEventService, ClearFileTask clearFileTask) {
+        this.workerEventService = workerEventService;
+        this.clearFileTask = clearFileTask;
     }
 
     /**
      * 清理：1天/次，每天早上8点清理过期文件
      */
-    @Scheduled(cron = "0 0 8 0/1 * *")
+    @Scheduled(cron = "0 0 8 * * *")
     public void clearExpiredFile() {
         logger.info(Thread.currentThread().getId() + ":clearExpiredFile start");
         try {
-            clearExpiredFileTask.run();
+            clearFileTask.clearExpiredFile();
+        } catch (Exception e) {
+            logger.error("clearExpiredFileTask fail", e);
+        }
+    }
+
+    /**
+     * 每分钟检查磁盘容量并清理
+     */
+    @Scheduled(cron = "0 * * * * *")
+    public void checkVolumeAndClear() {
+        logger.debug(Thread.currentThread().getId() + ":checkVolumeAndClear start");
+        try {
+            clearFileTask.checkVolumeAndClear();
         } catch (Exception e) {
             logger.error("clearExpiredFileTask fail", e);
         }
@@ -68,9 +82,9 @@ public class ScheduledTasks {
     public void heartBeat() {
         logger.info(Thread.currentThread().getId() + ":heartBeat start");
         try {
-            heartBeatTask.run();
+            workerEventService.commitWorkerEvent(WorkerEvent.heartBeat());
         } catch (Exception e) {
-            logger.error("heartBeatTask fail", e);
+            logger.error("commit heartBeat event fail", e);
         }
     }
 }

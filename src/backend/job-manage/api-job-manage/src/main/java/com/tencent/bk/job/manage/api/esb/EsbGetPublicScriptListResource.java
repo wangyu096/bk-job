@@ -24,24 +24,34 @@
 
 package com.tencent.bk.job.manage.api.esb;
 
+import com.tencent.bk.job.common.annotation.EsbAPI;
+import com.tencent.bk.job.common.constant.JobCommonHeaders;
 import com.tencent.bk.job.common.esb.model.EsbPageData;
 import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.manage.model.esb.EsbScriptDTO;
 import com.tencent.bk.job.manage.model.esb.request.EsbGetPublicScriptListRequest;
-import org.springframework.web.bind.annotation.*;
-
-import static com.tencent.bk.job.common.i18n.locale.LocaleUtils.COMMON_LANG_HEADER;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 获取公共脚本列表API-V2
  */
 @RequestMapping("/esb/api/v2")
 @RestController
+@EsbAPI
 public interface EsbGetPublicScriptListResource {
 
     @PostMapping("/get_public_script_list")
     EsbResp<EsbPageData<EsbScriptDTO>> getPublicScriptList(
-        @RequestHeader(value = COMMON_LANG_HEADER, required = false) String lang,
-        @RequestBody EsbGetPublicScriptListRequest request);
+        @RequestHeader(value = JobCommonHeaders.USERNAME) String username,
+        @RequestHeader(value = JobCommonHeaders.APP_CODE) String appCode,
+        @RequestBody
+        @Validated
+            EsbGetPublicScriptListRequest request
+    );
 
 }

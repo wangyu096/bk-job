@@ -24,18 +24,20 @@
 
 package com.tencent.bk.job.file.worker.api;
 
-import com.tencent.bk.job.common.model.ServiceResponse;
-import com.tencent.bk.job.file.worker.cos.service.RemoteClient;
+import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.file.worker.model.req.BaseReq;
 import com.tencent.bk.job.file.worker.model.req.ExecuteActionReq;
 import com.tencent.bk.job.file.worker.model.req.ListFileNodeReq;
+import com.tencent.bk.job.file.worker.service.RemoteClient;
 import com.tencent.bk.job.file_gateway.model.resp.common.FileNodesDTO;
 
 public interface IFileResource {
 
     RemoteClient getRemoteClient(BaseReq req);
 
-    ServiceResponse<FileNodesDTO> listFileNode(ListFileNodeReq req);
+    InternalResponse<Boolean> isFileAvailable(BaseReq req);
 
-    ServiceResponse<Boolean> executeAction(ExecuteActionReq req);
+    InternalResponse<FileNodesDTO> listFileNode(ListFileNodeReq req);
+
+    InternalResponse<Boolean> executeAction(ExecuteActionReq req);
 }

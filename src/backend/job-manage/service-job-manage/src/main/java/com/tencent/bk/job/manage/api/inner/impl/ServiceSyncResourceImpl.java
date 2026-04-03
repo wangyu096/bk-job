@@ -25,15 +25,16 @@
 package com.tencent.bk.job.manage.api.inner.impl;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.model.ServiceResponse;
-import com.tencent.bk.job.common.model.dto.ApplicationHostInfoDTO;
-import com.tencent.bk.job.common.model.dto.ApplicationInfoDTO;
+import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.model.InternalResponse;
+import com.tencent.bk.job.common.model.dto.ApplicationDTO;
+import com.tencent.bk.job.common.model.dto.ApplicationHostDTO;
 import com.tencent.bk.job.manage.api.inner.ServiceSyncResource;
-import com.tencent.bk.job.manage.model.inner.ServiceApplicationDTO;
 import com.tencent.bk.job.manage.model.inner.ServiceHostInfoDTO;
-import com.tencent.bk.job.manage.service.ApplicationHostService;
+import com.tencent.bk.job.manage.model.inner.resp.ServiceApplicationDTO;
 import com.tencent.bk.job.manage.service.ApplicationService;
 import com.tencent.bk.job.manage.service.SyncService;
+import com.tencent.bk.job.manage.service.host.HostService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
@@ -46,21 +47,21 @@ import java.util.stream.Collectors;
 @RestController
 public class ServiceSyncResourceImpl implements ServiceSyncResource {
     private final ApplicationService applicationService;
-    private final ApplicationHostService applicationHostService;
+    private final HostService hostService;
     private final SyncService syncService;
 
 
     @Autowired
     public ServiceSyncResourceImpl(ApplicationService applicationService,
-                                   ApplicationHostService applicationHostService, SyncService syncService) {
+                                   HostService hostService, SyncService syncService) {
         this.applicationService = applicationService;
-        this.applicationHostService = applicationHostService;
+        this.hostService = hostService;
         this.syncService = syncService;
     }
 
     @Override
     public List<ServiceApplicationDTO> listAllApps() {
-        List<ApplicationInfoDTO> apps = applicationService.listAllAppsFromLocalDB();
+        List<ApplicationDTO> apps = applicationService.listAllApps();
         if (apps == null) {
             return null;
         }
@@ -68,96 +69,93 @@ public class ServiceSyncResourceImpl implements ServiceSyncResource {
         return apps.stream().map(this::convertToServiceApp).collect(Collectors.toList());
     }
 
-    private ServiceApplicationDTO convertToServiceApp(ApplicationInfoDTO appInfo) {
+    private ServiceApplicationDTO convertToServiceApp(ApplicationDTO appInfo) {
         ServiceApplicationDTO app = new ServiceApplicationDTO();
         app.setName(appInfo.getName());
         app.setId(appInfo.getId());
         app.setOwner(appInfo.getBkSupplierAccount());
-        app.setAppType(appInfo.getAppType().getValue());
-        app.setSubAppIds(appInfo.getSubAppIds());
-        app.setOperateDeptId(appInfo.getOperateDeptId());
         app.setTimeZone(appInfo.getTimeZone());
         return app;
     }
 
 
     @Override
-    public ServiceResponse<List<ServiceHostInfoDTO>> getHostByAppId(Long appId) {
+    public InternalResponse<List<ServiceHostInfoDTO>> getHostByAppId(Long appId) {
         try {
-            List<ApplicationHostInfoDTO> hosts = applicationHostService.getHostsByAppId(appId);
+            List<ApplicationHostDTO> hosts = hostService.getHostsByAppId(appId);
             List<ServiceHostInfoDTO> serviceHosts = new ArrayList<>();
             if (hosts != null) {
                 serviceHosts =
                     hosts.stream().map(host -> convertToServiceHostInfo(appId, host)).collect(Collectors.toList());
             }
-            return ServiceResponse.buildSuccessResp(serviceHosts);
+            return InternalResponse.buildSuccessResp(serviceHosts);
         } catch (Exception e) {
             log.warn("Get host by appId exception", e);
-            return ServiceResponse.buildCommonFailResp(ErrorCode.SERVICE_INTERNAL_ERROR);
+            throw new InternalException(e, ErrorCode.INTERNAL_ERROR);
         }
     }
 
     @Override
-    public ServiceResponse<Boolean> syncHostByAppId(Long appId) {
-        return ServiceResponse.buildSuccessResp(syncService.syncAppHosts(appId));
+    public InternalResponse<Boolean> syncHostByBizId(Long bizId) {
+        return InternalResponse.buildSuccessResp(syncService.syncBizHosts(bizId));
     }
 
     @Override
-    public ServiceResponse<Boolean> enableAppWatch() {
-        return ServiceResponse.buildSuccessResp(syncService.enableAppWatch());
+    public InternalResponse<Boolean> enableBizWatch() {
+        return InternalResponse.buildSuccessResp(syncService.enableBizWatch());
     }
 
     @Override
-    public ServiceResponse<Boolean> disableAppWatch() {
-        return ServiceResponse.buildSuccessResp(syncService.disableAppWatch());
+    public InternalResponse<Boolean> disableBizWatch() {
+        return InternalResponse.buildSuccessResp(syncService.disableBizWatch());
     }
 
     @Override
-    public ServiceResponse<Boolean> enableHostWatch() {
-        return ServiceResponse.buildSuccessResp(syncService.enableHostWatch());
+    public InternalResponse<Boolean> enableHostWatch() {
+        return InternalResponse.buildSuccessResp(syncService.enableHostWatch());
     }
 
     @Override
-    public ServiceResponse<Boolean> disableHostWatch() {
-        return ServiceResponse.buildSuccessResp(syncService.disableHostWatch());
+    public InternalResponse<Boolean> disableHostWatch() {
+        return InternalResponse.buildSuccessResp(syncService.disableHostWatch());
     }
 
     @Override
-    public ServiceResponse<Boolean> enableSyncApp() {
-        return ServiceResponse.buildSuccessResp(syncService.enableSyncApp());
+    public InternalResponse<Boolean> enableSyncApp() {
+        return InternalResponse.buildSuccessResp(syncService.enableSyncApp());
     }
 
     @Override
-    public ServiceResponse<Boolean> disableSyncApp() {
-        return ServiceResponse.buildSuccessResp(syncService.disableSyncApp());
+    public InternalResponse<Boolean> disableSyncApp() {
+        return InternalResponse.buildSuccessResp(syncService.disableSyncApp());
     }
 
     @Override
-    public ServiceResponse<Boolean> enableSyncHost() {
-        return ServiceResponse.buildSuccessResp(syncService.enableSyncHost());
+    public InternalResponse<Boolean> enableSyncHost() {
+        return InternalResponse.buildSuccessResp(syncService.enableSyncHost());
     }
 
     @Override
-    public ServiceResponse<Boolean> disableSyncHost() {
-        return ServiceResponse.buildSuccessResp(syncService.disableSyncHost());
+    public InternalResponse<Boolean> disableSyncHost() {
+        return InternalResponse.buildSuccessResp(syncService.disableSyncHost());
     }
 
     @Override
-    public ServiceResponse<Boolean> enableSyncAgentStatus() {
-        return ServiceResponse.buildSuccessResp(syncService.enableSyncAgentStatus());
+    public InternalResponse<Boolean> enableSyncAgentStatus() {
+        return InternalResponse.buildSuccessResp(syncService.enableSyncAgentStatus());
     }
 
     @Override
-    public ServiceResponse<Boolean> disableSyncAgentStatus() {
-        return ServiceResponse.buildSuccessResp(syncService.disableSyncAgentStatus());
+    public InternalResponse<Boolean> disableSyncAgentStatus() {
+        return InternalResponse.buildSuccessResp(syncService.disableSyncAgentStatus());
     }
 
-    private ServiceHostInfoDTO convertToServiceHostInfo(long appId, ApplicationHostInfoDTO hostInfo) {
+    private ServiceHostInfoDTO convertToServiceHostInfo(long appId, ApplicationHostDTO hostInfo) {
         ServiceHostInfoDTO serviceHostInfo = new ServiceHostInfoDTO();
         serviceHostInfo.setAppId(appId);
         serviceHostInfo.setCloudAreaId(hostInfo.getCloudAreaId());
         serviceHostInfo.setIp(hostInfo.getIp());
-        serviceHostInfo.setDisplayIp(hostInfo.getDisplayIp());
+        serviceHostInfo.setIpv6(hostInfo.getIpv6());
         serviceHostInfo.setHostId(hostInfo.getHostId());
         return serviceHostInfo;
     }

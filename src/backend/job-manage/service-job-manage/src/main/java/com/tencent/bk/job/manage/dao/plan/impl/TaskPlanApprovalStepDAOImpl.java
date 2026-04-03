@@ -25,20 +25,20 @@
 package com.tencent.bk.job.manage.dao.plan.impl;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.exception.InternalException;
 import com.tencent.bk.job.common.util.json.JsonUtils;
 import com.tencent.bk.job.manage.common.util.DbRecordMapper;
 import com.tencent.bk.job.manage.dao.TaskApprovalStepDAO;
 import com.tencent.bk.job.manage.model.dto.task.TaskApprovalStepDTO;
+import com.tencent.bk.job.manage.model.tables.TaskPlan;
+import com.tencent.bk.job.manage.model.tables.TaskPlanStep;
+import com.tencent.bk.job.manage.model.tables.TaskPlanStepApproval;
+import com.tencent.bk.job.manage.model.tables.records.TaskPlanStepApprovalRecord;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Record6;
 import org.jooq.Result;
-import org.jooq.generated.tables.TaskPlan;
-import org.jooq.generated.tables.TaskPlanStep;
-import org.jooq.generated.tables.TaskPlanStepApproval;
-import org.jooq.generated.tables.records.TaskPlanStepApprovalRecord;
 import org.jooq.types.UByte;
 import org.jooq.types.ULong;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -112,7 +112,7 @@ public class TaskPlanApprovalStepDAOImpl implements TaskApprovalStepDAO {
 
     @Override
     public boolean updateApprovalById(TaskApprovalStepDTO approvalStep) {
-        throw new ServiceException(ErrorCode.UNSUPPORTED_OPERATION);
+        throw new InternalException(ErrorCode.UNSUPPORTED_OPERATION);
     }
 
     @Override

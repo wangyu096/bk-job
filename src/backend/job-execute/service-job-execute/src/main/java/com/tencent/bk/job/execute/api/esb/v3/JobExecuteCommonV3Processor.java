@@ -27,75 +27,67 @@ package com.tencent.bk.job.execute.api.esb.v3;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.esb.model.job.v3.EsbServerV3DTO;
 import com.tencent.bk.job.common.model.ValidateResult;
-import com.tencent.bk.job.common.model.dto.IpDTO;
+import com.tencent.bk.job.common.model.dto.HostDTO;
 import com.tencent.bk.job.execute.model.DynamicServerGroupDTO;
 import com.tencent.bk.job.execute.model.DynamicServerTopoNodeDTO;
-import com.tencent.bk.job.execute.model.ServersDTO;
+import com.tencent.bk.job.execute.model.ExecuteTargetDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 作业执行公用
  */
 @Slf4j
 public class JobExecuteCommonV3Processor {
-    /**
-     * 计算作业超时时间
-     *
-     * @param timeout 超时时间
-     * @return
-     */
-    protected int calculateTimeout(Integer timeout) {
-        int finalTimeout = 7200;
-        if (timeout != null && timeout > 0) {
-            if (timeout > 86400) {
-                finalTimeout = 86400;
-            } else if (timeout < 60) {
-                finalTimeout = 60;
-            } else {
-                finalTimeout = timeout;
-            }
-        }
-        return finalTimeout;
-    }
 
     protected ValidateResult checkServer(EsbServerV3DTO server) {
         if (server == null) {
             return ValidateResult.fail(ErrorCode.MISSING_PARAM_WITH_PARAM_NAME, "target_server");
         }
 
-        if (CollectionUtils.isEmpty(server.getIps()) && CollectionUtils.isEmpty(server.getTopoNodes())
-            && CollectionUtils.isEmpty(server.getDynamicGroups())) {
+        if (!server.checkHostParamsNonEmpty()) {
             return ValidateResult.fail(ErrorCode.SERVER_EMPTY);
         }
         return ValidateResult.pass();
     }
 
-    protected ServersDTO convertToServersDTO(EsbServerV3DTO server) {
+    protected ExecuteTargetDTO convertToServersDTO(EsbServerV3DTO server) {
         if (server == null) {
             return null;
         }
-        ServersDTO serversDTO = new ServersDTO();
+        ExecuteTargetDTO executeTargetDTO = new ExecuteTargetDTO();
+
+        // 拓扑节点
         if (CollectionUtils.isNotEmpty(server.getTopoNodes())) {
             List<DynamicServerTopoNodeDTO> topoNodes = new ArrayList<>();
             server.getTopoNodes().forEach(topoNode -> topoNodes.add(new DynamicServerTopoNodeDTO(topoNode.getId(),
                 topoNode.getNodeType())));
-            serversDTO.setTopoNodes(topoNodes);
+            executeTargetDTO.setTopoNodes(topoNodes);
         }
+
+        // 动态分组
         if (CollectionUtils.isNotEmpty(server.getDynamicGroups())) {
             List<DynamicServerGroupDTO> dynamicServerGroups = new ArrayList<>();
             server.getDynamicGroups().forEach(
                 group -> dynamicServerGroups.add(new DynamicServerGroupDTO(group.getId())));
-            serversDTO.setDynamicServerGroups(dynamicServerGroups);
+            executeTargetDTO.setDynamicServerGroups(dynamicServerGroups);
         }
-        if (CollectionUtils.isNotEmpty(server.getIps())) {
-            List<IpDTO> staticIpList = new ArrayList<>();
-            server.getIps().forEach(ip -> staticIpList.add(new IpDTO(ip.getCloudAreaId(), ip.getIp())));
-            serversDTO.setStaticIpList(staticIpList);
+
+        // 主机列表，优先使用hostId
+        if (CollectionUtils.isNotEmpty(server.getHostIds())) {
+            executeTargetDTO.setStaticIpList(
+                server.getHostIds().stream().map(HostDTO::fromHostId).collect(Collectors.toList()));
+        } else if (CollectionUtils.isNotEmpty(server.getIps())) {
+            executeTargetDTO.setStaticIpList(
+                server.getIps().stream()
+                    .map(host -> new HostDTO(host.getBkCloudId(), host.getIp()))
+                    .collect(Collectors.toList()));
         }
-        return serversDTO;
+
+        return executeTargetDTO;
     }
 }

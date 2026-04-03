@@ -24,13 +24,12 @@
 
 package com.tencent.bk.job.execute.api.esb.v3;
 
+import com.tencent.bk.audit.annotations.AuditRequestBody;
 import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
 import com.tencent.bk.job.common.esb.model.EsbResp;
-import com.tencent.bk.job.common.exception.ServiceException;
-import com.tencent.bk.job.common.i18n.MessageI18nService;
-import com.tencent.bk.job.common.iam.exception.InSufficientPermissionException;
-import com.tencent.bk.job.common.iam.service.AuthService;
+import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.util.json.JsonUtils;
 import com.tencent.bk.job.execute.constants.TaskOperationEnum;
 import com.tencent.bk.job.execute.model.esb.v3.EsbJobExecuteV3DTO;
@@ -44,43 +43,28 @@ import org.springframework.web.bind.annotation.RestController;
 public class EsbOperateJobInstanceV3ResourceImpl implements EsbOperateJobInstanceV3Resource {
     private final TaskExecuteService taskExecuteService;
 
-    private final MessageI18nService i18nService;
-
-    private final AuthService authService;
-
-    public EsbOperateJobInstanceV3ResourceImpl(TaskExecuteService taskExecuteService, MessageI18nService i18nService,
-                                               AuthService authService) {
+    public EsbOperateJobInstanceV3ResourceImpl(TaskExecuteService taskExecuteService) {
         this.taskExecuteService = taskExecuteService;
-        this.i18nService = i18nService;
-        this.authService = authService;
     }
 
     @Override
-    @EsbApiTimed(value = "esb.api", extraTags = {"api_name", "v3_operate_job_instance"})
-    public EsbResp<EsbJobExecuteV3DTO> operateJobInstance(String lang, EsbOperateJobInstanceV3Request request) {
+    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v3_operate_job_instance"})
+    public EsbResp<EsbJobExecuteV3DTO> operateJobInstance(String username,
+                                                          String appCode,
+                                                          @AuditRequestBody EsbOperateJobInstanceV3Request request) {
         log.info("Operate task instance, request={}", JsonUtils.toJson(request));
         if (!checkRequest(request)) {
-            return EsbResp.buildCommonFailResp(ErrorCode.ILLEGAL_PARAM, i18nService);
+            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
         }
         TaskOperationEnum taskOperation = TaskOperationEnum.getTaskOperation(request.getOperationCode());
-        try {
-            taskExecuteService.doTaskOperation(request.getAppId(), request.getUserName(),
-                request.getTaskInstanceId(), taskOperation);
-        } catch (InSufficientPermissionException e) {
-            return authService.buildEsbAuthFailResp(e);
-        } catch (ServiceException e) {
-            return EsbResp.buildCommonFailResp(e, i18nService);
-        }
+        taskExecuteService.doTaskOperation(request.getAppId(), username,
+            request.getTaskInstanceId(), taskOperation);
         EsbJobExecuteV3DTO result = new EsbJobExecuteV3DTO();
         result.setTaskInstanceId(request.getTaskInstanceId());
         return EsbResp.buildSuccessResp(result);
     }
 
     private boolean checkRequest(EsbOperateJobInstanceV3Request request) {
-        if (request.getAppId() == null || request.getAppId() <= 0) {
-            log.warn("Operate task instance, appId is empty!");
-            return false;
-        }
         if (request.getTaskInstanceId() == null || request.getTaskInstanceId() <= 0) {
             log.warn("Operate task instance, taskInstanceId is empty!");
             return false;

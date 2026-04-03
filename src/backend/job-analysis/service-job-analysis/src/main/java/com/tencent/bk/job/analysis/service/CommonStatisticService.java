@@ -24,26 +24,35 @@
 
 package com.tencent.bk.job.analysis.service;
 
-import com.tencent.bk.job.analysis.config.listener.StatisticConfig;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.tencent.bk.job.analysis.api.consts.StatisticsConstants;
+import com.tencent.bk.job.analysis.api.dto.StatisticsDTO;
+import com.tencent.bk.job.analysis.config.StatisticConfig;
 import com.tencent.bk.job.analysis.consts.DistributionMetricEnum;
 import com.tencent.bk.job.analysis.consts.TotalMetricEnum;
 import com.tencent.bk.job.analysis.dao.StatisticsDAO;
+import com.tencent.bk.job.analysis.model.dto.SimpleAppInfoDTO;
+import com.tencent.bk.job.analysis.model.inner.PerAppStatisticDTO;
 import com.tencent.bk.job.analysis.model.web.CommonDistributionVO;
 import com.tencent.bk.job.analysis.model.web.CommonStatisticWithRateVO;
 import com.tencent.bk.job.analysis.model.web.CommonTrendElementVO;
-import com.tencent.bk.job.analysis.model.web.PerAppStatisticVO;
 import com.tencent.bk.job.analysis.util.calc.SimpleMomYoyCalculator;
-import com.tencent.bk.job.common.statistics.consts.StatisticsConstants;
-import com.tencent.bk.job.common.statistics.model.dto.StatisticsDTO;
+import com.tencent.bk.job.common.util.CustomCollectionUtils;
 import com.tencent.bk.job.common.util.date.DateUtils;
+import com.tencent.bk.job.common.util.json.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
-@Service
+@Service("commonStatisticService")
 public class CommonStatisticService {
 
     protected final StatisticsDAO statisticsDAO;
@@ -60,6 +69,15 @@ public class CommonStatisticService {
         this.appService = appService;
     }
 
+    public List<Long> getJoinedAppIdList(String date) {
+        StatisticsDTO statisticsDTO = statisticsDAO.getStatistics(StatisticsConstants.DEFAULT_APP_ID,
+            StatisticsConstants.RESOURCE_APP, StatisticsConstants.DIMENSION_APP_STATISTIC_TYPE,
+            StatisticsConstants.DIMENSION_VALUE_APP_STATISTIC_TYPE_APP_LIST, date);
+        List<SimpleAppInfoDTO> applicationDTOList = JsonUtils.fromJson(statisticsDTO.getValue(),
+            new TypeReference<List<SimpleAppInfoDTO>>() {
+            });
+        return applicationDTOList.stream().map(SimpleAppInfoDTO::getId).collect(Collectors.toList());
+    }
 
     /**
      * @param statisticsDTO
@@ -69,7 +87,7 @@ public class CommonStatisticService {
      */
     public CommonStatisticWithRateVO calcMomYoyStatistic(StatisticsDTO statisticsDTO, StatisticsDTO momStatisticsDTO,
                                                          StatisticsDTO yoyStatisticsDTO) {
-        return new SimpleMomYoyCalculator(statisticsDTO, momStatisticsDTO, yoyStatisticsDTO).getResult();
+        return new SimpleMomYoyCalculator(statisticsDTO, momStatisticsDTO, yoyStatisticsDTO).calc();
     }
 
     public CommonStatisticWithRateVO getCommonTotalStatistics(TotalMetricEnum metric, List<Long> appIdList,
@@ -140,56 +158,51 @@ public class CommonStatisticService {
             StatisticsConstants.RESOURCE_GLOBAL, StatisticsConstants.DIMENSION_GLOBAL_STATISTIC_TYPE,
             StatisticsConstants.DIMENSION_VALUE_GLOBAL_STATISTIC_TYPE_PREFIX + metric.name(), startDate, endDate);
         // 按日期聚合多个业务的数据
-        Map<String, Integer> map = new HashMap<>();
+        Map<String, Long> map = new HashMap<>();
         for (StatisticsDTO statisticsDTO : statisticsDTOList) {
             String key = statisticsDTO.getDate();
             if (map.containsKey(key)) {
-                map.put(key, map.get(key) + Integer.parseInt(statisticsDTO.getValue()));
+                map.put(key, map.get(key) + Long.parseLong(statisticsDTO.getValue()));
             } else {
-                map.put(key, Integer.parseInt(statisticsDTO.getValue()));
+                map.put(key, Long.parseLong(statisticsDTO.getValue()));
             }
         }
-        for (Map.Entry<String, Integer> entry : map.entrySet()) {
+        for (Map.Entry<String, Long> entry : map.entrySet()) {
             String key = entry.getKey();
-            Integer value = entry.getValue();
+            Long value = entry.getValue();
             CommonTrendElementVO commonTrendElementVO = new CommonTrendElementVO(key, value);
             trendElementVOList.add(commonTrendElementVO);
         }
-        trendElementVOList.sort(new Comparator<CommonTrendElementVO>() {
-            @Override
-            public int compare(CommonTrendElementVO o1, CommonTrendElementVO o2) {
-                return o1.getDate().compareTo(o2.getDate());
-            }
-        });
+        trendElementVOList.sort(Comparator.comparing(CommonTrendElementVO::getDate));
         return trendElementVOList;
     }
 
-    public List<PerAppStatisticVO> listByPerApp(String resource, TotalMetricEnum metric, List<Long> appIdList,
-                                                String date) {
-        List<StatisticsDTO> statisticsDTOList = statisticsDAO.getStatisticsList(appIdList, null, resource,
+    public List<PerAppStatisticDTO> listByPerApp(String resource, TotalMetricEnum metric, List<Long> appIdList,
+                                                 String date) {
+        // 增加筛选范围：已接入的业务
+        List<Long> scopedAppIdList = CustomCollectionUtils.mergeList(appIdList, getJoinedAppIdList(date));
+        List<StatisticsDTO> statisticsDTOList = statisticsDAO.getStatisticsList(
+            scopedAppIdList,
+            null,
+            resource,
             StatisticsConstants.DIMENSION_GLOBAL_STATISTIC_TYPE,
             StatisticsConstants.DIMENSION_VALUE_GLOBAL_STATISTIC_TYPE_PREFIX + metric.name(), date);
-        List<PerAppStatisticVO> perAppStatisticVOList = new ArrayList<>();
-        Long totalValue = 0L;
+        List<PerAppStatisticDTO> perAppStatisticDTOList = new ArrayList<>();
+        long totalValue = 0L;
         for (StatisticsDTO statisticsDTO : statisticsDTOList) {
             Long appId = statisticsDTO.getAppId();
-            Long value = Long.parseLong(statisticsDTO.getValue());
+            long value = Long.parseLong(statisticsDTO.getValue());
             totalValue += value;
-            PerAppStatisticVO perAppStatisticVO = new PerAppStatisticVO();
-            perAppStatisticVO.setAppId(appId);
-            perAppStatisticVO.setValue(value);
-            perAppStatisticVOList.add(perAppStatisticVO);
+            PerAppStatisticDTO perAppStatisticDTO = new PerAppStatisticDTO();
+            perAppStatisticDTO.setAppId(appId);
+            perAppStatisticDTO.setValue(value);
+            perAppStatisticDTOList.add(perAppStatisticDTO);
         }
-        for (PerAppStatisticVO perAppStatisticVO : perAppStatisticVOList) {
-            perAppStatisticVO.setAppName(appService.getAppNameFromCache(perAppStatisticVO.getAppId()));
-            perAppStatisticVO.setRatio(perAppStatisticVO.getValue().floatValue() / totalValue);
+        for (PerAppStatisticDTO perAppStatisticDTO : perAppStatisticDTOList) {
+            perAppStatisticDTO.setScopeName(appService.getAppNameFromCache(perAppStatisticDTO.getAppId()));
+            perAppStatisticDTO.setRatio(perAppStatisticDTO.getValue().floatValue() / totalValue);
         }
-        perAppStatisticVOList.sort(new Comparator<PerAppStatisticVO>() {
-            @Override
-            public int compare(PerAppStatisticVO o1, PerAppStatisticVO o2) {
-                return o2.getValue().compareTo(o1.getValue());
-            }
-        });
-        return perAppStatisticVOList;
+        perAppStatisticDTOList.sort((o1, o2) -> o2.getValue().compareTo(o1.getValue()));
+        return perAppStatisticDTOList;
     }
 }

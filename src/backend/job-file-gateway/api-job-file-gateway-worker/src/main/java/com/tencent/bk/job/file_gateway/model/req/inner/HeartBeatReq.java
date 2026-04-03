@@ -24,6 +24,7 @@
 
 package com.tencent.bk.job.file_gateway.model.req.inner;
 
+import com.tencent.bk.job.common.util.json.SkipLogFields;
 import com.tencent.bk.job.file_gateway.model.req.common.FileWorkerConfig;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -38,16 +39,23 @@ import java.util.List;
 public class HeartBeatReq {
     @ApiModelProperty(value = "ID")
     Long id;
+    @ApiModelProperty(value = "名称")
+    String name;
+    @ApiModelProperty(value = "标签列表")
+    List<String> tagList;
     @ApiModelProperty(value = "业务ID", required = true)
     Long appId;
+    @SkipLogFields(value = "token")
     @ApiModelProperty(value = "密钥", required = true)
     String token;
     @ApiModelProperty(value = "访问worker使用的host", required = true)
     String accessHost;
-    @ApiModelProperty(value = "访问worker使用的host", required = true)
+    @ApiModelProperty(value = "访问worker使用的port", required = true)
     Integer accessPort;
     @ApiModelProperty(value = "worker所在云区域Id", required = true)
     Long cloudAreaId;
+    @ApiModelProperty(value = "worker的内网IP协议", required = true)
+    String innerIpProtocol;
     @ApiModelProperty(value = "worker的内网IP", required = true)
     String innerIp;
     @ApiModelProperty(value = "能力标签列表")
@@ -78,6 +86,7 @@ public class HeartBeatReq {
             ", accessHost='" + accessHost + '\'' +
             ", accessPort=" + accessPort +
             ", cloudAreaId=" + cloudAreaId +
+            ", innerIpProtocol='" + innerIpProtocol + '\'' +
             ", innerIp='" + innerIp + '\'' +
             ", abilityTagList=" + abilityTagList +
             ", cpuOverload=" + cpuOverload +

@@ -24,32 +24,40 @@
 
 package com.tencent.bk.job.manage.api.web.impl;
 
-import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.constant.JobConstants;
+import com.tencent.bk.job.common.model.Response;
 import com.tencent.bk.job.manage.api.web.WebPublicTagResource;
-import com.tencent.bk.job.manage.api.web.WebTagResource;
-import com.tencent.bk.job.manage.common.constants.JobManageConstants;
+import com.tencent.bk.job.manage.model.dto.TagDTO;
 import com.tencent.bk.job.manage.model.web.vo.TagVO;
+import com.tencent.bk.job.manage.service.TagService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
 @Slf4j
 public class WebPublicTagResourceImpl implements WebPublicTagResource {
-
-    private static final Long PUBLIC_APP_ID = JobManageConstants.PUBLIC_APP_ID;
-    private final WebTagResource tagResourceProxy;
+    private final TagService tagService;
 
     @Autowired
-    public WebPublicTagResourceImpl(@Qualifier("webTagResourceImpl") WebTagResource tagResourceProxy) {
-        this.tagResourceProxy = tagResourceProxy;
+    public WebPublicTagResourceImpl(TagService tagService) {
+        this.tagService = tagService;
     }
 
     @Override
-    public ServiceResponse<List<TagVO>> listTags(String username, String tagName) {
-        return tagResourceProxy.listTags(username, PUBLIC_APP_ID, tagName);
+    public Response<List<TagVO>> listTags(String username, String name) {
+        List<TagDTO> tags = tagService.listTags(JobConstants.PUBLIC_APP_ID, name);
+        List<TagVO> tagVOS = new ArrayList<>(tags.size());
+        for (TagDTO tag : tags) {
+            TagVO tagVO = new TagVO();
+            tagVO.setId(tag.getId());
+            tagVO.setName(tag.getName());
+            tagVO.setDescription(tag.getDescription());
+            tagVOS.add(tagVO);
+        }
+        return Response.buildSuccessResp(tagVOS);
     }
 }

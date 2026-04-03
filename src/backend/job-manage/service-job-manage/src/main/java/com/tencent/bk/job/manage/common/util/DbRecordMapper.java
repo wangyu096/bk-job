@@ -25,32 +25,43 @@
 package com.tencent.bk.job.manage.common.util;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.tencent.bk.job.common.constant.AppTypeEnum;
 import com.tencent.bk.job.common.constant.DuplicateHandlerEnum;
 import com.tencent.bk.job.common.constant.NotExistPathHandlerEnum;
-import com.tencent.bk.job.common.constant.TaskVariableTypeEnum;
-import com.tencent.bk.job.common.model.dto.ApplicationHostInfoDTO;
-import com.tencent.bk.job.common.model.dto.ApplicationInfoDTO;
 import com.tencent.bk.job.common.model.dto.UserRoleInfoDTO;
-import com.tencent.bk.job.common.util.StringUtil;
-import com.tencent.bk.job.common.util.TagUtils;
+import com.tencent.bk.job.common.mysql.util.JooqDataTypeUtil;
 import com.tencent.bk.job.common.util.json.JsonUtils;
-import com.tencent.bk.job.manage.common.consts.script.ScriptTypeEnum;
-import com.tencent.bk.job.manage.common.consts.task.*;
-import com.tencent.bk.job.manage.model.dto.TagDTO;
-import com.tencent.bk.job.manage.model.dto.task.*;
+import com.tencent.bk.job.manage.api.common.constants.script.ScriptTypeEnum;
+import com.tencent.bk.job.manage.api.common.constants.task.TaskApprovalTypeEnum;
+import com.tencent.bk.job.manage.api.common.constants.task.TaskFileTypeEnum;
+import com.tencent.bk.job.manage.api.common.constants.task.TaskPlanTypeEnum;
+import com.tencent.bk.job.manage.api.common.constants.task.TaskScriptSourceEnum;
+import com.tencent.bk.job.manage.api.common.constants.task.TaskStepTypeEnum;
+import com.tencent.bk.job.manage.api.common.constants.task.TaskTemplateStatusEnum;
+import com.tencent.bk.job.manage.api.common.constants.task.TaskTypeEnum;
+import com.tencent.bk.job.manage.model.dto.task.TaskApprovalStepDTO;
+import com.tencent.bk.job.manage.model.dto.task.TaskFileInfoDTO;
+import com.tencent.bk.job.manage.model.dto.task.TaskFileStepDTO;
+import com.tencent.bk.job.manage.model.dto.task.TaskPlanBasicInfoDTO;
+import com.tencent.bk.job.manage.model.dto.task.TaskPlanInfoDTO;
+import com.tencent.bk.job.manage.model.dto.task.TaskScriptStepDTO;
+import com.tencent.bk.job.manage.model.dto.task.TaskStepDTO;
+import com.tencent.bk.job.manage.model.dto.task.TaskTargetDTO;
+import com.tencent.bk.job.manage.model.dto.task.TaskTemplateInfoDTO;
+import com.tencent.bk.job.manage.model.tables.TaskPlan;
+import com.tencent.bk.job.manage.model.tables.TaskTemplate;
+import com.tencent.bk.job.manage.model.tables.TaskTemplateStepFileList;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.jooq.*;
-import org.jooq.generated.tables.*;
+import org.jooq.Record;
+import org.jooq.Record11;
+import org.jooq.Record13;
+import org.jooq.Record15;
+import org.jooq.Record6;
+import org.jooq.Record9;
 import org.jooq.types.UByte;
 import org.jooq.types.ULong;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @since 5/10/2019 09:38
@@ -61,31 +72,6 @@ public class DbRecordMapper {
     private static final TaskTemplateStepFileList TABLE_TASK_TEMPLATE_STEP_FILE_LIST =
         TaskTemplateStepFileList.TASK_TEMPLATE_STEP_FILE_LIST;
 
-    public static TaskVariableDTO convertRecordToTaskVariable(
-        Record8<ULong, ULong, String, UByte, String, String, UByte, UByte> record, TaskTypeEnum taskType) {
-        if (record == null) {
-            return null;
-        }
-        TaskVariableDTO taskVariable = new TaskVariableDTO();
-        taskVariable.setId(((ULong) record.get(0)).longValue());
-        switch (taskType) {
-            case TEMPLATE:
-                taskVariable.setTemplateId(((ULong) record.get(1)).longValue());
-                break;
-            case PLAN:
-                taskVariable.setPlanId(((ULong) record.get(1)).longValue());
-                break;
-            default:
-                return null;
-        }
-        taskVariable.setName((String) record.get(2));
-        taskVariable.setType(TaskVariableTypeEnum.valOf(((UByte) record.get(3)).intValue()));
-        taskVariable.setDefaultValue((String) record.get(4));
-        taskVariable.setDescription((String) record.get(5));
-        taskVariable.setChangeable(((UByte) record.get(6)).intValue() == 1);
-        taskVariable.setRequired(((UByte) record.get(7)).intValue() == 1);
-        return taskVariable;
-    }
 
     public static TaskApprovalStepDTO
     convertRecordToTaskApprovalStep(Record6<ULong, ULong, UByte, String, String, String> record) {
@@ -176,11 +162,11 @@ public class DbRecordMapper {
             taskScriptStep.setScriptVersionId(((ULong) record.get(5)).longValue());
         }
         taskScriptStep.setContent((String) record.get(6));
-        taskScriptStep.setLanguage(ScriptTypeEnum.valueOf(((UByte) record.get(7)).intValue()));
+        taskScriptStep.setLanguage(ScriptTypeEnum.valOf(((UByte) record.get(7)).intValue()));
         taskScriptStep.setScriptParam((String) record.get(8));
         taskScriptStep.setTimeout(((ULong) record.get(9)).longValue());
         taskScriptStep.setAccount(((ULong) record.get(10)).longValue());
-        taskScriptStep.setExecuteTarget(TaskTargetDTO.fromString((String) record.get(11)));
+        taskScriptStep.setExecuteTarget(TaskTargetDTO.fromJsonString((String) record.get(11)));
         taskScriptStep.setSecureParam(((UByte) record.get(12)).intValue() == 1);
         taskScriptStep.setStatus(((UByte) record.get(13)).intValue());
         taskScriptStep.setIgnoreError(((UByte) record.get(14)).intValue() == 1);
@@ -199,7 +185,7 @@ public class DbRecordMapper {
         taskFileStep.setOriginFileList(new ArrayList<>());
         taskFileStep.setDestinationFileLocation((String) record.get(2));
         taskFileStep.setExecuteAccount(((ULong) record.get(3)).longValue());
-        taskFileStep.setDestinationHostList(TaskTargetDTO.fromString((String) record.get(4)));
+        taskFileStep.setDestinationHostList(TaskTargetDTO.fromJsonString((String) record.get(4)));
         taskFileStep.setTimeout(((ULong) record.get(5)).longValue());
         taskFileStep.setOriginSpeedLimit(JooqDataTypeUtil.getLongFromULong((ULong) record.get(6)));
         taskFileStep.setTargetSpeedLimit(JooqDataTypeUtil.getLongFromULong((ULong) record.get(7)));
@@ -236,7 +222,7 @@ public class DbRecordMapper {
             taskFileInfo.setFileSize(null);
         }
         taskFileInfo.setFileHash((String) record.get(5));
-        taskFileInfo.setHost(TaskTargetDTO.fromString((String) record.get(6)));
+        taskFileInfo.setHost(TaskTargetDTO.fromJsonString((String) record.get(6)));
         if (record.get(7) != null) {
             taskFileInfo.setHostAccount(((ULong) record.get(7)).longValue());
         } else {
@@ -246,8 +232,8 @@ public class DbRecordMapper {
         return taskFileInfo;
     }
 
-    public static TaskTemplateInfoDTO convertRecordToTemplateInfo(Record14<ULong, ULong, String, String, String, UByte,
-        ULong, String, ULong, String, ULong, ULong, String, UByte> record) {
+    public static TaskTemplateInfoDTO convertRecordToTemplateInfo(Record13<ULong, ULong, String, String, String, UByte,
+        ULong, String, ULong, ULong, ULong, String, UByte> record) {
         if (record == null) {
             return null;
         }
@@ -263,77 +249,11 @@ public class DbRecordMapper {
         taskTemplateInfo.setCreateTime(record.get(table.CREATE_TIME).longValue());
         taskTemplateInfo.setLastModifyUser(record.get(table.LAST_MODIFY_USER));
         taskTemplateInfo.setLastModifyTime(record.get(table.LAST_MODIFY_TIME).longValue());
-        taskTemplateInfo.setTags(TagUtils.decodeDbTag(record.get(table.TAGS)).stream().map(tagId -> {
-            TagDTO tagInfo = new TagDTO();
-            tagInfo.setId(tagId);
-            return tagInfo;
-        }).collect(Collectors.toList()));
         taskTemplateInfo.setFirstStepId(record.get(table.FIRST_STEP_ID).longValue());
         taskTemplateInfo.setLastStepId(record.get(table.LAST_STEP_ID).longValue());
         taskTemplateInfo.setVersion(record.get(table.VERSION));
         taskTemplateInfo.setScriptStatus(record.get(table.SCRIPT_STATUS).intValue());
         return taskTemplateInfo;
-    }
-
-    public static ApplicationHostInfoDTO convertRecordToApplicationHostInfo(
-        Record12<ULong, ULong, String, String, String, String, ULong, String, String, String, String, UByte> record) {
-        if (record == null) {
-            return null;
-        }
-
-        Host table = Host.HOST;
-        ApplicationHostInfoDTO applicationHostInfoDTO = new ApplicationHostInfoDTO();
-        applicationHostInfoDTO.setAppId(record.get(table.APP_ID).longValue());
-        applicationHostInfoDTO.setIp(record.get(table.IP));
-        applicationHostInfoDTO.setIpDesc(record.get(table.IP_DESC));
-        applicationHostInfoDTO.setGseAgentAlive(record.get(table.IS_AGENT_ALIVE).intValue() == 1);
-        List<Long> setIdList = new ArrayList<>();
-        String setIdsStr = record.get(table.SET_IDS);
-        if (setIdsStr != null) {
-            setIdList = Arrays.asList(setIdsStr.split(",")).stream().filter(id -> !id.trim().equals(""))
-                .map(Long::parseLong).collect(Collectors.toList());
-        }
-        applicationHostInfoDTO.setSetId(setIdList);
-        applicationHostInfoDTO.setModuleId(StringUtil.strToList(record.get(table.MODULE_IDS), Long.class, ","));
-        applicationHostInfoDTO.setCloudAreaId(record.get(table.CLOUD_AREA_ID).longValue());
-        applicationHostInfoDTO.setDisplayIp(record.get(table.DISPLAY_IP));
-        applicationHostInfoDTO.setOs(record.get(table.OS));
-        applicationHostInfoDTO.setOsType(record.get(table.OS_TYPE));
-        applicationHostInfoDTO.setModuleType(StringUtil.strToList(record.get(table.MODULE_TYPE), Long.class, ","));
-        applicationHostInfoDTO.setHostId(record.get(table.HOST_ID).longValue());
-        return applicationHostInfoDTO;
-    }
-
-    public static ApplicationInfoDTO
-    convertRecordToApplicationInfo(Record9<ULong, String, String, String, Byte, String, String, Long, String> record) {
-        if (record == null) {
-            return null;
-        }
-        Application table = Application.APPLICATION;
-        ApplicationInfoDTO applicationInfoDTO = new ApplicationInfoDTO();
-        applicationInfoDTO.setId(record.get(table.APP_ID).longValue());
-        applicationInfoDTO.setName(record.get(table.APP_NAME));
-        applicationInfoDTO.setMaintainers(record.get(table.MAINTAINERS));
-        applicationInfoDTO.setBkSupplierAccount(record.get(table.BK_SUPPLIER_ACCOUNT));
-        applicationInfoDTO.setAppType(AppTypeEnum.valueOf(record.get(table.APP_TYPE)));
-        applicationInfoDTO.setSubAppIds(splitSubAppIds(record.get(table.SUB_APP_IDS)));
-        applicationInfoDTO.setTimeZone(record.get(table.TIMEZONE));
-        applicationInfoDTO.setOperateDeptId(record.get(table.BK_OPERATE_DEPT_ID));
-        applicationInfoDTO.setLanguage(record.get(table.LANGUAGE));
-        return applicationInfoDTO;
-    }
-
-    private static List<Long> splitSubAppIds(String appIds) {
-        List<Long> appIdList = new LinkedList<>();
-        if (StringUtils.isNotBlank(appIds)) {
-            for (String appIdStr : appIds.split("[,;]")) {
-                if (StringUtils.isNotBlank(appIdStr)) {
-                    appIdList.add(Long.valueOf(appIdStr));
-                }
-            }
-
-        }
-        return appIdList;
     }
 
     public static ULong getJooqLongValue(Long longValue) {
@@ -362,7 +282,7 @@ public class DbRecordMapper {
         taskPlanInfo.setId(record.get(table.ID).longValue());
         taskPlanInfo.setAppId(record.get(table.APP_ID).longValue());
         taskPlanInfo.setTemplateId(record.get(table.TEMPLATE_ID).longValue());
-        taskPlanInfo.setDebug(record.get(table.TYPE).intValue() == 1);
+        taskPlanInfo.setDebug(isDebugPlan(record));
         taskPlanInfo.setName(record.get(table.NAME));
         taskPlanInfo.setCreator(record.get(table.CREATOR));
         taskPlanInfo.setCreateTime(record.get(table.CREATE_TIME).longValue());
@@ -373,5 +293,25 @@ public class DbRecordMapper {
         taskPlanInfo.setVersion(record.get(table.VERSION));
         taskPlanInfo.setNeedUpdate(record.get(table.IS_LATEST_VERSION).intValue() == 0);
         return taskPlanInfo;
+    }
+
+    public static TaskPlanBasicInfoDTO convertRecordToPlanBasicInfo(
+        Record6<ULong, String, String, ULong, ULong, UByte> record) {
+        if (record == null) {
+            return null;
+        }
+        TaskPlanBasicInfoDTO taskPlanBasicInfoDTO = new TaskPlanBasicInfoDTO();
+        TaskPlan table = TaskPlan.TASK_PLAN;
+        taskPlanBasicInfoDTO.setId(record.get(table.ID).longValue());
+        taskPlanBasicInfoDTO.setName(record.get(table.NAME));
+        taskPlanBasicInfoDTO.setVersion(record.get(table.VERSION));
+        taskPlanBasicInfoDTO.setAppId(record.get(table.APP_ID).longValue());
+        taskPlanBasicInfoDTO.setTemplateId(record.get(table.TEMPLATE_ID).longValue());
+        taskPlanBasicInfoDTO.setDebug(isDebugPlan(record));
+        return taskPlanBasicInfoDTO;
+    }
+
+    private static boolean isDebugPlan(Record record) {
+        return record.get(TaskPlan.TASK_PLAN.TYPE).intValue() == TaskPlanTypeEnum.DEBUG.getValue();
     }
 }

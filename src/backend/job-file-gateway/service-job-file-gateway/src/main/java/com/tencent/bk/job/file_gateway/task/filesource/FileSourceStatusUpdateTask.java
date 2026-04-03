@@ -27,9 +27,9 @@ package com.tencent.bk.job.file_gateway.task.filesource;
 import com.tencent.bk.job.file_gateway.consts.FileSourceStatusEnum;
 import com.tencent.bk.job.file_gateway.model.dto.FileSourceDTO;
 import com.tencent.bk.job.file_gateway.model.dto.FileWorkerDTO;
-import com.tencent.bk.job.file_gateway.service.DispatchService;
 import com.tencent.bk.job.file_gateway.service.FileService;
 import com.tencent.bk.job.file_gateway.service.FileSourceService;
+import com.tencent.bk.job.file_gateway.service.dispatch.DispatchService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -53,15 +53,28 @@ public class FileSourceStatusUpdateTask {
     }
 
     public void run() {
-        List<FileSourceDTO> fileSourceDTOList = null;
+        List<FileSourceDTO> fileSourceDTOList;
         int start = 0;
         int pageSize = 20;
         do {
-            fileSourceDTOList = fileSourceService.listWorkTableFileSource(null, null, null, start, pageSize);
+            fileSourceDTOList = fileSourceService.listWorkTableFileSource(
+                null,
+                null,
+                null,
+                start,
+                pageSize
+            );
             for (FileSourceDTO fileSourceDTO : fileSourceDTOList) {
-                FileWorkerDTO fileWorkerDTO = dispatchService.findBestFileWorker(fileSourceDTO);
+                FileWorkerDTO fileWorkerDTO = dispatchService.findBestFileWorker(
+                    fileSourceDTO, "FileSourceStatusUpdateTask"
+                );
                 int status;
                 if (fileWorkerDTO == null) {
+                    log.info(
+                        "cannot find available file worker for fileSource {}:{}",
+                        fileSourceDTO.getId(),
+                        fileSourceDTO.getAlias()
+                    );
                     status = FileSourceStatusEnum.NO_WORKER.getStatus().intValue();
                 } else {
                     int onlineStatus = fileWorkerDTO.getOnlineStatus().intValue();
@@ -70,9 +83,12 @@ public class FileSourceStatusUpdateTask {
                     } else {
                         // 通过Worker调用listFileNode接口，OK的才算正常
                         try {
-                            fileService.listFileNode(fileSourceDTO.getCreator(), fileSourceDTO.getAppId(),
-                                fileSourceDTO.getId(), null, null, 0, 1);
-                            status = 1;
+                            if (fileService.isFileAvailable(fileSourceDTO.getCreator(), fileSourceDTO.getAppId(),
+                                fileSourceDTO.getId())) {
+                                status = 1;
+                            } else {
+                                status = 0;
+                            }
                         } catch (Throwable t) {
                             status = 0;
                         }

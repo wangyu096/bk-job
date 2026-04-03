@@ -24,14 +24,15 @@
 
 package com.tencent.bk.job.file.worker.api;
 
-import com.tencent.bk.job.common.model.ServiceResponse;
-import com.tencent.bk.job.file.worker.cos.service.FileTaskService;
-import com.tencent.bk.job.file.worker.cos.service.RemoteClient;
-import com.tencent.bk.job.file.worker.cos.service.ThreadCommandBus;
+import com.tencent.bk.job.common.model.Response;
+import com.tencent.bk.job.common.util.json.JsonUtils;
 import com.tencent.bk.job.file.worker.model.req.BaseReq;
 import com.tencent.bk.job.file.worker.model.req.ClearTaskFilesReq;
 import com.tencent.bk.job.file.worker.model.req.DownloadFilesTaskReq;
 import com.tencent.bk.job.file.worker.model.req.StopTasksReq;
+import com.tencent.bk.job.file.worker.service.FileTaskService;
+import com.tencent.bk.job.file.worker.service.RemoteClient;
+import com.tencent.bk.job.file.worker.service.ThreadCommandBus;
 import com.tencent.bk.job.file_gateway.consts.TaskCommandEnum;
 import lombok.extern.slf4j.Slf4j;
 
@@ -49,27 +50,28 @@ public abstract class FileTaskResourceImpl implements RemoteClientAccess, FileTa
     public abstract RemoteClient getRemoteClient(BaseReq req);
 
     @Override
-    public ServiceResponse<Integer> downloadFiles(DownloadFilesTaskReq req) {
-        log.debug("req={}", req);
+    public Response<Integer> downloadFiles(DownloadFilesTaskReq req) {
+        if (log.isDebugEnabled()) {
+            log.debug("req={}", JsonUtils.toJsonWithoutSkippedFields(req));
+        }
         RemoteClient remoteClient = getRemoteClient(req);
-        return ServiceResponse.buildSuccessResp(fileTaskService.downloadFiles(remoteClient, req.getTaskId(),
+        return Response.buildSuccessResp(fileTaskService.downloadFiles(remoteClient, req.getTaskId(),
             req.getFilePathList(), req.getFilePrefix()));
     }
 
     @Override
-    public ServiceResponse<Integer> stopTasks(StopTasksReq req) {
+    public Response<Integer> stopTasks(StopTasksReq req) {
         List<String> taskIdList = req.getTaskIdList();
         Integer count;
         count = fileTaskService.stopTasksAtOnce(taskIdList,
             new ThreadCommandBus.Command(TaskCommandEnum.valueOf(req.getTaskCommand()), null));
-        return ServiceResponse.buildSuccessResp(count);
+        return Response.buildSuccessResp(count);
     }
 
     @Override
-    public ServiceResponse<Integer> clearFiles(ClearTaskFilesReq req) {
+    public Response<Integer> clearFiles(ClearTaskFilesReq req) {
         List<String> taskIdList = req.getTaskIdList();
-        Integer count = 0;
-        count = fileTaskService.clearTaskFilesAtOnce(taskIdList);
-        return ServiceResponse.buildSuccessResp(count);
+        Integer count = fileTaskService.clearTaskFilesAtOnce(taskIdList);
+        return Response.buildSuccessResp(count);
     }
 }

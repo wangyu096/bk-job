@@ -26,7 +26,10 @@ package com.tencent.bk.job.backup.service.impl;
 
 import com.tencent.bk.job.backup.config.NfsStorageSystemConfig;
 import com.tencent.bk.job.backup.service.StorageService;
-import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.util.FilePathUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,7 +71,15 @@ public class NfsStorageServiceImpl implements StorageService {
             } else {
                 prefix = File.separator;
             }
-            String fileName = prefix + id + File.separatorChar + file.getOriginalFilename();
+            String originalFileName = file.getOriginalFilename();
+            if (StringUtils.isBlank(originalFileName)) {
+                throw new InvalidParamException(
+                    ErrorCode.ILLEGAL_PARAM_WITH_REASON,
+                    new String[]{"file", "filename cannot be blank"}
+                );
+            }
+            String fileName = prefix + id + File.separatorChar
+                + FilePathUtils.parseDirAndFileName(originalFileName).getRight();
 
             String fullFileName = storagePath.concat(fileName);
             File theFile = new File(fullFileName);
@@ -79,11 +90,11 @@ public class NfsStorageServiceImpl implements StorageService {
                 boolean isCreate = parentDir.mkdirs();
                 if (!isCreate) {
                     log.error("Fail to create parent dir:{}", parentDir.getCanonicalFile());
-                    throw new ServiceException("");
+                    throw new InternalException("Fail to create parent dir", ErrorCode.INTERNAL_ERROR);
                 }
                 if (!parentDir.setWritable(true, false)) {
                     log.error("Fail to set writable:{}", parentDir.getCanonicalFile());
-                    throw new ServiceException("");
+                    throw new InternalException("Fail to set writable", ErrorCode.INTERNAL_ERROR);
                 }
             }
 

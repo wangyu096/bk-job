@@ -24,15 +24,13 @@
 */
 
 /* eslint-disable no-param-reassign */
-import serviceState from '../source/service-state';
 import ServiceStateModel from '@model/service-state';
 
+import serviceState from '../source/service-state';
+
 export default {
-    serviceList (params) {
-        return serviceState.getList(params)
-            .then((data) => {
-                data.data = data.data.map(service => new ServiceStateModel(service));
-                return data;
-            });
-    },
+  serviceList(params = {}, paylaod = {}) {
+    return serviceState.getList(params, paylaod)
+      .then(({ data }) => data.map(service => new ServiceStateModel(service)));
+  },
 };

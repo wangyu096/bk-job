@@ -24,15 +24,17 @@
 
 package com.tencent.bk.job.backup.service.impl;
 
-import com.tencent.bk.job.backup.client.ServicePlanResourceClient;
-import com.tencent.bk.job.backup.client.WebPlanResourceClient;
 import com.tencent.bk.job.backup.service.TaskPlanService;
-import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.model.InternalResponse;
+import com.tencent.bk.job.common.model.Response;
+import com.tencent.bk.job.manage.api.inner.ServiceBackupTmpResource;
+import com.tencent.bk.job.manage.api.inner.ServiceTaskPlanResource;
 import com.tencent.bk.job.manage.model.inner.ServiceIdNameCheckDTO;
 import com.tencent.bk.job.manage.model.inner.ServiceTaskVariableDTO;
 import com.tencent.bk.job.manage.model.web.vo.task.TaskPlanVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.slf4j.helpers.MessageFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -41,20 +43,17 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * @since 29/7/2020 17:46
- */
 @Slf4j
-@Service
+@Service("jobBackupTaskPlanService")
 public class TaskPlanServiceImpl implements TaskPlanService {
-    private final WebPlanResourceClient webPlanResourceClient;
-    private final ServicePlanResourceClient servicePlanResourceClient;
+    private final ServiceBackupTmpResource backupTmpResource;
+    private final ServiceTaskPlanResource taskPlanResource;
 
     @Autowired
-    public TaskPlanServiceImpl(WebPlanResourceClient webPlanResourceClient,
-                               ServicePlanResourceClient servicePlanResourceClient) {
-        this.webPlanResourceClient = webPlanResourceClient;
-        this.servicePlanResourceClient = servicePlanResourceClient;
+    public TaskPlanServiceImpl(ServiceBackupTmpResource backupTmpResource,
+                               ServiceTaskPlanResource taskPlanResource) {
+        this.backupTmpResource = backupTmpResource;
+        this.taskPlanResource = taskPlanResource;
     }
 
     @Override
@@ -70,8 +69,8 @@ public class TaskPlanServiceImpl implements TaskPlanService {
                     continue;
                 }
                 log.debug("Fetching plan {}/{}/{} using {}", appId, templateId, planId, username);
-                ServiceResponse<TaskPlanVO> planByIdResponse =
-                    webPlanResourceClient.getPlanById(username, appId, templateId, planId);
+                Response<TaskPlanVO> planByIdResponse =
+                    backupTmpResource.getPlanById(username, appId, templateId, planId);
                 if (planByIdResponse != null) {
                     if (0 == planByIdResponse.getCode()) {
                         taskPlanList.add(planByIdResponse.getData());
@@ -83,7 +82,16 @@ public class TaskPlanServiceImpl implements TaskPlanService {
                 }
             }
         } catch (Exception e) {
-            log.error("Error while getting plan info!|{}|{}|{}|{}", username, appId, templateId, planIdList, e);
+            String msg = MessageFormatter.arrayFormat(
+                "Error while getting plan info!|{}|{}|{}|{}",
+                new String[]{
+                    username,
+                    String.valueOf(appId),
+                    String.valueOf(templateId),
+                    String.valueOf(planIdList)
+                }
+            ).getMessage();
+            log.error(msg, e);
         }
 
         return taskPlanList;
@@ -92,8 +100,8 @@ public class TaskPlanServiceImpl implements TaskPlanService {
     @Override
     public List<TaskPlanVO> listPlans(String username, Long appId, Long templateId) {
         try {
-            ServiceResponse<List<TaskPlanVO>> planListResponse =
-                webPlanResourceClient.listPlans(username, appId, templateId);
+            Response<List<TaskPlanVO>> planListResponse =
+                backupTmpResource.listPlans(username, appId, templateId);
             if (planListResponse != null) {
                 if (0 == planListResponse.getCode()) {
                     log.debug("Fetching plan list of {}/{} finished.", appId, templateId);
@@ -104,7 +112,15 @@ public class TaskPlanServiceImpl implements TaskPlanService {
                 }
             }
         } catch (Exception e) {
-            log.error("Error while list plan info by template id!|{}|{}|{}", username, appId, templateId, e);
+            String msg = MessageFormatter.arrayFormat(
+                "Error while list plan info by template id!|{}|{}|{}",
+                new String[]{
+                    username,
+                    String.valueOf(appId),
+                    String.valueOf(templateId)
+                }
+            ).getMessage();
+            log.error(msg, e);
         }
         return null;
     }
@@ -112,8 +128,8 @@ public class TaskPlanServiceImpl implements TaskPlanService {
     @Override
     public ServiceIdNameCheckDTO checkIdAndName(Long appId, Long templateId, Long planId, String name) {
         try {
-            ServiceResponse<ServiceIdNameCheckDTO> idNameCheckResponse =
-                servicePlanResourceClient.checkIdAndName(appId, templateId, planId, name);
+            InternalResponse<ServiceIdNameCheckDTO> idNameCheckResponse =
+                taskPlanResource.checkIdAndName(appId, templateId, planId, name);
             if (idNameCheckResponse != null) {
                 if (0 == idNameCheckResponse.getCode()) {
                     return idNameCheckResponse.getData();
@@ -141,8 +157,8 @@ public class TaskPlanServiceImpl implements TaskPlanService {
             }
             planInfo.setVariableList(planInfo.getVariableList());
 
-            ServiceResponse<Long> savePlanResult =
-                servicePlanResourceClient.savePlanForImport(username, appId, templateId, null, planInfo);
+            InternalResponse<Long> savePlanResult =
+                taskPlanResource.savePlanForImport(username, appId, templateId, null, planInfo);
 
             if (savePlanResult != null) {
                 if (0 == savePlanResult.getCode()) {
@@ -153,7 +169,16 @@ public class TaskPlanServiceImpl implements TaskPlanService {
                 }
             }
         } catch (Exception e) {
-            log.error("Error while save plan!|{}|{}|{}|{}", username, appId, templateId, planInfo, e);
+            String msg = MessageFormatter.arrayFormat(
+                "Error while save plan!|{}|{}|{}|{}",
+                new String[]{
+                    username,
+                    String.valueOf(appId),
+                    String.valueOf(templateId),
+                    String.valueOf(planInfo)
+                }
+            ).getMessage();
+            log.error(msg, e);
         }
         return null;
 
@@ -162,8 +187,8 @@ public class TaskPlanServiceImpl implements TaskPlanService {
     @Override
     public List<ServiceTaskVariableDTO> getPlanVariable(String username, Long appId, Long templateId, Long planId) {
         try {
-            ServiceResponse<List<ServiceTaskVariableDTO>> planVariableResponse =
-                servicePlanResourceClient.getPlanVariable(username, appId, templateId, planId);
+            InternalResponse<List<ServiceTaskVariableDTO>> planVariableResponse =
+                taskPlanResource.getPlanVariable(username, appId, templateId, planId);
             if (planVariableResponse != null) {
                 if (0 == planVariableResponse.getCode()) {
                     return planVariableResponse.getData();

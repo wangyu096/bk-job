@@ -24,8 +24,11 @@
 
 package com.tencent.bk.job.manage.dao;
 
+import com.tencent.bk.job.common.model.BaseSearchCondition;
+import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.manage.model.dto.TagDTO;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -40,6 +43,14 @@ public interface TagDAO {
      * @return 标签信息或 {@code null}
      */
     TagDTO getTagById(long tagId);
+
+    /**
+     * 根据标签 IDs 批量获取标签信息
+     *
+     * @param tagIds 标签 IDs
+     * @return 标签信息列表
+     */
+    List<TagDTO> listTagInfoByIds(Collection<Long> tagIds);
 
     /**
      * 根据业务 ID 和标签 ID 获取标签信息
@@ -58,6 +69,14 @@ public interface TagDAO {
      * @return 标签信息列表或空列表
      */
     List<TagDTO> listTagsByIds(long appId, List<Long> tagIds);
+
+    /**
+     * 根据标签 ID 列表获取标签信息
+     *
+     * @param tagIds 标签 ID 列表
+     * @return 标签信息列表或空列表
+     */
+    List<TagDTO> listTagsByIds(List<Long> tagIds);
 
     /**
      * 根据业务 ID 和标签 ID 列表获取标签信息
@@ -91,13 +110,42 @@ public interface TagDAO {
      * @param tag Tag 信息
      * @return 更新是否成功
      */
-    Boolean updateTagById(TagDTO tag);
+    boolean updateTagById(TagDTO tag);
 
     /**
      * 标签通用查询
      *
-     * @param searchCondition
-     * @return
+     * @param searchCondition 查询条件
+     * @return 标签列表
      */
     List<TagDTO> listTags(TagDTO searchCondition);
+
+    /**
+     * 标签通用查询
+     *
+     * @param tagQuery            查询条件
+     * @param baseSearchCondition 基本查询条件
+     * @return 分页标签列表
+     */
+    PageData<TagDTO> listPageTags(TagDTO tagQuery, BaseSearchCondition baseSearchCondition);
+
+    /**
+     * 根据标签ID删除标签
+     *
+     * @param tagId 标签ID
+     * @return 是否删除成功
+     */
+    boolean deleteTagById(Long tagId);
+
+    /**
+     * 业务下是否存在同名标签
+     *
+     * @param appId   业务ID
+     * @param tagName 标签名称
+     * @return 是否存在
+     */
+    boolean isExistDuplicateName(Long appId, String tagName);
+
+    List<TagDTO> listAllTags();
+
 }

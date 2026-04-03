@@ -26,97 +26,60 @@
 -->
 
 <template>
-    <bk-form-item
-        ref="bkFormItem"
-        :class="classes"
-        v-bind="$attrs"
-        :label="label"
-        v-on="$listeners">
-        <div class="jb-form-item-content">
-            <slot />
-        </div>
-        <p v-if="validator.state === 'error'" class="error">{{ validator.content }}</p>
-    </bk-form-item>
+  <bk-form-item
+    ref="bkFormItem"
+    class="jb-form-item"
+    :class="classes"
+    :error-display-type="errorDisplayType"
+    :label="label"
+    v-bind="$attrs"
+    v-on="$listeners">
+    <slot />
+  </bk-form-item>
 </template>
 <script>
-    export default {
-        name: 'JbFormItem',
-        inheritAttrs: false,
-        props: {
-            label: {
-                type: String,
-                default: '',
-            },
-            layout: {
-                type: String,
-                default: '',
-            },
-        },
-        data () {
-            return {
-                validator: {
-                    state: '',
-                    content: '',
-                },
-            };
-        },
-        computed: {
-            classes () {
-                const classes = {
-                    'jb-form-item': true,
-                    'label-miss': !this.label,
-                };
-                if (this.layout) {
-                    classes[`layout-${this.layout}`] = true;
-                }
-                return classes;
-            },
-        },
-        mounted () {
-            this.validator = this.$refs.bkFormItem.validator;
-        },
-        methods: {
-            clearValidator () {
-                this.$refs.bkFormItem.clearValidator();
-            },
-        },
-    };
+  export default {
+    name: 'JbFormItem',
+    inheritAttrs: false,
+    props: {
+      label: {
+        type: String,
+        default: '',
+      },
+      errorDisplayType: {
+        type: String,
+        default: 'normal',
+      },
+    },
+
+    computed: {
+      classes() {
+        const classes = {
+          'label-miss': !this.label,
+        };
+        return classes;
+      },
+    },
+
+    methods: {
+      clearValidator() {
+        this.$refs.bkFormItem.clearValidator();
+      },
+    },
+  };
 </script>
 <style lang='postcss'>
-    .jb-form-item {
-        &.label-miss {
-            .bk-label {
-                height: 0;
-                min-height: 0;
-                font-size: 0;
-            }
-        }
-
-        &.layout-inline {
-            flex-direction: row !important;
-        }
-
-        &.layout-vertical {
-            flex-direction: column !important;
-        }
-
-        .jb-form-item-content {
-            flex: 1;
-        }
-
-        .bk-label {
-            height: 32px;
-        }
-
-        .error {
-            margin-bottom: -4px;
-            font-size: 12px;
-            line-height: 20px;
-            color: #ff4d4d;
-        }
-
-        .tooltips-icon {
-            display: none;
-        }
+  .jb-form-item {
+    &.label-miss {
+      .bk-label {
+        height: 0;
+        min-height: 0;
+        font-size: 0;
+      }
     }
+
+    .jb-form-item-content {
+      flex: 1;
+    }
+  }
 </style>

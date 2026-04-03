@@ -1,0 +1,308 @@
+{{- if and .Values.backupConfig.enabled (eq .Values.deploy.mode "standard") }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "common.names.fullname" . }}-backup
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: "job-backup"
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+data:
+  application.yaml: |-
+    spring:
+      cloud:
+        stream:
+          defaultBinder: jobCommon
+          binders:
+            jobCommon:
+              type: rabbit
+              environment:
+                spring:
+                  rabbitmq:
+                    host: {{ include "job.rabbitmq.host" . }}
+                    port: {{ include "job.rabbitmq.port" . }}
+                    username: {{ include "job.rabbitmq.username" . }}
+                    {{ if .Values.externalRabbitMQ.existingPasswordSecret }}
+                    password: {{ .Values.externalRabbitMQ.existingPasswordKey | default "rabbitmq-password" | printf "${%s}" }}
+                    {{- else -}}
+                    password: ${rabbitmq-password}
+                    {{- end }}
+                    virtual-host: {{ include "job.rabbitmq.vhost" . }}
+          source: archive-task
+          bindings:
+            handleArchiveTaskEvent-in-0:
+              destination: archive.task
+              group: service.job.backup
+              binder: jobCommon
+              consumer:
+                concurrency: 5
+            archive-task-out-0:
+              destination: archive.task
+              group: service.job.backup
+              binder: jobCommon
+              consumer:
+                concurrency: 5
+          rabbit:
+            bindings:
+              handleArchiveTaskEvent-in-0:
+                consumer:
+                  maxConcurrency: 20
+              archive-task-out-0:
+                consumer:
+                  maxConcurrency: 20
+        function:
+          definition: handleArchiveTaskEvent
+      datasource:
+        job-backup:
+          driver-class-name: {{ include "job.jdbcMysqlDriverClass" . }}
+          type: com.zaxxer.hikari.HikariDataSource
+          jdbc-url: {{ include "job.jdbcMysqlScheme" . }}://{{- include "job.mariadb.host" . }}:{{- include "job.mariadb.port" . }}/job_backup{{ include "job.mariadb.connection.properties" . }}
+          username: {{ include "job.mariadb.username" . }}
+          {{ if .Values.externalMariaDB.existingPasswordSecret }}
+          password: {{ .Values.externalMariaDB.existingPasswordKey | default "mariadb-password" | printf "${%s}" }}
+          {{- else -}}
+          password: ${mariadb-password}
+          {{- end }}
+          maximum-pool-size: 20
+          minimum-idle: 5
+          idle-timeout: 600000
+          poolName: "job-backup"
+          validationTimeout: 5000
+        {{- if and .Values.backupConfig.archive.execute.enabled }}
+        {{- if eq .Values.backupConfig.archive.execute.mariadb.dataSourceMode "standalone" }}
+        job-execute:
+          driver-class-name: {{ include "job.jdbcMysqlDriverClass" . }}
+          type: com.zaxxer.hikari.HikariDataSource
+          jdbc-url: {{ include "job.jdbcMysqlScheme" . }}://{{- include "job.mariadb.host" . }}:{{- include "job.mariadb.port" . }}/job_execute{{ .Values.backupConfig.archive.execute.mariadb.connection.properties }}
+          username: {{ include "job.mariadb.username" . }}
+          {{ if .Values.externalMariaDB.existingPasswordSecret }}
+          password: {{ .Values.externalMariaDB.existingPasswordKey | default "mariadb-password" | printf "${%s}" }}
+          {{- else -}}
+          password: ${mariadb-password}
+          {{- end }}
+          maximum-pool-size: 10
+          minimum-idle: 2
+          idle-timeout: 6000
+          poolName: "job-execute"
+          validationTimeout: 5000
+        {{- else if eq .Values.backupConfig.archive.execute.mariadb.dataSourceMode "vertical_sharding" }}
+        {{- range $dsName, $ds := .Values.backupConfig.archive.execute.mariadb.verticalSharding.datasource }}
+        {{ $dsName }}:
+            driverClassName: {{ include "job.jdbcMysqlDriverClass" . }}
+            jdbcUrl: {{ $ds.jdbcUrl | quote }}
+            username: {{ $ds.username | quote }}
+            password: {{ $ds.password | quote }}
+            maximumPoolSize: {{ $ds.maximumPoolSize | default 100 }}
+            minimumIdle: {{ $ds.minimumIdle | default 20 }}
+            idleTimeout: {{ $ds.idleTimeout | default 600000 }}
+            poolName: {{ $ds.poolName | default "job-execute" }}
+            validationTimeout: {{ $ds.validationTimeout | default 5000 }}
+        {{- end }}
+        {{- end }}  
+        {{- end }}
+        {{- if and .Values.backupConfig.archive.execute.enabled (or (eq .Values.backupConfig.archive.execute.mode "backupThenDelete") (eq .Values.backupConfig.archive.execute.mode "backupOnly")) }}
+        job-execute-archive:
+          driver-class-name: {{ include "job.jdbcMysqlDriverClass" . }}
+          type: com.zaxxer.hikari.HikariDataSource
+          jdbc-url: {{ include "job.jdbcMysqlScheme" . }}://{{ .Values.backupConfig.archive.mariadb.host }}:{{ .Values.backupConfig.archive.mariadb.port }}/job_execute{{ .Values.backupConfig.archive.mariadb.connection.properties }}
+          username: {{ .Values.backupConfig.archive.mariadb.username }}
+          password: ${archive-mariadb-password}
+          maximum-pool-size: 10
+          minimum-idle: 2
+          idle-timeout: 6000
+          poolName: "job-execute-archive"
+          validationTimeout: 5000
+        {{- end }}
+      redis:
+      {{- include "job.redis.config" . | indent 8 }}
+        database: 0
+        lettuce:
+          pool:
+            min-idle: 5
+            max-idle: 10
+            max-active: 8
+            max-wait: 1ms
+          shutdown-timeout: 100ms
+      servlet:
+        multipart:
+          max-file-size: 5GB
+          max-request-size: 5GB
+    ribbon:
+      ReadTimeout: 60000
+      ConnectTimeout: 10000
+      eureka:
+        enabled: false
+    server:
+      port: {{ .Values.backupConfig.containerPort }}
+    job:
+      backup:
+        storage-backend: {{ .Values.backupConfig.storageBackend }}
+        artifactory:
+          repo: {{ .Values.backupConfig.artifactory.repo }}
+        archive:  
+          execute:
+            mysql:
+              dataSourceMode: {{ .Values.executeConfig.mysql.dataSourceMode }}
+              sharding:
+                enabled: {{ .Values.executeConfig.mysql.sharding.enabled }}
+                {{- if .Values.executeConfig.mysql.sharding.enabled }}
+                databases:
+                  job_execute:
+                    logicDatabaseName: job_execute
+                    dataSourceDriverClassName: {{ include "job.jdbcMysqlDriverClass" . }}
+                    username: {{ .Values.executeConfig.mysql.sharding.databases.job_execute.username | quote }}
+                    password: {{ .Values.executeConfig.mysql.sharding.databases.job_execute.password | quote }}
+                    maximumPoolSize: 5
+                    minimumIdle: 1
+                    idleTimeout: 600000
+                    validationTimeout: 5000
+                    connectionTimeout: 30000
+                    # 数据源分组配置
+                    dataSourceGroups:
+                      # 分片数据源
+                      {{- toYaml .Values.executeConfig.mysql.sharding.databases.job_execute.dataSourceGroups | nindent 22 }}
+                    # 规则配置
+                    rule:
+                      # 分片表规则配置
+                      sharding:
+                        tables:
+                          task_instance:
+                            {{ include "job.execute.sharding.jobInstance.dataNodes" . }}
+                            databaseStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                            tableStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                          step_instance:
+                            {{ include "job.execute.sharding.jobInstance.dataNodes" . }}
+                            databaseStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                            tableStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                          step_instance_script:
+                            {{ include "job.execute.sharding.jobInstance.dataNodes" . }}
+                            databaseStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                            tableStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                          step_instance_file:
+                            {{ include "job.execute.sharding.jobInstance.dataNodes" . }}
+                            databaseStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                            tableStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                          step_instance_confirm:
+                            {{ include "job.execute.sharding.jobInstance.dataNodes" . }}
+                            databaseStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                            tableStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                          gse_script_execute_obj_task:
+                            {{ include "job.execute.sharding.jobInstance.dataNodes" . }}
+                            databaseStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                            tableStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                          gse_file_execute_obj_task:
+                            {{ include "job.execute.sharding.jobInstance.dataNodes" . }}
+                            databaseStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                            tableStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                          gse_task:
+                            {{ include "job.execute.sharding.jobInstance.dataNodes" . }}
+                            databaseStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                            tableStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                          file_source_task_log:
+                            {{ include "job.execute.sharding.jobInstance.dataNodes" . }}
+                            databaseStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                            tableStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                          operation_log:
+                            {{ include "job.execute.sharding.jobInstance.dataNodes" . }}
+                            databaseStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                            tableStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                          task_instance_variable:
+                            {{ include "job.execute.sharding.jobInstance.dataNodes" . }}
+                            databaseStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                            tableStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                          step_instance_variable:
+                            {{ include "job.execute.sharding.jobInstance.dataNodes" . }}
+                            databaseStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                            tableStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                          rolling_config:
+                            {{ include "job.execute.sharding.jobInstance.dataNodes" . }}
+                            databaseStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                            tableStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                          step_instance_rolling_task:
+                            {{ include "job.execute.sharding.jobInstance.dataNodes" . }}
+                            databaseStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                            tableStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                          task_instance_app:
+                            {{ include "job.execute.sharding.jobInstanceSearch.dataNodes" . }}
+                            databaseStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                            tableStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                          task_instance_host:
+                            {{ include "job.execute.sharding.jobInstanceSearch.dataNodes" . }}
+                            databaseStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                            tableStrategy:
+                              type: hint
+                              shardingAlgorithmName: job_instance_hint
+                        ## 分库分表算法
+                        shardingAlgorithms:
+                          # 强制路由分片算法
+                          job_instance_hint:
+                            type: JOB_INSTANCE_HINT
+                    # 全局配置
+                    props:
+              {{- end }}
+{{- end }}

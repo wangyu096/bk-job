@@ -24,13 +24,12 @@
 
 package com.tencent.bk.job.file_gateway.api.inner;
 
-import com.tencent.bk.job.common.exception.ServiceException;
-import com.tencent.bk.job.common.model.ServiceResponse;
-import com.tencent.bk.job.file_gateway.model.req.inner.*;
+import com.tencent.bk.job.common.model.InternalResponse;
+import com.tencent.bk.job.file_gateway.model.req.inner.ClearTaskFilesReq;
+import com.tencent.bk.job.file_gateway.model.req.inner.FileSourceBatchDownloadTaskReq;
+import com.tencent.bk.job.file_gateway.model.req.inner.StopBatchTaskReq;
 import com.tencent.bk.job.file_gateway.model.resp.inner.BatchTaskInfoDTO;
 import com.tencent.bk.job.file_gateway.model.resp.inner.BatchTaskStatusDTO;
-import com.tencent.bk.job.file_gateway.model.resp.inner.FileSourceTaskStatusDTO;
-import com.tencent.bk.job.file_gateway.model.resp.inner.TaskInfoDTO;
 import com.tencent.bk.job.file_gateway.service.BatchTaskService;
 import com.tencent.bk.job.file_gateway.service.FileSourceTaskService;
 import lombok.extern.slf4j.Slf4j;
@@ -53,102 +52,45 @@ public class ServiceFileSourceTaskResourceImpl implements ServiceFileSourceTaskR
     }
 
     @Override
-    public ServiceResponse<TaskInfoDTO> startFileSourceDownloadTask(String username, FileSourceDownloadTaskReq req) {
-        try {
-            return ServiceResponse.buildSuccessResp(fileSourceTaskService.startFileSourceDownloadTask(username,
-                req.getAppId(), req.getStepInstanceId(), req.getExecuteCount(), null, req.getFileSourceId(),
-                req.getFilePathList()));
-        } catch (ServiceException e) {
-            log.error("Fail to startFileSourceDownloadTask", e);
-            return ServiceResponse.buildCommonFailResp(e.getErrorCode(), e.getErrorParams());
-        }
+    public InternalResponse<Integer> clearTaskFiles(ClearTaskFilesReq req) {
+        return InternalResponse.buildSuccessResp(fileSourceTaskService.clearTaskFiles(req.getTaskIdList()));
     }
 
     @Override
-    public ServiceResponse<Integer> stopTasks(StopTaskReq req) {
-        try {
-            return ServiceResponse.buildSuccessResp(fileSourceTaskService.stopTasks(req.getTaskIdList()));
-        } catch (ServiceException e) {
-            log.error("Fail to stopTasks", e);
-            return ServiceResponse.buildCommonFailResp(e.getErrorCode(), e.getErrorParams());
-        }
+    public InternalResponse<BatchTaskInfoDTO> startFileSourceBatchDownloadTask(String username,
+                                                                               FileSourceBatchDownloadTaskReq req) {
+        return InternalResponse.buildSuccessResp(
+            batchTaskService.startFileSourceBatchDownloadTask(
+                username,
+                req.getAppId(),
+                req.getStepInstanceId(),
+                req.getExecuteCount(),
+                req.getFileSourceTaskList()
+            )
+        );
     }
 
     @Override
-    public ServiceResponse<FileSourceTaskStatusDTO> getFileSourceTaskStatusAndLogs(String taskId, Long logStart,
-                                                                                   Long logLength) {
+    public InternalResponse<Integer> stopBatchTasks(StopBatchTaskReq req) {
+        return InternalResponse.buildSuccessResp(batchTaskService.stopBatchTasks(req.getBatchTaskIdList()));
+    }
+
+    @Override
+    public InternalResponse<BatchTaskStatusDTO> getBatchTaskStatusAndLogs(String batchTaskId,
+                                                                          Long logStart,
+                                                                          Long logLength) {
         if (logStart == null || logStart < 0) {
             logStart = 0L;
         }
         if (logLength == null || logLength <= 0) {
             logLength = -1L;
         }
-        try {
-            return ServiceResponse.buildSuccessResp(fileSourceTaskService.getFileSourceTaskStatusAndLogs(taskId,
-                logStart, logLength));
-        } catch (ServiceException e) {
-            log.error("Fail to getFileSourceTaskStatus", e);
-            return ServiceResponse.buildCommonFailResp(e.getErrorCode(), e.getErrorParams());
-        }
-    }
-
-    @Override
-    public ServiceResponse<Integer> clearTaskFiles(ClearTaskFilesReq req) {
-        try {
-            return ServiceResponse.buildSuccessResp(fileSourceTaskService.clearTaskFiles(req.getTaskIdList()));
-        } catch (ServiceException e) {
-            log.error("Fail to clearTaskFiles", e);
-            return ServiceResponse.buildCommonFailResp(e.getErrorCode(), e.getErrorParams());
-        }
-    }
-
-    @Override
-    public ServiceResponse<BatchTaskInfoDTO> startFileSourceBatchDownloadTask(String username,
-                                                                              FileSourceBatchDownloadTaskReq req) {
-        try {
-            return ServiceResponse.buildSuccessResp(batchTaskService.startFileSourceBatchDownloadTask(username,
-                req.getAppId(), req.getStepInstanceId(), req.getExecuteCount(), req.getFileSourceTaskList()));
-        } catch (ServiceException e) {
-            log.error("Fail to startFileSourceBatchDownloadTask", e);
-            return ServiceResponse.buildCommonFailResp(e.getErrorCode(), e.getErrorParams());
-        }
-    }
-
-    @Override
-    public ServiceResponse<Integer> stopBatchTasks(StopBatchTaskReq req) {
-        try {
-            return ServiceResponse.buildSuccessResp(batchTaskService.stopBatchTasks(req.getBatchTaskIdList()));
-        } catch (ServiceException e) {
-            log.error("Fail to stopBatchTasks", e);
-            return ServiceResponse.buildCommonFailResp(e.getErrorCode(), e.getErrorParams());
-        }
-    }
-
-    @Override
-    public ServiceResponse<BatchTaskStatusDTO> getBatchTaskStatusAndLogs(String batchTaskId, Long logStart,
-                                                                         Long logLength) {
-        if (logStart == null || logStart < 0) {
-            logStart = 0L;
-        }
-        if (logLength == null || logLength <= 0) {
-            logLength = -1L;
-        }
-        try {
-            return ServiceResponse.buildSuccessResp(batchTaskService.getBatchTaskStatusAndLogs(batchTaskId, logStart,
-                logLength));
-        } catch (ServiceException e) {
-            log.error("Fail to getBatchTaskStatusAndLogs", e);
-            return ServiceResponse.buildCommonFailResp(e.getErrorCode(), e.getErrorParams());
-        }
-    }
-
-    @Override
-    public ServiceResponse<Integer> clearBatchTaskFiles(ClearBatchTaskFilesReq req) {
-        try {
-            return ServiceResponse.buildSuccessResp(batchTaskService.clearBatchTaskFiles(req.getBatchTaskIdList()));
-        } catch (ServiceException e) {
-            log.error("Fail to clearBatchTaskFiles", e);
-            return ServiceResponse.buildCommonFailResp(e.getErrorCode(), e.getErrorParams());
-        }
+        return InternalResponse.buildSuccessResp(
+            batchTaskService.getBatchTaskStatusAndLogs(
+                batchTaskId,
+                logStart,
+                logLength
+            )
+        );
     }
 }

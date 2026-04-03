@@ -26,20 +26,37 @@ package com.tencent.bk.job.manage.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.exception.InternalException;
+import com.tencent.bk.job.common.exception.InvalidParamException;
 import com.tencent.bk.job.common.exception.ServiceException;
+import com.tencent.bk.job.common.mysql.JobTransactional;
 import com.tencent.bk.job.common.util.json.JsonUtils;
-import com.tencent.bk.job.manage.common.consts.task.TaskFileTypeEnum;
-import com.tencent.bk.job.manage.common.consts.task.TaskScriptSourceEnum;
-import com.tencent.bk.job.manage.common.consts.task.TaskTypeEnum;
-import com.tencent.bk.job.manage.dao.*;
-import com.tencent.bk.job.manage.model.dto.task.*;
+import com.tencent.bk.job.manage.api.common.constants.task.TaskFileTypeEnum;
+import com.tencent.bk.job.manage.api.common.constants.task.TaskScriptSourceEnum;
+import com.tencent.bk.job.manage.api.common.constants.task.TaskTypeEnum;
+import com.tencent.bk.job.manage.dao.ScriptDAO;
+import com.tencent.bk.job.manage.dao.TaskApprovalStepDAO;
+import com.tencent.bk.job.manage.dao.TaskFileInfoDAO;
+import com.tencent.bk.job.manage.dao.TaskFileStepDAO;
+import com.tencent.bk.job.manage.dao.TaskScriptStepDAO;
+import com.tencent.bk.job.manage.dao.TaskStepDAO;
+import com.tencent.bk.job.manage.model.dto.ScriptDTO;
+import com.tencent.bk.job.manage.model.dto.task.TaskApprovalStepDTO;
+import com.tencent.bk.job.manage.model.dto.task.TaskFileInfoDTO;
+import com.tencent.bk.job.manage.model.dto.task.TaskFileStepDTO;
+import com.tencent.bk.job.manage.model.dto.task.TaskScriptStepDTO;
+import com.tencent.bk.job.manage.model.dto.task.TaskStepDTO;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -55,6 +72,7 @@ public abstract class AbstractTaskStepService {
     protected TaskFileStepDAO taskFileStepDAO;
     protected TaskApprovalStepDAO taskApprovalStepDAO;
     protected TaskFileInfoDAO taskFileInfoDAO;
+    protected ScriptDAO scriptDAO;
     protected TaskTypeEnum taskType;
 
     /**
@@ -88,6 +106,7 @@ public abstract class AbstractTaskStepService {
 
         // Fill detail info by type
         Map<Long, TaskScriptStepDTO> scriptStepMap = taskScriptStepDAO.listScriptStepByIds(scriptStepIdList);
+        fillRefScriptContent(scriptStepMap);
         Map<Long, TaskFileStepDTO> fileStepMap = taskFileStepDAO.listFileStepsByIds(fileStepIdList);
         Map<Long, List<TaskFileInfoDTO>> fileInfoListMap = taskFileInfoDAO.listFileInfosByStepIds(fileStepIdList);
         Map<Long, TaskApprovalStepDTO> approvalStepMap = taskApprovalStepDAO.listApprovalsByIds(approvalStepIdList);
@@ -114,6 +133,26 @@ public abstract class AbstractTaskStepService {
         return taskStepList;
     }
 
+    private void fillRefScriptContent(Map<Long, TaskScriptStepDTO> scriptStepMap) {
+        List<Long> scriptVersionIds = scriptStepMap.values().stream()
+            .filter(scriptStep -> scriptStep.getScriptVersionId() != null)
+            .map(TaskScriptStepDTO::getScriptVersionId)
+            .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(scriptVersionIds)) {
+            List<ScriptDTO> scripts = scriptDAO.batchGetScriptVersionsByIds(scriptVersionIds);
+            Map<Long, ScriptDTO> scriptMap = new HashMap<>();
+            scripts.forEach(script -> scriptMap.put(script.getScriptVersionId(), script));
+            scriptStepMap.values().forEach(scriptStep -> {
+                if (scriptStep.getScriptVersionId() != null && StringUtils.isEmpty(scriptStep.getContent())) {
+                    ScriptDTO script = scriptMap.get(scriptStep.getScriptVersionId());
+                    if (script != null) {
+                        scriptStep.setContent(script.getContent());
+                    }
+                }
+            });
+        }
+    }
+
     /**
      * 新增步骤
      *
@@ -121,7 +160,7 @@ public abstract class AbstractTaskStepService {
      * @return 新增的步骤 ID
      * @throws ServiceException 新增步骤异常
      */
-    @Transactional(rollbackFor = ServiceException.class)
+    @JobTransactional(transactionManager = "jobManageTransactionManager")
     public long insertStep(TaskStepDTO taskStep) throws ServiceException {
         try {
             Long stepId = taskStepDAO.insertStep(taskStep);
@@ -138,7 +177,7 @@ public abstract class AbstractTaskStepService {
                                 scriptStepInfo.setPlanId(taskStep.getPlanId());
                                 break;
                             default:
-                                throw new ServiceException(ErrorCode.WRONG_TASK_TYPE);
+                                throw new InvalidParamException(ErrorCode.WRONG_TASK_TYPE);
                         }
                         scriptStepInfo.setStepId(stepId);
                         Long scriptStepId = taskScriptStepDAO.insertScriptStep(scriptStepInfo);
@@ -147,7 +186,7 @@ public abstract class AbstractTaskStepService {
                             scriptStepInfo.setId(scriptStepId);
                             taskStepDAO.updateStepById(taskStep);
                         } else {
-                            throw new ServiceException(ErrorCode.CREATE_STEP_FAILED);
+                            throw new InternalException(ErrorCode.CREATE_STEP_FAILED);
                         }
                         break;
                     case FILE:
@@ -163,7 +202,7 @@ public abstract class AbstractTaskStepService {
                             fileStepInfo.setId(fileStepId);
                             taskStepDAO.updateStepById(taskStep);
                         } else {
-                            throw new ServiceException(ErrorCode.CREATE_STEP_FAILED);
+                            throw new InternalException(ErrorCode.CREATE_STEP_FAILED);
                         }
                         break;
                     case APPROVAL:
@@ -175,7 +214,7 @@ public abstract class AbstractTaskStepService {
                             approvalStepInfo.setId(approvalStepId);
                             taskStepDAO.updateStepById(taskStep);
                         } else {
-                            throw new ServiceException(ErrorCode.CREATE_STEP_FAILED);
+                            throw new InternalException(ErrorCode.CREATE_STEP_FAILED);
                         }
                         break;
                     default:
@@ -184,13 +223,13 @@ public abstract class AbstractTaskStepService {
                 }
                 return stepId;
             } else {
-                throw new ServiceException(ErrorCode.CREATE_STEP_FAILED);
+                throw new InternalException(ErrorCode.CREATE_STEP_FAILED);
             }
         } catch (ServiceException e) {
             throw e;
         } catch (Exception e) {
             log.error("unknown error while insert step!", e);
-            throw new ServiceException(ErrorCode.CREATE_STEP_FAILED);
+            throw new InternalException(ErrorCode.CREATE_STEP_FAILED);
         }
     }
 
@@ -201,7 +240,7 @@ public abstract class AbstractTaskStepService {
      * @return 是否更新成功
      * @throws ServiceException 更新异常
      */
-    @Transactional(rollbackFor = ServiceException.class)
+    @JobTransactional(transactionManager = "jobManageTransactionManager")
     public boolean updateStepById(TaskStepDTO taskStep) throws ServiceException {
         try {
             if (taskStepDAO.updateStepById(taskStep)) {
@@ -215,17 +254,17 @@ public abstract class AbstractTaskStepService {
                             if (taskScriptStepDAO.updateScriptStepById(taskStep.getScriptStepInfo())) {
                                 return true;
                             } else {
-                                throw new ServiceException(ErrorCode.UPDATE_STEP_FAILED);
+                                throw new InternalException(ErrorCode.UPDATE_STEP_FAILED);
                             }
                         } else {
-                            throw new ServiceException(ErrorCode.ILLEGAL_PARAM);
+                            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
                         }
                     case FILE:
                         if (taskStep.getFileStepInfo().getStepId() > 0) {
                             if (taskFileStepDAO.updateFileStepById(taskStep.getFileStepInfo())) {
                                 List<TaskFileInfoDTO> originTaskFileInfo =
                                     taskFileInfoDAO.listFileInfoByStepId(taskStep.getFileStepInfo().getStepId());
-                                List<Long> originTaskFileInfoIds = originTaskFileInfo.parallelStream()
+                                List<Long> originTaskFileInfoIds = originTaskFileInfo.stream()
                                     .map(TaskFileInfoDTO::getId).collect(Collectors.toList());
                                 List<TaskFileInfoDTO> newFileInfo = new ArrayList<>();
                                 for (TaskFileInfoDTO fileInfo : taskStep.getFileStepInfo().getOriginFileList()) {
@@ -236,7 +275,7 @@ public abstract class AbstractTaskStepService {
                                             continue;
                                         }
                                         if (!taskFileInfoDAO.updateFileInfoById(fileInfo)) {
-                                            throw new ServiceException(ErrorCode.UPDATE_FILE_INFO_FAILED);
+                                            throw new InternalException(ErrorCode.UPDATE_FILE_INFO_FAILED);
                                         }
                                         originTaskFileInfoIds.remove(fileInfo.getId());
                                     } else {
@@ -250,20 +289,20 @@ public abstract class AbstractTaskStepService {
                                 }
                                 return true;
                             } else {
-                                throw new ServiceException(ErrorCode.UPDATE_STEP_FAILED);
+                                throw new InternalException(ErrorCode.UPDATE_STEP_FAILED);
                             }
                         } else {
-                            throw new ServiceException(ErrorCode.ILLEGAL_PARAM);
+                            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
                         }
                     case APPROVAL:
                         if (taskStep.getApprovalStepInfo().getStepId() > 0) {
                             if (taskApprovalStepDAO.updateApprovalById(taskStep.getApprovalStepInfo())) {
                                 return true;
                             } else {
-                                throw new ServiceException(ErrorCode.UPDATE_STEP_FAILED);
+                                throw new InternalException(ErrorCode.UPDATE_STEP_FAILED);
                             }
                         } else {
-                            throw new ServiceException(ErrorCode.ILLEGAL_PARAM);
+                            throw new InvalidParamException(ErrorCode.ILLEGAL_PARAM);
                         }
                     default:
                         log.error("Unrecognized step type!|{}", taskStep.getType());
@@ -271,13 +310,13 @@ public abstract class AbstractTaskStepService {
                 }
                 return true;
             } else {
-                throw new ServiceException(ErrorCode.UPDATE_STEP_FAILED);
+                throw new InternalException(ErrorCode.UPDATE_STEP_FAILED);
             }
         } catch (ServiceException e) {
             throw e;
         } catch (Exception e) {
             log.error("unknown error while update step!", e);
-            throw new ServiceException(ErrorCode.UPDATE_STEP_FAILED);
+            throw new InternalException(ErrorCode.UPDATE_STEP_FAILED);
         }
     }
 
@@ -289,7 +328,7 @@ public abstract class AbstractTaskStepService {
      * @return 是否删除成功
      * @throws ServiceException 删除异常
      */
-    @Transactional(rollbackFor = ServiceException.class)
+    @JobTransactional(transactionManager = "jobManageTransactionManager")
     public boolean deleteStepById(Long parentId, Long id) throws ServiceException {
         try {
             TaskStepDTO taskStep = taskStepDAO.getStepById(parentId, id);
@@ -302,32 +341,32 @@ public abstract class AbstractTaskStepService {
                         if (taskScriptStepDAO.deleteScriptStepById(id)) {
                             return true;
                         } else {
-                            throw new ServiceException(ErrorCode.DELETE_STEP_FAILED);
+                            throw new InternalException(ErrorCode.DELETE_STEP_FAILED);
                         }
                     case FILE:
                         if (taskFileStepDAO.deleteFileStepById(id)) {
                             taskFileInfoDAO.deleteFileInfosByStepId(id);
                             return true;
                         }
-                        throw new ServiceException(ErrorCode.DELETE_STEP_FAILED);
+                        throw new InternalException(ErrorCode.DELETE_STEP_FAILED);
                     case APPROVAL:
                         if (taskApprovalStepDAO.deleteApprovalById(id)) {
                             return true;
                         } else {
-                            throw new ServiceException(ErrorCode.DELETE_STEP_FAILED);
+                            throw new InternalException(ErrorCode.DELETE_STEP_FAILED);
                         }
                     default:
                         log.error("Unrecognized step type!|{}", taskStep.getType());
                         return true;
                 }
             } else {
-                throw new ServiceException(ErrorCode.DELETE_STEP_FAILED);
+                throw new InternalException(ErrorCode.DELETE_STEP_FAILED);
             }
         } catch (ServiceException e) {
             throw e;
         } catch (Exception e) {
             log.error("unknown error while delete step!", e);
-            throw new ServiceException(ErrorCode.DELETE_STEP_FAILED);
+            throw new InternalException(ErrorCode.DELETE_STEP_FAILED);
         }
     }
 
@@ -350,7 +389,7 @@ public abstract class AbstractTaskStepService {
                 uniqScriptVersionSet.add(taskScriptStepDTO.getScriptVersionId());
             });
         }
-        templateScriptVersionMap.put(0L, uniqScriptVersionSet.parallelStream().collect(Collectors.toList()));
+        templateScriptVersionMap.put(0L, new ArrayList<>(uniqScriptVersionSet));
         return templateScriptVersionMap;
     }
 

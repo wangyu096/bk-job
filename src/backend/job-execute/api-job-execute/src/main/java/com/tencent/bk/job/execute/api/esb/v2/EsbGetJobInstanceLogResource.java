@@ -24,33 +24,46 @@
 
 package com.tencent.bk.job.execute.api.esb.v2;
 
+import com.tencent.bk.job.common.annotation.EsbAPI;
+import com.tencent.bk.job.common.constant.JobCommonHeaders;
 import com.tencent.bk.job.common.esb.model.EsbResp;
 import com.tencent.bk.job.execute.model.esb.v2.EsbStepInstanceResultAndLog;
 import com.tencent.bk.job.execute.model.esb.v2.request.EsbGetJobInstanceLogRequest;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-
-import static com.tencent.bk.job.common.i18n.locale.LocaleUtils.COMMON_LANG_HEADER;
 
 /**
  * 根据作业实例ID查询作业执行日志-V2
  */
 @RequestMapping("/esb/api/v2")
 @RestController
+@EsbAPI
 public interface EsbGetJobInstanceLogResource {
 
     @PostMapping("/get_job_instance_log")
     EsbResp<List<EsbStepInstanceResultAndLog>> getJobInstanceLogUsingPost(
-        @RequestHeader(value = COMMON_LANG_HEADER, required = false) String lang,
-        @RequestBody EsbGetJobInstanceLogRequest request);
+        @RequestHeader(value = JobCommonHeaders.USERNAME) String username,
+        @RequestHeader(value = JobCommonHeaders.APP_CODE) String appCode,
+        @RequestBody
+        @Validated
+            EsbGetJobInstanceLogRequest request
+    );
 
     @GetMapping("/get_job_instance_log")
     EsbResp<List<EsbStepInstanceResultAndLog>> getJobInstanceLog(
-        @RequestHeader(value = COMMON_LANG_HEADER, required = false) String lang,
-        @RequestParam(value = "bk_app_code") String appCode,
-        @RequestParam(value = "bk_username") String username,
-        @RequestParam(value = "bk_biz_id") Long appId,
+        @RequestHeader(value = JobCommonHeaders.USERNAME) String username,
+        @RequestHeader(value = JobCommonHeaders.APP_CODE) String appCode,
+        @RequestParam(value = "bk_biz_id", required = false) Long bizId,
+        @RequestParam(value = "bk_scope_type", required = false) String scopeType,
+        @RequestParam(value = "bk_scope_id", required = false) String scopeId,
         @RequestParam(value = "job_instance_id") Long taskInstanceId);
 
 

@@ -25,6 +25,7 @@
 package com.tencent.bk.job.execute.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.tencent.bk.job.execute.model.inner.ServiceFileDetailDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -53,6 +54,10 @@ public class FileDetailDTO implements Cloneable {
      * 文件名
      */
     private String fileName;
+    /**
+     * base64编码的文件内容
+     */
+    private String base64Content;
     /**
      * 文件hash，目前用md5
      */
@@ -87,5 +92,11 @@ public class FileDetailDTO implements Cloneable {
         FileDetailDTO fileDetailDTO = new FileDetailDTO(filePath, fileName, fileHash, fileSize);
         fileDetailDTO.setResolvedFilePath(resolvedFilePath);
         return fileDetailDTO;
+    }
+
+    public ServiceFileDetailDTO toServiceFileDetailDTO() {
+        ServiceFileDetailDTO serviceFileDetailDTO = new ServiceFileDetailDTO();
+        serviceFileDetailDTO.setFilePath(filePath);
+        return serviceFileDetailDTO;
     }
 }

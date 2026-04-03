@@ -24,32 +24,38 @@
 
 package com.tencent.bk.job.execute.api.esb.v2.impl;
 
+import com.tencent.bk.audit.annotations.AuditEntry;
+import com.tencent.bk.audit.annotations.AuditRequestBody;
+import com.tencent.bk.job.common.constant.AccountCategoryEnum;
 import com.tencent.bk.job.common.constant.ErrorCode;
+import com.tencent.bk.job.common.constant.JobConstants;
 import com.tencent.bk.job.common.esb.metrics.EsbApiTimed;
 import com.tencent.bk.job.common.esb.model.EsbResp;
+import com.tencent.bk.job.common.exception.InvalidParamException;
+import com.tencent.bk.job.common.exception.NotFoundException;
 import com.tencent.bk.job.common.exception.ServiceException;
-import com.tencent.bk.job.common.i18n.MessageI18nService;
-import com.tencent.bk.job.common.iam.exception.InSufficientPermissionException;
-import com.tencent.bk.job.common.iam.service.AuthService;
+import com.tencent.bk.job.common.i18n.service.MessageI18nService;
+import com.tencent.bk.job.common.metrics.CommonMetricNames;
 import com.tencent.bk.job.common.model.ValidateResult;
+import com.tencent.bk.job.common.util.ArrayUtil;
 import com.tencent.bk.job.common.util.Base64Util;
 import com.tencent.bk.job.common.util.date.DateUtils;
+import com.tencent.bk.job.common.web.metrics.CustomTimed;
 import com.tencent.bk.job.execute.api.esb.v2.EsbFastExecuteScriptResource;
 import com.tencent.bk.job.execute.common.constants.RunStatusEnum;
 import com.tencent.bk.job.execute.common.constants.StepExecuteTypeEnum;
 import com.tencent.bk.job.execute.common.constants.TaskStartupModeEnum;
 import com.tencent.bk.job.execute.common.constants.TaskTypeEnum;
+import com.tencent.bk.job.execute.metrics.ExecuteMetricsConstants;
 import com.tencent.bk.job.execute.model.AccountDTO;
+import com.tencent.bk.job.execute.model.FastTaskDTO;
 import com.tencent.bk.job.execute.model.StepInstanceDTO;
 import com.tencent.bk.job.execute.model.TaskInstanceDTO;
 import com.tencent.bk.job.execute.model.esb.v2.EsbJobExecuteDTO;
 import com.tencent.bk.job.execute.model.esb.v2.request.EsbFastExecuteScriptRequest;
 import com.tencent.bk.job.execute.service.AccountService;
-import com.tencent.bk.job.execute.service.ScriptService;
 import com.tencent.bk.job.execute.service.TaskExecuteService;
-import com.tencent.bk.job.manage.common.consts.account.AccountCategoryEnum;
-import com.tencent.bk.job.manage.common.consts.script.ScriptTypeEnum;
-import com.tencent.bk.job.manage.model.inner.ServiceScriptDTO;
+import com.tencent.bk.job.manage.api.common.constants.script.ScriptTypeEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,55 +75,48 @@ public class EsbFastExecuteScriptResourceImpl
 
     private final MessageI18nService i18nService;
 
-    private final ScriptService scriptService;
-
-    private final AuthService authService;
-
     @Autowired
-    public EsbFastExecuteScriptResourceImpl(TaskExecuteService taskExecuteService, AccountService accountService,
-                                            MessageI18nService i18nService, ScriptService scriptService,
-                                            AuthService authService) {
+    public EsbFastExecuteScriptResourceImpl(TaskExecuteService taskExecuteService,
+                                            AccountService accountService,
+                                            MessageI18nService i18nService) {
         this.taskExecuteService = taskExecuteService;
         this.accountService = accountService;
         this.i18nService = i18nService;
-        this.scriptService = scriptService;
-        this.authService = authService;
     }
 
     @Override
-    @EsbApiTimed(value = "esb.api", extraTags = {"api_name", "v2_fast_execute_script"})
-    public EsbResp<EsbJobExecuteDTO> fastExecuteScript(String lang, EsbFastExecuteScriptRequest request) {
+    @EsbApiTimed(value = CommonMetricNames.ESB_API, extraTags = {"api_name", "v2_fast_execute_script"})
+    @CustomTimed(metricName = ExecuteMetricsConstants.NAME_JOB_TASK_START,
+        extraTags = {
+            ExecuteMetricsConstants.TAG_KEY_START_MODE, ExecuteMetricsConstants.TAG_VALUE_START_MODE_API,
+            ExecuteMetricsConstants.TAG_KEY_TASK_TYPE, ExecuteMetricsConstants.TAG_VALUE_TASK_TYPE_FAST_SCRIPT
+        })
+    @AuditEntry
+    public EsbResp<EsbJobExecuteDTO> fastExecuteScript(String username,
+                                                       String appCode,
+                                                       @AuditRequestBody EsbFastExecuteScriptRequest request) {
+
         ValidateResult checkResult = checkFastExecuteScriptRequest(request);
         if (!checkResult.isPass()) {
             log.warn("Fast execute script request is illegal!");
-            return EsbResp.buildCommonFailResp(i18nService, checkResult);
+            throw new InvalidParamException(checkResult);
         }
 
         request.trimIps();
 
-        ServiceScriptDTO script = getAndCheckScript(request.getAppId(), request.getUserName(), request.getScriptId(),
-            scriptService);
-        try {
-            TaskInstanceDTO taskInstance = buildFastScriptTaskInstance(request);
-            StepInstanceDTO stepInstance = buildFastScriptStepInstance(request, script);
-            long taskInstanceId = taskExecuteService.createTaskInstanceFast(taskInstance, stepInstance);
-            taskExecuteService.startTask(taskInstanceId);
+        TaskInstanceDTO taskInstance = buildFastScriptTaskInstance(username, appCode, request);
+        StepInstanceDTO stepInstance = buildFastScriptStepInstance(username, request);
+        TaskInstanceDTO executeTaskInstance = taskExecuteService.executeFastTask(
+            FastTaskDTO.builder().taskInstance(taskInstance).stepInstance(stepInstance).build()
+        );
 
-            EsbJobExecuteDTO jobExecuteInfo = new EsbJobExecuteDTO();
-            jobExecuteInfo.setTaskInstanceId(taskInstanceId);
-            jobExecuteInfo.setTaskName(stepInstance.getName());
-            jobExecuteInfo.setStepInstanceId(stepInstance.getId());
-            return EsbResp.buildSuccessResp(jobExecuteInfo);
-        } catch (InSufficientPermissionException e) {
-            return authService.buildEsbAuthFailResp(e);
-        } catch (ServiceException e) {
-            log.warn("Fail to start task", e);
-            return EsbResp.buildCommonFailResp(e, i18nService);
-        } catch (Exception e) {
-            log.warn("Fail to start task", e);
-            return EsbResp.buildCommonFailResp(ErrorCode.STARTUP_TASK_FAIL, i18nService);
-        }
+        EsbJobExecuteDTO jobExecuteInfo = new EsbJobExecuteDTO();
+        jobExecuteInfo.setTaskInstanceId(executeTaskInstance.getId());
+        jobExecuteInfo.setTaskName(stepInstance.getName());
+        jobExecuteInfo.setStepInstanceId(stepInstance.getId());
+        return EsbResp.buildSuccessResp(jobExecuteInfo);
     }
+
 
     private String generateDefaultFastTaskName() {
         return i18nService.getI18n("task.type.name.fast_execute_script") + "_"
@@ -125,9 +124,9 @@ public class EsbFastExecuteScriptResourceImpl
     }
 
     private ValidateResult checkFastExecuteScriptRequest(EsbFastExecuteScriptRequest request) {
-        if (request.getScriptId() != null) {
-            if (request.getScriptId() < 1) {
-                log.warn("Fast execute script, scriptId:{} is invalid", request.getScriptId());
+        if (request.getScriptVersionId() != null) {
+            if (request.getScriptVersionId() < 1) {
+                log.warn("Fast execute script, scriptId:{} is invalid", request.getScriptVersionId());
                 return ValidateResult.fail(ErrorCode.ILLEGAL_PARAM_WITH_PARAM_NAME, "script_id");
             }
         } else {
@@ -156,31 +155,33 @@ public class EsbFastExecuteScriptResourceImpl
     }
 
 
-    private TaskInstanceDTO buildFastScriptTaskInstance(EsbFastExecuteScriptRequest request) {
+    private TaskInstanceDTO buildFastScriptTaskInstance(String username,
+                                                        String appCode,
+                                                        EsbFastExecuteScriptRequest request) {
         TaskInstanceDTO taskInstance = new TaskInstanceDTO();
         if (StringUtils.isNotBlank(request.getName())) {
             taskInstance.setName(request.getName());
         } else {
             taskInstance.setName(generateDefaultFastTaskName());
         }
-        taskInstance.setTaskId(-1L);
+        taskInstance.setPlanId(-1L);
         taskInstance.setCronTaskId(-1L);
         taskInstance.setTaskTemplateId(-1L);
         taskInstance.setDebugTask(false);
         taskInstance.setAppId(request.getAppId());
         taskInstance.setStartupMode(TaskStartupModeEnum.API.getValue());
-        taskInstance.setStatus(RunStatusEnum.BLANK.getValue());
-        taskInstance.setOperator(request.getUserName());
+        taskInstance.setStatus(RunStatusEnum.BLANK);
+        taskInstance.setOperator(username);
         taskInstance.setCreateTime(DateUtils.currentTimeMillis());
         taskInstance.setType(TaskTypeEnum.SCRIPT.getValue());
-        taskInstance.setCurrentStepId(0L);
+        taskInstance.setCurrentStepInstanceId(0L);
         taskInstance.setCallbackUrl(request.getCallbackUrl());
-        taskInstance.setAppCode(request.getAppCode());
+        taskInstance.setAppCode(appCode);
         return taskInstance;
     }
 
 
-    private StepInstanceDTO buildFastScriptStepInstance(EsbFastExecuteScriptRequest request, ServiceScriptDTO script)
+    private StepInstanceDTO buildFastScriptStepInstance(String username, EsbFastExecuteScriptRequest request)
         throws ServiceException {
         StepInstanceDTO stepInstance = new StepInstanceDTO();
         stepInstance.setAppId(request.getAppId());
@@ -190,13 +191,12 @@ public class EsbFastExecuteScriptResourceImpl
             stepInstance.setName(generateDefaultFastTaskName());
         }
         stepInstance.setStepId(-1L);
-        if (script != null) {
-            stepInstance.setScriptContent(script.getContent());
-            stepInstance.setScriptType(script.getType());
+        if (request.getScriptVersionId() != null && request.getScriptVersionId() > 0) {
+            stepInstance.setScriptVersionId(request.getScriptVersionId());
         } else {
             // 对传入参数进行base64解码
             stepInstance.setScriptContent(Base64Util.decodeContentToStr(request.getContent()));
-            stepInstance.setScriptType(request.getScriptType());
+            stepInstance.setScriptType(ScriptTypeEnum.valOf(request.getScriptType()));
         }
         if (StringUtils.isNotEmpty(request.getScriptParam())) {
             String scriptParam = Base64Util.decodeContentToStr(request.getScriptParam());
@@ -206,23 +206,24 @@ public class EsbFastExecuteScriptResourceImpl
             }
         }
         stepInstance.setSecureParam(request.getIsParamSensitive() != null && request.getIsParamSensitive() == 1);
-        stepInstance.setTimeout(calculateTimeout(request.getTimeout()));
+        stepInstance.setTimeout(request.getTimeout() == null ?
+            JobConstants.DEFAULT_JOB_TIMEOUT_SECONDS : request.getTimeout());
 
-        stepInstance.setExecuteType(StepExecuteTypeEnum.EXECUTE_SCRIPT.getValue());
-        stepInstance.setStatus(RunStatusEnum.BLANK.getValue());
-        stepInstance.setTargetServers(convertToStandardServers(request.getTargetServer(), request.getIpList(),
+        stepInstance.setExecuteType(StepExecuteTypeEnum.EXECUTE_SCRIPT);
+        stepInstance.setStatus(RunStatusEnum.BLANK);
+        stepInstance.setTargetExecuteObjects(convertToStandardServers(request.getTargetServer(), request.getIpList(),
             request.getDynamicGroupIdList()));
         AccountDTO account = accountService.getSystemAccountByAlias(request.getAccount(), request.getAppId());
         if (account == null) {
             log.info("Account:{} is not exist in app:{}", request.getAccount(), request.getAppId());
-            throw new ServiceException(ErrorCode.ACCOUNT_NOT_EXIST, request.getAccount());
+            throw new NotFoundException(ErrorCode.ACCOUNT_NOT_EXIST, ArrayUtil.toArray(request.getAccount()));
         }
         if (AccountCategoryEnum.SYSTEM != account.getCategory()) {
             log.info("Account:{} is not os account in app:{}", request.getAccount(), request.getAppId());
-            throw new ServiceException(ErrorCode.ACCOUNT_NOT_EXIST, request.getAccount());
+            throw new NotFoundException(ErrorCode.ACCOUNT_NOT_EXIST, ArrayUtil.toArray(request.getAccount()));
         }
         stepInstance.setAccountId(account.getId());
-        stepInstance.setOperator(request.getUserName());
+        stepInstance.setOperator(username);
         stepInstance.setCreateTime(DateUtils.currentTimeMillis());
         // ESB接口默认为手工录入的本地脚本
         stepInstance.setScriptSource(1);

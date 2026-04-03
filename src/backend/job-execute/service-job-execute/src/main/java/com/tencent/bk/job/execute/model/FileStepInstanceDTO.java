@@ -34,19 +34,20 @@ import java.util.List;
 @Setter
 @ToString
 public class FileStepInstanceDTO {
+    private Long taskInstanceId;
     private Long stepInstanceId;
     /**
      * 文件传输的源文件
      */
     private List<FileSourceDTO> fileSourceList;
     /**
-     * 变量解析之后的文件传输的源文件
-     */
-    private List<FileSourceDTO> resolvedFileSourceList;
-    /**
      * 文件传输的目标目录
      */
     private String fileTargetPath;
+    /**
+     * 文件分发到目标主机的对应名称
+     */
+    private String fileTargetName;
     /**
      * 变量解析之后的目标路径
      */

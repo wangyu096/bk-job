@@ -24,12 +24,13 @@
 
 package com.tencent.bk.job.manage.manager.script.check.checker;
 
-import com.tencent.bk.job.manage.common.consts.RuleMatchHandleActionEnum;
-import com.tencent.bk.job.manage.common.consts.script.ScriptTypeEnum;
+import com.tencent.bk.job.manage.api.common.constants.RuleMatchHandleActionEnum;
+import com.tencent.bk.job.manage.api.common.constants.script.ScriptTypeEnum;
 import com.tencent.bk.job.manage.manager.script.check.ScriptCheckParam;
 import com.tencent.bk.job.manage.model.dto.ScriptCheckResultItemDTO;
 import com.tencent.bk.job.manage.model.dto.globalsetting.DangerousRuleDTO;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -55,22 +56,24 @@ public abstract class DefaultChecker implements ScriptChecker {
     protected void checkScriptLines(Long ruleId, String ruleExpression, RuleMatchHandleActionEnum action,
                                     List<ScriptCheckResultItemDTO> results, String[] lines,
                                     Pattern pattern, String checkItemCode, String description) {
-        Matcher matcher;
-        int tmpNum, lineNumber = 0;
-        while (lineNumber < lines.length) {
-            while (isComment(param.getScriptType(), lines[lineNumber])) {
-                lineNumber++;
-            }
-            tmpNum = lineNumber++;
-            StringBuilder line = new StringBuilder(lines[tmpNum].length());
-            tmpNum = getTmpNum(lines, tmpNum, line);
+        if (lines == null || lines.length == 0) {
+            return;
+        }
 
-            matcher = pattern.matcher(line);
+        Matcher matcher;
+        int lineNumber = 1;
+        while (lineNumber <= lines.length) {
+            String lineContent = lines[lineNumber - 1];
+            if (isComment(param.getScriptType(), lineContent) || StringUtils.isBlank(lineContent)) {
+                lineNumber++;
+                continue;
+            }
+            matcher = pattern.matcher(lineContent);
             if (matcher.find()) {
                 results.add(createResult(ruleId, ruleExpression, action, lineNumber, checkItemCode,
-                    description, lines[lineNumber - 1], matcher.group()));
+                    description, lineContent, matcher.group()));
             }
-            lineNumber = tmpNum;
+            lineNumber++;
         }
     }
 
@@ -117,20 +120,5 @@ public abstract class DefaultChecker implements ScriptChecker {
         checkScriptLines(dangerousRule.getId(), dangerousRule.getExpression(),
             RuleMatchHandleActionEnum.getRuleMatchHandleModeEnum(dangerousRule.getAction()), results, lines,
             pattern, null, dangerousRule.getDescription());
-    }
-
-    int getTmpNum(String[] lines, int tmpNum, StringBuilder line) {
-        do {
-            String trim = lines[tmpNum++].trim();
-            if (!trim.startsWith("#")) {
-                line.append(trim);
-                if (line.length() > 0 && line.charAt(line.length() - 1) == '\\') {
-                    line.deleteCharAt(line.length() - 1);
-                } else {
-                    break;
-                }
-            }
-        } while (tmpNum < lines.length);
-        return tmpNum;
     }
 }

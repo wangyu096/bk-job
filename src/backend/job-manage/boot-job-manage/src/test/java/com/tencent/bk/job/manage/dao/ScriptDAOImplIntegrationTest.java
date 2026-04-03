@@ -27,13 +27,13 @@ package com.tencent.bk.job.manage.dao;
 import com.tencent.bk.job.common.model.BaseSearchCondition;
 import com.tencent.bk.job.common.model.PageData;
 import com.tencent.bk.job.common.util.JobUUID;
-import com.tencent.bk.job.manage.common.consts.JobResourceStatusEnum;
-import com.tencent.bk.job.manage.common.consts.script.ScriptTypeEnum;
+import com.tencent.bk.job.manage.api.common.constants.JobResourceStatusEnum;
+import com.tencent.bk.job.manage.api.common.constants.script.ScriptTypeEnum;
 import com.tencent.bk.job.manage.model.dto.ScriptDTO;
-import com.tencent.bk.job.manage.model.dto.ScriptQueryDTO;
-import com.tencent.bk.job.manage.model.dto.TagDTO;
-import org.jooq.generated.tables.Script;
+import com.tencent.bk.job.manage.model.query.ScriptQuery;
+import com.tencent.bk.job.manage.model.tables.Script;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +45,6 @@ import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -83,15 +82,6 @@ class ScriptDAOImplIntegrationTest {
         assertThat(script.getStatus()).isEqualTo(0);
         assertThat(script.getVersionDesc()).isEqualTo("version_desc1");
         assertThat(script.getDescription()).isEqualTo("desc1");
-
-        List<TagDTO> expectedTags = new ArrayList<>();
-        TagDTO tag1 = new TagDTO();
-        tag1.setId(1L);
-        expectedTags.add(tag1);
-        TagDTO tag2 = new TagDTO();
-        tag2.setId(2L);
-        expectedTags.add(tag2);
-        assertThat(script.getTags()).usingComparator(new TagListComparator()).isEqualTo(expectedTags);
     }
 
     @Test
@@ -102,11 +92,10 @@ class ScriptDAOImplIntegrationTest {
 
     @Test
     void whenListPageScriptThenReturnOrderedPageResult() {
-        ScriptQueryDTO scriptCondition = new ScriptQueryDTO();
+        ScriptQuery scriptCondition = new ScriptQuery();
         scriptCondition.setAppId(2L);
         scriptCondition.setType(1);
         scriptCondition.setName("test");
-        scriptCondition.setTags("<2>");
 
         BaseSearchCondition baseSearchCondition = new BaseSearchCondition();
         baseSearchCondition.setStart(0);
@@ -136,36 +125,11 @@ class ScriptDAOImplIntegrationTest {
         assertThat(actual.getCreateTime()).isNotNull();
         assertThat(actual.getLastModifyUser()).isEqualTo("user1");
         assertThat(actual.getLastModifyTime()).isNotNull();
-
-        List<TagDTO> expectedTags = new ArrayList<>();
-        TagDTO tag1 = new TagDTO();
-        tag1.setId(2L);
-        expectedTags.add(tag1);
-        TagDTO tag2 = new TagDTO();
-        tag2.setId(3L);
-        expectedTags.add(tag2);
-
-        assertThat(actual.getTags()).usingComparator(new TagListComparator()).isEqualTo(expectedTags);
-    }
-
-    @Test
-    void whenListScriptByMultiTagsThenReturnData() {
-        ScriptQueryDTO scriptCondition = new ScriptQueryDTO();
-        scriptCondition.setAppId(2L);
-        scriptCondition.setTags("<2>,<1>");
-
-        BaseSearchCondition baseSearchCondition = new BaseSearchCondition();
-        baseSearchCondition.setStart(0);
-        baseSearchCondition.setLength(1);
-
-        PageData<ScriptDTO> pageData = scriptDAO.listPageScript(scriptCondition, baseSearchCondition);
-        ScriptDTO actual = pageData.getData().get(0);
-        assertThat(actual.getId()).isEqualTo("dc65a20cd91811e993a2309c2357fc12");
     }
 
     @Test
     public void givenNoMatchScriptWhenListScriptThenReturnEmptyPageData() {
-        ScriptQueryDTO scriptCondition = new ScriptQueryDTO();
+        ScriptQuery scriptCondition = new ScriptQuery();
         scriptCondition.setAppId(2L);
         scriptCondition.setName("notexistscript");
 
@@ -181,20 +145,56 @@ class ScriptDAOImplIntegrationTest {
         assertThat(pageData.getData()).isNullOrEmpty();
     }
 
+
+    @Nested
+    @DisplayName("TestListPageScript")
+    class TestListPageScript {
+        @Test
+        public void whenListPageScriptByScriptIdThenReturnSingleData() {
+            ScriptQuery scriptCondition = new ScriptQuery();
+            scriptCondition.setId("dc65a20cd91811e993a2309c2357fc12");
+
+            BaseSearchCondition baseSearchCondition = new BaseSearchCondition();
+            baseSearchCondition.setStart(0);
+            baseSearchCondition.setLength(10);
+
+            PageData<ScriptDTO> pageData = scriptDAO.listPageScript(scriptCondition, baseSearchCondition);
+            assertThat(pageData).isNotNull();
+            assertThat(pageData.getTotal()).isEqualTo(1);
+            assertThat(pageData.getData()).isNotNull();
+            assertThat(pageData.getData().get(0).getId()).isEqualTo("dc65a20cd91811e993a2309c2357fc12");
+        }
+
+        @Test
+        public void whenListPageScriptByScriptContentReturn() {
+            ScriptQuery scriptCondition = new ScriptQuery();
+            scriptCondition.setContentKeyword("ls");
+
+            BaseSearchCondition baseSearchCondition = new BaseSearchCondition();
+            baseSearchCondition.setStart(0);
+            baseSearchCondition.setLength(10);
+
+            PageData<ScriptDTO> pageData = scriptDAO.listPageScript(scriptCondition, baseSearchCondition);
+            assertThat(pageData).isNotNull();
+            assertThat(pageData.getTotal()).isEqualTo(2);
+            assertThat(pageData.getData()).isNotNull();
+            assertThat(pageData.getData()).extracting("id")
+                .containsOnly("dc65a20cd91811e993a2309c2357fc12", "553285c5db8211e9ac466c92bf62a896");
+        }
+    }
+
     @Test
-    public void whenListPageScriptByScriptIdThenReturnSingleData() {
-        ScriptQueryDTO scriptCondition = new ScriptQueryDTO();
-        scriptCondition.setId("dc65a20cd91811e993a2309c2357fc12");
+    void whenListScriptThenReturnResult() {
+        ScriptQuery scriptCondition = new ScriptQuery();
+        scriptCondition.setAppId(2L);
+        scriptCondition.setType(1);
+        scriptCondition.setName("test");
 
-        BaseSearchCondition baseSearchCondition = new BaseSearchCondition();
-        baseSearchCondition.setStart(0);
-        baseSearchCondition.setLength(10);
-
-        PageData<ScriptDTO> pageData = scriptDAO.listPageScript(scriptCondition, baseSearchCondition);
-        assertThat(pageData).isNotNull();
-        assertThat(pageData.getTotal()).isEqualTo(1);
-        assertThat(pageData.getData()).isNotNull();
-        assertThat(pageData.getData().get(0).getId()).isEqualTo("dc65a20cd91811e993a2309c2357fc12");
+        List<ScriptDTO> scripts = scriptDAO.listScripts(scriptCondition);
+        assertThat(scripts).isNotEmpty();
+        assertThat(scripts.size()).isEqualTo(2);
+        assertThat(scripts).extracting("id").containsOnly("dc65a20cd91811e993a2309c2357fc12",
+            "d68700a6db8711e9ac466c92bf62a896");
     }
 
     @Test
@@ -205,15 +205,6 @@ class ScriptDAOImplIntegrationTest {
         assertThat(script.getType()).isEqualTo(1);
         assertThat(script.getCategory()).isEqualTo(1);
         assertThat(script.getCreator()).isEqualTo("user1");
-
-        List<TagDTO> expectedTags = new ArrayList<>();
-        TagDTO tag1 = new TagDTO();
-        tag1.setId(1L);
-        expectedTags.add(tag1);
-        TagDTO tag2 = new TagDTO();
-        tag2.setId(2L);
-        expectedTags.add(tag2);
-        assertThat(script.getTags()).usingComparator(new TagListComparator()).isEqualTo(expectedTags);
         assertThat(script.getLastModifyUser()).isEqualTo("user1");
     }
 
@@ -230,7 +221,7 @@ class ScriptDAOImplIntegrationTest {
         String scriptId = scriptDAO.saveScript(script);
         assertThat(scriptId).isNotEmpty();
 
-        ScriptQueryDTO scriptCondition = new ScriptQueryDTO();
+        ScriptQuery scriptCondition = new ScriptQuery();
         scriptCondition.setId(scriptId);
 
         BaseSearchCondition baseSearchCondition = new BaseSearchCondition();
@@ -251,35 +242,21 @@ class ScriptDAOImplIntegrationTest {
     }
 
     @Test
-    public void whenUpdateScriptThenStore() {
-        ScriptDTO script = new ScriptDTO();
-        script.setLastModifyUser("user2");
-        script.setId("dc65a20cd91811e993a2309c2357fc12");
-        List<TagDTO> tags = new ArrayList<>();
-        TagDTO tag1 = new TagDTO();
-        tag1.setId(1L);
-        tags.add(tag1);
-        TagDTO tag2 = new TagDTO();
-        tag2.setId(2L);
-        tags.add(tag2);
-        TagDTO tag3 = new TagDTO();
-        tag3.setId(3L);
-        tags.add(tag3);
-        script.setTags(tags);
-        script.setName("new_name");
+    public void updateScriptLastModify() {
+        String lastModifyUser = "user2";
+        String scriptId = "dc65a20cd91811e993a2309c2357fc12";
+        long time = System.currentTimeMillis();
 
-        scriptDAO.updateScript(script);
+        scriptDAO.updateScriptLastModify(scriptId, lastModifyUser, time);
 
-        ScriptDTO updatedScript = getScriptById("dc65a20cd91811e993a2309c2357fc12");
+        ScriptDTO updatedScript = getScriptById(scriptId);
         assertThat(updatedScript).isNotNull();
-        assertThat(updatedScript.getTags()).isNotEmpty();
-        assertThat(updatedScript.getTags()).isEqualTo(tags);
-        assertThat(updatedScript.getLastModifyUser()).isEqualTo(script.getLastModifyUser());
-        assertThat(updatedScript.getName()).isEqualTo("new_name");
+        assertThat(updatedScript.getLastModifyUser()).isEqualTo(lastModifyUser);
+        assertThat(updatedScript.getLastModifyTime()).isEqualTo(time);
     }
 
     private ScriptDTO getScriptById(String scriptId) {
-        ScriptQueryDTO scriptCondition = new ScriptQueryDTO();
+        ScriptQuery scriptCondition = new ScriptQuery();
         scriptCondition.setId(scriptId);
         BaseSearchCondition baseSearchCondition = new BaseSearchCondition();
         baseSearchCondition.setStart(0);
@@ -320,7 +297,7 @@ class ScriptDAOImplIntegrationTest {
 
     @Test
     public void whenListScriptVersionThenReturnOrderResult() {
-        List<ScriptDTO> scripts = scriptDAO.listByScriptId("dc65a20cd91811e993a2309c2357fc12");
+        List<ScriptDTO> scripts = scriptDAO.listScriptVersionsByScriptId("dc65a20cd91811e993a2309c2357fc12");
         assertThat(scripts).isNotEmpty();
         assertThat(scripts).hasSize(2);
         // 按照更新时间排序
@@ -329,7 +306,7 @@ class ScriptDAOImplIntegrationTest {
 
     @Test
     public void givenNotExistScriptIdWhenListScriptVersionThenReturnEmptyList() {
-        List<ScriptDTO> scripts = scriptDAO.listByScriptId("notexistscriptid");
+        List<ScriptDTO> scripts = scriptDAO.listScriptVersionsByScriptId("notexistscriptid");
         assertThat(scripts).isNotNull();
         assertThat(scripts).isEmpty();
     }
@@ -357,16 +334,17 @@ class ScriptDAOImplIntegrationTest {
     }
 
     @Test
-    public void whenDeletScriptVersionThenDeleted() {
+    public void whenDeleteScriptVersionThenDeleted() {
         scriptDAO.deleteScriptVersion(1L);
         ScriptDTO deletedScriptVersion = scriptDAO.getScriptVersionById(1L);
         assertThat(deletedScriptVersion).describedAs("check the script version is deleted").isNull();
     }
 
     @Test
-    public void whenDeletAllScriptVersionThenDeleted() {
+    public void whenDeleteAllScriptVersionThenDeleted() {
         scriptDAO.deleteScriptVersionByScriptId("dc65a20cd91811e993a2309c2357fc12");
-        List<ScriptDTO> existScriptVersions = scriptDAO.listByScriptId("dc65a20cd91811e993a2309c2357fc12");
+        List<ScriptDTO> existScriptVersions = scriptDAO.listScriptVersionsByScriptId(
+            "dc65a20cd91811e993a2309c2357fc12");
         assertThat(existScriptVersions).describedAs("check that all script version is deleted").isNullOrEmpty();
     }
 
@@ -381,7 +359,7 @@ class ScriptDAOImplIntegrationTest {
 
     @Test
     @DisplayName("验证批量根据scriptIdList获取在线脚本")
-    public void whenbatchGetOnlineScriptVersionByScriptIdsThenReturn() {
+    public void whenBatchGetOnlineScriptVersionByScriptIdsThenReturn() {
         List<String> scriptIdList = new ArrayList<>();
         scriptIdList.add("dc65a20cd91811e993a2309c2357fc12");
         scriptIdList.add("d68700a6db8711e9ac466c92bf62a896");
@@ -422,29 +400,8 @@ class ScriptDAOImplIntegrationTest {
     }
 
     @Test
-    @DisplayName("验证更新脚本标签")
-    public void whenUpdateScriptTagsThenUpdated() {
-        String scriptId = "dc65a20cd91811e993a2309c2357fc12";
-        String operator = "new_operator";
-        List<TagDTO> tags = new ArrayList<>();
-        TagDTO tag1 = new TagDTO();
-        tag1.setId(10L);
-        tags.add(tag1);
-        TagDTO tag2 = new TagDTO();
-        tag2.setId(11L);
-        tags.add(tag2);
-
-        scriptDAO.updateScriptTags(operator, scriptId, tags);
-
-        ScriptDTO updatedScript = scriptDAO.getScriptByScriptId(scriptId);
-
-        assertThat(updatedScript.getTags()).extracting("id").containsOnly(10L, 11L);
-        assertThat(updatedScript.getLastModifyUser()).isEqualTo(operator);
-    }
-
-    @Test
     @DisplayName("验证更新脚本版本")
-    public void whenUpdatScriptVersionThenUpdated() {
+    public void whenUpdateScriptVersionThenUpdated() {
         Long scriptVersionId = 1L;
         String operator = "new_operator";
         ScriptDTO scriptVersion = new ScriptDTO();
@@ -477,7 +434,7 @@ class ScriptDAOImplIntegrationTest {
     public void testGetOnlineScriptVersionByScriptId() {
         String scriptId = "dc65a20cd91811e993a2309c2357fc12";
         long appId = 2L;
-        ScriptDTO onlineScriptVersion = scriptDAO.getOnlineByScriptId(appId, scriptId);
+        ScriptDTO onlineScriptVersion = scriptDAO.getOnlineScriptVersionByScriptId(appId, scriptId);
 
         assertThat(onlineScriptVersion.getId()).isEqualTo("dc65a20cd91811e993a2309c2357fc12");
         assertThat(onlineScriptVersion.getScriptVersionId()).isEqualTo(2L);
@@ -487,15 +444,16 @@ class ScriptDAOImplIntegrationTest {
     @Test
     @DisplayName("测试分页查询脚本版本列表")
     void whenListPageScriptVersionThenReturnOrderedPageResult() {
-        ScriptQueryDTO scriptCondition = new ScriptQueryDTO();
+        ScriptQuery scriptCondition = new ScriptQuery();
         scriptCondition.setAppId(2L);
         scriptCondition.setStatus(JobResourceStatusEnum.ONLINE.getValue());
 
         BaseSearchCondition baseSearchCondition = new BaseSearchCondition();
         baseSearchCondition.setStart(0);
         baseSearchCondition.setLength(Integer.MAX_VALUE);
+        scriptCondition.setBaseSearchCondition(baseSearchCondition);
 
-        PageData<ScriptDTO> pageData = scriptDAO.listPageScriptVersion(scriptCondition, baseSearchCondition);
+        PageData<ScriptDTO> pageData = scriptDAO.listPageScriptVersion(scriptCondition);
         assertThat(pageData).isNotNull();
         assertThat(pageData.getPageSize()).isEqualTo(Integer.MAX_VALUE);
         assertThat(pageData.getStart()).isEqualTo(0);
@@ -534,7 +492,7 @@ class ScriptDAOImplIntegrationTest {
 
     @Test
     void testListPageOnlineScript() {
-        ScriptQueryDTO scriptQuery = new ScriptQueryDTO();
+        ScriptQuery scriptQuery = new ScriptQuery();
         scriptQuery.setAppId(2L);
         scriptQuery.setPublicScript(false);
         scriptQuery.setType(ScriptTypeEnum.SHELL.getValue());
@@ -548,31 +506,6 @@ class ScriptDAOImplIntegrationTest {
         assertThat(pageData.getPageSize()).isEqualTo(100);
         assertThat(pageData.getData()).hasSize(2);
 
-    }
-
-    private static class TagListComparator implements Comparator<List<? extends TagDTO>> {
-        @Override
-        public int compare(List<? extends TagDTO> tagList1, List<? extends TagDTO> tagList2) {
-            if (tagList1 == null && tagList2 == null) {
-                return 0;
-            }
-            if (tagList1 != null && tagList2 != null) {
-                if (tagList1.size() != tagList2.size()) {
-                    return -1;
-                }
-                boolean isEqual = true;
-                for (int i = 0; i < tagList1.size(); i++) {
-                    TagDTO tagInList1 = tagList1.get(i);
-                    TagDTO tagInList2 = tagList2.get(i);
-                    if (!tagInList1.getId().equals(tagInList2.getId())) {
-                        isEqual = false;
-                        break;
-                    }
-                }
-                return isEqual ? 0 : -1;
-            }
-            return -1;
-        }
     }
 
 

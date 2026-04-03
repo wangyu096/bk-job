@@ -24,15 +24,13 @@
 
 package com.tencent.bk.job.file_gateway.api.web;
 
-import com.tencent.bk.job.common.constant.ErrorCode;
 import com.tencent.bk.job.common.exception.ServiceException;
-import com.tencent.bk.job.common.model.ServiceResponse;
-import com.tencent.bk.job.common.model.permission.AuthResultVO;
-import com.tencent.bk.job.file_gateway.model.dto.FileSourceDTO;
-import com.tencent.bk.job.file_gateway.model.dto.FileWorkerDTO;
+import com.tencent.bk.job.common.iam.exception.PermissionDeniedException;
+import com.tencent.bk.job.common.iam.model.AuthResult;
+import com.tencent.bk.job.common.model.Response;
+import com.tencent.bk.job.common.model.dto.AppResourceScope;
 import com.tencent.bk.job.file_gateway.model.req.common.ExecuteActionReq;
 import com.tencent.bk.job.file_gateway.model.resp.common.FileNodesVO;
-import com.tencent.bk.job.file_gateway.service.DispatchService;
 import com.tencent.bk.job.file_gateway.service.FileService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,57 +45,61 @@ public class WebFileResourceImpl implements WebFileResource {
 
     private final WebFileSourceResourceImpl webFileSourceResource;
     private final FileService fileService;
-    private final DispatchService dispatchService;
 
     @Autowired
-    public WebFileResourceImpl(WebFileSourceResourceImpl webFileSourceResource, FileService fileService,
-                               DispatchService dispatchService) {
+    public WebFileResourceImpl(WebFileSourceResourceImpl webFileSourceResource, FileService fileService) {
         this.webFileSourceResource = webFileSourceResource;
         this.fileService = fileService;
-        this.dispatchService = dispatchService;
     }
 
-    private FileWorkerDTO getFileWorker(Long appId, FileSourceDTO fileSourceDTO) {
-        if (fileSourceDTO == null) {
-            throw new ServiceException(ErrorCode.FILE_SOURCE_NOT_EXIST);
-        }
-        return dispatchService.findBestFileWorker(fileSourceDTO);
-    }
 
     @Override
-    public ServiceResponse<FileNodesVO> listFileNode(String username, Long appId, Integer fileSourceId, String path,
-                                                     String name, Integer start, Integer pageSize) {
+    public Response<FileNodesVO> listFileNode(String username,
+                                              AppResourceScope appResourceScope,
+                                              String scopeType,
+                                              String scopeId,
+                                              Integer fileSourceId,
+                                              String path,
+                                              String name,
+                                              Integer start,
+                                              Integer pageSize) {
         try {
-            AuthResultVO viewFileSourceAuthResultVO = webFileSourceResource.checkViewFileSourcePermission(username,
-                appId, fileSourceId);
-            if (!viewFileSourceAuthResultVO.isPass()) {
-                return ServiceResponse.buildAuthFailResp(viewFileSourceAuthResultVO);
+            Long appId = appResourceScope.getAppId();
+            AuthResult viewFileSourceAuthResult = webFileSourceResource.checkViewFileSourcePermission(username,
+                appResourceScope, fileSourceId);
+            if (!viewFileSourceAuthResult.isPass()) {
+                throw new PermissionDeniedException(viewFileSourceAuthResult);
             }
-            AuthResultVO manageFileSourceAuthResultVO =
-                webFileSourceResource.checkManageFileSourcePermission(username, appId, fileSourceId);
+            AuthResult manageFileSourceAuthResult =
+                webFileSourceResource.checkManageFileSourcePermission(username, appResourceScope, fileSourceId);
             FileNodesVO fileNodesVO = fileService.listFileNode(username, appId, fileSourceId, path, name, start,
                 pageSize);
             for (Map<String, Object> map : fileNodesVO.getPageData().getData()) {
-                map.put("canManage", manageFileSourceAuthResultVO.isPass());
+                map.put("canManage", manageFileSourceAuthResult.isPass());
             }
-            return ServiceResponse.buildSuccessResp(fileNodesVO);
+            return Response.buildSuccessResp(fileNodesVO);
         } catch (ServiceException e) {
-            return ServiceResponse.buildCommonFailResp(e.getErrorCode(), e.getErrorParams());
+            return Response.buildCommonFailResp(e.getErrorCode(), e.getErrorParams());
         }
     }
 
     @Override
-    public ServiceResponse<Boolean> executeAction(String username, Long appId, Integer fileSourceId,
-                                                  ExecuteActionReq req) {
+    public Response<Boolean> executeAction(String username,
+                                           AppResourceScope appResourceScope,
+                                           String scopeType,
+                                           String scopeId,
+                                           Integer fileSourceId,
+                                           ExecuteActionReq req) {
         try {
-            AuthResultVO authResultVO = webFileSourceResource.checkManageFileSourcePermission(username, appId,
+            Long appId = appResourceScope.getAppId();
+            AuthResult authResult = webFileSourceResource.checkManageFileSourcePermission(username, appResourceScope,
                 fileSourceId);
-            if (!authResultVO.isPass()) {
-                return ServiceResponse.buildAuthFailResp(authResultVO);
+            if (!authResult.isPass()) {
+                throw new PermissionDeniedException(authResult);
             }
-            return ServiceResponse.buildSuccessResp(fileService.executeAction(username, appId, fileSourceId, req));
+            return Response.buildSuccessResp(fileService.executeAction(username, appId, fileSourceId, req));
         } catch (ServiceException e) {
-            return ServiceResponse.buildCommonFailResp(e.getErrorCode(), e.getErrorParams());
+            return Response.buildCommonFailResp(e.getErrorCode(), e.getErrorParams());
         }
     }
 }

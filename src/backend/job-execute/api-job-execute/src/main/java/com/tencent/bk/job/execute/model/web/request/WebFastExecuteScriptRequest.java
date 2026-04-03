@@ -25,10 +25,17 @@
 package com.tencent.bk.job.execute.model.web.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.tencent.bk.job.execute.model.web.vo.ExecuteTargetVO;
+import com.tencent.bk.job.common.annotation.CompatibleImplementation;
+import com.tencent.bk.job.common.constant.CompatibleType;
+import com.tencent.bk.job.common.constant.JobConstants;
+import com.tencent.bk.job.common.model.vo.TaskTargetVO;
+import com.tencent.bk.job.execute.model.web.vo.RollingConfigVO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import org.hibernate.validator.constraints.Range;
+
+import javax.validation.constraints.NotNull;
 
 /**
  * 脚本执行请求
@@ -44,13 +51,13 @@ public class WebFastExecuteScriptRequest {
     /**
      * 脚本内容
      */
-    @ApiModelProperty(value = "脚本内容，BASE64编码，当手动录入的时候使用此参数", required = false)
+    @ApiModelProperty(value = "脚本内容，BASE64编码，当手动录入的时候使用此参数")
     private String content;
 
-    @ApiModelProperty(value = "脚本ID,当引用脚本的时候传该参数", required = false)
+    @ApiModelProperty(value = "脚本ID,当引用脚本的时候传该参数")
     private String scriptId;
 
-    @ApiModelProperty(value = "脚本版本ID,当引用脚本的时候传该参数", required = false)
+    @ApiModelProperty(value = "脚本版本ID,当引用脚本的时候传该参数")
     private Long scriptVersionId;
 
     /**
@@ -74,24 +81,37 @@ public class WebFastExecuteScriptRequest {
     /**
      * 脚本参数
      */
-    @ApiModelProperty(value = "脚本参数", required = false)
+    @ApiModelProperty(value = "脚本参数")
     private String scriptParam;
 
     /**
      * 执行超时时间
      */
     @ApiModelProperty(value = "执行超时时间，单位秒", required = true)
+    @NotNull(message = "{validation.constraints.InvalidJobTimeout_empty.message}")
+    @Range(min = JobConstants.MIN_JOB_TIMEOUT_SECONDS, max= JobConstants.MAX_JOB_TIMEOUT_SECONDS,
+        message = "{validation.constraints.InvalidJobTimeout_outOfRange.message}")
     private Integer timeout;
 
     /**
-     * 目标服务器
+     * 目标执行对象
      */
-    private ExecuteTargetVO targetServers;
+    @Deprecated
+    @CompatibleImplementation(name = "execute_object", deprecatedVersion = "3.9.x", type = CompatibleType.DEPLOY,
+        explain = "使用 taskTarget 参数替换。发布完成后可以删除")
+    @ApiModelProperty(hidden = true)
+    private TaskTargetVO targetServers;
+
+    /**
+     * 目标执行对象
+     */
+    @ApiModelProperty(value = "执行目标", required = true)
+    private TaskTargetVO taskTarget;
 
     /**
      * 是否敏感参数 0-否，1-是
      */
-    @ApiModelProperty(value = "是否敏感参数 0-否，1-是。默认0", required = false)
+    @ApiModelProperty(value = "是否敏感参数 0-否，1-是。默认0")
     private Integer secureParam = 0;
 
     @ApiModelProperty(value = "是否是重做任务")
@@ -101,4 +121,15 @@ public class WebFastExecuteScriptRequest {
     @ApiModelProperty(value = "任务实例ID,重做的时候需要传入")
     private Long taskInstanceId;
 
+    @ApiModelProperty(value = "滚动配置, 滚动执行需要传入")
+    private RollingConfigVO rollingConfig;
+
+    @ApiModelProperty(value = "是否启用滚动执行")
+    private boolean rollingEnabled;
+
+    @CompatibleImplementation(name = "execute_object", deprecatedVersion = "3.9.x", type = CompatibleType.DEPLOY,
+        explain = "发布完成后可以删除")
+    public TaskTargetVO getTaskTarget() {
+        return taskTarget != null ? taskTarget : targetServers;
+    }
 }

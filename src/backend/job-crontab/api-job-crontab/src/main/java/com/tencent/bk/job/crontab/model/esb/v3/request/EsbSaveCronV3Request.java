@@ -25,41 +25,48 @@
 package com.tencent.bk.job.crontab.model.esb.v3.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.tencent.bk.job.common.esb.model.EsbReq;
+import com.tencent.bk.job.common.esb.model.EsbAppScopeReq;
 import com.tencent.bk.job.common.esb.model.job.v3.EsbGlobalVarV3DTO;
+import com.tencent.bk.job.common.validation.Create;
+import com.tencent.bk.job.crontab.validation.provider.EsbSaveCronV3RequestSequenceProvider;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.apache.commons.lang3.StringUtils;
+import org.hibernate.validator.constraints.Length;
+import org.hibernate.validator.group.GroupSequenceProvider;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
  * @since 26/2/2020 16:33
  */
+@GroupSequenceProvider(EsbSaveCronV3RequestSequenceProvider.class)
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class EsbSaveCronV3Request extends EsbReq {
-
-    /**
-     * 业务 ID
-     */
-    @JsonProperty("bk_biz_id")
-    private Long appId;
+public class EsbSaveCronV3Request extends EsbAppScopeReq {
 
     /**
      * 定时任务ID，更新定时任务时，必须传这个值
      */
+    @Min(value = 1L, message = "{validation.constraints.InvalidCronId.message}")
     private Long id;
 
     /**
      * 要定时执行的作业的作业ID
      */
     @JsonProperty("job_plan_id")
+    @NotNull(message = "{validation.constraints.InvalidCronJobPlanId.message}", groups = Create.class)
+    @Min(value = 1L, message = "{validation.constraints.InvalidCronJobPlanId.message}")
     private Long planId;
 
     /**
      * 定时作业名称，新建时必填，修改时选填
      */
+    @NotEmpty(message = "{validation.constraints.InvalidCronJobName_empty.message}", groups = Create.class)
+    @Length(max = 60, message = "{validation.constraints.InvalidCronJobName_outOfLength.message}")
     private String name;
 
     /**
@@ -71,47 +78,20 @@ public class EsbSaveCronV3Request extends EsbReq {
     private String cronExpression;
 
     /**
+     * 单次执行的指定执行时间（Unix时间戳）
+     * <p>
+     * 不可与 cronExpression 同时为空
+     */
+    @JsonProperty("execute_time")
+    @Min(value = 1L, message = "{validation.constraints.InvalidCronExecuteTime.message}")
+    private Long executeTime;
+
+    /**
      * 定时任务的变量信息
      */
     @JsonProperty("global_var_list")
+    @Valid
     private List<EsbGlobalVarV3DTO> globalVarList;
 
-    public boolean validate() {
-        if (appId == null || appId <= 0) {
-            return false;
-        }
-        if (id != null && id < 0) {
-            return false;
-        }
-        if (id == null || id == 0) {
-            if (planId == null || planId <= 0) {
-                return false;
-            }
-            if (StringUtils.isBlank(name)) {
-                return false;
-            }
-            if (StringUtils.isBlank(cronExpression)) {
-                return false;
-            }
-        } else {
-            boolean hasChange = false;
-            if (planId != null && planId > 0) {
-                hasChange = true;
-            }
-            if (StringUtils.isNotBlank(name)) {
-                hasChange = true;
-            } else {
-                name = null;
-            }
-            if (StringUtils.isNotBlank(cronExpression)) {
-                hasChange = true;
-            } else {
-                cronExpression = null;
-            }
-            if (!hasChange) {
-                return false;
-            }
-        }
-        return true;
-    }
+
 }

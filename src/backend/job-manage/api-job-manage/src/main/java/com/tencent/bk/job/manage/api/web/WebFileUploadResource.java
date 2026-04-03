@@ -24,12 +24,20 @@
 
 package com.tencent.bk.job.manage.api.web;
 
-import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.annotation.WebAPI;
+import com.tencent.bk.job.common.model.Response;
+import com.tencent.bk.job.manage.model.web.request.GenUploadTargetReq;
 import com.tencent.bk.job.manage.model.web.vo.UploadLocalFileResultVO;
+import com.tencent.bk.job.manage.model.web.vo.UploadTargetVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -40,13 +48,26 @@ import java.util.List;
 @Api(tags = {"job-manage:web:File_Upload_Management"})
 @RequestMapping("/web/upload")
 @RestController
+@WebAPI
 public interface WebFileUploadResource {
     @ApiOperation(value = "上传本地文件", produces = "application/json")
     @PostMapping("/localFile")
-    ServiceResponse<List<UploadLocalFileResultVO>> uploadLocalFile(@ApiParam("用户名，网关自动传入")
-                                                                   @RequestHeader("username")
-                                                                       String username,
-                                                                   @ApiParam("本地文件")
-                                                                   @RequestParam("uploadFiles")
-                                                                       MultipartFile[] uploadFiles);
+    Response<List<UploadLocalFileResultVO>> uploadLocalFile(
+        @ApiParam("用户名，网关自动传入")
+        @RequestHeader("username")
+            String username,
+        @ApiParam("本地文件")
+        @RequestParam("uploadFiles")
+            MultipartFile[] uploadFiles);
+
+    @ApiOperation(value = "生成上传目标地址信息", produces = "application/json")
+    @PostMapping("/genUploadTarget")
+    Response<UploadTargetVO> genUploadTarget(
+        @ApiParam("用户名，网关自动传入")
+        @RequestHeader("username")
+            String username,
+        @ApiParam("要上传的文件信息")
+        @RequestBody
+            GenUploadTargetReq req
+    );
 }

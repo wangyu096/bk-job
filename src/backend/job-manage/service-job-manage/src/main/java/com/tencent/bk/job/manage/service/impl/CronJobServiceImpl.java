@@ -24,9 +24,9 @@
 
 package com.tencent.bk.job.manage.service.impl;
 
-import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.model.InternalResponse;
+import com.tencent.bk.job.crontab.api.inner.ServiceCronJobResource;
 import com.tencent.bk.job.crontab.model.CronJobVO;
-import com.tencent.bk.job.manage.client.ServiceCronJobResourceClient;
 import com.tencent.bk.job.manage.service.CronJobService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -36,18 +36,15 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @since 22/2/2020 21:25
- */
 @Slf4j
 @Service
 public class CronJobServiceImpl implements CronJobService {
 
-    private ServiceCronJobResourceClient serviceCronJobResourceClient;
+    private final ServiceCronJobResource serviceCronJobResource;
 
     @Autowired
-    public CronJobServiceImpl(ServiceCronJobResourceClient serviceCronJobResourceClient) {
-        this.serviceCronJobResourceClient = serviceCronJobResourceClient;
+    public CronJobServiceImpl(ServiceCronJobResource serviceCronJobResource) {
+        this.serviceCronJobResource = serviceCronJobResource;
     }
 
     @Override
@@ -55,8 +52,8 @@ public class CronJobServiceImpl implements CronJobService {
         if (appId <= 0 || CollectionUtils.isEmpty(planIdList)) {
             return null;
         }
-        ServiceResponse<Map<Long, List<CronJobVO>>> cronJobByPlanIds =
-            serviceCronJobResourceClient.batchListCronJobByPlanIds(appId, planIdList);
+        InternalResponse<Map<Long, List<CronJobVO>>> cronJobByPlanIds =
+            serviceCronJobResource.batchListCronJobByPlanIds(appId, planIdList);
         if (cronJobByPlanIds != null) {
             return cronJobByPlanIds.getData();
         }

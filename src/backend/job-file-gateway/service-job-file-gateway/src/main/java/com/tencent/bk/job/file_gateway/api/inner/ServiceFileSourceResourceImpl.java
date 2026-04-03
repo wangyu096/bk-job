@@ -25,7 +25,8 @@
 package com.tencent.bk.job.file_gateway.api.inner;
 
 import com.tencent.bk.job.common.constant.ErrorCode;
-import com.tencent.bk.job.common.model.ServiceResponse;
+import com.tencent.bk.job.common.exception.NotFoundException;
+import com.tencent.bk.job.common.model.InternalResponse;
 import com.tencent.bk.job.file_gateway.model.dto.FileSourceDTO;
 import com.tencent.bk.job.file_gateway.service.FileSourceService;
 import lombok.extern.slf4j.Slf4j;
@@ -45,11 +46,26 @@ public class ServiceFileSourceResourceImpl implements ServiceFileSourceResource 
     }
 
     @Override
-    public ServiceResponse<Integer> getFileSourceIdByCode(String code) {
+    public InternalResponse<Integer> getFileSourceIdByCode(Long appId, String code) {
+        FileSourceDTO fileSourceDTO = fileSourceService.getFileSourceByCode(appId, code);
+        if (null == fileSourceDTO) {
+            throw new NotFoundException(ErrorCode.FAIL_TO_FIND_FILE_SOURCE_BY_CODE, new String[]{code});
+        }
+        return InternalResponse.buildSuccessResp(fileSourceDTO.getId());
+    }
+
+    @Override
+    public InternalResponse<Integer> getFileSourceIdByCode(String code) {
         FileSourceDTO fileSourceDTO = fileSourceService.getFileSourceByCode(code);
         if (null == fileSourceDTO) {
-            return ServiceResponse.buildCommonFailResp(ErrorCode.FAIL_TO_FIND_FILE_SOURCE_BY_CODE, new String[]{code});
+            throw new NotFoundException(ErrorCode.FAIL_TO_FIND_FILE_SOURCE_BY_CODE, new String[]{code});
         }
-        return ServiceResponse.buildSuccessResp(fileSourceDTO.getId());
+        return InternalResponse.buildSuccessResp(fileSourceDTO.getId());
+    }
+
+    @Override
+    public InternalResponse<Boolean> existsFileSourceUsingCredential(Long appId, String credentialId) {
+        boolean result = fileSourceService.existsFileSourceUsingCredential(appId, credentialId);
+        return InternalResponse.buildSuccessResp(result);
     }
 }
